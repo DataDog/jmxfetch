@@ -1,0 +1,12 @@
+include:
+    attribute:
+        HeapMemoryUsage.used:
+            alias: jvm.heap_memory
+            metric_type: gauge
+        NonHeapMemoryUsage.used:
+            alias: jvm.non_heap_memory
+            metric_type: gauge
+        ThreadCount:
+            alias: jvm.thread_count
+            metric_type: gauge
+    domain: java.lang
