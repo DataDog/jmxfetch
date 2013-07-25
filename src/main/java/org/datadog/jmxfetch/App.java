@@ -21,12 +21,18 @@ import javax.security.auth.login.FailedLoginException;
 public class App 
 {
 	public static ArrayList<Instance> _instances = new ArrayList<Instance>();
+	
+	private static LinkedList<Instance> _broken_instances = new LinkedList<Instance>();
 
 	private static List<String> JMX_YAML_FILE = Arrays.asList("tomcat.yaml", "activemq.yaml", "jmx.yaml", "solr.yaml", "cassandra.yaml"); 
 
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
 
 	private static MetricReporter METRIC_REPORTER;
+	
+	private static int loop_counter;
+	
+	
 	
 	public static void main( String[] args )
 	{
@@ -35,6 +41,7 @@ public class App
 		int loop_period = 0;
 		String log_location = null;
 		String log_level = null;
+		
 		
 		// We check the arguments passed are valid
 		if (args.length != 5) {
@@ -70,6 +77,7 @@ public class App
 		init(confd_directory);
 		
 		// Start main loop
+		loop_counter = 0;
 		do_loop(loop_period, confd_directory);
 		
 		
@@ -102,7 +110,8 @@ public class App
 	}
 	
 	private static void do_iteration()
-	{
+	{	
+			loop_counter++;
 			
 			if(_instances.size() == 0)
 			{
@@ -110,7 +119,7 @@ public class App
 				System.exit(1);
 			}
 				
-			LinkedList<Instance> broken_instances = new LinkedList<Instance>();
+			
 			for (Instance instance : _instances)
 			{
 				LinkedList<HashMap<String, Object>> metrics;
@@ -123,21 +132,24 @@ public class App
 
 				if (metrics.size() == 0)
 				{
-					broken_instances.add(instance);
+					_broken_instances.add(instance);
 					continue;
 				}
-				METRIC_REPORTER.sendMetrics(metrics);
+				METRIC_REPORTER.sendMetrics(metrics, instance.instance_name, loop_counter);
 					
 			}
-					
-			for (Instance instance : broken_instances)
+			
+			Iterator<Instance> it = _broken_instances.iterator();
+			while(it.hasNext())
 			{
+				Instance instance = it.next();
 				LOGGER.warning("Instance " + instance + " didn't return any metrics. Maybe the server got disconnected ? Trying to reconnect.");
 				_instances.remove(instance);
 				Instance new_instance = new Instance(instance.yaml, instance.init_config, instance.check_name);
 				try {
 					new_instance.init();
 					_instances.add(new_instance);
+					it.remove();
 				} catch (IOException e) {
 					LOGGER.warning("Cannot connect to instance " + instance + ". Is a JMX Server running at this address?");
 				} catch (SecurityException e) {

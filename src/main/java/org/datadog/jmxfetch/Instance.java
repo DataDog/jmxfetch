@@ -33,7 +33,7 @@ public class Instance {
 	private LinkedList<Configuration> conf_list = new LinkedList<Configuration>();
 	private LinkedList<JMXAttribute> matching_attr;
 	public LinkedHashMap<String, Object> init_config;
-	private String instance_name;
+	String instance_name;
 	public String check_name;
 	private LinkedList<JMXAttribute> failing_attributes;
 	private Integer refresh_beans;
@@ -85,6 +85,7 @@ public class Instance {
 	
 	public void init() throws IOException, FailedLoginException, SecurityException
 	{
+		LOGGER.info("Trying to connect to JMX Server at " + this.toString());
 		this.mbs = this.connect(this.yaml);
 		LOGGER.info("Connected to JMX Server at " + this.toString());
 		
@@ -172,7 +173,7 @@ public class Instance {
 	    		}
 	    		else
 	    		{
-	    			LOGGER.warning("Attribute: " + a + " has an unsupported type: " + a.getType());
+	    			LOGGER.fine("Attribute: " + a + " has an unsupported type: " + a.getType());
 	    			continue;
 	    		}
 	    		

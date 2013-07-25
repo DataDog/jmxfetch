@@ -11,12 +11,9 @@ public class MetricReporter {
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
 	private StatsDClient statsd_client;
 	private HashMap<String, HashMap<String, Object>> rates_aggregator = new HashMap<String, HashMap<String, Object>>();
-	private int loop_counter;
-	
+
 	public MetricReporter(int statsd_port) {
-		this.statsd_client = new NonBlockingStatsDClient(null, "localhost", statsd_port, new String[] {});
-		this.loop_counter = 0;
-		
+		this.statsd_client = new NonBlockingStatsDClient(null, "localhost", statsd_port, new String[] {});		
 	}
 	
 	private String generate_id(HashMap<String, Object> m)
@@ -29,20 +26,20 @@ public class MetricReporter {
 		return key;
 	}
 
-	public void sendMetrics(LinkedList<HashMap<String, Object>> metrics) {
-		this.loop_counter++;
+	public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instance_name, int loop_counter) {
 		
-		if(this.loop_counter <= 5 || this.loop_counter % 10 == 0)
+		
+		if(loop_counter <= 5 || loop_counter % 10 == 0)
 		{
-			LOGGER.info("Collection #" + this.loop_counter + " is sending " + metrics.size() + " metrics to the dogstatsd server");
-			if (this.loop_counter == 5)
+			LOGGER.info("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the dogstatsd server during collection #" + loop_counter);
+			if (loop_counter == 5)
 			{
 				LOGGER.info("Next collections will be logged only every 10 collections.");
 			}
 		}
 		else
 		{
-			LOGGER.fine("Collection #" + this.loop_counter + " is sending " + metrics.size() + " metrics to the dogstatsd server");
+			LOGGER.fine("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the dogstatsd server during collection #" + loop_counter);
 		}
 		
 		for (HashMap<String, Object> m : metrics)
