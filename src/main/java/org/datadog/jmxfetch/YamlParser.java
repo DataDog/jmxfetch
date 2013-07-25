@@ -9,26 +9,24 @@ import org.yaml.snakeyaml.Yaml;
 
 public class YamlParser {
 	
-	private HashMap<Object, Object> parsed_yaml;
-
+	private HashMap<Object, Object> parsedYaml;
+	
 	public YamlParser(String path) throws FileNotFoundException {
-		
 		InputStream yaml_file = new FileInputStream(path);
 		Yaml yaml = new Yaml();
-	    parsed_yaml = (HashMap<Object, Object>) yaml.load(yaml_file);
-	   
+	    parsedYaml = (HashMap<Object, Object>) yaml.load(yaml_file);	   
 	}
 	
-	public Object get_init_config() {
-		return parsed_yaml.get("init_config");
+	public Object getInitConfig() {
+		return parsedYaml.get("init_config");
 	}
 	
-	public Object get_instances() {
-		return parsed_yaml.get("instances");
+	public Object getYamlInstances() {
+		return parsedYaml.get("instances");
 	}
 	
-	public Object get_parsed_yaml() {
-		return parsed_yaml;
+	public Object getParsedYaml() {
+		return parsedYaml;
 	}
 	
 }

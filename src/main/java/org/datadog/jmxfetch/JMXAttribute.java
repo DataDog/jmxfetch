@@ -18,144 +18,131 @@ public abstract class JMXAttribute {
 
 	protected MBeanAttributeInfo attribute;
 	protected MBeanServerConnection mbs;
-	protected ObjectInstance jmx_instance;
+	protected ObjectInstance jmxInstance;
 	protected double value;
 	protected String domain;
-	protected String bean_name;
-	protected String attribute_name;
+	protected String beanName;
+	protected String attributeName;
 	protected String[] tags;
 	protected Configuration matching_conf;
 	protected static final List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
 	protected static final List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData");
+	private static final String[] EXCLUDED_BEAN_PARAMS = {"domain", "bean_name", "bean", "attribute"};
+	
+	private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
+	private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
+	private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
+	private static final String DOT_UNDERSCORE = "_*\\._*";
 
-	public JMXAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs, ObjectInstance jmx_instance, String instance_name)
-	{
+	public JMXAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs, ObjectInstance jmxInstance, String instanceName) {
 		this.attribute = a;
 		this.mbs = mbs;
-		this.jmx_instance = jmx_instance;
-		this.bean_name = jmx_instance.getObjectName().toString();
-
+		this.jmxInstance = jmxInstance;
+		this.matching_conf = null;
+		
+		this.beanName = jmxInstance.getObjectName().toString();
 		// A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
 		// i.e. : domain:bean_parameter1,bean_parameter2
-		String[] split = this.bean_name.split(":");
+		String[] split = this.beanName.split(":");
 		this.domain = split[0];
-		this.attribute_name = a.getName();
-		LinkedList<String> bean_tags = new LinkedList<String>(Arrays.asList(split[1].replace("=",":").split(",")));
-		bean_tags.add("instance:"+instance_name);
-		this.tags = new String[bean_tags.size()];
-		bean_tags.toArray(this.tags);
-		this.matching_conf = null;
-
+		this.attributeName = a.getName();
+		
+		
+		// We add the instance name as a tag. We need to convert the Array of strings to List in order to do that
+		LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(split[1].replace("=",":").split(",")));
+		beanTags.add("instance:"+instanceName);
+		this.tags = new String[beanTags.size()];
+		beanTags.toArray(this.tags);
+		
 	}
 
 	@Override
-	public String toString()
-	{
-		return this.bean_name + " - " + this.attribute_name;
+	public String toString() {
+		return this.beanName + " - " + this.attributeName;
 	}
 
-	public abstract LinkedList<HashMap<String, Object>> get_metrics() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException;
+	public abstract LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException;
 
+	/**
+	 * An abstract function implemented in the inherited classes JMXSimpleAttribute and JMXComplexAttribute 
+	 * 
+	 * @param Configuration , a Configuration object that will be used to check if the JMX Attribute match this configuration
+	 * @return a boolean that tells if the attribute matches the configuration or not
+	 */
 	public abstract boolean match(Configuration conf);
 
 
-	protected Object get_jmx_value() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException
-	{
-		return this.mbs.getAttribute(this.jmx_instance.getObjectName(), this.attribute.getName());
+	protected Object getJmxValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+		return this.mbs.getAttribute(this.jmxInstance.getObjectName(), this.attribute.getName());
 	}
 
-	protected boolean match_domain(Configuration conf)
-	{
+	protected boolean matchDomain(Configuration conf) {
 		return conf.include.get("domain") == null || ((String)(conf.include.get("domain"))).equals(this.domain);
 	}
 
-	protected boolean exclude_match_domain(Configuration conf)
-	{
+	protected boolean excludeMatchDomain(Configuration conf) {
 		return conf.exclude.get("domain") != null && ((String)(conf.exclude.get("domain"))).equals(this.domain);
 	}
 
-	protected boolean exclude_match_bean(Configuration conf)
-	{
+	protected boolean excludeMatchBean(Configuration conf) {
 		String bean = (String) conf.exclude.get("bean");
-		String bean_name = (String) conf.exclude.get("bean_name");
-		String[] excluded_bean_params = {"domain", "bean_name", "bean", "attribute"};
+		String confBeanName = (String) conf.exclude.get("bean_name");
 
-
-		if (this.bean_name.equals(bean) || this.bean_name.equals(bean_name))
-		{
+		if (this.beanName.equals(bean) || this.beanName.equals(confBeanName)) {
 			return true;
 		}
 
-		for (String bean_attr: conf.exclude.keySet())
-		{	
-			if (Arrays.asList(excluded_bean_params).contains(bean_attr)) 
-			{
+		for (String bean_attr: conf.exclude.keySet()) {	
+			if (Arrays.asList(EXCLUDED_BEAN_PARAMS).contains(bean_attr)) {
 				continue;
 			}
 
-			HashMap<String, String> bean_params = new HashMap<String, String>();
-			for (String param : this.tags)
-			{
-				String[] param_split = param.split(":");
-				bean_params.put(param_split[0], param_split[1]);
+			HashMap<String, String> beanParams = new HashMap<String, String>();
+			for (String param : this.tags) {
+				String[] paramSplit = param.split(":");
+				beanParams.put(paramSplit[0], paramSplit[1]);
 			}
 
-			if(conf.exclude.get(bean_attr).equals(bean_params.get(bean_attr)))
-			{
+			if(conf.exclude.get(bean_attr).equals(beanParams.get(bean_attr))) {
 				return true;
 			}
-
-
-
 		}
 		return false;
-
 	}
 
-	protected static String convert_metric_name(String metric_name)
-	{
-		String first_cap_pattern = "(.)([A-Z][a-z]+)";
-		String all_cap_pattern = "([a-z0-9])([A-Z])";
-		String metric_replacement = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
-		String dot_underscore = "_*\\._*";
-		metric_name = metric_name.replaceAll(first_cap_pattern, "$1_$2");
-		metric_name = metric_name.replaceAll(all_cap_pattern, "$1_$2").toLowerCase();
-		metric_name = metric_name.replaceAll(metric_replacement, "_");
-		metric_name = metric_name.replaceAll(dot_underscore, ".").trim();
-		return metric_name;
-
+	protected static String convertMetricName(String metricName) {
+		metricName = metricName.replaceAll(FIRST_CAP_PATTERN, "$1_$2");
+		metricName = metricName.replaceAll(ALL_CAP_PATTERN, "$1_$2").toLowerCase();
+		metricName = metricName.replaceAll(METRIC_REPLACEMENT, "_");
+		metricName = metricName.replaceAll(DOT_UNDERSCORE, ".").trim();
+		return metricName;
 	}
 
-	protected boolean match_bean(Configuration conf)
-	{
-		String[] excluded_bean_params = {"domain", "bean_name", "bean", "attribute"};
-		boolean match_bean_name = (conf.include.get("bean") == null && conf.include.get("bean_name") == null) || ((String)(conf.include.get("bean"))).equals(this.bean_name) || ((String)(conf.include.get("bean_name"))).equals(this.bean_name);
+	protected boolean matchBean(Configuration configuration) {
+		
+		boolean matchBeanName = (configuration.include.get("bean") == null && configuration.include.get("bean_name") == null) 
+				|| ((String)(configuration.include.get("bean"))).equals(this.beanName) 
+				|| ((String)(configuration.include.get("bean_name"))).equals(this.beanName);
 
-		if (!match_bean_name)
-		{
+		if (!matchBeanName) {
 			return false;
 		}
 
-		for (String bean_attr: conf.include.keySet())
-		{	
-			if (Arrays.asList(excluded_bean_params).contains(bean_attr)) 
-			{
+		for (String bean_attr: configuration.include.keySet()) {	
+			if (Arrays.asList(EXCLUDED_BEAN_PARAMS).contains(bean_attr)) {
 				continue;
 			}
 
-			HashMap<String, String> bean_params = new HashMap<String, String>();
-			for (String param : this.tags)
-			{
-				String[] param_split = param.split(":");
-				bean_params.put(param_split[0], param_split[1]);
+			HashMap<String, String> beanParams = new HashMap<String, String>();
+			for (String param : this.tags) {
+				String[] paramSplit = param.split(":");
+				beanParams.put(paramSplit[0], paramSplit[1]);
 			}
 
-			if (bean_params.get(bean_attr) == null || !((String)(bean_params.get(bean_attr))).equals(((String)(conf.include.get(bean_attr)))))
-			{
+			if (beanParams.get(bean_attr) == null 
+					|| !((String)beanParams.get(bean_attr)).equals((String)configuration.include.get(bean_attr))) {
 				return false;
 			}
-
-
 		}
 		return true;
 	}

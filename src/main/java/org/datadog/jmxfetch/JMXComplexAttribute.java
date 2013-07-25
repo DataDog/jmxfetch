@@ -20,22 +20,21 @@ import javax.management.openmbean.CompositeData;
 
 public class JMXComplexAttribute extends JMXAttribute {
 
-	private HashMap<String,HashMap<String,Object>> sub_attr_list;
+	private HashMap<String,HashMap<String,Object>> subAttributeList;
 
 	public JMXComplexAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs,
 			ObjectInstance instance, String instance_name) {
+		
 		super(a, mbs, instance, instance_name);
-		this.sub_attr_list = new HashMap<String, HashMap<String, Object>>();
+		this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
 	}
 
-	private void populate_sub_attr_list(Object attr_val) {
-		if (this.attribute.getType().equals("javax.management.openmbean.CompositeData"))
-		{
-			CompositeData data = (CompositeData) attr_val;
-			for ( String key : data.getCompositeType().keySet() )
-			{
+	private void _populateSubAttributeList(Object attributeValue) {
+		if (this.attribute.getType().equals("javax.management.openmbean.CompositeData")) {
+			CompositeData data = (CompositeData) attributeValue;
+			for ( String key : data.getCompositeType().keySet() ) {
 				HashMap<String, Object> sub_attr_params = new HashMap<String, Object>();
-				this.sub_attr_list.put(key, sub_attr_params);
+				this.subAttributeList.put(key, sub_attr_params);
 			}
 		}
 	
@@ -43,33 +42,31 @@ public class JMXComplexAttribute extends JMXAttribute {
 
 
 	@Override
-	public LinkedList<HashMap<String, Object>> get_metrics()
+	public LinkedList<HashMap<String, Object>> getMetrics()
 			throws AttributeNotFoundException, InstanceNotFoundException,
 			MBeanException, ReflectionException, IOException {
 
 		LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-		Iterator<Entry<String, HashMap<String, Object>>> it = this.sub_attr_list.entrySet().iterator();
+		Iterator<Entry<String, HashMap<String, Object>>> it = this.subAttributeList.entrySet().iterator();
 
-		while(it.hasNext())
-		{
+		while(it.hasNext()) {
 			Map.Entry<String, HashMap<String, Object>> pairs = (Map.Entry<String, HashMap<String, Object>>)it.next();
-			String sub_attr = pairs.getKey();
+			String subAttribute = pairs.getKey();
 			HashMap<String, Object> metric = pairs.getValue();
 			
-			if (metric.get("alias") == null)
-			{
-				metric.put("alias", convert_metric_name(get_alias(sub_attr)));
+			if (metric.get("alias") == null) {
+				metric.put("alias", convertMetricName(_getAlias(subAttribute)));
 			}
-			if (metric.get("metric_type") == null)
-			{
-				metric.put("metric_type", get_metric_type(sub_attr));
+			
+			if (metric.get("metric_type") == null) {
+				metric.put("metric_type", _getMetricType(subAttribute));
 			}
-			if (metric.get("tags") == null)
-			{
+			
+			if (metric.get("tags") == null) {
 				metric.put("tags", this.tags);
 			}
 
-			metric.put("value", get_value(sub_attr));
+			metric.put("value", _getValue(subAttribute));
 			metrics.add(metric);
 			
 		}
@@ -77,23 +74,22 @@ public class JMXComplexAttribute extends JMXAttribute {
 
 	}
 
-	private double get_value(String sub_attr) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-		Object value = this.get_jmx_value();
+	private double _getValue(String subAttribute) throws AttributeNotFoundException, InstanceNotFoundException, 
+				MBeanException, ReflectionException, IOException {
+		
+		Object value = this.getJmxValue();
 
-		if (this.attribute.getType().equals("javax.management.openmbean.CompositeData"))
-		{
+		if (this.attribute.getType().equals("javax.management.openmbean.CompositeData")) {
 			CompositeData data = (CompositeData) value;
-			Object sub_value = data.get(sub_attr);
-			if (sub_value instanceof String)
-			{
+			Object sub_value = data.get(subAttribute);
+			
+			if (sub_value instanceof String) {
 				return Double.parseDouble((String)value);
-			}
-			else if (sub_value instanceof Integer)
-			{
+				
+			} else if (sub_value instanceof Integer) {
 				return new Double((Integer)(sub_value));
-			}
-			else if (sub_value instanceof Double)
-			{
+				
+			} else if (sub_value instanceof Double) {
 				return (Double)sub_value;
 			}
 			
@@ -104,81 +100,78 @@ public class JMXComplexAttribute extends JMXAttribute {
 		return 0;
 	}
 
-	private Object get_metric_type(String sub_attr) {
-		String sub_attr_name = this.attribute.getName() + "." + sub_attr;
-		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>)
-		{	
-			return ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(sub_attr_name).get("metric_type");	
+	private Object _getMetricType(String subAttribute) {
+		String subAttributeName = this.attribute.getName() + "." + subAttribute;
+		
+		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {	
+			return ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(subAttributeName).get("metric_type");	
 		}
+		
 		return "gauge";
 	}
 
-	private String get_alias(String sub_attr)
+	private String _getAlias(String subAttribute)
 	{
-		String sub_attr_name = this.attribute.getName() + "." + sub_attr;
+		String subAttributeName = this.attribute.getName() + "." + subAttribute;
 
-		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>)
-		{
-			return ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(sub_attr_name).get("alias");	
+		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+			return ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(subAttributeName).get("alias");	
+		
+		} else if (this.matching_conf.conf.get("metric_prefix") != null) {
+			return this.matching_conf.conf.get("metric_prefix")+"."+beanName.split(":")[0]+ "." + subAttributeName;
+		
 		}
-		if (this.matching_conf.conf.get("metric_prefix") != null)
-		{
-			return this.matching_conf.conf.get("metric_prefix")+"."+bean_name.split(":")[0]+ "." + sub_attr_name;
-		}
-		return "jmx."+bean_name.split(":")[0] + "." + sub_attr_name;
+		
+		return "jmx."+beanName.split(":")[0] + "." + subAttributeName;
 	}
 
 
 
 	@Override
-	public boolean match(Configuration conf) {
-		if (!match_domain(conf) || !match_bean(conf) || exclude_match_domain(conf) || exclude_match_bean(conf)) 
-		{
+	public boolean match(Configuration configuration) {
+		if (!matchDomain(configuration) 
+				|| !matchBean(configuration) 
+				|| excludeMatchDomain(configuration) 
+				|| excludeMatchBean(configuration)) {
 			return false;
 		}
+		
 		try {
-			populate_sub_attr_list(get_jmx_value());
+			_populateSubAttributeList(getJmxValue());
 		} catch (Exception e) {
 			return false;
 		}
 
-		return match_attribute(conf) && !exclude_match_attribute(conf);
+		return _matchAttribute(configuration) && !_excludeMatchAttribute(configuration);
 	}
 
-	private boolean match_sub_attribute(LinkedHashMap<String, Object> params, String attr_name)
+	private boolean _matchSubAttribute(LinkedHashMap<String, Object> params, String subAttributeName)
 	{
-		if ((params.get("attribute") instanceof LinkedHashMap<?, ?>) &&  ((LinkedHashMap<String, Object>)(params.get("attribute"))).containsKey(attr_name))
-		{
+		if ((params.get("attribute") instanceof LinkedHashMap<?, ?>) &&  ((LinkedHashMap<String, Object>)(params.get("attribute"))).containsKey(subAttributeName)) {
 			return true;
-		}
-		if ((params.get("attribute") instanceof ArrayList<?> && ((ArrayList<String>)(params.get("attribute"))).contains(attr_name)))
-		{
+		
+		} else if ((params.get("attribute") instanceof ArrayList<?> && ((ArrayList<String>)(params.get("attribute"))).contains(subAttributeName))) {
 			return true;
 		}
 		return false;
 
 	}
 
-	private boolean match_attribute(Configuration conf)
-	{
-		if (match_sub_attribute(conf.include, this.attribute_name))
-		{
+	private boolean _matchAttribute(Configuration configuration) {
+		if (_matchSubAttribute(configuration.include, this.attributeName)) {
 			return true;
 		}		
 		
-		Iterator<String> it = this.sub_attr_list.keySet().iterator();
+		Iterator<String> it = this.subAttributeList.keySet().iterator();
 		
-		while(it.hasNext())
-		{
-			String sub_attr = it.next();
-			if (!match_sub_attribute(conf.include, this.attribute_name + "." + sub_attr))
-			{
+		while(it.hasNext()) {
+			String subAttribute = it.next();
+			if (!_matchSubAttribute(configuration.include, this.attributeName + "." + subAttribute)) {
 				it.remove();
 			}
 		}
 		
-		if (this.sub_attr_list.size() > 0)
-		{
+		if (this.subAttributeList.size() > 0) {
 			return true;
 		}
 
@@ -187,26 +180,22 @@ public class JMXComplexAttribute extends JMXAttribute {
 	}
 	
 	
-	private boolean exclude_match_attribute(Configuration conf)
-	{
-		if (match_sub_attribute(conf.exclude, this.attribute_name))
-		{
+	private boolean _excludeMatchAttribute(Configuration configuration) {
+		
+		if (_matchSubAttribute(configuration.exclude, this.attributeName)) {
 			return true;
 		}		
 		
-		Iterator<String> it = this.sub_attr_list.keySet().iterator();
+		Iterator<String> it = this.subAttributeList.keySet().iterator();
 	
-		while(it.hasNext())
-		{
-			String sub_attr = it.next();
-			if (match_sub_attribute(conf.exclude, this.attribute_name + "." + sub_attr))
-			{
+		while(it.hasNext()) {
+			String subAttribute = it.next();
+			if (_matchSubAttribute(configuration.exclude, this.attributeName + "." + subAttribute)) {
 				it.remove();
 			}
 		}
 		
-		if (this.sub_attr_list.size() > 0)
-		{
+		if (this.subAttributeList.size() > 0) {
 			return false;
 		}
 

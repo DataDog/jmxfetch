@@ -16,122 +16,116 @@ import javax.management.ReflectionException;
 
 public class JMXSimpleAttribute extends JMXAttribute {
 
-	private String alias = null;
-	private String metric_type;
+	private String _alias = null;
+	private String _metricType;
 
 	public JMXSimpleAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs,
 			ObjectInstance instance, String instance_name) {
-		super(a, mbs, instance, instance_name);
 		
+		super(a, mbs, instance, instance_name);
 	}
 
 	@Override
-	public LinkedList<HashMap<String, Object>> get_metrics() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+	public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, 
+			InstanceNotFoundException, MBeanException, ReflectionException, IOException {
 		HashMap<String, Object> metric = new HashMap<String, Object>();	
-		metric.put("alias", get_alias());
-		metric.put("value", get_value());
+		
+		metric.put("alias", _getAlias());
+		metric.put("value", _getValue());
 		metric.put("tags", this.tags);
-		metric.put("metric_type", get_metric_type());
+		metric.put("metric_type", _getMetricType());
 		LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
 		metrics.add(metric);
 		return metrics;
 	}
 	
 	
-	public boolean match(Configuration conf)
-	{
-		return match_domain(conf) && match_bean(conf) && match_attribute(conf) && !(exclude_match_domain(conf) || exclude_match_bean(conf) || exclude_match_attribute(conf));
+	public boolean match(Configuration configuration) {
+		return matchDomain(configuration) 
+				&& matchBean(configuration) 
+				&& matchAttribute(configuration) 
+				&& !(
+					excludeMatchDomain(configuration) 
+					|| excludeMatchBean(configuration)
+					|| _excludeMatchAttribute(configuration));
 	}
 	
-	private boolean exclude_match_attribute(Configuration conf)
-	{
-		if (conf.exclude.get("attribute") == null)
-		{
+	private boolean _excludeMatchAttribute(Configuration configuration) {
+		if (configuration.exclude.get("attribute") == null) {
 			return false;
-		}
-		if ((conf.exclude.get("attribute") instanceof LinkedHashMap<?, ?>) &&  ((LinkedHashMap<String, Object>)(conf.exclude.get("attribute"))).containsKey(attribute_name))
-		{
+			
+		} else if ((configuration.exclude.get("attribute") instanceof LinkedHashMap<?, ?>) 
+				&&  ((LinkedHashMap<String, Object>)(configuration.exclude.get("attribute"))).containsKey(attributeName)) {
 			return true;
-		}
-		if ((conf.exclude.get("attribute") instanceof ArrayList<?> && ((ArrayList<String>)(conf.exclude.get("attribute"))).contains(attribute_name)))
-		{
-			return true;
-		}
-		return false;
-	}
-	
-	private boolean match_attribute(Configuration conf)
-	{
-		if (conf.include.get("attribute") == null)
-		{
-			return true;
-		}
-		if ((conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) &&  ((LinkedHashMap<String, Object>)(conf.include.get("attribute"))).containsKey(attribute_name))
-		{
-			return true;
-		}
-		if ((conf.include.get("attribute") instanceof ArrayList<?> && ((ArrayList<String>)(conf.include.get("attribute"))).contains(attribute_name)))
-		{
+			
+		} else if ((configuration.exclude.get("attribute") instanceof ArrayList<?> 
+				&& ((ArrayList<String>)(configuration.exclude.get("attribute"))).contains(attributeName))) {
 			return true;
 		}
 		return false;
 	}
 	
-	private String get_alias()
-	{
-		if (this.alias != null)
-		{
-			return this.alias;
+	private boolean matchAttribute(Configuration configuration) {
+		if (configuration.include.get("attribute") == null) {
+			return true;
+			
+		} else if ((configuration.include.get("attribute") instanceof LinkedHashMap<?, ?>) 
+				&&  ((LinkedHashMap<String, Object>)(configuration.include.get("attribute"))).containsKey(attributeName)) {
+			return true;
+			
+		} else if ((configuration.include.get("attribute") instanceof ArrayList<?> 
+				&& ((ArrayList<String>)(configuration.include.get("attribute"))).contains(attributeName))) {
+			return true;
 		}
 		
-		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>)
-		{
-			this.alias =  ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attribute.getName()).get("alias");	
-		}
-		else if (this.matching_conf.conf.get("metric_prefix") != null)
-		{
-			this.alias = this.matching_conf.conf.get("metric_prefix")+"."+bean_name.split(":")[0]+"."+this.attribute_name;
-		}
-		else {
-			this.alias = "jmx."+bean_name.split(":")[0]+"."+this.attribute_name;
-		}
-		this.alias = convert_metric_name(this.alias);
-		return this.alias; 
+		return false;
 	}
 	
-	private String get_metric_type()
-	{
-		if (this.metric_type != null)
-		{
-			return this.metric_type;
-		}
-		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>)
-		{	
-			this.metric_type =((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attribute_name).get("metric_type");	
-		}
-		if (this.metric_type == null) {
-			this.metric_type = "gauge";
-		}
-		return this.metric_type;
-	}
-	
-	private double get_value() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException
-	{
-		Object value = this.get_jmx_value();
+	private String _getAlias() {
+		if (this._alias != null) {
+			return this._alias;
 		
-		if (value instanceof String)
-		{
+		} else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+			this._alias =  ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attribute.getName()).get("alias");	
+		
+		} else if (this.matching_conf.conf.get("metric_prefix") != null) {
+			this._alias = this.matching_conf.conf.get("metric_prefix") + "."+beanName.split(":")[0] + "." + this.attributeName;
+		
+		} else {
+			this._alias = "jmx." + beanName.split(":")[0] + "." + this.attributeName;
+		}
+		
+		this._alias = convertMetricName(this._alias);
+		return this._alias; 
+	}
+	
+	private String _getMetricType() {
+		if (this._metricType != null) {
+			return this._metricType;
+		
+		} else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {	
+			this._metricType =((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("metric_type");	
+		
+		} else if (this._metricType == null) {
+			this._metricType = "gauge";
+		}
+		
+		return this._metricType;
+	}
+	
+	private double _getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException
+	{
+		Object value = this.getJmxValue();
+		
+		if (value instanceof String) {
 			return Double.parseDouble((String)value);
-		}
-		else if (value instanceof Integer)
-		{
+		
+		} else if (value instanceof Integer) {
 			return new Double((Integer)(value));
-		}
-		else if (value instanceof Double)
-		{
+		
+		} else if (value instanceof Double) {
 			return (Double)value;
 		}
-		
 		
 		Long l = new Long((Long) value);
 		return l.doubleValue();
