@@ -29,13 +29,13 @@ public class App
 
 	private static LinkedList<Instance> _brokenInstances = new LinkedList<Instance>();
 
-	private final static List<String> JMX_YAML_FILE = Arrays.asList("tomcat.yaml", "activemq.yaml", "jmx.yaml", "solr.yaml", "cassandra.yaml"); 
-
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
 
 	private static MetricReporter _metricReporter;
 
 	private static int _loopCounter;
+	
+	private static String yaml_file_list = null;
 
 	public static void main( String[] args ) {
 		String confd_directory = null;
@@ -43,10 +43,11 @@ public class App
 		int loop_period = 0;
 		String log_location = null;
 		String log_level = null;
+		
 
 
 		// We check the arguments passed are valid
-		if (args.length != 5) {
+		if (args.length != 6) {
 			System.out.println("All arguments are required!");
 			System.exit(1);
 		}
@@ -57,6 +58,8 @@ public class App
 			loop_period = Integer.valueOf(args[2]);
 			log_location = args[3];
 			log_level = args[4];
+			App.yaml_file_list = args[5];
+			
 		} catch (Exception e) {
 			System.out.println("Arguments are not valid.");
 			System.exit(1);
@@ -73,7 +76,7 @@ public class App
 		_metricReporter = new MetricReporter(statsd_port);
 
 		// Initiate JMX Connections, get attributes that match the yaml configuration
-		_init(confd_directory);
+		_init(confd_directory, App.yaml_file_list);
 
 		// Start main loop
 		_loopCounter = 0;
@@ -100,7 +103,7 @@ public class App
 			} catch (InterruptedException e) {
 				System.exit(1);
 			}
-			_init(confd_directory);
+			_init(confd_directory, App.yaml_file_list);
 			_doLoop(loop_period, confd_directory);
 		}
 	}
@@ -152,12 +155,37 @@ public class App
 
 	}
 
-	private static void _init(String confdDirectory) {
+	private static void _init(String confdDirectory, String yaml_file_list) {
 		// Load JMX Yaml files				
 		File conf_d_dir = new File(confdDirectory);
+		final List<String> yaml_list = Arrays.asList(yaml_file_list.split(","));
 		File[] files = conf_d_dir.listFiles(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return JMX_YAML_FILE.contains(name);
+				String extension = null;
+				int i = name.lastIndexOf('.');
+				if (i > 0) {
+				    extension = name.substring(i+1);
+				}
+				if (!extension.equals("yaml")) {
+					return false;
+				}
+				if (yaml_list.contains(name)) {
+					return true;
+				} else {
+					YamlParser config;
+					File file = new File(dir.getAbsolutePath(), name);
+					try {
+						config = new YamlParser(file.getAbsolutePath());
+						return config.isJmx();
+					} catch (FileNotFoundException e) {
+						LOGGER.warning("Cannot find " + file.getAbsolutePath());
+						return false;
+					} catch (Exception e) {
+						LOGGER.warning("Cannot parse yaml file " + file.getAbsolutePath());
+						LOGGER.warning(e.getMessage());
+						return false;
+					}				
+				}
 			}
 		});
 
@@ -170,8 +198,7 @@ public class App
 			} catch (FileNotFoundException e) {
 				LOGGER.warning("Cannot find " + file.getAbsolutePath());
 				continue;
-			} catch (Exception e)
-			{
+			} catch (Exception e) {
 				LOGGER.warning("Cannot parse yaml file " + file.getAbsolutePath());
 				continue;
 			}
@@ -183,6 +210,7 @@ public class App
 					String check_name = file.getName().replace(".yaml", "");
 					instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) config.getInitConfig()), check_name);
 				} catch(Exception e) {
+					e.printStackTrace();
 					LOGGER.severe("Unable to create instance. Please check your yaml file");
 					continue;
 				}
