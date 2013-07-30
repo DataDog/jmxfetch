@@ -13,8 +13,17 @@ public class YamlParser {
 	
 	public YamlParser(String path) throws FileNotFoundException {
 		InputStream yaml_file = new FileInputStream(path);
+		init(yaml_file);
+	}
+	
+	public YamlParser(InputStream yamlInputStream) {
+		init(yamlInputStream);
+	}
+		
+	
+	private void init(InputStream yamlInputStream) {
 		Yaml yaml = new Yaml();
-	    parsedYaml = (HashMap<Object, Object>) yaml.load(yaml_file);	   
+	    parsedYaml = (HashMap<Object, Object>) yaml.load(yamlInputStream);	   
 	}
 	
 	public Object getInitConfig() {
@@ -27,6 +36,14 @@ public class YamlParser {
 	
 	public Object getParsedYaml() {
 		return parsedYaml;
+	}
+	
+	public boolean isJmx() {
+		try {
+			return (Boolean) ((HashMap<Object, Object>) parsedYaml.get("init_config")).get("is_jmx");
+		} catch(Exception e) {
+			return false;
+		}
 	}
 	
 }

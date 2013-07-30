@@ -69,18 +69,8 @@ public class Instance {
 			_configurationList.add(new Configuration(conf));
 		}
 
-		// We add a default configuration to fetch basic JVM metrics
-		// The configuration files are embedded within the jar file
-		try {
-			_configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(".settings/jmx-1.yaml").getParsedYaml()));
-		} catch (FileNotFoundException e) {
-			LOGGER.warning("Cannot load basic jvm metrics configuration file jmx-1.yaml");
-		}
-		try {
-			_configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(".settings/jmx-2.yaml").getParsedYaml()));
-		} catch (FileNotFoundException e) {
-			LOGGER.warning("Cannot load basic jvm metrics configuration file jmx-2.yaml");
-		}
+		_configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-1.yaml")).getParsedYaml()));
+		_configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-2.yaml")).getParsedYaml()));
 	}
 
 	public void init() throws IOException, FailedLoginException, SecurityException {
