@@ -1,7 +1,8 @@
 package org.datadog.jmxfetch;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +12,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.management.MBeanAttributeInfo;
@@ -27,7 +34,7 @@ public class Instance {
 	private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
 	private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
 	private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData");
-	
+
 	private Set<ObjectInstance> _beans;
 	private LinkedList<Configuration> _configurationList = new LinkedList<Configuration>();
 	private LinkedList<JMXAttribute> _matchingAttributes;
@@ -39,8 +46,8 @@ public class Instance {
 	private LinkedHashMap<String, Object> _initConfig;
 	private String _instanceName;
 	private String _checkName;
-	
-	
+	private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
+
 
 
 	public Instance(LinkedHashMap<String, Object> yaml_instance, LinkedHashMap<String, Object> init_config, String check_name) 
@@ -64,7 +71,7 @@ public class Instance {
 		if (yaml_conf == null) {
 			yaml_conf = this._initConfig.get("conf");
 		}
-		
+
 		for ( LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>)(yaml_conf) ) {
 			_configurationList.add(new Configuration(conf));
 		}
@@ -83,8 +90,7 @@ public class Instance {
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return this._yaml.get("host") + ":" + this._yaml.get("port");
 	}
 
@@ -167,9 +173,10 @@ public class Instance {
 
 	private MBeanServerConnection connect(LinkedHashMap<String, Object> connection_params) throws IOException {
 		JMXServiceURL address = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://"+connection_params.get("host")+":"+Integer.toString((Integer)(connection_params.get("port")))+"/jmxrmi");
-		Map<String,String[]> env = new HashMap<String, String[]>();
+		Map<String,Object> env = new HashMap<String, Object>();
 		env.put( JMXConnector.CREDENTIALS, new String[]{(String)(connection_params.get("user")), (String)(connection_params.get("password"))} );
-		JMXConnector connector = JMXConnectorFactory.connect(address,env);
+		env.put( "jmx.remote.x.request.waiting.timeout", new Long(10000));
+		JMXConnector connector = connectWithTimeout(address, env, 20, TimeUnit.SECONDS);
 		MBeanServerConnection mbs = connector.getMBeanServerConnection();
 		return mbs;
 	}
@@ -182,17 +189,75 @@ public class Instance {
 	public String getName() {
 		return this._instanceName;
 	}
-	
+
 	public LinkedHashMap<String, Object> getYaml() {
 		return this._yaml;
 	}
-	
+
 	public LinkedHashMap<String, Object> getInitConfig() {
 		return this._initConfig;
 	}
-	
+
 	public String getCheckName() {
 		return this._checkName;
 	}
 
+	public static JMXConnector connectWithTimeout(
+			final JMXServiceURL url, final Map<String, Object> env, long timeout, TimeUnit unit)
+					throws IOException {
+		final BlockingQueue<Object> mailbox = new ArrayBlockingQueue<Object>(1);
+		
+		ExecutorService executor = 	Executors.newSingleThreadExecutor(daemonThreadFactory);
+		executor.submit(new Runnable() {
+			public void run() {
+				try {
+					JMXConnector connector = JMXConnectorFactory.connect(url, env);
+					if (!mailbox.offer(connector)) {
+						connector.close();
+					}
+				} catch (Throwable t) {
+					mailbox.offer(t);
+				}
+			}
+		});
+		Object result;
+		try {
+			result = mailbox.poll(timeout, unit);
+			if (result == null) {
+				if (!mailbox.offer(""))
+					result = mailbox.take();
+			}
+		} catch (InterruptedException e) {
+			throw initCause(new InterruptedIOException(e.getMessage()), e);
+		} finally {
+			executor.shutdown();
+		}
+		if (result == null) {
+			LOGGER.warning("Connection timed out: " + url);
+			throw new SocketTimeoutException("Connect timed out: " + url);
+		}
+		if (result instanceof JMXConnector) {
+			return (JMXConnector) result;
+		}
+		try {
+			throw (Throwable) result;
+		} catch (Throwable e) {
+			// In principle this can't happen but we wrap it anyway
+			throw new IOException(e.toString(), e);
+		}
+	}
+
+	private static <T extends Throwable> T initCause(T wrapper, Throwable wrapped) {
+		wrapper.initCause(wrapped);
+		return wrapper;
+	}
+
+	private static class DaemonThreadFactory implements ThreadFactory {
+		public Thread newThread(Runnable r) {
+			Thread t = Executors.defaultThreadFactory().newThread(r);
+			t.setDaemon(true);
+			return t;
+		}
+	}
+	
 }
