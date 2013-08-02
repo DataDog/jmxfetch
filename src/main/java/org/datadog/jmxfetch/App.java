@@ -219,13 +219,9 @@ public class App
 					instance.init();
 					_instances.add(instance);
 				} catch (IOException e) {
-					LOGGER.warning("Cannot connect to instance " + instance + ". Is a JMX Server running at this address?");
-				} catch (SecurityException e) {
-					LOGGER.warning("Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials");
-				} catch (FailedLoginException e) {
-					LOGGER.warning("Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials");
+					LOGGER.severe("Cannot connect to instance " + instance + " " + e.getMessage());
 				} catch (Exception e) {
-					LOGGER.warning("Unexpected exception while initiating instance "+ instance + " : " + e.getMessage());
+					LOGGER.severe("Unexpected exception while initiating instance "+ instance + " : " + e.getMessage());
 				}
 			}
 		}
