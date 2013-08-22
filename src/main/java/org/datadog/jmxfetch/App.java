@@ -1,9 +1,3 @@
-/*
- * App: Main class of the app
- * 
- * @author <a href="mailto:remi@datadoghq.com">Remi Hakim</a>
- * 
- */
 
 package org.datadog.jmxfetch;
 
