@@ -30,8 +30,12 @@ public class App
 	private static int _loopCounter;
 	
 	private static String yaml_file_list = null;
+	
+	private static Status status = new Status();
 
 	public static void main( String[] args ) {
+		
+
 		String confd_directory = null;
 		int statsd_port = 0;
 		int loop_period = 0;
@@ -116,17 +120,24 @@ public class App
 			try {
 				metrics = instance.getMetrics();
 			} catch (IOException e) {
-				LOGGER.warning("Unable to refresh bean list for instance " + instance);
+				String warning = "Unable to refresh bean list for instance " + instance;
+				LOGGER.warning(warning);
+				status.addInstanceStats(instance.getName(), 0, warning);
 				continue;
 			}
 
 			if (metrics.size() == 0) {
 				_brokenInstances.add(instance);
+				String warning = "Instance " + instance + "didn't return any metrics";
+				LOGGER.warning(warning);
+				status.addInstanceStats(instance.getName(), 0, warning);
 				continue;
 			}
 			_metricReporter.sendMetrics(metrics, instance.getName());
+			status.addInstanceStats(instance.getName(), metrics.size(), null);
 
 		}
+		
 
 		Iterator<Instance> it = _brokenInstances.iterator();
 		while(it.hasNext()) {
@@ -139,13 +150,21 @@ public class App
 				_instances.add(newInstance);
 				it.remove();
 			} catch (IOException e) {
-				LOGGER.warning("Cannot connect to instance " + instance + ". Is a JMX Server running at this address?");
+				String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
+				LOGGER.warning(warning);
+				status.addInstanceStats(instance.getName(), 0, warning);
 			} catch (SecurityException e) {
-				LOGGER.warning("Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials");
+				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
+				LOGGER.warning(warning);
+				status.addInstanceStats(instance.getName(), 0, warning);
 			} catch (FailedLoginException e) {
-				LOGGER.warning("Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials");
+				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
+				LOGGER.warning(warning);
+				status.addInstanceStats(instance.getName(), 0, warning);
 			}
 		}
+		
+		status.flush();
 
 	}
 
@@ -213,8 +232,10 @@ public class App
 					instance.init();
 					_instances.add(instance);
 				} catch (IOException e) {
+					_brokenInstances.add(instance);
 					LOGGER.severe("Cannot connect to instance " + instance + " " + e.getMessage());
 				} catch (Exception e) {
+					_brokenInstances.add(instance);
 					LOGGER.severe("Unexpected exception while initiating instance "+ instance + " : " + e.getMessage());
 				}
 			}
