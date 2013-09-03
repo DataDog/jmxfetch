@@ -1,8 +1,6 @@
 package org.datadog.jmxfetch;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -14,9 +12,11 @@ public class Status {
 	HashMap<String, HashMap<String, Object>> instanceStats;
 	
 	private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
+	private String status_file_location;
 	
-	public Status() {
+	public Status(String status_file_location) {
 		this._clearStats();
+		this.status_file_location = status_file_location;
 		
 	}
 	
@@ -41,14 +41,11 @@ public class Status {
 	}
 	
 	public void flush() {
-		LOGGER.fine("Writing status to temp yaml file");
+		
 		String yaml = _generateYaml();
 		try {
-			String path;
-			path = Status.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-			path = path.substring(0, path.lastIndexOf('/')+1);
-			File root = new File(path);
-			File f = new File(root, "jmx_status.yaml");
+			File f = new File(this.status_file_location);
+			LOGGER.fine("Writing status to temp yaml file: " + f.getAbsolutePath());
 			FileUtils.writeStringToFile(f, yaml);
 			
 		} catch (Exception e) {

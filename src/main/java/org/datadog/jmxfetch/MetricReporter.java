@@ -10,7 +10,7 @@ public class MetricReporter {
 	
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
 	private final StatsDClient STATSD_CLIENT;
-	private HashMap<String, HashMap<String, Object>> ratesAggregator = new HashMap<String, HashMap<String, Object>>();
+	private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
 
 	public MetricReporter(int statsd_port) {
 		this.STATSD_CLIENT = new NonBlockingStatsDClient(null, "localhost", statsd_port, new String[] {});		
@@ -23,8 +23,19 @@ public class MetricReporter {
 		}
 		return key;
 	}
+	
+	public void clearRatesAggregator(String instance_name){
+		ratesAggregator.put(instance_name, new HashMap<String, HashMap<String, Object>>());
+	}
 
 	public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instance_name) {
+		
+		HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
+		if (ratesAggregator.containsKey(instance_name)) {
+			instanceRatesAggregator = ratesAggregator.get(instance_name);
+		} else {
+			instanceRatesAggregator = new HashMap<String, HashMap<String, Object>>();
+		}
 		
 		int loopCounter = App.getLoopCounter();
 		
@@ -38,36 +49,48 @@ public class MetricReporter {
 		}
 		
 		for (HashMap<String, Object> m : metrics) {
-
 			// We need to edit metrics for legacy reasons (rename metrics, etc)
 			HashMap<String, Object> metric = _postprocess(m);
 			
-			// StatsD doesn't support rate metrics so we need to have our own agregator to compute rates
+			Double current_value = (Double) metric.get("value");
+			if (current_value.isNaN() || current_value.isInfinite()) {
+				continue;
+			}
+			
+			String metric_name = (String) metric.get("alias");
+			String[] tags = (String[]) metric.get("tags");
+			
+			// StatsD doesn't support rate metrics so we need to have our own aggregator to compute rates
 			if(!metric.get("metric_type").equals("gauge")) {
 				String key = _generateId(metric);
-				if (!ratesAggregator.containsKey(key)) {
+				if (!instanceRatesAggregator.containsKey(key)) {
 					HashMap<String, Object> rate_info = new HashMap<String, Object>();
 					rate_info.put("ts", System.currentTimeMillis());
-					rate_info.put("value", metric.get("value"));
-					ratesAggregator.put(key, rate_info);
+					rate_info.put("value", current_value);
+					instanceRatesAggregator.put(key, rate_info);
 					continue;
 				}
 				
-				long old_ts = (Long) ratesAggregator.get(key).get("ts");
-				double old_value = (Double) ratesAggregator.get(key).get("value");
+				long old_ts = (Long) instanceRatesAggregator.get(key).get("ts");
+				double old_value = (Double) instanceRatesAggregator.get(key).get("value");
 				
 				long now = System.currentTimeMillis();
-				double rate = 1000 * ((Double) metric.get("value") - old_value) / (now - old_ts);
+				double rate = 1000 * ((Double) current_value - old_value) / (now - old_ts);
 				
-				STATSD_CLIENT.gauge((String) metric.get("alias"), rate, (String[]) metric.get("tags"));
+				if(!Double.isNaN(rate) && !Double.isInfinite(rate))	{
+					STATSD_CLIENT.gauge(metric_name, rate, tags);
+				}
 				
-				ratesAggregator.get(key).put("ts", now);
-				ratesAggregator.get(key).put("value", metric.get("value"));
+				instanceRatesAggregator.get(key).put("ts", now);
+				instanceRatesAggregator.get(key).put("value", current_value);
 			}
-			else {
-				STATSD_CLIENT.gauge((String) metric.get("alias"), (Double) metric.get("value"), (String[]) metric.get("tags"));
+			
+			else { // The metric is a gauge
+				STATSD_CLIENT.gauge(metric_name, current_value, tags);
 			}
 		}
+
+		ratesAggregator.put(instance_name, instanceRatesAggregator);
 	}
 
 	private HashMap<String, Object> _postProcessCassandra(HashMap<String, Object> metric) {
