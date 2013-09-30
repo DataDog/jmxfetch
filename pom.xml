@@ -51,6 +51,14 @@
     <build>
   <plugins>
     <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.9</version>
+        <configuration>
+            <argLine>-Dcom.sun.management.jmxremote.port=3333 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false</argLine>
+        </configuration>
+    </plugin>
+    <plugin>
       <artifactId>maven-assembly-plugin</artifactId>
       <configuration>
         <archive>

@@ -1,22 +1,16 @@
 package org.datadog.jmxfetch;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-
-public class MetricReporter {
+public abstract class MetricReporter {
 	
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
-	private final StatsDClient STATSD_CLIENT;
-	private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
-
-	public MetricReporter(int statsd_port) {
-		this.STATSD_CLIENT = new NonBlockingStatsDClient(null, "localhost", statsd_port, new String[] {});		
-	}
 	
-	private String _generateId(HashMap<String, Object> metric) {
+	protected HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
+	
+	protected String _generateId(HashMap<String, Object> metric) {
 		String key = (String) metric.get("alias");
 		for (String tag : (String[]) metric.get("tags")) {
 			key += tag;
@@ -27,7 +21,7 @@ public class MetricReporter {
 	public void clearRatesAggregator(String instance_name){
 		ratesAggregator.put(instance_name, new HashMap<String, HashMap<String, Object>>());
 	}
-
+	
 	public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instance_name) {
 		
 		HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
@@ -78,7 +72,7 @@ public class MetricReporter {
 				double rate = 1000 * ((Double) current_value - old_value) / (now - old_ts);
 				
 				if(!Double.isNaN(rate) && !Double.isInfinite(rate))	{
-					STATSD_CLIENT.gauge(metric_name, rate, tags);
+					_sendMetricPoint(metric_name, rate, tags);
 				}
 				
 				instanceRatesAggregator.get(key).put("ts", now);
@@ -86,27 +80,27 @@ public class MetricReporter {
 			}
 			
 			else { // The metric is a gauge
-				STATSD_CLIENT.gauge(metric_name, current_value, tags);
+				_sendMetricPoint(metric_name, current_value, tags);
 			}
 		}
 
 		ratesAggregator.put(instance_name, instanceRatesAggregator);
 	}
-
-	private HashMap<String, Object> _postProcessCassandra(HashMap<String, Object> metric) {
-		metric.put("alias", ((String) metric.get("alias")).replace("jmx.org.apache.", ""));
-		return metric;
-	}
 	
 
-	private HashMap<String, Object> _postprocess(HashMap<String, Object> metric) {
+	protected HashMap<String, Object> _postprocess(HashMap<String, Object> metric) {
 		if (metric.get("check_name").equals("cassandra")) {
 				return _postProcessCassandra(metric);
 		}
 		return metric;
 	}
-
 	
+	private HashMap<String, Object> _postProcessCassandra(HashMap<String, Object> metric) {
+		metric.put("alias", ((String) metric.get("alias")).replace("jmx.org.apache.", ""));
+		return metric;
+	}
 
+
+	protected abstract void _sendMetricPoint(String metricName, double value, String[] tags);
 
 }

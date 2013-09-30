@@ -1,0 +1,22 @@
+init_config:
+
+instances:
+    -   host: localhost
+        port: 3333
+        name: jmx_test_instance
+        conf:
+            - include: 
+               domain: org.datadog.jmxfetch.test
+               attribute:
+                    ShouldBe100:
+                        metric_type: gauge
+                        alias: this.is.100
+                    ShouldBeCounter:
+                        metric_type: counter
+                        alias: test.counter
+                        
+            - include: 
+               domain: org.datadog.jmxfetch.test
+              exclude:
+                attribute:
+                    ShouldBe100

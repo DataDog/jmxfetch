@@ -25,22 +25,19 @@ public class App
 
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
 
-	private static MetricReporter _metricReporter;
-
 	private static int _loopCounter;
-	
-	private static String yaml_file_list = null;
 	
 	private static Status status = null;
 
 	public static void main( String[] args ) {
-		
+				
 		String confd_directory = null;
 		int statsd_port = 0;
 		int loop_period = 0;
 		String log_location = null;
 		String log_level = null;
 		String status_file_location = null;
+		String yaml_file_list = null;
 
 
 		// We check the arguments passed are valid
@@ -55,9 +52,9 @@ public class App
 			loop_period = Integer.valueOf(args[2]);
 			log_location = args[3];
 			log_level = args[4];
-			App.yaml_file_list = args[5];
+			yaml_file_list = args[5];
 			status_file_location = args[6];
-			
+						
 			
 		} catch (Exception e) {
 			System.out.println("Arguments are not valid.");
@@ -71,31 +68,26 @@ public class App
 			e.printStackTrace();
 		}
 		
-		// Set up the Status writer
-		status = new Status(status_file_location);
-
 		// Set up the metric reporter (Statsd Client)
-		_metricReporter = new MetricReporter(statsd_port);
+    	MetricReporter metric_reporter = new StatsdMetricReporter(statsd_port);
 
 		// Initiate JMX Connections, get attributes that match the yaml configuration
-		_init(confd_directory, App.yaml_file_list);
-
-		// Start main loop
-		_loopCounter = 0;
-		_doLoop(loop_period, confd_directory);
-
-
+		init(confd_directory, yaml_file_list, status_file_location);
+		
+		_doLoop(loop_period, confd_directory, metric_reporter, yaml_file_list, status_file_location);
+		
 	}
 
-	private static void _doLoop(int loop_period, String confd_directory) {
+
+	private static void _doLoop(int loop_period, String confd_directory, MetricReporter metric_reporter, String yaml_file_list, String status_file_location) {
 		// Main Loop that will periodically collect metrics from the JMX Server
 		while(true) {
 			if (_instances.size() > 0) {
-				_doIteration();
+				doIteration(metric_reporter);
 			} else {
 				LOGGER.warning("No instance could be initiated. Retrying initialization.");
 				status.flush();
-				_init(confd_directory, App.yaml_file_list);
+				init(confd_directory, yaml_file_list, status_file_location);
 				
 			}
 			
@@ -109,7 +101,7 @@ public class App
 
 	}
 
-	private static void _doIteration() {	
+	public static void doIteration(MetricReporter metric_reporter) {	
 		_loopCounter++;
 
 		for (Instance instance : _instances) {
@@ -125,12 +117,12 @@ public class App
 
 			if (metrics.size() == 0) {
 				_brokenInstances.add(instance);
-				String warning = "Instance " + instance + "didn't return any metrics";
+				String warning = "Instance " + instance + " didn't return any metrics";
 				LOGGER.warning(warning);
 				status.addInstanceStats(instance.getName(), 0, warning);
 				continue;
 			}
-			_metricReporter.sendMetrics(metrics, instance.getName());
+			metric_reporter.sendMetrics(metrics, instance.getName());
 			status.addInstanceStats(instance.getName(), metrics.size(), null);
 
 		}
@@ -142,7 +134,7 @@ public class App
 			Instance instance = it.next();
 			
 			// Clearing rates aggregator so we won't compute wrong rates if we can reconnect
-			_metricReporter.clearRatesAggregator(instance.getName());
+			metric_reporter.clearRatesAggregator(instance.getName());
 			
 			LOGGER.warning("Instance " + instance + " didn't return any metrics. Maybe the server got disconnected ? Trying to reconnect.");
 			
@@ -176,7 +168,10 @@ public class App
 
 	}
 
-	private static void _init(String confdDirectory, String yaml_file_list) {
+	public static void init(String confdDirectory, String yaml_file_list, String status_file_location) {
+		
+		// Set up the Status writer
+		status = new Status(status_file_location);
 		
 		// Reset the list of instances
 		_brokenInstances = new LinkedList<Instance>();
@@ -191,6 +186,9 @@ public class App
 				int i = name.lastIndexOf('.');
 				if (i > 0) {
 				    extension = name.substring(i+1);
+				}
+				if (extension == null) {
+					return false;
 				}
 				if (!extension.equals("yaml")) {
 					return false;
