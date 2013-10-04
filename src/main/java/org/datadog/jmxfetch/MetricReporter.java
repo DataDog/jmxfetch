@@ -34,12 +34,12 @@ public abstract class MetricReporter {
 		int loopCounter = App.getLoopCounter();
 		
 		if(loopCounter <= 5 || loopCounter % 10 == 0) {
-			LOGGER.info("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the dogstatsd server during collection #" + loopCounter);
+			LOGGER.info("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the metrics reporter during collection #" + loopCounter);
 			if (loopCounter == 5) {
 				LOGGER.info("Next collections will be logged only every 10 collections.");
 			}
 		} else {
-			LOGGER.fine("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the dogstatsd server during collection #" + loopCounter);
+			LOGGER.fine("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the metrics reporter during collection #" + loopCounter);
 		}
 		
 		for (HashMap<String, Object> m : metrics) {
@@ -52,10 +52,11 @@ public abstract class MetricReporter {
 			}
 			
 			String metric_name = (String) metric.get("alias");
+			String metric_type = (String) metric.get("metric_type");
 			String[] tags = (String[]) metric.get("tags");
-			
+						
 			// StatsD doesn't support rate metrics so we need to have our own aggregator to compute rates
-			if(!metric.get("metric_type").equals("gauge")) {
+			if(!metric_type.equals("gauge")) {
 				String key = _generateId(metric);
 				if (!instanceRatesAggregator.containsKey(key)) {
 					HashMap<String, Object> rate_info = new HashMap<String, Object>();

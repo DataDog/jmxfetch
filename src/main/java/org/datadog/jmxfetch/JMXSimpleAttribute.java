@@ -113,24 +113,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
 		return this._metricType;
 	}
 	
-	private double _getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException
-	{
+	private double _getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException, NumberFormatException {
 		Object value = this.getJmxValue();
-		
-		if (value instanceof String) {
-			return Double.parseDouble((String)value);
-		
-		} else if (value instanceof Integer) {
-			return new Double((Integer)(value));
-		
-		} else if (value instanceof Double) {
-			return (Double)value;
-		}
-		
-		Long l = new Long((Long) value);
-		return l.doubleValue();
-		
-		
+		return _getValueAsDouble(value);	
 	}
 
 }

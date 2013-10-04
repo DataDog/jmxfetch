@@ -14,9 +14,12 @@ instances:
                     ShouldBeCounter:
                         metric_type: counter
                         alias: test.counter
-                        
+                    Hashmap.thisis0:
+                        metric_type: gauge
+                        alias: subattr.this.is.0
+                    Hashmap.thisiscounter:
+                        metric_type: counter
+                        alias: subattr.counter
             - include: 
                domain: org.datadog.jmxfetch.test
-              exclude:
-                attribute:
-                    ShouldBe100
+               

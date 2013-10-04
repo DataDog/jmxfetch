@@ -33,7 +33,7 @@ public class Instance {
 
 	private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
 	private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
-	private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData");
+	private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
 
 	private Set<ObjectInstance> _beans;
 	private LinkedList<Configuration> _configurationList = new LinkedList<Configuration>();
@@ -76,6 +76,7 @@ public class Instance {
 			_configurationList.add(new Configuration(conf));
 		}
 
+		// Add the configuration to get the default basic metrics from the JVM
 		_configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-1.yaml")).getParsedYaml()));
 		_configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-2.yaml")).getParsedYaml()));
 	}
@@ -134,8 +135,8 @@ public class Instance {
 
 	private void _getMatchingAttributes() {
 		this._matchingAttributes = new LinkedList<JMXAttribute>();
-		for( ObjectInstance instance : this._beans) {
-			ObjectName bean_name = instance.getObjectName();	
+		for( ObjectInstance bean : this._beans) {
+			ObjectName bean_name = bean.getObjectName();	
 			MBeanAttributeInfo[] atr;
 
 			try {
@@ -149,9 +150,9 @@ public class Instance {
 			for ( MBeanAttributeInfo a : atr) {
 				JMXAttribute jmxAttribute;
 				if( SIMPLE_TYPES.contains(a.getType()) ) {
-					jmxAttribute = new JMXSimpleAttribute(a, this._mbs, instance, this._instanceName);
+					jmxAttribute = new JMXSimpleAttribute(a, this._mbs, bean, this._instanceName);
 				} else if (COMPOSED_TYPES.contains(a.getType())) {
-					jmxAttribute = new JMXComplexAttribute(a, this._mbs, instance, this._instanceName);
+					jmxAttribute = new JMXComplexAttribute(a, this._mbs, bean, this._instanceName);
 				} else {
 					LOGGER.fine("Attribute: " + a + " has an unsupported type: " + a.getType());
 					continue;
@@ -168,7 +169,7 @@ public class Instance {
 				}
 			}
 		}
-		LOGGER.fine("Found " + _matchingAttributes.size() + " matching attributes");
+		LOGGER.info("Found " + _matchingAttributes.size() + " matching attributes");
 	}
 
 	private MBeanServerConnection connect(LinkedHashMap<String, Object> connection_params) throws IOException {

@@ -117,6 +117,24 @@ public abstract class JMXAttribute {
 		metricName = metricName.replaceAll(DOT_UNDERSCORE, ".").trim();
 		return metricName;
 	}
+	
+	protected double _getValueAsDouble(Object value) {
+		if (value instanceof String) {
+			return Double.parseDouble((String)value);
+			
+		} else if (value instanceof Integer) {
+			return new Double((Integer)(value));
+			
+		} else if (value instanceof Double) {
+			return (Double)value;
+		} else if (value instanceof Long) {
+			Long l = new Long((Long) value);
+			return l.doubleValue();
+		} else {
+			throw new NumberFormatException();
+		}
+		
+	}
 
 	protected boolean matchBean(Configuration configuration) {
 		
