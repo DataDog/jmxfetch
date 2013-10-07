@@ -30,10 +30,11 @@ import javax.management.remote.JMXServiceURL;
 import javax.security.auth.login.FailedLoginException;
 
 public class Instance {
-
+	
 	private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
 	private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
 	private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
+	private final static int MAX_RETURNED_METRICS = 100;
 
 	private Set<ObjectInstance> _beans;
 	private LinkedList<Configuration> _configurationList = new LinkedList<Configuration>();
@@ -46,6 +47,7 @@ public class Instance {
 	private LinkedHashMap<String, Object> _initConfig;
 	private String _instanceName;
 	private String _checkName;
+	private int _maxReturnedMetrics;
 	private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
 
 
@@ -60,6 +62,12 @@ public class Instance {
 		this._failingAttributes = new LinkedList<JMXAttribute>();
 		this._refreshBeansPeriod = (Integer)this._yaml.get("refresh_beans");
 		this._lastRefreshTime = 0;
+		Object maxReturnedMetrics = this._yaml.get("max_returned_metrics");
+		if (maxReturnedMetrics == null) {
+			_maxReturnedMetrics = MAX_RETURNED_METRICS;
+		} else {
+			_maxReturnedMetrics = (Integer) maxReturnedMetrics;
+		}
 
 		// Generate an instance name that will be send as a tag with the metrics
 		if (this._instanceName == null)	{
@@ -128,7 +136,7 @@ public class Instance {
 					this._failingAttributes.add(jmxAttr);
 				}
 				continue;
-			} 
+			}
 		}
 		return metrics;
 	}
@@ -201,6 +209,10 @@ public class Instance {
 
 	public String getCheckName() {
 		return this._checkName;
+	}
+	
+	public int getMaxNumberOfMetrics() {
+		return this._maxReturnedMetrics;
 	}
 
 	public static JMXConnector connectWithTimeout(
