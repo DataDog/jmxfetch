@@ -111,7 +111,7 @@ public class App
 			} catch (IOException e) {
 				String warning = "Unable to refresh bean list for instance " + instance;
 				LOGGER.warning(warning);
-				status.addInstanceStats(instance.getName(), 0, warning);
+				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 				continue;
 			}
 
@@ -119,11 +119,22 @@ public class App
 				_brokenInstances.add(instance);
 				String warning = "Instance " + instance + " didn't return any metrics";
 				LOGGER.warning(warning);
-				status.addInstanceStats(instance.getName(), 0, warning);
+				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 				continue;
 			}
-			metric_reporter.sendMetrics(metrics, instance.getName());
-			status.addInstanceStats(instance.getName(), metrics.size(), null);
+						
+			if (metrics.size() > instance.getMaxNumberOfMetrics()) {
+				 LinkedList<HashMap<String, Object>> truncatedMetrics = new LinkedList<HashMap<String, Object>>(metrics.subList(0, instance.getMaxNumberOfMetrics()));
+				 metric_reporter.sendMetrics(truncatedMetrics, instance.getName());
+				 String warning = "Number of returned metrics is too high for instance: " 
+						 + instance.getName() 
+						 + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
+				 CustomLogger.laconic(LOGGER, Level.WARNING, warning, 0);
+				 status.addInstanceStats(instance.getName(), instance.getMaxNumberOfMetrics(), warning, Status.STATUS_WARNING);
+			 } else {
+				 metric_reporter.sendMetrics(metrics, instance.getName());
+				 status.addInstanceStats(instance.getName(), metrics.size(), null, Status.STATUS_OK);
+			 }
 
 		}
 		
@@ -152,15 +163,15 @@ public class App
 			} catch (IOException e) {
 				String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
 				LOGGER.warning(warning);
-				status.addInstanceStats(instance.getName(), 0, warning);
+				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			} catch (SecurityException e) {
 				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
 				LOGGER.warning(warning);
-				status.addInstanceStats(instance.getName(), 0, warning);
+				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			} catch (FailedLoginException e) {
 				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
 				LOGGER.warning(warning);
-				status.addInstanceStats(instance.getName(), 0, warning);
+				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			}
 		}
 		
@@ -236,7 +247,7 @@ public class App
 				} catch(Exception e) {
 					e.printStackTrace();
 					String warning = "Unable to create instance. Please check your yaml file";
-					status.addInstanceStats(instance.getName(), 0, warning);
+					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 					LOGGER.severe(warning);
 					continue;
 				}
@@ -247,12 +258,12 @@ public class App
 				} catch (IOException e) {
 					_brokenInstances.add(instance);
 					String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
-					status.addInstanceStats(instance.getName(), 0, warning);
+					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 					LOGGER.severe(warning);
 				} catch (Exception e) {
 					_brokenInstances.add(instance);
 					String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
-					status.addInstanceStats(instance.getName(), 0, warning);
+					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 					LOGGER.severe(warning);
 				}
 			}
