@@ -4,7 +4,7 @@
 
   <groupId>datadog</groupId>
   <artifactId>jmxfetch</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <packaging>jar</packaging>
 
   <name>jmxfetch</name>
@@ -40,7 +40,7 @@
    <dependency>
     <groupId>org.yaml</groupId>
     <artifactId>snakeyaml</artifactId>
-    <version>1.13-SNAPSHOT</version>
+    <version>1.13</version>
   </dependency>
   </dependencies>
       <scm>
