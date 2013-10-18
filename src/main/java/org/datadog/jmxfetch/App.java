@@ -1,4 +1,3 @@
-
 package org.datadog.jmxfetch;
 
 import java.io.File;
@@ -19,18 +18,36 @@ import javax.security.auth.login.FailedLoginException;
 
 public class App 
 {
-	public static ArrayList<Instance> _instances = new ArrayList<Instance>();
-
+	private static ArrayList<Instance> _instances = new ArrayList<Instance>();
 	private static LinkedList<Instance> _brokenInstances = new LinkedList<Instance>();
-
 	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
-
 	private static int _loopCounter;
-	
 	private static Status status = null;
-
+	
 	public static void main( String[] args ) {
-				
+		
+		/**
+		 * ShutdownHook that will be called when SIGTERM will be send to JMXFetch
+		 *
+		 */
+		class ShutdownHook {
+			 public void attachShutDownHook(){
+			  Runtime.getRuntime().addShutdownHook(new Thread() {
+			   @Override
+			   public void run() {
+				   LOGGER.info("JMXFetch is closing");
+				   Status.getInstance().deleteStatus();
+			   }
+			  });
+			 }
+		}
+		
+		// We check the arguments passed are valid
+		if (args.length != 7) {
+			System.out.println("All arguments are required!");
+			System.exit(1);
+		}
+
 		String confd_directory = null;
 		int statsd_port = 0;
 		int loop_period = 0;
@@ -39,13 +56,6 @@ public class App
 		String status_file_location = null;
 		String yaml_file_list = null;
 
-
-		// We check the arguments passed are valid
-		if (args.length != 7) {
-			System.out.println("All arguments are required!");
-			System.exit(1);
-		}
-
 		try{
 			confd_directory = args[0];
 			statsd_port = Integer.valueOf(args[1]);
@@ -53,14 +63,13 @@ public class App
 			log_location = args[3];
 			log_level = args[4];
 			yaml_file_list = args[5];
-			status_file_location = args[6];
-						
-			
+			status_file_location = args[6];			
 		} catch (Exception e) {
 			System.out.println("Arguments are not valid.");
 			System.exit(1);
 		}
 
+		// We set up the logger
 		try {
 			CustomLogger.setup(Level.parse(log_level), log_location);
 		} catch (IOException e) {
@@ -74,6 +83,12 @@ public class App
 		// Initiate JMX Connections, get attributes that match the yaml configuration
 		init(confd_directory, yaml_file_list, status_file_location);
 		
+		// Add a shutdown hook to delete status file when jmxfetch closes
+		ShutdownHook shutdownHook = new ShutdownHook();
+		shutdownHook.attachShutDownHook();
+		
+		
+		// Start the main loop
 		_doLoop(loop_period, confd_directory, metric_reporter, yaml_file_list, status_file_location);
 		
 	}
@@ -87,8 +102,7 @@ public class App
 			} else {
 				LOGGER.warning("No instance could be initiated. Retrying initialization.");
 				status.flush();
-				init(confd_directory, yaml_file_list, status_file_location);
-				
+				init(confd_directory, yaml_file_list, status_file_location);		
 			}
 			
 			// Sleep until next collection
@@ -182,7 +196,8 @@ public class App
 	public static void init(String confdDirectory, String yaml_file_list, String status_file_location) {
 		
 		// Set up the Status writer
-		status = new Status(status_file_location);
+		status = Status.getInstance();
+		status.configure(status_file_location);
 		
 		// Reset the list of instances
 		_brokenInstances = new LinkedList<Instance>();
@@ -191,6 +206,8 @@ public class App
 		// Load JMX Yaml files				
 		File conf_d_dir = new File(confdDirectory);
 		final List<String> yaml_list = Arrays.asList(yaml_file_list.split(","));
+		
+		// Filter the files in the directory to only get valid yaml files
 		File[] files = conf_d_dir.listFiles(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				String extension = null;

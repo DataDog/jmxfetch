@@ -11,6 +11,8 @@ public class Status {
 	
 	HashMap<String, HashMap<String, Object>> instanceStats;
 	
+	private static volatile Status _instance = null;
+	
 	private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
 	private String status_file_location;
 	
@@ -18,7 +20,20 @@ public class Status {
 	public final static String STATUS_OK = "OK";
 	public final static String STATUS_ERROR = "ERROR";
 	
-	public Status(String status_file_location) {
+	private Status() { }
+	
+	public static Status getInstance() {
+		if (_instance == null) {
+			synchronized (Status .class){
+				if (_instance == null) {
+					_instance = new Status ();
+				}
+			}
+		}
+		return _instance;
+	}
+	
+	public void configure(String status_file_location) {
 		this._clearStats();
 		this.status_file_location = status_file_location;
 		
@@ -42,6 +57,21 @@ public class Status {
 		status.put("timestamp", System.currentTimeMillis());
 		status.put("instances", this.instanceStats);
 	    return yaml.dump(status);
+		
+	}
+	
+	public void deleteStatus() {
+		try {
+			File f = new File(this.status_file_location);
+			LOGGER.info("Deleting status file");
+			if(f.delete()) {
+				LOGGER.info("Status file properly deleted");
+			} else {
+				LOGGER.warning("Couldn't delete status file");
+			}
+		} catch (Exception e) {
+			LOGGER.warning("Couldn't delete status file" + e.getMessage());
+		}
 		
 	}
 	
