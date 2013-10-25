@@ -186,6 +186,10 @@ public class App
 				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
 				LOGGER.warning(warning);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+			} catch (Exception e) {
+				String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
+				LOGGER.warning(warning);
+				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			}
 		}
 		

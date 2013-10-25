@@ -30,7 +30,7 @@ import javax.management.remote.JMXServiceURL;
 import javax.security.auth.login.FailedLoginException;
 
 public class Instance {
-	
+
 	private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
 	private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
 	private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
@@ -41,7 +41,7 @@ public class Instance {
 	private LinkedList<JMXAttribute> _matchingAttributes;
 	private LinkedList<JMXAttribute> _failingAttributes;
 	private Integer _refreshBeansPeriod;
-	private long _lastRefreshTime;	
+	private long _lastRefreshTime;  
 	private MBeanServerConnection _mbs;
 	private LinkedHashMap<String, Object> _yaml;
 	private LinkedHashMap<String, Object> _initConfig;
@@ -70,7 +70,7 @@ public class Instance {
 		}
 
 		// Generate an instance name that will be send as a tag with the metrics
-		if (this._instanceName == null)	{
+		if (this._instanceName == null) {
 			this._instanceName = check_name + "-" + this._yaml.get("host") + "-" + this._yaml.get("port");
 		}
 
@@ -144,7 +144,7 @@ public class Instance {
 	private void _getMatchingAttributes() {
 		this._matchingAttributes = new LinkedList<JMXAttribute>();
 		for( ObjectInstance bean : this._beans) {
-			ObjectName bean_name = bean.getObjectName();	
+			ObjectName bean_name = bean.getObjectName();    
 			MBeanAttributeInfo[] atr;
 
 			try {
@@ -168,12 +168,12 @@ public class Instance {
 
 				// For each attribute we try it with each configuration to see if there is one that matches
 				// If so, we store the attribute so metrics will be collected from it. Otherwise we discard it.
-				for ( Configuration conf : this._configurationList) {	
+				for ( Configuration conf : this._configurationList) {   
 					if ( jmxAttribute.match(conf) ) {
 						jmxAttribute.matching_conf = conf;
 						this._matchingAttributes.add(jmxAttribute);
 						break;
-					}  		
+					}       
 				}
 			}
 		}
@@ -185,6 +185,12 @@ public class Instance {
 		Map<String,Object> env = new HashMap<String, Object>();
 		env.put( JMXConnector.CREDENTIALS, new String[]{(String)(connection_params.get("user")), (String)(connection_params.get("password"))} );
 		env.put( "jmx.remote.x.request.waiting.timeout", new Long(10000));
+
+		if(connection_params.containsKey("trust_store_path") && connection_params.containsKey("trust_store_password")) {
+			System.setProperty("javax.net.ssl.trustStore", (String)(connection_params.get("trust_store_path")));
+			System.setProperty("javax.net.ssl.trustStorePassword", (String)(connection_params.get("trust_store_password")));
+		}
+
 		JMXConnector connector = connectWithTimeout(address, env, 20, TimeUnit.SECONDS);
 		MBeanServerConnection mbs = connector.getMBeanServerConnection();
 		return mbs;
@@ -210,17 +216,23 @@ public class Instance {
 	public String getCheckName() {
 		return this._checkName;
 	}
-	
+
 	public int getMaxNumberOfMetrics() {
 		return this._maxReturnedMetrics;
 	}
 
+	/**
+	 * Connect to a MBean Server with a timeout
+	 * This code comes from this blog post:
+	 * https://weblogs.java.net/blog/emcmanus/archive/2007/05/making_a_jmx_co.html
+	 */
 	public static JMXConnector connectWithTimeout(
 			final JMXServiceURL url, final Map<String, Object> env, long timeout, TimeUnit unit)
 					throws IOException {
+
 		final BlockingQueue<Object> mailbox = new ArrayBlockingQueue<Object>(1);
-		
-		ExecutorService executor = 	Executors.newSingleThreadExecutor(daemonThreadFactory);
+
+		ExecutorService executor =  Executors.newSingleThreadExecutor(daemonThreadFactory);
 		executor.submit(new Runnable() {
 			public void run() {
 				try {
@@ -272,5 +284,5 @@ public class Instance {
 			return t;
 		}
 	}
-	
+
 }
