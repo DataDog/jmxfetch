@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.MBeanAttributeInfo;
@@ -76,7 +77,7 @@ public class Instance {
 
 		// In case the configuration to match beans is not specified in the "instance" parameter but in the init_config one
 		Object yaml_conf = this._yaml.get("conf");
-		if (yaml_conf == null) {
+		if (yaml_conf == null && this._initConfig != null) {
 			yaml_conf = this._initConfig.get("conf");
 		}
 
@@ -149,6 +150,7 @@ public class Instance {
 
 			try {
 				// Get all the attributes for bean_name
+				LOGGER.fine("Getting attributes for bean: " + bean_name);
 				atr = this._mbs.getMBeanInfo( bean_name ).getAttributes();
 			} catch (Exception e) {
 				LOGGER.warning("Cannot get bean attributes " + e.getMessage());
@@ -157,24 +159,31 @@ public class Instance {
 
 			for ( MBeanAttributeInfo a : atr) {
 				JMXAttribute jmxAttribute;
-				if( SIMPLE_TYPES.contains(a.getType()) ) {
+				String attributeType = a.getType();
+				if( SIMPLE_TYPES.contains(attributeType) ) {
+					LOGGER.fine("Attribute: " + bean_name + " : " + a + " has a simple type");
 					jmxAttribute = new JMXSimpleAttribute(a, this._mbs, bean, this._instanceName);
-				} else if (COMPOSED_TYPES.contains(a.getType())) {
+				} else if (COMPOSED_TYPES.contains(attributeType)) {
+					LOGGER.fine("Attribute: " + bean_name + " : " + a + " has a complex type");
 					jmxAttribute = new JMXComplexAttribute(a, this._mbs, bean, this._instanceName);
 				} else {
-					LOGGER.fine("Attribute: " + a + " has an unsupported type: " + a.getType());
+					LOGGER.fine("Attribute: " + bean_name + " : " + a + " has an unsupported type: " + attributeType);
 					continue;
 				}
 
 				// For each attribute we try it with each configuration to see if there is one that matches
 				// If so, we store the attribute so metrics will be collected from it. Otherwise we discard it.
-				for ( Configuration conf : this._configurationList) {   
-					if ( jmxAttribute.match(conf) ) {
-						jmxAttribute.matching_conf = conf;
-						this._matchingAttributes.add(jmxAttribute);
-						break;
-					}       
-				}
+				for ( Configuration conf : this._configurationList) {
+					try {
+						if ( jmxAttribute.match(conf) ) {
+							jmxAttribute.matching_conf = conf;
+							this._matchingAttributes.add(jmxAttribute);
+							break;
+						}       
+					} catch (Exception e) {
+						LOGGER.log(Level.SEVERE, "Error while trying to match a configuration with the Attribute: " + bean_name + " : " + a, e);
+					}
+				}		
 			}
 		}
 		LOGGER.info("Found " + _matchingAttributes.size() + " matching attributes");
@@ -267,7 +276,6 @@ public class Instance {
 		try {
 			throw (Throwable) result;
 		} catch (Throwable e) {
-			// In principle this can't happen but we wrap it anyway
 			throw new IOException(e.toString(), e);
 		}
 	}

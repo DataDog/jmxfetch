@@ -188,7 +188,7 @@ public class App
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			} catch (Exception e) {
 				String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
-				LOGGER.warning(warning);
+				LOGGER.log(Level.SEVERE, warning, e);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			}
 		}
@@ -285,7 +285,7 @@ public class App
 					_brokenInstances.add(instance);
 					String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
 					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
-					LOGGER.severe(warning);
+					LOGGER.log(Level.SEVERE, warning, e);
 				}
 			}
 		}
