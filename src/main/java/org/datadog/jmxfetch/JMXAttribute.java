@@ -138,9 +138,14 @@ public abstract class JMXAttribute {
 
 	protected boolean matchBean(Configuration configuration) {
 		
-		boolean matchBeanName = (configuration.include.get("bean") == null && configuration.include.get("bean_name") == null) 
-				|| ((String)(configuration.include.get("bean"))).equals(this.beanName) 
-				|| ((String)(configuration.include.get("bean_name"))).equals(this.beanName);
+		boolean matchBeanName = false;
+		if (configuration.include.get("bean") == null && configuration.include.get("bean_name") == null) {
+			matchBeanName = true;
+		} else if (configuration.include.get("bean") != null) {
+			matchBeanName = ((String)(configuration.include.get("bean"))).equals(this.beanName);
+		} else if (configuration.include.get("bean_name") != null) {
+			matchBeanName = ((String)(configuration.include.get("bean_name"))).equals(this.beanName);
+		}
 
 		if (!matchBeanName) {
 			return false;
