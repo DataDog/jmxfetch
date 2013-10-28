@@ -31,9 +31,8 @@ import javax.management.remote.JMXServiceURL;
 import javax.security.auth.login.FailedLoginException;
 
 public class Instance {
-
 	private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
-	private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
+	private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double", "java.lang.Double", "java.lang.Integer", "java.lang.Long"); 
 	private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
 	private final static int MAX_RETURNED_METRICS = 100;
 
