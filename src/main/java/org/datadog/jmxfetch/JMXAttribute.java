@@ -51,6 +51,7 @@ public abstract class JMXAttribute {
 		// We add the instance name as a tag. We need to convert the Array of strings to List in order to do that
 		LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(split[1].replace("=",":").split(",")));
 		beanTags.add("instance:"+instanceName);
+		beanTags.add("jmx_domain:"+domain);
 		this.tags = new String[beanTags.size()];
 		beanTags.toArray(this.tags);
 		

@@ -91,13 +91,13 @@ public class AppTest
 			assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
 			
 			if (name.equals("this.is.100")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 100.0);
 				metric_100_present = true;
 			}
 			
 			else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 1000.0);
 				metric_1000_present = true;
 			}
@@ -106,7 +106,7 @@ public class AppTest
 				counter_absent = false;
 		
 			} else if (name.equals("subattr.this.is.0")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 0.0);
 				subattr_0_present = true;
 
@@ -141,27 +141,27 @@ public class AppTest
 			assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
 			
 			if (name.equals("this.is.100")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 100.0);
 				metric_100_present = true;
 				
 			} else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 1000.0);
 				metric_1000_present = true;
 				
 			} else if (name.equals("test.counter")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
 				counter_absent = false;
 				
 			} else if (name.equals("subattr.this.is.0")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 0.0);
 				subattr_0_present = true;
 			
 			} else if(name.equals("subattr.counter")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
 				subattr_counter_absent = false;
 			}
@@ -203,26 +203,26 @@ public class AppTest
 			assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
 			
 			if (name.equals("this.is.100")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 100.0);
 				metric_100_present = true;
 			} else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 1000.0);
 				metric_1000_present = true;
 			} else if (name.equals("test.counter")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				// The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
 				assertTrue(value < 1.00);
 				assertTrue(value > 0.99);
 				counter_absent = false;
 			} else if (name.equals("subattr.this.is.0")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				assertEquals(value, 0.0);
 				subattr_0_present = true;
 				
 			} else if(name.equals("subattr.counter")) {
-				assertEquals(tags.length, 2);
+				assertEquals(tags.length, 3);
 				// The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
 				assertTrue(value < 1.00);
 				assertTrue(value > 0.99);
