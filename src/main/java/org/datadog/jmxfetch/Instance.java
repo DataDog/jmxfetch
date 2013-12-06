@@ -48,6 +48,7 @@ public class Instance {
 	private String _instanceName;
 	private String _checkName;
 	private int _maxReturnedMetrics;
+	private boolean _limitReached;
 	private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
 
 
@@ -62,6 +63,7 @@ public class Instance {
 		this._failingAttributes = new LinkedList<JMXAttribute>();
 		this._refreshBeansPeriod = (Integer)this._yaml.get("refresh_beans");
 		this._lastRefreshTime = 0;
+		this._limitReached = false;
 		Object maxReturnedMetrics = this._yaml.get("max_returned_metrics");
 		if (maxReturnedMetrics == null) {
 			_maxReturnedMetrics = MAX_RETURNED_METRICS;
@@ -155,8 +157,13 @@ public class Instance {
 				LOGGER.warning("Cannot get bean attributes " + e.getMessage());
 				continue;
 			} 
-
+			
 			for ( MBeanAttributeInfo a : atr) {
+				if (  _matchingAttributes.size() >= this._maxReturnedMetrics ) {
+					this._limitReached = true;
+					LOGGER.warning("Maximum number of metrics reached");
+					break;
+				}
 				JMXAttribute jmxAttribute;
 				String attributeType = a.getType();
 				if( SIMPLE_TYPES.contains(attributeType) ) {
@@ -290,6 +297,10 @@ public class Instance {
 			t.setDaemon(true);
 			return t;
 		}
+	}
+
+	public boolean isLimitReached() {
+		return this._limitReached;
 	}
 
 }

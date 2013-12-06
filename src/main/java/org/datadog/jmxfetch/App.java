@@ -137,14 +137,14 @@ public class App
 				continue;
 			}
 						
-			if (metrics.size() > instance.getMaxNumberOfMetrics()) {
+			if ( instance.isLimitReached() ) {
 				 LinkedList<HashMap<String, Object>> truncatedMetrics = new LinkedList<HashMap<String, Object>>(metrics.subList(0, instance.getMaxNumberOfMetrics()));
 				 metric_reporter.sendMetrics(truncatedMetrics, instance.getName());
 				 String warning = "Number of returned metrics is too high for instance: " 
 						 + instance.getName() 
 						 + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
 				 CustomLogger.laconic(LOGGER, Level.WARNING, warning, 0);
-				 status.addInstanceStats(instance.getName(), instance.getMaxNumberOfMetrics(), warning, Status.STATUS_WARNING);
+				 status.addInstanceStats(instance.getName(), truncatedMetrics.size(), warning, Status.STATUS_WARNING);
 			 } else {
 				 metric_reporter.sendMetrics(metrics, instance.getName());
 				 status.addInstanceStats(instance.getName(), metrics.size(), null, Status.STATUS_OK);
