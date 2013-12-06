@@ -245,21 +245,32 @@ public class App
 			}
 		});
 
+		LOGGER.info("Found " + files.length + " yaml files.");
 
 		// Iterate over all JMX Yaml files
 		for (File file : files) {
 			YamlParser config;
+			String path = file.getAbsolutePath();
+			String name = file.getName().replace(".yaml", "");
 			try {
-				config = new YamlParser(file.getAbsolutePath());
+				LOGGER.info("Reading " + path);
+				config = new YamlParser(path);
 			} catch (FileNotFoundException e) {
-				LOGGER.warning("Cannot find " + file.getAbsolutePath());
+				LOGGER.warning("Cannot find " + path);
 				continue;
 			} catch (Exception e) {
-				LOGGER.warning("Cannot parse yaml file " + file.getAbsolutePath());
+				LOGGER.warning("Cannot parse yaml file " + path);
 				continue;
 			}
 
-			for(Iterator<LinkedHashMap<String,Object>> i = ((ArrayList<LinkedHashMap<String, Object>>) config.getYamlInstances()).iterator(); i.hasNext(); ) {	
+			ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) config.getYamlInstances());
+			if ( configInstances == null || configInstances.size() == 0) {
+				String warning = "No instance found in :" + path;
+				LOGGER.warning(warning);
+				status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
+				continue;
+			}
+			for(Iterator<LinkedHashMap<String,Object>> i = configInstances.iterator(); i.hasNext(); ) {	
 				Instance instance = null;
 				//Create a new Instance object
 				try {
@@ -268,7 +279,7 @@ public class App
 				} catch(Exception e) {
 					e.printStackTrace();
 					String warning = "Unable to create instance. Please check your yaml file";
-					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+					status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
 					LOGGER.severe(warning);
 					continue;
 				}
