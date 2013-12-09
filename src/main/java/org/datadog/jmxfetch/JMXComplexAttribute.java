@@ -101,12 +101,20 @@ public class JMXComplexAttribute extends JMXAttribute {
 
 	private Object _getMetricType(String subAttribute) {
 		String subAttributeName = this.attribute.getName() + "." + subAttribute;
+		String metricType = null;
 		
-		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {	
-			return ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(subAttributeName).get("metric_type");	
+		if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+			metricType = ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(subAttributeName).get("metric_type");	
+			if (metricType == null) {
+			    metricType = ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(subAttributeName).get("type");
+			}
 		}
 		
-		return "gauge";
+		if ( metricType == null) {
+			metricType = "gauge";
+		}
+		
+		return metricType;
 	}
 
 	private String _getAlias(String subAttribute)

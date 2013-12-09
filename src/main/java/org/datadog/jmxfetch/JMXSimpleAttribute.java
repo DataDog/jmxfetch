@@ -103,10 +103,15 @@ public class JMXSimpleAttribute extends JMXAttribute {
 		if (this._metricType != null) {
 			return this._metricType;
 		
-		} else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {	
-			this._metricType =((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("metric_type");	
+		} else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+			this._metricType = ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("metric_type");	
+			if ( this._metricType == null){
+				this._metricType =((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("type");
+			}
+		} 
 		
-		} else if (this._metricType == null) {
+		if (this._metricType == null) {
+			// Default to gauge
 			this._metricType = "gauge";
 		}
 		
