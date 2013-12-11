@@ -44,7 +44,7 @@ public class App
 			LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
 		}
 		
-		LOGGER.info("JMX Feth has started");
+		LOGGER.info("JMX Fetch has started");
 		
 		// Set up the metric reporter (Statsd Client)
     	MetricReporter metricReporter = new StatsdMetricReporter(config.statsdPort);
@@ -93,16 +93,19 @@ public class App
 	private static void _doLoop(int loopPeriod, String confdDirectory, MetricReporter metricReporter, String yamlFileList, String statusFileLocation) {
 		// Main Loop that will periodically collect metrics from the JMX Server
 		while(true) {
+			long start = System.currentTimeMillis();
 			if (_instances.size() > 0) {
 				doIteration(metricReporter);
 			} else {
 				LOGGER.warn("No instance could be initiated. Retrying initialization.");
 				status.flush();
-				init(confdDirectory, yamlFileList, statusFileLocation);		
+				init(confdDirectory, yamlFileList, statusFileLocation, true);		
 			}
-			
+			long length = System.currentTimeMillis() - start;
+			LOGGER.debug("Iteration ran in " + length  + " ms");
 			// Sleep until next collection
 			try {
+				LOGGER.debug("Sleeping for " + loopPeriod + " ms.");
 				Thread.sleep(loopPeriod);
 			} catch (InterruptedException e) {
 				LOGGER.warn(e.getMessage(), e);
@@ -111,10 +114,14 @@ public class App
 
 	}
 
+	
+
 	public static void doIteration(MetricReporter metricReporter) {	
 		_loopCounter++;
 
-		for (Instance instance : _instances) {
+		Iterator<Instance> it = _instances.iterator();
+		while (it.hasNext() ){
+			Instance instance = it.next();
 			LinkedList<HashMap<String, Object>> metrics;
 			try {
 				metrics = instance.getMetrics();
@@ -122,14 +129,15 @@ public class App
 				String warning = "Unable to refresh bean list for instance " + instance;
 				LOGGER.warn(warning, e);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+				_brokenInstances.add(instance);
 				continue;
 			}
 
 			if (metrics.size() == 0) {
-				_brokenInstances.add(instance);
 				String warning = "Instance " + instance + " didn't return any metrics";
 				LOGGER.warn(warning);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+				_brokenInstances.add(instance);
 				continue;
 			}
 						
@@ -147,6 +155,7 @@ public class App
 				 CustomLogger.laconic(LOGGER, Level.WARN, warning, 0);
 				 
 			 } else {
+				 // All is well
 				 metricReporter.sendMetrics(metrics, instance.getName());
 				 status.addInstanceStats(instance.getName(), metrics.size(), null, Status.STATUS_OK);
 			 }
@@ -155,7 +164,7 @@ public class App
 		
 
 		// Iterate over broken" instances to fix them by resetting them
-		Iterator<Instance> it = _brokenInstances.iterator();
+		it = _brokenInstances.iterator();
 		while(it.hasNext()) {
 			Instance instance = it.next();
 			
@@ -171,8 +180,8 @@ public class App
 			Instance newInstance = new Instance(instance.getYaml(), instance.getInitConfig(), instance.getCheckName());
 			try {
 				// Try to reinit the connection and force to renew it
-				newInstance.init(true);
-				
+				LOGGER.info("Trying to reconnecting to: " + newInstance);
+				newInstance.init(true);		
 				// If we are here, the connection succeeded, the instance is fixed. It can be readded to the good instances list
 				_instances.add(newInstance);
 				it.remove();
@@ -202,12 +211,16 @@ public class App
 		}
 	}
 
+	public static void init(String confdDirectory, String yamlFileList, String statusFileLocation) {
+		init(confdDirectory, yamlFileList, statusFileLocation, false);
+		
+	}
 	@SuppressWarnings("unchecked")
-	public static void init(String confdDirectory, String yaml_file_list, String status_file_location) {
+	public static void init(String confdDirectory, String yamlFileList, String statusFileLocation, boolean forceNewConnection) {
 		
 		// Set up the Status writer
 		status = Status.getInstance();
-		status.configure(status_file_location);
+		status.configure(statusFileLocation);
 		
 		// Reset the list of instances
 		_brokenInstances = new LinkedList<Instance>();
@@ -215,7 +228,7 @@ public class App
 		
 		// Load JMX Yaml files				
 		File conf_d_dir = new File(confdDirectory);
-		final List<String> yaml_list = Arrays.asList(yaml_file_list.split(","));
+		final List<String> yamlList = Arrays.asList(yamlFileList.split(","));
 		
 		// Filter the files in the directory to only get valid yaml files
 		File[] files = conf_d_dir.listFiles(new FilenameFilter() {
@@ -231,7 +244,7 @@ public class App
 				if (!extension.equals("yaml")) {
 					return false;
 				}
-				if (yaml_list.contains(name)) {
+				if (yamlList.contains(name)) {
 					return true;
 				} else {
 					YamlParser config;
@@ -289,13 +302,13 @@ public class App
 				}
 				try {
 					//  initiate the JMX Connection
-					instance.init();
+					instance.init(forceNewConnection);
 					_instances.add(instance);
 				} catch (IOException e) {
 					_brokenInstances.add(instance);
 					String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
 					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
-					LOGGER.error(warning, e);
+					LOGGER.error(warning);
 				} catch (Exception e) {
 					_brokenInstances.add(instance);
 					String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
@@ -332,6 +345,7 @@ public class App
 		private AppConfig(String[] args) {
 			// We check the arguments passed are valid
 			if (args.length != 7) {
+				// TODO: Add a real args parser here
 				LOGGER.fatal("All arguments are required!");
 				System.exit(1);
 			}
