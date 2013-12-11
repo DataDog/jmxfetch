@@ -6,15 +6,18 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.security.auth.login.FailedLoginException;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 public class App 
 {
@@ -24,98 +27,91 @@ public class App
 	private static int _loopCounter;
 	private static Status status = null;
 	
+	/**
+	 * Main entry of JMX Fetch
+	 * Args are not parsed so far, hence order matters
+	 * See AppConfig class for more details
+	 */
 	public static void main( String[] args ) {
 		
-		/**
-		 * ShutdownHook that will be called when SIGTERM will be send to JMXFetch
-		 *
-		 */
-		class ShutdownHook {
-			 public void attachShutDownHook(){
-			  Runtime.getRuntime().addShutdownHook(new Thread() {
-			   @Override
-			   public void run() {
-				   LOGGER.info("JMXFetch is closing");
-				   Status.getInstance().deleteStatus();
-			   }
-			  });
-			 }
+		// Load the config from the args
+		AppConfig config = AppConfig.getInstance(args);
+
+		// Set up the logger to add file handler
+		try {
+			CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
+		} catch (IOException e) {
+			LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
 		}
 		
-		// We check the arguments passed are valid
-		if (args.length != 7) {
-			System.out.println("All arguments are required!");
-			System.exit(1);
-		}
-
-		String confd_directory = null;
-		int statsd_port = 0;
-		int loop_period = 0;
-		String log_location = null;
-		String log_level = null;
-		String status_file_location = null;
-		String yaml_file_list = null;
-
-		try{
-			confd_directory = args[0];
-			statsd_port = Integer.valueOf(args[1]);
-			loop_period = Integer.valueOf(args[2]);
-			log_location = args[3];
-			log_level = args[4];
-			yaml_file_list = args[5];
-			status_file_location = args[6];			
-		} catch (Exception e) {
-			System.out.println("Arguments are not valid.");
-			System.exit(1);
-		}
-
-		// We set up the logger
-		try {
-			CustomLogger.setup(Level.parse(log_level), log_location);
-		} catch (IOException e) {
-			System.out.println("Unable to setup logging");
-			e.printStackTrace();
-		}
+		LOGGER.info("JMX Feth has started");
 		
 		// Set up the metric reporter (Statsd Client)
-    	MetricReporter metric_reporter = new StatsdMetricReporter(statsd_port);
+    	MetricReporter metricReporter = new StatsdMetricReporter(config.statsdPort);
 
 		// Initiate JMX Connections, get attributes that match the yaml configuration
-		init(confd_directory, yaml_file_list, status_file_location);
+		init(config.confdDirectory, config.yamlFileList, config.statusFileLocation);
 		
-		// Add a shutdown hook to delete status file when jmxfetch closes
+		// Set up the shutdown hook to properly close resources
+		attachShutdownHook();
+				
+		// Start the main loop
+		_doLoop(config.loopPeriod, config.confdDirectory, metricReporter, config.yamlFileList, config.statusFileLocation);
+		
+	}
+	
+	/**
+	 * Attach a Shutdown Hook that will be called when SIGTERM will be send to JMXFetch
+	 */
+	@SuppressWarnings("unchecked")
+	private static void attachShutdownHook() {
+		class ShutdownHook {
+			public void attachShutDownHook(){
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					@Override
+					public void run() {
+						LOGGER.info("JMXFetch is closing");
+						Status.getInstance().deleteStatus();
+						
+						// Properly close log handlers
+						Enumeration<Appender> enume = LOGGER.getAllAppenders();
+						while (enume.hasMoreElements()) {
+							Appender h = enume.nextElement();
+							h.close();
+						}
+					}
+				});
+			}
+		}
+
 		ShutdownHook shutdownHook = new ShutdownHook();
 		shutdownHook.attachShutDownHook();
-		
-		
-		// Start the main loop
-		_doLoop(loop_period, confd_directory, metric_reporter, yaml_file_list, status_file_location);
-		
+
 	}
 
 
-	private static void _doLoop(int loop_period, String confd_directory, MetricReporter metric_reporter, String yaml_file_list, String status_file_location) {
+	private static void _doLoop(int loopPeriod, String confdDirectory, MetricReporter metricReporter, String yamlFileList, String statusFileLocation) {
 		// Main Loop that will periodically collect metrics from the JMX Server
 		while(true) {
 			if (_instances.size() > 0) {
-				doIteration(metric_reporter);
+				doIteration(metricReporter);
 			} else {
-				LOGGER.warning("No instance could be initiated. Retrying initialization.");
+				LOGGER.warn("No instance could be initiated. Retrying initialization.");
 				status.flush();
-				init(confd_directory, yaml_file_list, status_file_location);		
+				init(confdDirectory, yamlFileList, statusFileLocation);		
 			}
 			
 			// Sleep until next collection
 			try {
-				Thread.sleep(loop_period);
+				Thread.sleep(loopPeriod);
 			} catch (InterruptedException e) {
-				LOGGER.log(Level.WARNING, e.getMessage());
+				LOGGER.warn(e.getMessage(), e);
 			}
 		}
 
 	}
 
-	public static void doIteration(MetricReporter metric_reporter) {	
+	public static void doIteration(MetricReporter metricReporter) {	
 		_loopCounter++;
 
 		for (Instance instance : _instances) {
@@ -124,7 +120,7 @@ public class App
 				metrics = instance.getMetrics();
 			} catch (IOException e) {
 				String warning = "Unable to refresh bean list for instance " + instance;
-				LOGGER.warning(warning);
+				LOGGER.warn(warning, e);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 				continue;
 			}
@@ -132,36 +128,41 @@ public class App
 			if (metrics.size() == 0) {
 				_brokenInstances.add(instance);
 				String warning = "Instance " + instance + " didn't return any metrics";
-				LOGGER.warning(warning);
+				LOGGER.warn(warning);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 				continue;
 			}
 						
 			if ( instance.isLimitReached() ) {
+				 // Max number of metrics reached so we truncate it and add a warning in the status so it appears in the agent info page.
+				
 				 LinkedList<HashMap<String, Object>> truncatedMetrics = new LinkedList<HashMap<String, Object>>(metrics.subList(0, instance.getMaxNumberOfMetrics()));
-				 metric_reporter.sendMetrics(truncatedMetrics, instance.getName());
+				 metricReporter.sendMetrics(truncatedMetrics, instance.getName());
 				 String warning = "Number of returned metrics is too high for instance: " 
 						 + instance.getName() 
 						 + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
-				 CustomLogger.laconic(LOGGER, Level.WARNING, warning, 0);
 				 status.addInstanceStats(instance.getName(), truncatedMetrics.size(), warning, Status.STATUS_WARNING);
+				 
+				 // We don't want to log the warning at every iteration so we use this custom logger.
+				 CustomLogger.laconic(LOGGER, Level.WARN, warning, 0);
+				 
 			 } else {
-				 metric_reporter.sendMetrics(metrics, instance.getName());
+				 metricReporter.sendMetrics(metrics, instance.getName());
 				 status.addInstanceStats(instance.getName(), metrics.size(), null, Status.STATUS_OK);
 			 }
 
 		}
 		
 
-		// We iterate over "broken" instances to "fix" them by resetting them
+		// Iterate over broken" instances to fix them by resetting them
 		Iterator<Instance> it = _brokenInstances.iterator();
 		while(it.hasNext()) {
 			Instance instance = it.next();
 			
 			// Clearing rates aggregator so we won't compute wrong rates if we can reconnect
-			metric_reporter.clearRatesAggregator(instance.getName());
+			metricReporter.clearRatesAggregator(instance.getName());
 			
-			LOGGER.warning("Instance " + instance + " didn't return any metrics. Maybe the server got disconnected ? Trying to reconnect.");
+			LOGGER.warn("Instance " + instance + " didn't return any metrics. Maybe the server got disconnected ? Trying to reconnect.");
 			
 			// Remove the broken instance from the good instance list so jmxfetch won't try to collect metrics from this broken instance during next collection
 			_instances.remove(instance);
@@ -169,34 +170,39 @@ public class App
 			// Resetting the instance
 			Instance newInstance = new Instance(instance.getYaml(), instance.getInitConfig(), instance.getCheckName());
 			try {
-				newInstance.init();
+				// Try to reinit the connection and force to renew it
+				newInstance.init(true);
 				
-				// If we are here, the connection succeeded, the instance is "fixed". We can readd it to the "good" instances list
+				// If we are here, the connection succeeded, the instance is fixed. It can be readded to the good instances list
 				_instances.add(newInstance);
 				it.remove();
 			} catch (IOException e) {
 				String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
-				LOGGER.warning(warning);
+				LOGGER.warn(warning);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			} catch (SecurityException e) {
 				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
-				LOGGER.warning(warning);
+				LOGGER.warn(warning);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			} catch (FailedLoginException e) {
 				String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
-				LOGGER.warning(warning);
+				LOGGER.warn(warning);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			} catch (Exception e) {
 				String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
-				LOGGER.log(Level.SEVERE, warning, e);
+				LOGGER.fatal(warning, e);
 				status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
 			}
 		}
 		
-		status.flush();
-
+		try {
+			status.flush();
+		} catch (Exception e) {
+			LOGGER.error("Unable to flush stats.", e);
+		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void init(String confdDirectory, String yaml_file_list, String status_file_location) {
 		
 		// Set up the Status writer
@@ -234,11 +240,10 @@ public class App
 						config = new YamlParser(file.getAbsolutePath());
 						return config.isJmx();
 					} catch (FileNotFoundException e) {
-						LOGGER.warning("Cannot find " + file.getAbsolutePath());
+						LOGGER.warn("Cannot find " + file.getAbsolutePath());
 						return false;
 					} catch (Exception e) {
-						LOGGER.warning("Cannot parse yaml file " + file.getAbsolutePath());
-						LOGGER.warning(e.getMessage());
+						LOGGER.warn("Cannot parse yaml file " + file.getAbsolutePath(), e);
 						return false;
 					}				
 				}
@@ -256,17 +261,17 @@ public class App
 				LOGGER.info("Reading " + path);
 				config = new YamlParser(path);
 			} catch (FileNotFoundException e) {
-				LOGGER.warning("Cannot find " + path);
+				LOGGER.warn("Cannot find " + path);
 				continue;
 			} catch (Exception e) {
-				LOGGER.warning("Cannot parse yaml file " + path);
+				LOGGER.warn("Cannot parse yaml file " + path, e);
 				continue;
 			}
 
 			ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) config.getYamlInstances());
 			if ( configInstances == null || configInstances.size() == 0) {
 				String warning = "No instance found in :" + path;
-				LOGGER.warning(warning);
+				LOGGER.warn(warning);
 				status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
 				continue;
 			}
@@ -277,10 +282,9 @@ public class App
 					String check_name = file.getName().replace(".yaml", "");
 					instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) config.getInitConfig()), check_name);
 				} catch(Exception e) {
-					e.printStackTrace();
 					String warning = "Unable to create instance. Please check your yaml file";
 					status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
-					LOGGER.severe(warning);
+					LOGGER.error(warning, e);
 					continue;
 				}
 				try {
@@ -291,12 +295,12 @@ public class App
 					_brokenInstances.add(instance);
 					String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
 					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
-					LOGGER.severe(warning);
+					LOGGER.error(warning, e);
 				} catch (Exception e) {
 					_brokenInstances.add(instance);
 					String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
 					status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
-					LOGGER.log(Level.SEVERE, warning, e);
+					LOGGER.error(warning, e);
 				}
 			}
 		}
@@ -305,5 +309,45 @@ public class App
 	
 	public static int getLoopCounter() {
 		return _loopCounter;
+	}
+	
+	public static class AppConfig {
+		private static volatile AppConfig _instance = null;
+		
+		public String confdDirectory = null;
+		public int statsdPort = 0;
+		public int loopPeriod = 0;
+		public String logLocation = null;
+		public String logLevel = null;
+		public String statusFileLocation = null;
+		public String yamlFileList = null;
+		
+		public static AppConfig getInstance(String[] args) {
+			if (_instance == null) {
+				_instance = new AppConfig(args);
+			}
+			return _instance;
+		}
+		
+		private AppConfig(String[] args) {
+			// We check the arguments passed are valid
+			if (args.length != 7) {
+				LOGGER.fatal("All arguments are required!");
+				System.exit(1);
+			}
+			try{
+				confdDirectory = args[0];
+				statsdPort = Integer.valueOf(args[1]);
+				loopPeriod = Integer.valueOf(args[2]);
+				logLocation = args[3];
+				logLevel = args[4];
+				yamlFileList = args[5];
+				statusFileLocation = args[6];			
+			} catch (Exception e) {
+				LOGGER.fatal("Arguments are not valid.", e);
+				System.exit(1);
+			}
+			
+		}
 	}
 }

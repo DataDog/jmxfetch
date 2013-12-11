@@ -2,7 +2,9 @@ package org.datadog.jmxfetch;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
+
 
 public abstract class MetricReporter {
 	
@@ -39,7 +41,7 @@ public abstract class MetricReporter {
 				LOGGER.info("Next collections will be logged only every 10 collections.");
 			}
 		} else {
-			LOGGER.fine("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the metrics reporter during collection #" + loopCounter);
+			LOGGER.debug("Instance " + instance_name + " is sending " + metrics.size() + " metrics to the metrics reporter during collection #" + loopCounter);
 		}
 		
 		for (HashMap<String, Object> m : metrics) {

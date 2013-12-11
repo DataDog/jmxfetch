@@ -10,14 +10,13 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 
 public abstract class JMXAttribute {
 
 	protected MBeanAttributeInfo attribute;
-	protected MBeanServerConnection mbs;
+	protected Connection connection;
 	protected ObjectInstance jmxInstance;
 	protected double value;
 	protected String domain;
@@ -34,11 +33,11 @@ public abstract class JMXAttribute {
 	private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
 	private static final String DOT_UNDERSCORE = "_*\\._*";
 
-	public JMXAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs, ObjectInstance jmxInstance, String instanceName) {
+	public JMXAttribute(MBeanAttributeInfo a, ObjectInstance jmxInstance, String instanceName, Connection connection) {
 		this.attribute = a;
-		this.mbs = mbs;
 		this.jmxInstance = jmxInstance;
 		this.matching_conf = null;
+		this.connection = connection;
 		
 		this.beanName = jmxInstance.getObjectName().toString();
 		// A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -74,7 +73,7 @@ public abstract class JMXAttribute {
 
 
 	protected Object getJmxValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-		return this.mbs.getAttribute(this.jmxInstance.getObjectName(), this.attribute.getName());
+		return this.connection.getAttribute(this.jmxInstance.getObjectName(), this.attribute.getName());
 	}
 
 	protected boolean matchDomain(Configuration conf) {

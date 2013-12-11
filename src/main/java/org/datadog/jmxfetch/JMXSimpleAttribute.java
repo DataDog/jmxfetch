@@ -10,7 +10,6 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 
@@ -19,10 +18,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
 	private String _alias = null;
 	private String _metricType;
 
-	public JMXSimpleAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs,
-			ObjectInstance instance, String instance_name) {
+	public JMXSimpleAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection) {
 		
-		super(a, mbs, instance, instance_name);
+		super(a, instance, instance_name, connection);
 	}
 
 	@Override
@@ -50,6 +48,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
 					|| _excludeMatchAttribute(configuration));
 	}
 	
+	@SuppressWarnings("unchecked")
 	private boolean _excludeMatchAttribute(Configuration configuration) {
 		if (configuration.exclude.get("attribute") == null) {
 			return false;
@@ -65,6 +64,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
 		return false;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private boolean matchAttribute(Configuration configuration) {
 		if (configuration.include.get("attribute") == null) {
 			return true;
@@ -81,6 +81,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
 		return false;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private String _getAlias() {
 		if (this._alias != null) {
 			return this._alias;
@@ -99,6 +100,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
 		return this._alias; 
 	}
 	
+	@SuppressWarnings("unchecked")
 	private String _getMetricType() {
 		if (this._metricType != null) {
 			return this._metricType;

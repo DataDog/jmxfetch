@@ -13,7 +13,6 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
@@ -22,13 +21,13 @@ public class JMXComplexAttribute extends JMXAttribute {
 
 	private HashMap<String,HashMap<String,Object>> subAttributeList;
 
-	public JMXComplexAttribute(MBeanAttributeInfo a, MBeanServerConnection mbs,
-			ObjectInstance instance, String instance_name) {
+	public JMXComplexAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection) {
 		
-		super(a, mbs, instance, instance_name);
+		super(a, instance, instance_name, connection);
 		this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void _populateSubAttributeList(Object attributeValue) {
 		if (this.attribute.getType().equals("javax.management.openmbean.CompositeData")) {
 			CompositeData data = (CompositeData) attributeValue;
@@ -81,6 +80,7 @@ public class JMXComplexAttribute extends JMXAttribute {
 
 	}
 	
+	@SuppressWarnings("unchecked")
 	private double _getValue(String subAttribute) throws AttributeNotFoundException, InstanceNotFoundException, 
 				MBeanException, ReflectionException, IOException {
 		
@@ -99,6 +99,7 @@ public class JMXComplexAttribute extends JMXAttribute {
 		throw new NumberFormatException();
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object _getMetricType(String subAttribute) {
 		String subAttributeName = this.attribute.getName() + "." + subAttribute;
 		String metricType = null;
@@ -117,6 +118,7 @@ public class JMXComplexAttribute extends JMXAttribute {
 		return metricType;
 	}
 
+	@SuppressWarnings("unchecked")
 	private String _getAlias(String subAttribute)
 	{
 		String subAttributeName = this.attribute.getName() + "." + subAttribute;
@@ -152,6 +154,7 @@ public class JMXComplexAttribute extends JMXAttribute {
 		return _matchAttribute(configuration) && !_excludeMatchAttribute(configuration);
 	}
 
+	@SuppressWarnings("unchecked")
 	private boolean _matchSubAttribute(LinkedHashMap<String, Object> params, String subAttributeName, boolean matchOnEmpty)
 	{
 		if ((params.get("attribute") instanceof LinkedHashMap<?, ?>) &&  ((LinkedHashMap<String, Object>)(params.get("attribute"))).containsKey(subAttributeName)) {

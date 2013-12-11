@@ -1,8 +1,4 @@
 package org.datadog.jmxfetch;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.logging.Logger;
-
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 

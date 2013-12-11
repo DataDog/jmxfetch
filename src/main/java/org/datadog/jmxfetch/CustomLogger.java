@@ -2,35 +2,33 @@ package org.datadog.jmxfetch;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 public class CustomLogger {
-  static private FileHandler handler;
-  static private SimpleFormatter formatter;
   static private HashMap<String, Integer> message_stats = new HashMap<String, Integer>();
-  static public void setup(Level level, String log_location) throws IOException {
-
-    Logger logger = Logger.getLogger(CustomLogger.class.getPackage().getName());
-
-    logger.setLevel(level);
-    handler = new FileHandler(log_location);
-   
-    formatter = new SimpleFormatter();
-    handler.setFormatter(formatter);
-    handler.setLevel(level);
-    logger.addHandler(handler);
-
+  private final static Logger LOGGER = Logger.getLogger(CustomLogger.class.getName());
+  static public void setup(Level level, String logLocation) throws IOException {
+	  FileAppender fa = new FileAppender();
+	  fa.setName("FileLogger");
+	  fa.setFile(logLocation);
+	  fa.setLayout(new PatternLayout("%d %-5p [%c{1}] %m%n"));	
+	  fa.setThreshold(level);
+	  fa.setAppend(true);
+	  fa.activateOptions();
+	  Logger.getRootLogger().addAppender(fa);
+	  LOGGER.info("File Handler set");
+	  
   }
   
   static public void laconic(Logger logger, Level level, String message, int max) {
 	  if (!message_stats.containsKey(message)) {
 		  logger.log(level, message);
 		  message_stats.put(message, 1);
-	  }
-	  else if( message_stats.get(message) < max) {
+	  } else if( message_stats.get(message) < max) {
 		  logger.log(level, message);
 		  message_stats.put(message, message_stats.get(message) + 1);
 	  }

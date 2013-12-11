@@ -8,6 +8,10 @@ public class Configuration {
 	public LinkedHashMap<String, Object> include;
 	public LinkedHashMap<String, Object> exclude;
 
+	/**
+	 * A simple class to access configuration elements more easily
+	 */
+	@SuppressWarnings("unchecked")
 	public Configuration(LinkedHashMap<String, Object> conf)
 	{
 		this.conf = conf;

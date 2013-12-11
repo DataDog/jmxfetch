@@ -2,9 +2,9 @@ package org.datadog.jmxfetch;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 public class Status {
@@ -67,10 +67,10 @@ public class Status {
 			if(f.delete()) {
 				LOGGER.info("Status file properly deleted");
 			} else {
-				LOGGER.warning("Couldn't delete status file");
+				LOGGER.warn("Couldn't delete status file");
 			}
 		} catch (Exception e) {
-			LOGGER.warning("Couldn't delete status file" + e.getMessage());
+			LOGGER.warn("Couldn't delete status file", e);
 		}
 		
 	}
@@ -80,11 +80,11 @@ public class Status {
 		String yaml = _generateYaml();
 		try {
 			File f = new File(this.status_file_location);
-			LOGGER.fine("Writing status to temp yaml file: " + f.getAbsolutePath());
+			LOGGER.debug("Writing status to temp yaml file: " + f.getAbsolutePath());
 			FileUtils.writeStringToFile(f, yaml);
 			
 		} catch (Exception e) {
-			LOGGER.warning("Cannot write status to temp file: " + e.getMessage());
+			LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
 		} 
 		this._clearStats();
 		

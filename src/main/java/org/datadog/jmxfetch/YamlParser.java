@@ -20,7 +20,7 @@ public class YamlParser {
 		init(yamlInputStream);
 	}
 		
-	
+	@SuppressWarnings("unchecked")
 	private void init(InputStream yamlInputStream) {
 		Yaml yaml = new Yaml();
 	    parsedYaml = (HashMap<Object, Object>) yaml.load(yamlInputStream);	   
@@ -38,6 +38,7 @@ public class YamlParser {
 		return parsedYaml;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public boolean isJmx() {
 		try {
 			return (Boolean) ((HashMap<Object, Object>) parsedYaml.get("init_config")).get("is_jmx");

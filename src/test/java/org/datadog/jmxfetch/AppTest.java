@@ -5,8 +5,6 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -15,15 +13,14 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.apache.log4j.Level;
+
 /**
  * Unit test for simple App.
  */
 public class AppTest 
     extends TestCase
 {
-	
-	private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
-	
 	MetricReporter test_metric_reporter = new TestMetricReporter();
 	
 	static SimpleTestJavaApp testApp = new SimpleTestJavaApp();
@@ -37,7 +34,7 @@ public class AppTest
     {
         super( testName );
         try {
-			CustomLogger.setup(Level.parse("ALL"), "/tmp/jmxfetch_test.log");
+			CustomLogger.setup(Level.toLevel("INFO"), "/tmp/jmxfetch_test.log");
 		} catch (IOException e) {
 			System.out.println("Unable to setup logging");
 			e.printStackTrace();
