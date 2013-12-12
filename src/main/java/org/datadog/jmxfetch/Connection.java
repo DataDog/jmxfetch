@@ -30,127 +30,127 @@ import javax.management.remote.JMXServiceURL;
 import org.apache.log4j.Logger;
 
 public class Connection {
-	private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
-	private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
-	private Integer port;
-	private String host;
-	private String user;
-	private String password;
-	private String trustStorePath;
-	private String trustStorePassword;
-	private MBeanServerConnection mbs;
-	private static final Long CONNECTION_TIMEOUT = new Long(10000);
-	private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
-	private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
-	
+    private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
+    private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
+    private Integer port;
+    private String host;
+    private String user;
+    private String password;
+    private String trustStorePath;
+    private String trustStorePassword;
+    private MBeanServerConnection mbs;
+    private static final Long CONNECTION_TIMEOUT = new Long(10000);
+    private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
+    private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
+    
 
-	public Connection(LinkedHashMap<String, Object> connectionParams) throws IOException {
-		this.host = (String) connectionParams.get("host");
-		this.port = (Integer) connectionParams.get("port");	
-		this.user = (String) connectionParams.get("user");
-		this.password = (String) connectionParams.get("password");
-		
-		if(connectionParams.containsKey(TRUST_STORE_PATH_KEY) && connectionParams.containsKey(TRUST_STORE_PASSWORD_KEY)) {
-			this.trustStorePath = (String) connectionParams.get(TRUST_STORE_PATH_KEY);
-			this.trustStorePassword = (String) connectionParams.get(TRUST_STORE_PASSWORD_KEY);
-		} else {
-			this.trustStorePath = null;
-			this.trustStorePassword = null;
-		}
-		
-		this.mbs = this.createConnection();
-	}
-	
-	public MBeanAttributeInfo[] getAttributesForBean(ObjectName bean_name) throws InstanceNotFoundException, IntrospectionException, ReflectionException, IOException {
-		return this.mbs.getMBeanInfo( bean_name ).getAttributes();
-	}
-	
-	public Set<ObjectInstance> queryMBeans() throws IOException {
-		return this.mbs.queryMBeans(null, null);
-	}
-	
-	private MBeanServerConnection createConnection() throws IOException {
-		JMXServiceURL address = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/jmxrmi");
-		Map<String,Object> env = new HashMap<String, Object>();
-		env.put( JMXConnector.CREDENTIALS, new String[]{this.user,this.password} );
-		env.put( "jmx.remote.x.request.waiting.timeout", CONNECTION_TIMEOUT);
+    public Connection(LinkedHashMap<String, Object> connectionParams) throws IOException {
+        this.host = (String) connectionParams.get("host");
+        this.port = (Integer) connectionParams.get("port"); 
+        this.user = (String) connectionParams.get("user");
+        this.password = (String) connectionParams.get("password");
+        
+        if(connectionParams.containsKey(TRUST_STORE_PATH_KEY) && connectionParams.containsKey(TRUST_STORE_PASSWORD_KEY)) {
+            this.trustStorePath = (String) connectionParams.get(TRUST_STORE_PATH_KEY);
+            this.trustStorePassword = (String) connectionParams.get(TRUST_STORE_PASSWORD_KEY);
+        } else {
+            this.trustStorePath = null;
+            this.trustStorePassword = null;
+        }
+        
+        this.mbs = this.createConnection();
+    }
+    
+    public MBeanAttributeInfo[] getAttributesForBean(ObjectName bean_name) throws InstanceNotFoundException, IntrospectionException, ReflectionException, IOException {
+        return this.mbs.getMBeanInfo( bean_name ).getAttributes();
+    }
+    
+    public Set<ObjectInstance> queryMBeans() throws IOException {
+        return this.mbs.queryMBeans(null, null);
+    }
+    
+    private MBeanServerConnection createConnection() throws IOException {
+        JMXServiceURL address = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/jmxrmi");
+        Map<String,Object> env = new HashMap<String, Object>();
+        env.put( JMXConnector.CREDENTIALS, new String[]{this.user,this.password} );
+        env.put( "jmx.remote.x.request.waiting.timeout", CONNECTION_TIMEOUT);
 
-		if(this.trustStorePath != null && this.trustStorePassword != null) {
-			System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
-			System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
-			LOGGER.info("Setting trustStore path: " + this.trustStorePath + " and trustStorePassword");
-		}
+        if(this.trustStorePath != null && this.trustStorePassword != null) {
+            System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
+            System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
+            LOGGER.info("Setting trustStore path: " + this.trustStorePath + " and trustStorePassword");
+        }
 
-		JMXConnector connector = connectWithTimeout(address, env, 20, TimeUnit.SECONDS);
-		MBeanServerConnection mbs = connector.getMBeanServerConnection();
-		return mbs;
-	}
-	
-	public Object getAttribute(ObjectName objectName, String attributeName) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-		return this.mbs.getAttribute(objectName, attributeName);
-	}
-	
-	/**
-	 * Connect to a MBean Server with a timeout
-	 * This code comes from this blog post:
-	 * https://weblogs.java.net/blog/emcmanus/archive/2007/05/making_a_jmx_co.html
-	 */
-	public static JMXConnector connectWithTimeout(
-			final JMXServiceURL url, final Map<String, Object> env, long timeout, TimeUnit unit)
-					throws IOException {
+        JMXConnector connector = connectWithTimeout(address, env, 20, TimeUnit.SECONDS);
+        MBeanServerConnection mbs = connector.getMBeanServerConnection();
+        return mbs;
+    }
+    
+    public Object getAttribute(ObjectName objectName, String attributeName) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+        return this.mbs.getAttribute(objectName, attributeName);
+    }
+    
+    /**
+     * Connect to a MBean Server with a timeout
+     * This code comes from this blog post:
+     * https://weblogs.java.net/blog/emcmanus/archive/2007/05/making_a_jmx_co.html
+     */
+    public static JMXConnector connectWithTimeout(
+            final JMXServiceURL url, final Map<String, Object> env, long timeout, TimeUnit unit)
+                    throws IOException {
 
-		final BlockingQueue<Object> mailbox = new ArrayBlockingQueue<Object>(1);
+        final BlockingQueue<Object> mailbox = new ArrayBlockingQueue<Object>(1);
 
-		ExecutorService executor =  Executors.newSingleThreadExecutor(daemonThreadFactory);
-		executor.submit(new Runnable() {
-			public void run() {
-				try {
-					JMXConnector connector = JMXConnectorFactory.connect(url, env);
-					if (!mailbox.offer(connector)) {
-						connector.close();
-					}
-				} catch (Throwable t) {
-					mailbox.offer(t);
-				}
-			}
-		});
-		Object result;
-		try {
-			result = mailbox.poll(timeout, unit);
-			if (result == null) {
-				if (!mailbox.offer(""))
-					result = mailbox.take();
-			}
-		} catch (InterruptedException e) {
-			throw initCause(new InterruptedIOException(e.getMessage()), e);
-		} finally {
-			executor.shutdown();
-		}
-		if (result == null) {
-			LOGGER.warn("Connection timed out: " + url);
-			throw new SocketTimeoutException("Connection timed out: " + url);
-		}
-		if (result instanceof JMXConnector) {
-			return (JMXConnector) result;
-		}
-		try {
-			throw (Throwable) result;
-		} catch (Throwable e) {
-			throw new IOException(e.toString(), e);
-		}
-	}
+        ExecutorService executor =  Executors.newSingleThreadExecutor(daemonThreadFactory);
+        executor.submit(new Runnable() {
+            public void run() {
+                try {
+                    JMXConnector connector = JMXConnectorFactory.connect(url, env);
+                    if (!mailbox.offer(connector)) {
+                        connector.close();
+                    }
+                } catch (Throwable t) {
+                    mailbox.offer(t);
+                }
+            }
+        });
+        Object result;
+        try {
+            result = mailbox.poll(timeout, unit);
+            if (result == null) {
+                if (!mailbox.offer(""))
+                    result = mailbox.take();
+            }
+        } catch (InterruptedException e) {
+            throw initCause(new InterruptedIOException(e.getMessage()), e);
+        } finally {
+            executor.shutdown();
+        }
+        if (result == null) {
+            LOGGER.warn("Connection timed out: " + url);
+            throw new SocketTimeoutException("Connection timed out: " + url);
+        }
+        if (result instanceof JMXConnector) {
+            return (JMXConnector) result;
+        }
+        try {
+            throw (Throwable) result;
+        } catch (Throwable e) {
+            throw new IOException(e.toString(), e);
+        }
+    }
 
-	private static <T extends Throwable> T initCause(T wrapper, Throwable wrapped) {
-		wrapper.initCause(wrapped);
-		return wrapper;
-	}
+    private static <T extends Throwable> T initCause(T wrapper, Throwable wrapped) {
+        wrapper.initCause(wrapped);
+        return wrapper;
+    }
 
-	private static class DaemonThreadFactory implements ThreadFactory {
-		public Thread newThread(Runnable r) {
-			Thread t = Executors.defaultThreadFactory().newThread(r);
-			t.setDaemon(true);
-			return t;
-		}
-	}
+    private static class DaemonThreadFactory implements ThreadFactory {
+        public Thread newThread(Runnable r) {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    }
 }
 

@@ -21,10 +21,10 @@ import org.apache.log4j.Level;
 public class AppTest 
     extends TestCase
 {
-	MetricReporter test_metric_reporter = new TestMetricReporter();
-	
-	static SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-	
+    MetricReporter test_metric_reporter = new TestMetricReporter();
+    
+    static SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+    
     /**
      * Create the test case
      *
@@ -34,11 +34,11 @@ public class AppTest
     {
         super( testName );
         try {
-			CustomLogger.setup(Level.toLevel("INFO"), "/tmp/jmxfetch_test.log");
-		} catch (IOException e) {
-			System.out.println("Unable to setup logging");
-			e.printStackTrace();
-		}
+            CustomLogger.setup(Level.toLevel("INFO"), "/tmp/jmxfetch_test.log");
+        } catch (IOException e) {
+            System.out.println("Unable to setup logging");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -46,19 +46,19 @@ public class AppTest
      */
     public static Test suite() throws Exception
     {
-    	// We expose a few metrics through JMX
-		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-		ObjectName name = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp");		
-		mbs.registerMBean(testApp, name);
-		
-		// We initialize the main app that will collect these metrics using JMX
-		String yaml_file_list = "jmx.yaml";
-		String status_file_location = "/tmp/jmxfetch_test.yaml";
-		String confd_directory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
-		confd_directory = confd_directory.substring(0, confd_directory.length() - 8);
-		App.init(confd_directory, yaml_file_list, status_file_location);
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp");       
+        mbs.registerMBean(testApp, name);
         
-		return new TestSuite( AppTest.class );
+        // We initialize the main app that will collect these metrics using JMX
+        String yaml_file_list = "jmx.yaml";
+        String status_file_location = "/tmp/jmxfetch_test.yaml";
+        String confd_directory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
+        confd_directory = confd_directory.substring(0, confd_directory.length() - 8);
+        App.init(confd_directory, yaml_file_list, status_file_location);
+        
+        return new TestSuite( AppTest.class );
     }
 
     /**
@@ -66,183 +66,183 @@ public class AppTest
      * @throws Exception 
      */
     public void testApp() throws Exception {
-    	// We do a first collection
-		App.doIteration(test_metric_reporter);
-		LinkedList<HashMap<String, Object>> metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
-					
-		assertEquals(metrics.size(), 10); // 10 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 1 gauge that is implicitly collected, see jmx.yaml in the test/resources folder
-		
-		// We test for the presence and the value of the metrics we want to collect
-		boolean metric_100_present = false;
-		boolean metric_1000_present = false;
-		boolean counter_absent = true;
-		boolean subattr_0_present = false;
-		boolean subattr_counter_absent = true;
-			
-		for (HashMap<String, Object> m : metrics) {
-			String name = (String)(m.get("name"));
-			Double value = (Double)(m.get("value"));
-			String[] tags = (String[])(m.get("tags"));
-			
-			// All metrics should be tagged with "instance:jmx_test_instance"
-			assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
-			
-			if (name.equals("this.is.100")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 100.0);
-				metric_100_present = true;
-			}
-			
-			else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 1000.0);
-				metric_1000_present = true;
-			}
-			
-			else if (m.get("name").equals("test.counter")) {
-				counter_absent = false;
-		
-			} else if (name.equals("subattr.this.is.0")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 0.0);
-				subattr_0_present = true;
+        // We do a first collection
+        App.doIteration(test_metric_reporter);
+        LinkedList<HashMap<String, Object>> metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
+                    
+        assertEquals(metrics.size(), 10); // 10 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 1 gauge that is implicitly collected, see jmx.yaml in the test/resources folder
+        
+        // We test for the presence and the value of the metrics we want to collect
+        boolean metric_100_present = false;
+        boolean metric_1000_present = false;
+        boolean counter_absent = true;
+        boolean subattr_0_present = false;
+        boolean subattr_counter_absent = true;
+            
+        for (HashMap<String, Object> m : metrics) {
+            String name = (String)(m.get("name"));
+            Double value = (Double)(m.get("value"));
+            String[] tags = (String[])(m.get("tags"));
+            
+            // All metrics should be tagged with "instance:jmx_test_instance"
+            assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
+            
+            if (name.equals("this.is.100")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 100.0);
+                metric_100_present = true;
+            }
+            
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1000.0);
+                metric_1000_present = true;
+            }
+            
+            else if (m.get("name").equals("test.counter")) {
+                counter_absent = false;
+        
+            } else if (name.equals("subattr.this.is.0")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 0.0);
+                subattr_0_present = true;
 
-			} else if(name.equals("subattr.counter")) {
-				subattr_counter_absent = false;
-			}
-		
-		}
-		
-		assertTrue(metric_100_present);
-		assertTrue(metric_1000_present);
-		assertTrue(counter_absent);
-		assertTrue(subattr_0_present);
-		assertTrue(subattr_counter_absent);
-		
-		// We run a second collection. The counter should now be present		
-		App.doIteration(test_metric_reporter);
-		metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
-		assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
-		
-		// We test for the same metrics but this time, the counter should be here
-		metric_100_present = false;
-		metric_1000_present = false;
-		counter_absent = true;
-		
-		for (HashMap<String, Object> m : metrics) {
-			String name = (String)(m.get("name"));
-			Double value = (Double)(m.get("value"));
-			String[] tags = (String[])(m.get("tags"));
-			
-			// All metrics should be tagged with "instance:jmx_test_instance"
-			assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
-			
-			if (name.equals("this.is.100")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 100.0);
-				metric_100_present = true;
-				
-			} else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 1000.0);
-				metric_1000_present = true;
-				
-			} else if (name.equals("test.counter")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
-				counter_absent = false;
-				
-			} else if (name.equals("subattr.this.is.0")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 0.0);
-				subattr_0_present = true;
-			
-			} else if(name.equals("subattr.counter")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
-				subattr_counter_absent = false;
-			}
-			
-		}
-		
-		assertTrue(metric_100_present);
-		assertTrue(metric_1000_present);
-		assertFalse(counter_absent);
-		assertTrue(subattr_0_present);
-		assertFalse(subattr_counter_absent);
-		
-		
-		// We run a 3rd collection but this time we increment the counter and we sleep
-	    Thread.sleep(5000);
-		testApp.incrementCounter(5);
-		testApp.incrementHashMapCounter(5);
-		
-		App.doIteration(test_metric_reporter);
-		metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
-		assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
-		
-		metric_100_present = false;
-		metric_1000_present = false;
-		counter_absent = true;
-		HashMap<String, Integer> jvm_metrics = new HashMap<String, Integer>();
-		jvm_metrics.put("jvm.gc.cms.count", 2);
-		jvm_metrics.put("jvm.gc.parnew.time", 2);
-		jvm_metrics.put("jvm.heap_memory", 1);
-		jvm_metrics.put("jvm.non_heap_memory", 1);
-		jvm_metrics.put("jvm.thread_count", 1);
-		
-		for (HashMap<String, Object> m : metrics) {
-			String name = (String)(m.get("name"));
-			Double value = (Double)(m.get("value"));
-			String[] tags = (String[])(m.get("tags"));
-			
-			// All metrics should be tagged with "instance:jmx_test_instance"
-			assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
-			
-			if (name.equals("this.is.100")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 100.0);
-				metric_100_present = true;
-			} else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 1000.0);
-				metric_1000_present = true;
-			} else if (name.equals("test.counter")) {
-				assertEquals(tags.length, 3);
-				// The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
-				assertTrue(value < 1.00);
-				assertTrue(value > 0.99);
-				counter_absent = false;
-			} else if (name.equals("subattr.this.is.0")) {
-				assertEquals(tags.length, 3);
-				assertEquals(value, 0.0);
-				subattr_0_present = true;
-				
-			} else if(name.equals("subattr.counter")) {
-				assertEquals(tags.length, 3);
-				// The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
-				assertTrue(value < 1.00);
-				assertTrue(value > 0.99);
-				subattr_counter_absent = false;
-								
-			} else {
-				// Those are jvm metrics
-				assertTrue(jvm_metrics.containsKey(name));
-				jvm_metrics.put(name, jvm_metrics.get(name) - 1);
-			}
-			
-			
-		}
-		
-		assertTrue(metric_100_present);
-		assertTrue(metric_1000_present);
-		assertFalse(counter_absent);
-		assertTrue(subattr_0_present);
-		assertFalse(subattr_counter_absent);
-		
-		for (int i : jvm_metrics.values()) {
-			assertEquals(i, 0);
-		}
-				
+            } else if(name.equals("subattr.counter")) {
+                subattr_counter_absent = false;
+            }
+        
+        }
+        
+        assertTrue(metric_100_present);
+        assertTrue(metric_1000_present);
+        assertTrue(counter_absent);
+        assertTrue(subattr_0_present);
+        assertTrue(subattr_counter_absent);
+        
+        // We run a second collection. The counter should now be present        
+        App.doIteration(test_metric_reporter);
+        metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
+        assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        
+        // We test for the same metrics but this time, the counter should be here
+        metric_100_present = false;
+        metric_1000_present = false;
+        counter_absent = true;
+        
+        for (HashMap<String, Object> m : metrics) {
+            String name = (String)(m.get("name"));
+            Double value = (Double)(m.get("value"));
+            String[] tags = (String[])(m.get("tags"));
+            
+            // All metrics should be tagged with "instance:jmx_test_instance"
+            assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
+            
+            if (name.equals("this.is.100")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 100.0);
+                metric_100_present = true;
+                
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1000.0);
+                metric_1000_present = true;
+                
+            } else if (name.equals("test.counter")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
+                counter_absent = false;
+                
+            } else if (name.equals("subattr.this.is.0")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 0.0);
+                subattr_0_present = true;
+            
+            } else if(name.equals("subattr.counter")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
+                subattr_counter_absent = false;
+            }
+            
+        }
+        
+        assertTrue(metric_100_present);
+        assertTrue(metric_1000_present);
+        assertFalse(counter_absent);
+        assertTrue(subattr_0_present);
+        assertFalse(subattr_counter_absent);
+        
+        
+        // We run a 3rd collection but this time we increment the counter and we sleep
+        Thread.sleep(5000);
+        testApp.incrementCounter(5);
+        testApp.incrementHashMapCounter(5);
+        
+        App.doIteration(test_metric_reporter);
+        metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
+        assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        
+        metric_100_present = false;
+        metric_1000_present = false;
+        counter_absent = true;
+        HashMap<String, Integer> jvm_metrics = new HashMap<String, Integer>();
+        jvm_metrics.put("jvm.gc.cms.count", 2);
+        jvm_metrics.put("jvm.gc.parnew.time", 2);
+        jvm_metrics.put("jvm.heap_memory", 1);
+        jvm_metrics.put("jvm.non_heap_memory", 1);
+        jvm_metrics.put("jvm.thread_count", 1);
+        
+        for (HashMap<String, Object> m : metrics) {
+            String name = (String)(m.get("name"));
+            Double value = (Double)(m.get("value"));
+            String[] tags = (String[])(m.get("tags"));
+            
+            // All metrics should be tagged with "instance:jmx_test_instance"
+            assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
+            
+            if (name.equals("this.is.100")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 100.0);
+                metric_100_present = true;
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1000.0);
+                metric_1000_present = true;
+            } else if (name.equals("test.counter")) {
+                assertEquals(tags.length, 3);
+                // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
+                assertTrue(value < 1.00);
+                assertTrue(value > 0.99);
+                counter_absent = false;
+            } else if (name.equals("subattr.this.is.0")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 0.0);
+                subattr_0_present = true;
+                
+            } else if(name.equals("subattr.counter")) {
+                assertEquals(tags.length, 3);
+                // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
+                assertTrue(value < 1.00);
+                assertTrue(value > 0.99);
+                subattr_counter_absent = false;
+                                
+            } else {
+                // Those are jvm metrics
+                assertTrue(jvm_metrics.containsKey(name));
+                jvm_metrics.put(name, jvm_metrics.get(name) - 1);
+            }
+            
+            
+        }
+        
+        assertTrue(metric_100_present);
+        assertTrue(metric_1000_present);
+        assertFalse(counter_absent);
+        assertTrue(subattr_0_present);
+        assertFalse(subattr_counter_absent);
+        
+        for (int i : jvm_metrics.values()) {
+            assertEquals(i, 0);
+        }
+                
     }
 }
