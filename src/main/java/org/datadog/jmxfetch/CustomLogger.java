@@ -15,7 +15,7 @@ public class CustomLogger {
       FileAppender fa = new FileAppender();
       fa.setName("FileLogger");
       fa.setFile(logLocation);
-      fa.setLayout(new PatternLayout("%d %-5p [%c{1}] %m%n"));  
+      fa.setLayout(new PatternLayout("%d | %-5p| %c{1} | %m%n"));  
       fa.setThreshold(level);
       fa.setAppend(true);
       fa.activateOptions();
