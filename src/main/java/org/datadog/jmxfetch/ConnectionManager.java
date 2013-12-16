@@ -32,6 +32,7 @@ public class ConnectionManager {
     public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
         String key = generateKey(connectionParams);
         if (this._connections.containsKey(key) && !forceNewConnection) {
+        	LOGGER.info("Connection already existing for key: " + key + " . Using it...");
             return this._connections.get(key);
         }
         if ( forceNewConnection ){

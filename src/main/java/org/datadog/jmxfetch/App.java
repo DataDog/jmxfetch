@@ -123,6 +123,8 @@ public class App
         while (it.hasNext() ){
             Instance instance = it.next();
             LinkedList<HashMap<String, Object>> metrics;
+            String instanceStatus = Status.STATUS_OK;
+            String instanceMessage = null;
             try {
                 metrics = instance.getMetrics();
             } catch (IOException e) {
@@ -139,27 +141,18 @@ public class App
                 status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
                 _brokenInstances.add(instance);
                 continue;
+            } else if ( instance.isLimitReached()) { 
+            	instanceMessage = "Number of returned metrics is too high for instance: " 
+                        + instance.getName() 
+                        + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
+            	
+            	instanceStatus = Status.STATUS_WARNING;
+            	// We don't want to log the warning at every iteration so we use this custom logger.
+            	CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
-            
-            if ( instance.isLimitReached() ) {
-                 // Max number of metrics reached so we truncate it and add a warning in the status so it appears in the agent info page.
-                
-                LinkedList<HashMap<String, Object>> truncatedMetrics = new LinkedList<HashMap<String, Object>>(metrics.subList(0, instance.getMaxNumberOfMetrics()));
-                metricReporter.sendMetrics(truncatedMetrics, instance.getName());
-                String warning = "Number of returned metrics is too high for instance: " 
-                + instance.getName() 
-                + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
-                status.addInstanceStats(instance.getName(), truncatedMetrics.size(), warning, Status.STATUS_WARNING);
-                
-                 // We don't want to log the warning at every iteration so we use this custom logger.
-                CustomLogger.laconic(LOGGER, Level.WARN, warning, 0);
-                
-            } else {
-                 // All is well
                 metricReporter.sendMetrics(metrics, instance.getName());
-                status.addInstanceStats(instance.getName(), metrics.size(), null, Status.STATUS_OK);
-            }
-
+                status.addInstanceStats(instance.getName(), metrics.size(), instanceMessage, instanceStatus);
+            
         }
         
 

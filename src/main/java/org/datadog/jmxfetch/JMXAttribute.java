@@ -70,7 +70,14 @@ public abstract class JMXAttribute {
      * @return a boolean that tells if the attribute matches the configuration or not
      */
     public abstract boolean match(Configuration conf);
-
+    
+    public int getMetricsCount() {
+    	try {
+			return this.getMetrics().size();
+		} catch (Exception e) {
+			return 0;
+		} 
+    }
 
     protected Object getJmxValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
         return this.connection.getAttribute(this.jmxInstance.getObjectName(), this.attribute.getName());

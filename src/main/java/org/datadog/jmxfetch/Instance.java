@@ -134,7 +134,12 @@ public class Instance {
 
     private void _getMatchingAttributes() {
         this._matchingAttributes = new LinkedList<JMXAttribute>();
+        int metricsCount = 0;
         for( ObjectInstance bean : this._beans) {
+        	if ( this._limitReached ) {
+        		LOGGER.debug("Limit reached. We won't browse more beans");
+        		break;
+        	}
             ObjectName bean_name = bean.getObjectName();    
             MBeanAttributeInfo[] atr;
 
@@ -148,7 +153,7 @@ public class Instance {
             } 
             
             for ( MBeanAttributeInfo a : atr) {
-                if (  _matchingAttributes.size() >= this._maxReturnedMetrics ) {
+                if (  metricsCount >= this._maxReturnedMetrics ) {
                     this._limitReached = true;
                     LOGGER.warn("Maximum number of metrics reached");
                     break;
@@ -173,6 +178,7 @@ public class Instance {
                         if ( jmxAttribute.match(conf) ) {
                             jmxAttribute.matching_conf = conf;
                             this._matchingAttributes.add(jmxAttribute);
+                            metricsCount += jmxAttribute.getMetricsCount();
                             break;
                         }       
                     } catch (Exception e) {
