@@ -72,6 +72,11 @@ public class AppConfig {
     	return this.action.get(0);
     }
     
+    public void setAction(String action) {
+    	// For testing only
+    	this.action = Arrays.asList(action);
+    }
+    
     public boolean isConsoleReporter() {
     	return _isConsoleReporter;
     }

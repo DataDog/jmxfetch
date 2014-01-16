@@ -16,6 +16,9 @@ import junit.framework.TestSuite;
 
 import org.apache.log4j.Level;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
+
 /**
  * Unit test for simple App.
  */
@@ -56,6 +59,8 @@ public class AppTest
         List<String> yaml_file_list = Arrays.asList("jmx.yaml");
         String confd_directory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
         confd_directory = confd_directory.substring(0, confd_directory.length() - 8);
+
+        AppConfig.getInstance().setAction(AppConfig.ACTION_COLLECT);
         App.init(confd_directory, yaml_file_list, false);
         
         return new TestSuite( AppTest.class );
