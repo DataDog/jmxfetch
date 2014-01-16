@@ -5,6 +5,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -52,11 +53,10 @@ public class AppTest
         mbs.registerMBean(testApp, name);
         
         // We initialize the main app that will collect these metrics using JMX
-        String yaml_file_list = "jmx.yaml";
-        String status_file_location = "/tmp/jmxfetch_test.yaml";
+        List<String> yaml_file_list = Arrays.asList("jmx.yaml");
         String confd_directory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
         confd_directory = confd_directory.substring(0, confd_directory.length() - 8);
-        App.init(confd_directory, yaml_file_list, status_file_location);
+        App.init(confd_directory, yaml_file_list);
         
         return new TestSuite( AppTest.class );
     }

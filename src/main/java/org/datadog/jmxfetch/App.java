@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,6 +17,9 @@ import javax.security.auth.login.FailedLoginException;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 
 public class App 
 {
@@ -35,8 +37,19 @@ public class App
     public static void main( String[] args ) {
         
         // Load the config from the args
-        AppConfig config = AppConfig.getInstance(args);
-
+        AppConfig config = AppConfig.getInstance();
+        JCommander jCommander = null;
+        try{
+        	jCommander = new JCommander(config, args);
+        } catch(ParameterException e) {
+        	System.out.println(e.getMessage());
+        	System.exit(1);
+        }
+        if(config.help) {
+        	jCommander.usage();
+        	System.exit(0);
+        }
+        
         // Set up the logger to add file handler
         try {
             CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
@@ -47,16 +60,16 @@ public class App
         LOGGER.info("JMX Fetch has started");
         
         // Set up the metric reporter (Statsd Client)
-        MetricReporter metricReporter = new StatsdMetricReporter(config.statsdPort);
+        MetricReporter metricReporter = config.metricReporter;
 
         // Initiate JMX Connections, get attributes that match the yaml configuration
-        init(config.confdDirectory, config.yamlFileList, config.statusFileLocation);
+        init(config.confdDirectory, config.yamlFileList);
         
         // Set up the shutdown hook to properly close resources
         attachShutdownHook();
         
         // Start the main loop
-        _doLoop(config.loopPeriod, config.confdDirectory, metricReporter, config.yamlFileList, config.statusFileLocation);
+        _doLoop(config.loopPeriod, config.confdDirectory, metricReporter, config.yamlFileList);
         
     }
     
@@ -90,7 +103,7 @@ public class App
     }
 
 
-    private static void _doLoop(int loopPeriod, String confdDirectory, MetricReporter metricReporter, String yamlFileList, String statusFileLocation) {
+    private static void _doLoop(int loopPeriod, String confdDirectory, MetricReporter metricReporter, List<String> yamlFileList) {
         // Main Loop that will periodically collect metrics from the JMX Server
         while(true) {
             long start = System.currentTimeMillis();
@@ -99,7 +112,7 @@ public class App
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
                 status.flush();
-                init(confdDirectory, yamlFileList, statusFileLocation, true);       
+                init(confdDirectory, yamlFileList, true);       
             }
             long length = System.currentTimeMillis() - start;
             LOGGER.debug("Iteration ran in " + length  + " ms");
@@ -204,16 +217,16 @@ public class App
         }
     }
 
-    public static void init(String confdDirectory, String yamlFileList, String statusFileLocation) {
-        init(confdDirectory, yamlFileList, statusFileLocation, false);
+    public static void init(String confdDirectory, List<String> yamlFilesList) {
+        init(confdDirectory, yamlFilesList, false);
         
     }
     @SuppressWarnings("unchecked")
-    public static void init(String confdDirectory, String yamlFileList, String statusFileLocation, boolean forceNewConnection) {
+    public static void init(String confdDirectory, final List<String> yamlList, boolean forceNewConnection) {
         
         // Set up the Status writer
         status = Status.getInstance();
-        status.configure(statusFileLocation);
+ 
         
         // Reset the list of instances
         _brokenInstances = new LinkedList<Instance>();
@@ -221,7 +234,7 @@ public class App
         
         // Load JMX Yaml files              
         File conf_d_dir = new File(confdDirectory);
-        final List<String> yamlList = Arrays.asList(yamlFileList.split(","));
+     
         
         // Filter the files in the directory to only get valid yaml files
         File[] files = conf_d_dir.listFiles(new FilenameFilter() {
@@ -317,44 +330,4 @@ public class App
         return _loopCounter;
     }
     
-    public static class AppConfig {
-        private static volatile AppConfig _instance = null;
-        
-        public String confdDirectory = null;
-        public int statsdPort = 0;
-        public int loopPeriod = 0;
-        public String logLocation = null;
-        public String logLevel = null;
-        public String statusFileLocation = null;
-        public String yamlFileList = null;
-        
-        public static AppConfig getInstance(String[] args) {
-            if (_instance == null) {
-                _instance = new AppConfig(args);
-            }
-            return _instance;
-        }
-        
-        private AppConfig(String[] args) {
-            // We check the arguments passed are valid
-            if (args.length != 7) {
-                // TODO: Add a real args parser here
-                LOGGER.fatal("All arguments are required!");
-                System.exit(1);
-            }
-            try{
-                confdDirectory = args[0];
-                statsdPort = Integer.valueOf(args[1]);
-                loopPeriod = Integer.valueOf(args[2]);
-                logLocation = args[3];
-                logLevel = args[4];
-                yamlFileList = args[5];
-                statusFileLocation = args[6];           
-            } catch (Exception e) {
-                LOGGER.fatal("Arguments are not valid.", e);
-                System.exit(1);
-            }
-            
-        }
-    }
 }
