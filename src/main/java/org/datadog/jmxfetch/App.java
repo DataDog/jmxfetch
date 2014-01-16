@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.security.auth.login.FailedLoginException;
 
@@ -219,8 +221,29 @@ public class App
 
     public static void init(String confdDirectory, List<String> yamlFilesList) {
         init(confdDirectory, yamlFilesList, false);
-        
+       
     }
+    
+    private static HashMap<String, YamlParser> _getConfigs(String confdDirectory, final List<String> yamlList) {
+    	HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
+    	YamlParser fileConfig;
+    	for (String fileName : yamlList) {
+    		File f = new File(confdDirectory, fileName);
+    		String name = f.getName().replace(".yaml", "");
+    		try {
+    			LOGGER.info("Reading " + f.getAbsolutePath());
+				fileConfig = new YamlParser(f.getAbsolutePath());
+				configs.put(name, fileConfig);
+			} catch (FileNotFoundException e) {
+				LOGGER.warn("Cannot find " + f.getAbsolutePath());
+			} catch (Exception e) {
+                LOGGER.warn("Cannot parse yaml file " + f.getAbsolutePath(), e);
+			}
+    	}
+    	LOGGER.info("Found " + configs.size() + " config files");
+    	return configs;
+    }
+    
     @SuppressWarnings("unchecked")
     public static void init(String confdDirectory, final List<String> yamlList, boolean forceNewConnection) {
         
@@ -232,74 +255,29 @@ public class App
         _brokenInstances = new LinkedList<Instance>();
         _instances = new ArrayList<Instance>();
         
-        // Load JMX Yaml files              
-        File conf_d_dir = new File(confdDirectory);
-     
+        HashMap<String, YamlParser> configs = _getConfigs(confdDirectory, yamlList);
         
-        // Filter the files in the directory to only get valid yaml files
-        File[] files = conf_d_dir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                String extension = null;
-                int i = name.lastIndexOf('.');
-                if (i > 0) {
-                    extension = name.substring(i+1);
-                }
-                if (extension == null) {
-                    return false;
-                }
-                if (!extension.equals("yaml")) {
-                    return false;
-                }
-                if (yamlList.contains(name)) {
-                    return true;
-                } else {
-                    YamlParser config;
-                    File file = new File(dir.getAbsolutePath(), name);
-                    try {
-                        config = new YamlParser(file.getAbsolutePath());
-                        return config.isJmx();
-                    } catch (FileNotFoundException e) {
-                        LOGGER.warn("Cannot find " + file.getAbsolutePath());
-                        return false;
-                    } catch (Exception e) {
-                        LOGGER.warn("Cannot parse yaml file " + file.getAbsolutePath(), e);
-                        return false;
-                    }               
-                }
-            }
-        });
-
-        LOGGER.info("Found " + files.length + " yaml files.");
-
-        // Iterate over all JMX Yaml files
-        for (File file : files) {
-            YamlParser config;
-            String path = file.getAbsolutePath();
-            String name = file.getName().replace(".yaml", "");
-            try {
-                LOGGER.info("Reading " + path);
-                config = new YamlParser(path);
-            } catch (FileNotFoundException e) {
-                LOGGER.warn("Cannot find " + path);
-                continue;
-            } catch (Exception e) {
-                LOGGER.warn("Cannot parse yaml file " + path, e);
-                continue;
-            }
-
+        Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, YamlParser> entry = (Map.Entry<String, YamlParser>)it.next();
+            String name = entry.getKey();
+            YamlParser config = entry.getValue();
+            it.remove(); 
+            
+   
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) config.getYamlInstances());
             if ( configInstances == null || configInstances.size() == 0) {
-                String warning = "No instance found in :" + path;
+                String warning = "No instance found in :" + name;
                 LOGGER.warn(warning);
                 status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
                 continue;
             }
+            
             for(Iterator<LinkedHashMap<String,Object>> i = configInstances.iterator(); i.hasNext(); ) { 
                 Instance instance = null;
                 //Create a new Instance object
                 try {
-                    String check_name = file.getName().replace(".yaml", "");
-                    instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) config.getInitConfig()), check_name);
+                    instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) config.getInitConfig()), name);
                 } catch(Exception e) {
                     String warning = "Unable to create instance. Please check your yaml file";
                     status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
