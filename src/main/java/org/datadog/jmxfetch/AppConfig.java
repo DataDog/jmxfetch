@@ -13,19 +13,8 @@ import com.beust.jcommander.Parameters;
 @Parameters(separators = "=")
 public class AppConfig {
 	private static volatile AppConfig _instance = null;
-  
-    public static AppConfig getInstance() {
-        if (_instance == null) {
-            _instance = new AppConfig();
-        }
-        return _instance;
-    }
-    
-    private AppConfig(){
-    	// A private constructor to make sure that only one instance will be created
-    }
-
 	private static final List<String> LOG4J_LEVELS = Arrays.asList("ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL");
+	
 	
 	@Parameter(names = {"--help", "-h"}, help = true, description = "Display this help page")
 	public boolean help;
@@ -50,14 +39,24 @@ public class AppConfig {
 	@Parameter(names= {"--check_period", "-p"}, description = "Sleeping time during two iterations in ms", validateWith = PositiveInteger.class, required = false)
 	public int loopPeriod = 15000;
 
-	@Parameter(names= {"--status_location", "-s"}, description = "Absolute path of the status file. (default to null = no status file written)", validateWith = LogWritableLocation.class,
+	@Parameter(names= {"--status_location", "-s"}, description = "Absolute path of the status file. (default to null = no status file written)", validateWith = StatusWritableLocation.class,
 			converter = StatusWritableLocation.class, required = false)
 	public Status status = null;
 	
 	@Parameter(description="Action to take, should be either \"collect\" or \"list\"", required = true)
 	public List<String> action = new ArrayList<String>();
 	
-	
+	public static AppConfig getInstance() {
+        if (_instance == null) {
+            _instance = new AppConfig();
+        }
+        return _instance;
+    }
+    
+    private AppConfig(){
+    	// A private constructor to make sure that only one instance will be created
+    }
+
 	public static class StatusWritableLocation implements IParameterValidator, IStringConverter<Status> {
 		public void validate(String name, String value) {
 			File f = new File(value);
@@ -75,7 +74,7 @@ public class AppConfig {
 		}
 	}
 
-	public class LogWritableLocation implements IParameterValidator {
+	public static class LogWritableLocation implements IParameterValidator {
 		public void validate(String name, String value) {
 			File f = new File(value);
 			if (!f.canWrite()) {
@@ -128,7 +127,7 @@ public class AppConfig {
 		}
 	}
 
-	public class Log4JLevelValidator implements IParameterValidator {
+	public static class Log4JLevelValidator implements IParameterValidator {
 		public void validate(String name, String value)
 				throws ParameterException {
 
@@ -143,7 +142,7 @@ public class AppConfig {
 
 	}
 
-	public class PositiveInteger implements IParameterValidator {
+	public static class PositiveInteger implements IParameterValidator {
 		public void validate(String name, String value)
 				throws ParameterException {
 			int n = Integer.parseInt(value);
@@ -152,5 +151,8 @@ public class AppConfig {
 			}
 		}
 	}
+	
+	
+	
 
 }
