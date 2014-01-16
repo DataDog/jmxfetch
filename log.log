@@ -1,0 +1,11 @@
+2014-01-16 17:25:48,517 | INFO | CustomLogger | File Handler set
+2014-01-16 17:25:48,518 | INFO | App | JMX Fetch has started
+2014-01-16 17:25:48,519 | INFO | App | Reading /Users/remi/datadog/dd-agent/conf.d/tomcat.yaml
+2014-01-16 17:25:48,598 | INFO | App | Reading /Users/remi/datadog/dd-agent/conf.d/machin.ta
+2014-01-16 17:25:48,598 | WARN | App | Cannot find /Users/remi/datadog/dd-agent/conf.d/machin.ta
+2014-01-16 17:25:48,598 | INFO | App | Found 1 config files
+2014-01-16 17:25:48,607 | INFO | Instance | Trying to connect to JMX Server at remihakim.fr:3000
+2014-01-16 17:25:48,608 | INFO | ConnectionManager | Connection not existing. Creating new connection
+2014-01-16 17:25:49,583 | INFO | Instance | Connected to JMX Server at remihakim.fr:3000
+2014-01-16 17:26:05,118 | INFO | Instance | Found 40 matching attributes
+2014-01-16 17:26:05,119 | INFO | App | JMXFetch is closing

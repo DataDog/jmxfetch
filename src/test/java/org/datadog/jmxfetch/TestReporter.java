@@ -5,7 +5,7 @@ import java.util.LinkedList;
 
 import javax.management.ObjectName;
 
-public class TestMetricReporter extends MetricReporter{
+public class TestReporter extends Reporter{
     
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
 
@@ -39,6 +39,10 @@ public class TestMetricReporter extends MetricReporter{
 	}
 
 	public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
+		throw new UnsupportedOperationException();		
+	}
+	
+	public void displayInstanceName(Instance instance) {
 		throw new UnsupportedOperationException();		
 	}
     

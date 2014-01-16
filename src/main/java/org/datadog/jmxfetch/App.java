@@ -74,14 +74,14 @@ public class App
         LOGGER.info("JMX Fetch has started");
            
         // Set up the metric reporter (Statsd Client)
-        MetricReporter metricReporter = config.metricReporter;
+        Reporter reporter = config.reporter;
         
         // Initiate JMX Connections, get attributes that match the yaml configuration
         init(config.confdDirectory, config.yamlFileList, false);
 
         if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
         	// Start the main loop
-        	_doLoop(config.loopPeriod, config.confdDirectory, metricReporter, config.yamlFileList);
+        	_doLoop(config.loopPeriod, config.confdDirectory, reporter, config.yamlFileList);
         }
         
     }
@@ -116,12 +116,12 @@ public class App
     }
 
 
-    private static void _doLoop(int loopPeriod, String confdDirectory, MetricReporter metricReporter, List<String> yamlFileList) {
+    private static void _doLoop(int loopPeriod, String confdDirectory, Reporter reporter, List<String> yamlFileList) {
         // Main Loop that will periodically collect metrics from the JMX Server
         while(true) {
             long start = System.currentTimeMillis();
             if (_instances.size() > 0) {
-                doIteration(metricReporter);
+                doIteration(reporter);
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
                 status.flush();
@@ -142,7 +142,7 @@ public class App
 
     
 
-    public static void doIteration(MetricReporter metricReporter) { 
+    public static void doIteration(Reporter metricReporter) { 
         _loopCounter++;
 
         Iterator<Instance> it = _instances.iterator();

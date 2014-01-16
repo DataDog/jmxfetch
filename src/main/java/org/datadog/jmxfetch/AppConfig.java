@@ -41,8 +41,8 @@ public class AppConfig {
 	public String confdDirectory = null;
 
 	@Parameter(names = {"--reporter", "-r"}, description = "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"", 
-			validateWith = MetricReporterConverter.class, converter = MetricReporterConverter.class, required = false)
-	public MetricReporter metricReporter = new ConsoleReporter();
+			validateWith = ReporterConverter.class, converter = ReporterConverter.class, required = false)
+	public Reporter reporter = new ConsoleReporter();
 
 	@Parameter(names = {"--check", "-c"}, description = "Yaml file name to read (must be in the confd directory)", required = true, variableArity = true)
 	public List<String> yamlFileList;
@@ -111,8 +111,8 @@ public class AppConfig {
 		}
 	}
 
-	public static class MetricReporterConverter implements IParameterValidator, IStringConverter<MetricReporter> {
-		private static MetricReporter _reporter;
+	public static class ReporterConverter implements IParameterValidator, IStringConverter<Reporter> {
+		private static Reporter _reporter;
 
 		public void validate(String name, String value)
 				throws ParameterException {
@@ -141,7 +141,7 @@ public class AppConfig {
 					throw new ParameterException("Statsd port should be > 0");
 				}
 
-				_reporter = new StatsdMetricReporter(port);
+				_reporter = new StatsdReporter(port);
 
 			} else {	
 				//Reporter is console
@@ -150,7 +150,7 @@ public class AppConfig {
 			}
 		}
 
-		public MetricReporter convert(String value) {
+		public Reporter convert(String value) {
 			// _reporter should have been set during validation
 			return _reporter;
 		}

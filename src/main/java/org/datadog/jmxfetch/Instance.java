@@ -133,12 +133,17 @@ public class Instance {
 	}
 
 	private void _getMatchingAttributes() {
-		MetricReporter reporter = AppConfig.getInstance().metricReporter;
+		Reporter reporter = AppConfig.getInstance().reporter;
 		String action = AppConfig.getInstance().getAction();
 		boolean metricReachedDisplayed = false;
 
 		this._matchingAttributes = new LinkedList<JMXAttribute>();
 		int metricsCount = 0;
+		
+		if ( !action.equals(AppConfig.ACTION_COLLECT)) {
+			reporter.displayInstanceName(this);
+		}
+		
 		for( ObjectInstance bean : this._beans) {
 			if ( this._limitReached) {
 				LOGGER.debug("Limit reached");

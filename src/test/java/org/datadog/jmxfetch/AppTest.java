@@ -16,16 +16,13 @@ import junit.framework.TestSuite;
 
 import org.apache.log4j.Level;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
-
 /**
  * Unit test for simple App.
  */
 public class AppTest 
     extends TestCase
 {
-    MetricReporter test_metric_reporter = new TestMetricReporter();
+    Reporter test_metric_reporter = new TestReporter();
     
     static SimpleTestJavaApp testApp = new SimpleTestJavaApp();
     
@@ -73,7 +70,7 @@ public class AppTest
     public void testApp() throws Exception {
         // We do a first collection
         App.doIteration(test_metric_reporter);
-        LinkedList<HashMap<String, Object>> metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
+        LinkedList<HashMap<String, Object>> metrics = ((TestReporter) test_metric_reporter).getMetrics();
                     
         assertEquals(metrics.size(), 10); // 10 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 1 gauge that is implicitly collected, see jmx.yaml in the test/resources folder
         
@@ -126,7 +123,7 @@ public class AppTest
         
         // We run a second collection. The counter should now be present        
         App.doIteration(test_metric_reporter);
-        metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
+        metrics = ((TestReporter) test_metric_reporter).getMetrics();
         assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
         
         // We test for the same metrics but this time, the counter should be here
@@ -183,7 +180,7 @@ public class AppTest
         testApp.incrementHashMapCounter(5);
         
         App.doIteration(test_metric_reporter);
-        metrics = ((TestMetricReporter) test_metric_reporter).getMetrics();
+        metrics = ((TestReporter) test_metric_reporter).getMetrics();
         assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
         
         metric_100_present = false;

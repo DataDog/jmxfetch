@@ -3,9 +3,7 @@ package org.datadog.jmxfetch;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import javax.management.ObjectName;
-
-public class ConsoleReporter extends MetricReporter{
+public class ConsoleReporter extends Reporter{
 
 	private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
 
@@ -33,12 +31,6 @@ public class ConsoleReporter extends MetricReporter{
 	}
 
 	@Override
-	public void displayBeanName(ObjectName beanName) {
-		System.out.println(beanName);
-		
-	}
-
-	@Override
 	public void displayMetricReached() {
 		System.out.println();
 		System.out.println();
@@ -51,13 +43,18 @@ public class ConsoleReporter extends MetricReporter{
 
 	@Override
 	public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank) {
-		System.out.println("       Matching: " + rank + ". " + jmxAttribute); //.attribute.getName());
+		System.out.println("       Matching: " + rank + ". " + jmxAttribute);
 		
 	}
 
 	@Override
 	public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-		System.out.println("       Not Matching: " + jmxAttribute);// 	.attribute.getName());
+		System.out.println("       Not Matching: " + jmxAttribute);
+	}
+
+	@Override
+	public void displayInstanceName(Instance instance) {
+		System.out.println("Instance: " + instance);
 		
 	}
 
