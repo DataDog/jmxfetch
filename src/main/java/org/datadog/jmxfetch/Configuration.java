@@ -22,4 +22,8 @@ public class Configuration {
         }
     }
     
+    public String toString() {
+    	return "include: " + this.include + " - exclude: " + this.exclude;
+    }
+    
 }

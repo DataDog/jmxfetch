@@ -3,6 +3,8 @@ package org.datadog.jmxfetch;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import javax.management.ObjectName;
+
 public class TestMetricReporter extends MetricReporter{
     
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
@@ -23,5 +25,21 @@ public class TestMetricReporter extends MetricReporter{
         metrics = new LinkedList<HashMap<String, Object>>();
         return returned_metrics;
     }
+
+    public void displayBeanName(ObjectName beanName) {
+		throw new UnsupportedOperationException();
+	}
+
+	public void displayMetricReached() {
+		throw new UnsupportedOperationException();		
+	}
+
+	public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank) {
+		throw new UnsupportedOperationException();		
+	}
+
+	public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
+		throw new UnsupportedOperationException();		
+	}
     
 }

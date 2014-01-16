@@ -47,31 +47,43 @@ public class App
         	System.out.println(e.getMessage());
         	System.exit(1);
         }
-        if(config.help) {
+        if(config.help || config.getAction().equals(AppConfig.ACTION_HELP)) {
         	jCommander.usage();
         	System.exit(0);
         }
         
         // Set up the logger to add file handler
         try {
-            CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
+        	CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
         } catch (IOException e) {
             LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
         }
         
-        LOGGER.info("JMX Fetch has started");
+        if (!AppConfig.ACTIONS.contains(config.getAction())) {
+        	LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
+        	System.exit(1);
+        }
         
-        // Set up the metric reporter (Statsd Client)
-        MetricReporter metricReporter = config.metricReporter;
-
-        // Initiate JMX Connections, get attributes that match the yaml configuration
-        init(config.confdDirectory, config.yamlFileList);
+        if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
+        	LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
+        	System.exit(1);
+        }
         
         // Set up the shutdown hook to properly close resources
         attachShutdownHook();
+    
+        LOGGER.info("JMX Fetch has started");
+           
+        // Set up the metric reporter (Statsd Client)
+        MetricReporter metricReporter = config.metricReporter;
         
-        // Start the main loop
-        _doLoop(config.loopPeriod, config.confdDirectory, metricReporter, config.yamlFileList);
+        // Initiate JMX Connections, get attributes that match the yaml configuration
+        init(config.confdDirectory, config.yamlFileList, false);
+
+        if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
+        	// Start the main loop
+        	_doLoop(config.loopPeriod, config.confdDirectory, metricReporter, config.yamlFileList);
+        }
         
     }
     
@@ -218,12 +230,7 @@ public class App
             LOGGER.error("Unable to flush stats.", e);
         }
     }
-
-    public static void init(String confdDirectory, List<String> yamlFilesList) {
-        init(confdDirectory, yamlFilesList, false);
-       
-    }
-    
+   
     private static HashMap<String, YamlParser> _getConfigs(String confdDirectory, final List<String> yamlList) {
     	HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
     	YamlParser fileConfig;
@@ -243,14 +250,12 @@ public class App
     	LOGGER.info("Found " + configs.size() + " config files");
     	return configs;
     }
-    
+      
     @SuppressWarnings("unchecked")
     public static void init(String confdDirectory, final List<String> yamlList, boolean forceNewConnection) {
         
-        // Set up the Status writer
         status = Status.getInstance();
  
-        
         // Reset the list of instances
         _brokenInstances = new LinkedList<Instance>();
         _instances = new ArrayList<Instance>();

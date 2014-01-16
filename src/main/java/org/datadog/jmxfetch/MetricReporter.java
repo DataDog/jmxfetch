@@ -3,6 +3,8 @@ package org.datadog.jmxfetch;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import javax.management.ObjectName;
+
 import org.apache.log4j.Logger;
 
 
@@ -105,5 +107,13 @@ public abstract class MetricReporter {
 
 
     protected abstract void _sendMetricPoint(String metricName, double value, String[] tags);
+
+	public abstract void displayBeanName(ObjectName beanName);
+
+	public abstract void displayMetricReached();
+
+	public abstract void displayNonMatchingAttributeName(JMXAttribute jmxAttribute);
+	
+	public abstract void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank);
 
 }
