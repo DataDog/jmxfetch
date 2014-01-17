@@ -5,7 +5,6 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -16,14 +15,16 @@ import junit.framework.TestSuite;
 
 import org.apache.log4j.Level;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
+
 /**
  * Unit test for simple App.
  */
 public class AppTest 
     extends TestCase
 {
-    Reporter test_metric_reporter = new TestReporter();
-    
+	
     static SimpleTestJavaApp testApp = new SimpleTestJavaApp();
     
     /**
@@ -35,7 +36,7 @@ public class AppTest
     {
         super( testName );
         try {
-            CustomLogger.setup(Level.toLevel("INFO"), "/tmp/jmxfetch_test.log");
+            CustomLogger.setup(Level.toLevel("ALL"), "/tmp/jmxfetch_test.log");
         } catch (IOException e) {
             System.out.println("Unable to setup logging");
             e.printStackTrace();
@@ -53,12 +54,22 @@ public class AppTest
         mbs.registerMBean(testApp, name);
         
         // We initialize the main app that will collect these metrics using JMX
-        List<String> yaml_file_list = Arrays.asList("jmx.yaml");
-        String confd_directory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
-        confd_directory = confd_directory.substring(0, confd_directory.length() - 8);
+        String confdDirectory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
+        confdDirectory = confdDirectory.substring(0, confdDirectory.length() - 8);
+        
 
-        AppConfig.getInstance().setAction(AppConfig.ACTION_COLLECT);
-        App.init(confd_directory, yaml_file_list, false);
+    	String[] params = {"--reporter", "console",  "-c", "jmx.yaml", "--conf_directory", confdDirectory, "collect"};
+
+        AppConfig config = AppConfig.getInstance();
+        try{
+        	// Try to parse the args using JCommander
+        	new JCommander(config, params);
+        } catch(ParameterException e) {
+        	System.out.println(e.getMessage());
+        	System.exit(1);
+        }
+        
+        App.init(config, false);
         
         return new TestSuite( AppTest.class );
     }
@@ -69,8 +80,9 @@ public class AppTest
      */
     public void testApp() throws Exception {
         // We do a first collection
-        App.doIteration(test_metric_reporter);
-        LinkedList<HashMap<String, Object>> metrics = ((TestReporter) test_metric_reporter).getMetrics();
+    	AppConfig config = AppConfig.getInstance();
+        App.doIteration(config);
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) config.reporter).getMetrics();
                     
         assertEquals(metrics.size(), 10); // 10 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 1 gauge that is implicitly collected, see jmx.yaml in the test/resources folder
         
@@ -122,8 +134,8 @@ public class AppTest
         assertTrue(subattr_counter_absent);
         
         // We run a second collection. The counter should now be present        
-        App.doIteration(test_metric_reporter);
-        metrics = ((TestReporter) test_metric_reporter).getMetrics();
+        App.doIteration(config);
+        metrics = ((ConsoleReporter) config.reporter).getMetrics();
         assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
         
         // We test for the same metrics but this time, the counter should be here
@@ -179,8 +191,8 @@ public class AppTest
         testApp.incrementCounter(5);
         testApp.incrementHashMapCounter(5);
         
-        App.doIteration(test_metric_reporter);
-        metrics = ((TestReporter) test_metric_reporter).getMetrics();
+        App.doIteration(config);
+        metrics = ((ConsoleReporter) config.reporter).getMetrics();
         assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
         
         metric_100_present = false;

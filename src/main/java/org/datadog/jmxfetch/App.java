@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -28,12 +27,12 @@ public class App
     private static LinkedList<Instance> _brokenInstances = new LinkedList<Instance>();
     private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
     private static int _loopCounter;
-    private static Status status = null;
+
     
     /**
-     * Main entry of JMX Fetch
-     * Args are not parsed so far, hence order matters
-     * See AppConfig class for more details
+     * Main entry of JMXFetch
+     * 
+     * See AppConfig class for more details on the args
      */
     public static void main( String[] args ) {
         
@@ -41,11 +40,14 @@ public class App
         AppConfig config = AppConfig.getInstance();
         JCommander jCommander = null;
         try{
+        	// Try to parse the args using JCommander
         	jCommander = new JCommander(config, args);
         } catch(ParameterException e) {
         	System.out.println(e.getMessage());
         	System.exit(1);
         }
+        
+        // Display the help and quit
         if(config.help || config.getAction().equals(AppConfig.ACTION_HELP)) {
         	jCommander.usage();
         	System.exit(0);
@@ -58,11 +60,14 @@ public class App
             LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
         }
         
+        
+        // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(config.getAction())) {
         	LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
         	System.exit(1);
         }
         
+        // The "list_*" actions can only be used with the reporter
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
         	LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
         	System.exit(1);
@@ -73,21 +78,19 @@ public class App
     
         LOGGER.info("JMX Fetch has started");
            
-        // Set up the metric reporter (Statsd Client)
-        Reporter reporter = config.reporter;
-        
-        // Initiate JMX Connections, get attributes that match the yaml configuration
-        init(config.confdDirectory, config.yamlFileList, false);
+         // Initiate JMX Connections, get attributes that match the yaml configuration
+        init(config, false);
 
+        // We don't want to loop if the action is list_* as it's just used for display information about what will be collected
         if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
         	// Start the main loop
-        	_doLoop(config.loopPeriod, config.confdDirectory, reporter, config.yamlFileList);
+        	_doLoop(config);
         }
         
     }
     
     /**
-     * Attach a Shutdown Hook that will be called when SIGTERM will be send to JMXFetch
+     * Attach a Shutdown Hook that will be called when SIGTERM is sent to JMXFetch
      */
     @SuppressWarnings("unchecked")
     private static void attachShutdownHook() {
@@ -116,23 +119,23 @@ public class App
     }
 
 
-    private static void _doLoop(int loopPeriod, String confdDirectory, Reporter reporter, List<String> yamlFileList) {
-        // Main Loop that will periodically collect metrics from the JMX Server
+    private static void _doLoop(AppConfig config) { 
+    	// Main Loop that will periodically collect metrics from the JMX Server
         while(true) {
             long start = System.currentTimeMillis();
             if (_instances.size() > 0) {
-                doIteration(reporter);
+                doIteration(config);
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
-                status.flush();
-                init(confdDirectory, yamlFileList, true);       
+                config.status.flush();
+                init(config, true);       
             }
             long length = System.currentTimeMillis() - start;
             LOGGER.debug("Iteration ran in " + length  + " ms");
             // Sleep until next collection
             try {
-                LOGGER.debug("Sleeping for " + loopPeriod + " ms.");
-                Thread.sleep(loopPeriod);
+                LOGGER.debug("Sleeping for " + config.loopPeriod + " ms.");
+                Thread.sleep(config.loopPeriod);
             } catch (InterruptedException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
@@ -142,9 +145,10 @@ public class App
 
     
 
-    public static void doIteration(Reporter metricReporter) { 
+    public static void doIteration(AppConfig config) { 
         _loopCounter++;
-
+        Reporter reporter = config.reporter;
+    
         Iterator<Instance> it = _instances.iterator();
         while (it.hasNext() ){
             Instance instance = it.next();
@@ -156,7 +160,7 @@ public class App
             } catch (IOException e) {
                 String warning = "Unable to refresh bean list for instance " + instance;
                 LOGGER.warn(warning, e);
-                status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
                 _brokenInstances.add(instance);
                 continue;
             }
@@ -164,7 +168,7 @@ public class App
             if (metrics.size() == 0) {
                 String warning = "Instance " + instance + " didn't return any metrics";
                 LOGGER.warn(warning);
-                status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
                 _brokenInstances.add(instance);
                 continue;
             } else if ( instance.isLimitReached()) { 
@@ -176,8 +180,8 @@ public class App
             	// We don't want to log the warning at every iteration so we use this custom logger.
             	CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
-                metricReporter.sendMetrics(metrics, instance.getName());
-                status.addInstanceStats(instance.getName(), metrics.size(), instanceMessage, instanceStatus);
+                reporter.sendMetrics(metrics, instance.getName());
+                config.status.addInstanceStats(instance.getName(), metrics.size(), instanceMessage, instanceStatus);
             
         }
         
@@ -188,7 +192,7 @@ public class App
             Instance instance = it.next();
             
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
-            metricReporter.clearRatesAggregator(instance.getName());
+            reporter.clearRatesAggregator(instance.getName());
             
             LOGGER.warn("Instance " + instance + " didn't return any metrics. Maybe the server got disconnected ? Trying to reconnect.");
             
@@ -196,7 +200,7 @@ public class App
             _instances.remove(instance);
             
             // Resetting the instance
-            Instance newInstance = new Instance(instance.getYaml(), instance.getInitConfig(), instance.getCheckName());
+            Instance newInstance = new Instance(instance.getYaml(), instance.getInitConfig(), instance.getCheckName(), config);
             try {
                 // Try to reinit the connection and force to renew it
                 LOGGER.info("Trying to reconnecting to: " + newInstance);
@@ -207,34 +211,34 @@ public class App
             } catch (IOException e) {
                 String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
                 LOGGER.warn(warning);
-                status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
             } catch (SecurityException e) {
                 String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
                 LOGGER.warn(warning);
-                status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
             } catch (FailedLoginException e) {
                 String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
                 LOGGER.warn(warning);
-                status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
             } catch (Exception e) {
                 String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
                 LOGGER.fatal(warning, e);
-                status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
             }
         }
         
         try {
-            status.flush();
+            config.status.flush();
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
         }
     }
    
-    private static HashMap<String, YamlParser> _getConfigs(String confdDirectory, final List<String> yamlList) {
+    private static HashMap<String, YamlParser> _getConfigs(AppConfig config) {
     	HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
     	YamlParser fileConfig;
-    	for (String fileName : yamlList) {
-    		File f = new File(confdDirectory, fileName);
+    	for (String fileName : config.yamlFileList) {
+    		File f = new File(config.confdDirectory, fileName);
     		String name = f.getName().replace(".yaml", "");
     		try {
     			LOGGER.info("Reading " + f.getAbsolutePath());
@@ -251,29 +255,27 @@ public class App
     }
       
     @SuppressWarnings("unchecked")
-    public static void init(String confdDirectory, final List<String> yamlList, boolean forceNewConnection) {
+    public static void init(AppConfig config, boolean forceNewConnection) {
         
-        status = Status.getInstance();
- 
-        // Reset the list of instances
+    	// Reset the list of instances
         _brokenInstances = new LinkedList<Instance>();
         _instances = new ArrayList<Instance>();
         
-        HashMap<String, YamlParser> configs = _getConfigs(confdDirectory, yamlList);
+        HashMap<String, YamlParser> configs = _getConfigs(config);
         
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, YamlParser> entry = (Map.Entry<String, YamlParser>)it.next();
             String name = entry.getKey();
-            YamlParser config = entry.getValue();
+            YamlParser yamlConfig = entry.getValue();
             it.remove(); 
             
    
-            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) config.getYamlInstances());
+            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
             if ( configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
                 LOGGER.warn(warning);
-                status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
                 continue;
             }
             
@@ -281,10 +283,10 @@ public class App
                 Instance instance = null;
                 //Create a new Instance object
                 try {
-                    instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) config.getInitConfig()), name);
+                    instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) yamlConfig.getInitConfig()), name, config);
                 } catch(Exception e) {
                     String warning = "Unable to create instance. Please check your yaml file";
-                    status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
+                    config.status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning, e);
                     continue;
                 }
@@ -295,12 +297,12 @@ public class App
                 } catch (IOException e) {
                     _brokenInstances.add(instance);
                     String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
-                    status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                    config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
                 } catch (Exception e) {
                     _brokenInstances.add(instance);
                     String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
-                    status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                    config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning, e);
                 }
             }
@@ -311,5 +313,5 @@ public class App
     public static int getLoopCounter() {
         return _loopCounter;
     }
-    
+   
 }

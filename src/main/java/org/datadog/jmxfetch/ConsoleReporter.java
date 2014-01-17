@@ -12,7 +12,15 @@ public class ConsoleReporter extends Reporter{
 		String tagString = "[" + join(", ", tags) + "]";
 		System.out.println(metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
+		HashMap<String, Object> m = new HashMap<String, Object>();
+
+		m.put("name", metricName);
+		m.put("value", value);
+		m.put("tags", tags);
+		metrics.add(m);
+
 	}
+
 
 	public LinkedList<HashMap<String, Object>> getMetrics() {
 		LinkedList<HashMap<String, Object>> returned_metrics = metrics;
@@ -44,7 +52,7 @@ public class ConsoleReporter extends Reporter{
 	@Override
 	public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank) {
 		System.out.println("       Matching: " + rank + ". " + jmxAttribute);
-		
+
 	}
 
 	@Override
@@ -55,7 +63,7 @@ public class ConsoleReporter extends Reporter{
 	@Override
 	public void displayInstanceName(Instance instance) {
 		System.out.println("Instance: " + instance);
-		
+
 	}
 
 }

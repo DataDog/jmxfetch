@@ -36,11 +36,13 @@ public class Instance {
 	private int _maxReturnedMetrics;
 	private boolean _limitReached;
 	private Connection _connection;
+	private AppConfig config;
 
 
 	@SuppressWarnings("unchecked")
-	public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> init_config, String checkName) 
+	public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> init_config, String checkName, AppConfig config) 
 	{
+		this.config = config;
 		this._yaml = yamlInstance;
 		this._initConfig = init_config;
 		this._instanceName = (String) this._yaml.get("name");
@@ -133,8 +135,8 @@ public class Instance {
 	}
 
 	private void _getMatchingAttributes() {
-		Reporter reporter = AppConfig.getInstance().reporter;
-		String action = AppConfig.getInstance().getAction();
+		Reporter reporter = config.reporter;
+		String action = config.getAction();
 		boolean metricReachedDisplayed = false;
 
 		this._matchingAttributes = new LinkedList<JMXAttribute>();
