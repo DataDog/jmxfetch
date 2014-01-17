@@ -69,8 +69,12 @@ public class Instance {
             yaml_conf = this._initConfig.get("conf");
         }
 
-        for ( LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>)(yaml_conf) ) {
-            _configurationList.add(new Configuration(conf));
+        if (yaml_conf == null) {
+            LOGGER.warn("Cannot find a \"conf\" section in " + this._instanceName);
+        } else {
+            for ( LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>)(yaml_conf) ) {
+                _configurationList.add(new Configuration(conf));
+            }
         }
 
         // Add the configuration to get the default basic metrics from the JVM
