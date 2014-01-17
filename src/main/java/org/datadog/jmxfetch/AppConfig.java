@@ -34,7 +34,7 @@ public class AppConfig {
     @Parameter(names = {"--log_level", "-L"}, description = "Level of verbosity", validateWith = Log4JLevelValidator.class, required = false)
     public String logLevel = "INFO";
 
-    @Parameter(names= {"--log_location", "-l"}, description = "Absolute path of the log file (default to null = no logging)", validateWith = LogWritableLocation.class, required = false)
+    @Parameter(names= {"--log_location", "-l"}, description = "Absolute path of the log file (default to null = no logging)", required = false)
     public String logLocation = null;
 
     @Parameter(names = {"--conf_directory", "-D"}, description = "Absolute path to the conf.d directory", required = true)
@@ -50,8 +50,7 @@ public class AppConfig {
     @Parameter(names= {"--check_period", "-p"}, description = "Sleeping time during two iterations in ms", validateWith = PositiveInteger.class, required = false)
     public int loopPeriod = 15000;
 
-    @Parameter(names= {"--status_location", "-s"}, description = "Absolute path of the status file. (default to null = no status file written)", validateWith = StatusWritableLocation.class,
-            converter = StatusWritableLocation.class, required = false)
+    @Parameter(names= {"--status_location", "-s"}, description = "Absolute path of the status file. (default to null = no status file written)", converter = StatusWritableLocation.class, required = false)
     public Status status = Status.getInstance();
 
     @Parameter(description="Action to take, should be in [help, collect, list_everything, list_collected_attributes, list_matching_attributes, list_not_matching_attributes, list_limited_attributes]", required = true)
@@ -80,29 +79,12 @@ public class AppConfig {
         _isConsoleReporter = b;
     }
 
-    public static class StatusWritableLocation implements IParameterValidator, IStringConverter<Status> {
-        public void validate(String name, String value) {
-            File f = new File(value);
-            if (!f.canWrite()) {
-                throw new ParameterException("File " + name +
-                        "is not writable");
-            }
+    public static class StatusWritableLocation implements IStringConverter<Status> {
 
-            Status.getInstance().configure(value);
-        }
-
-
-        public Status convert(String arg0) {
-            return Status.getInstance();
-        }
-    }
-
-    public static class LogWritableLocation implements IParameterValidator {
-        public void validate(String name, String value) {
-            File f = new File(value);
-            if (!f.canWrite()) {
-                System.out.println("Warning - Log file: " + value + " is not writable.");
-            }
+        public Status convert(String value) {
+            Status status = Status.getInstance();
+            status.configure(value);
+            return status;
         }
     }
 
