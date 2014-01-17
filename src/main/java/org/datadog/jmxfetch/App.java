@@ -287,7 +287,7 @@ public class App
                 } catch(Exception e) {
                     String warning = "Unable to create instance. Please check your yaml file";
                     config.status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning, e);
+                    LOGGER.error(warning);
                     continue;
                 }
                 try {
