@@ -174,7 +174,7 @@ public class App
             } else if ( instance.isLimitReached()) { 
                 instanceMessage = "Number of returned metrics is too high for instance: " 
                         + instance.getName() 
-                        + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
+                        + ". Please read http://docs.datadoghq.com/integrations/java/ or get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
 
                 instanceStatus = Status.STATUS_WARNING;
                 // We don't want to log the warning at every iteration so we use this custom logger.

@@ -35,5 +35,5 @@ mvn test
 # To run:
 ```
 Get help on usage:
-java -jar jmxfetch-0.1.2-jar-with-dependencies.jar --help
+java -jar jmxfetch-0.2.0-jar-with-dependencies.jar --help
 ```
