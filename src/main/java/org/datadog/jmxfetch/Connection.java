@@ -42,14 +42,14 @@ public class Connection {
     private static final Long CONNECTION_TIMEOUT = new Long(10000);
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
-    
+
 
     public Connection(LinkedHashMap<String, Object> connectionParams) throws IOException {
         this.host = (String) connectionParams.get("host");
         this.port = (Integer) connectionParams.get("port"); 
         this.user = (String) connectionParams.get("user");
         this.password = (String) connectionParams.get("password");
-        
+
         if(connectionParams.containsKey(TRUST_STORE_PATH_KEY) && connectionParams.containsKey(TRUST_STORE_PASSWORD_KEY)) {
             this.trustStorePath = (String) connectionParams.get(TRUST_STORE_PATH_KEY);
             this.trustStorePassword = (String) connectionParams.get(TRUST_STORE_PASSWORD_KEY);
@@ -57,18 +57,18 @@ public class Connection {
             this.trustStorePath = null;
             this.trustStorePassword = null;
         }
-        
+
         this.mbs = this.createConnection();
     }
-    
+
     public MBeanAttributeInfo[] getAttributesForBean(ObjectName bean_name) throws InstanceNotFoundException, IntrospectionException, ReflectionException, IOException {
         return this.mbs.getMBeanInfo( bean_name ).getAttributes();
     }
-    
+
     public Set<ObjectInstance> queryMBeans() throws IOException {
         return this.mbs.queryMBeans(null, null);
     }
-    
+
     private MBeanServerConnection createConnection() throws IOException {
         JMXServiceURL address = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/jmxrmi");
         Map<String,Object> env = new HashMap<String, Object>();
@@ -85,11 +85,11 @@ public class Connection {
         MBeanServerConnection mbs = connector.getMBeanServerConnection();
         return mbs;
     }
-    
+
     public Object getAttribute(ObjectName objectName, String attributeName) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
         return this.mbs.getAttribute(objectName, attributeName);
     }
-    
+
     /**
      * Connect to a MBean Server with a timeout
      * This code comes from this blog post:

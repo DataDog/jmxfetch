@@ -27,7 +27,7 @@ public abstract class JMXAttribute {
     protected static final List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
     protected static final List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData");
     private static final String[] EXCLUDED_BEAN_PARAMS = {"domain", "bean_name", "bean", "attribute"};
-    
+
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
@@ -38,22 +38,22 @@ public abstract class JMXAttribute {
         this.jmxInstance = jmxInstance;
         this.matching_conf = null;
         this.connection = connection;
-        
+
         this.beanName = jmxInstance.getObjectName().toString();
         // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
         String[] split = this.beanName.split(":");
         this.domain = split[0];
         this.attributeName = a.getName();
-        
-        
+
+
         // We add the instance name as a tag. We need to convert the Array of strings to List in order to do that
         LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(split[1].replace("=",":").split(",")));
         beanTags.add("instance:"+instanceName);
         beanTags.add("jmx_domain:"+domain);
         this.tags = new String[beanTags.size()];
         beanTags.toArray(this.tags);
-        
+
     }
 
     @Override
@@ -70,13 +70,13 @@ public abstract class JMXAttribute {
      * @return a boolean that tells if the attribute matches the configuration or not
      */
     public abstract boolean match(Configuration conf);
-    
+
     public int getMetricsCount() {
-    	try {
-			return this.getMetrics().size();
-		} catch (Exception e) {
-			return 0;
-		} 
+        try {
+            return this.getMetrics().size();
+        } catch (Exception e) {
+            return 0;
+        } 
     }
 
     protected Object getJmxValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
@@ -124,14 +124,14 @@ public abstract class JMXAttribute {
         metricName = metricName.replaceAll(DOT_UNDERSCORE, ".").trim();
         return metricName;
     }
-    
+
     protected double _getValueAsDouble(Object value) {
         if (value instanceof String) {
             return Double.parseDouble((String)value);
-            
+
         } else if (value instanceof Integer) {
             return new Double((Integer)(value));
-            
+
         } else if (value instanceof Double) {
             return (Double)value;
         } else if (value instanceof Long) {
@@ -140,11 +140,11 @@ public abstract class JMXAttribute {
         } else {
             throw new NumberFormatException();
         }
-        
+
     }
 
     protected boolean matchBean(Configuration configuration) {
-        
+
         boolean matchBeanName = false;
         if (configuration.include.get("bean") == null && configuration.include.get("bean_name") == null) {
             matchBeanName = true;

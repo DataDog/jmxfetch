@@ -28,67 +28,67 @@ public class App
     private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
     private static int _loopCounter;
 
-    
+
     /**
      * Main entry of JMXFetch
      * 
      * See AppConfig class for more details on the args
      */
     public static void main( String[] args ) {
-        
+
         // Load the config from the args
         AppConfig config = AppConfig.getInstance();
         JCommander jCommander = null;
         try{
-        	// Try to parse the args using JCommander
-        	jCommander = new JCommander(config, args);
+            // Try to parse the args using JCommander
+            jCommander = new JCommander(config, args);
         } catch(ParameterException e) {
-        	System.out.println(e.getMessage());
-        	System.exit(1);
+            System.out.println(e.getMessage());
+            System.exit(1);
         }
-        
+
         // Display the help and quit
         if(config.help || config.getAction().equals(AppConfig.ACTION_HELP)) {
-        	jCommander.usage();
-        	System.exit(0);
+            jCommander.usage();
+            System.exit(0);
         }
-        
+
         // Set up the logger to add file handler
         try {
-        	CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
+            CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
         } catch (IOException e) {
             LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
         }
-        
-        
+
+
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(config.getAction())) {
-        	LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
-        	System.exit(1);
+            LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
+            System.exit(1);
         }
-        
+
         // The "list_*" actions can only be used with the reporter
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
-        	LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
-        	System.exit(1);
+            LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
+            System.exit(1);
         }
-        
+
         // Set up the shutdown hook to properly close resources
         attachShutdownHook();
-    
+
         LOGGER.info("JMX Fetch has started");
-           
-         // Initiate JMX Connections, get attributes that match the yaml configuration
+
+        // Initiate JMX Connections, get attributes that match the yaml configuration
         init(config, false);
 
         // We don't want to loop if the action is list_* as it's just used for display information about what will be collected
         if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
-        	// Start the main loop
-        	_doLoop(config);
+            // Start the main loop
+            _doLoop(config);
         }
-        
+
     }
-    
+
     /**
      * Attach a Shutdown Hook that will be called when SIGTERM is sent to JMXFetch
      */
@@ -101,7 +101,7 @@ public class App
                     public void run() {
                         LOGGER.info("JMXFetch is closing");
                         Status.getInstance().deleteStatus();
-                        
+
                         // Properly close log handlers
                         Enumeration<Appender> enume = LOGGER.getAllAppenders();
                         while (enume.hasMoreElements()) {
@@ -120,7 +120,7 @@ public class App
 
 
     private static void _doLoop(AppConfig config) { 
-    	// Main Loop that will periodically collect metrics from the JMX Server
+        // Main Loop that will periodically collect metrics from the JMX Server
         while(true) {
             long start = System.currentTimeMillis();
             if (_instances.size() > 0) {
@@ -143,12 +143,12 @@ public class App
 
     }
 
-    
+
 
     public static void doIteration(AppConfig config) { 
         _loopCounter++;
         Reporter reporter = config.reporter;
-    
+
         Iterator<Instance> it = _instances.iterator();
         while (it.hasNext() ){
             Instance instance = it.next();
@@ -159,10 +159,10 @@ public class App
                 metrics = instance.getMetrics();
             } catch (IOException e) {
                 String warning = "Unable to refresh bean list for instance " + instance;
-                LOGGER.warn(warning, e);
-                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
-                _brokenInstances.add(instance);
-                continue;
+                        LOGGER.warn(warning, e);
+                        config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                        _brokenInstances.add(instance);
+                        continue;
             }
 
             if (metrics.size() == 0) {
@@ -172,33 +172,33 @@ public class App
                 _brokenInstances.add(instance);
                 continue;
             } else if ( instance.isLimitReached()) { 
-            	instanceMessage = "Number of returned metrics is too high for instance: " 
+                instanceMessage = "Number of returned metrics is too high for instance: " 
                         + instance.getName() 
                         + ". Please get in touch with Datadog Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
-            	
-            	instanceStatus = Status.STATUS_WARNING;
-            	// We don't want to log the warning at every iteration so we use this custom logger.
-            	CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
+
+                instanceStatus = Status.STATUS_WARNING;
+                // We don't want to log the warning at every iteration so we use this custom logger.
+                CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
-                reporter.sendMetrics(metrics, instance.getName());
-                config.status.addInstanceStats(instance.getName(), metrics.size(), instanceMessage, instanceStatus);
-            
+            reporter.sendMetrics(metrics, instance.getName());
+            config.status.addInstanceStats(instance.getName(), metrics.size(), instanceMessage, instanceStatus);
+
         }
-        
+
 
         // Iterate over broken" instances to fix them by resetting them
         it = _brokenInstances.iterator();
         while(it.hasNext()) {
             Instance instance = it.next();
-            
+
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
-            
+
             LOGGER.warn("Instance " + instance + " didn't return any metrics. Maybe the server got disconnected ? Trying to reconnect.");
-            
+
             // Remove the broken instance from the good instance list so jmxfetch won't try to collect metrics from this broken instance during next collection
             _instances.remove(instance);
-            
+
             // Resetting the instance
             Instance newInstance = new Instance(instance.getYaml(), instance.getInitConfig(), instance.getCheckName(), config);
             try {
@@ -226,51 +226,51 @@ public class App
                 config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
             }
         }
-        
+
         try {
             config.status.flush();
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
         }
     }
-   
+
     private static HashMap<String, YamlParser> _getConfigs(AppConfig config) {
-    	HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
-    	YamlParser fileConfig;
-    	for (String fileName : config.yamlFileList) {
-    		File f = new File(config.confdDirectory, fileName);
-    		String name = f.getName().replace(".yaml", "");
-    		try {
-    			LOGGER.info("Reading " + f.getAbsolutePath());
-				fileConfig = new YamlParser(f.getAbsolutePath());
-				configs.put(name, fileConfig);
-			} catch (FileNotFoundException e) {
-				LOGGER.warn("Cannot find " + f.getAbsolutePath());
-			} catch (Exception e) {
+        HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
+        YamlParser fileConfig;
+        for (String fileName : config.yamlFileList) {
+            File f = new File(config.confdDirectory, fileName);
+            String name = f.getName().replace(".yaml", "");
+            try {
+                LOGGER.info("Reading " + f.getAbsolutePath());
+                fileConfig = new YamlParser(f.getAbsolutePath());
+                configs.put(name, fileConfig);
+            } catch (FileNotFoundException e) {
+                LOGGER.warn("Cannot find " + f.getAbsolutePath());
+            } catch (Exception e) {
                 LOGGER.warn("Cannot parse yaml file " + f.getAbsolutePath(), e);
-			}
-    	}
-    	LOGGER.info("Found " + configs.size() + " config files");
-    	return configs;
+            }
+        }
+        LOGGER.info("Found " + configs.size() + " config files");
+        return configs;
     }
-      
+
     @SuppressWarnings("unchecked")
     public static void init(AppConfig config, boolean forceNewConnection) {
-        
-    	// Reset the list of instances
+
+        // Reset the list of instances
         _brokenInstances = new LinkedList<Instance>();
         _instances = new ArrayList<Instance>();
-        
+
         HashMap<String, YamlParser> configs = _getConfigs(config);
-        
+
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, YamlParser> entry = (Map.Entry<String, YamlParser>)it.next();
             String name = entry.getKey();
             YamlParser yamlConfig = entry.getValue();
             it.remove(); 
-            
-   
+
+
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
             if ( configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
@@ -278,7 +278,7 @@ public class App
                 config.status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
                 continue;
             }
-            
+
             for(Iterator<LinkedHashMap<String,Object>> i = configInstances.iterator(); i.hasNext(); ) { 
                 Instance instance = null;
                 //Create a new Instance object
@@ -309,9 +309,9 @@ public class App
         }
 
     }
-    
+
     public static int getLoopCounter() {
         return _loopCounter;
     }
-   
+
 }
