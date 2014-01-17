@@ -6,3 +6,8 @@ target/*
 .umlproject
 .classpath
 .project
+/target
+
+*.ucls
+
+*.png

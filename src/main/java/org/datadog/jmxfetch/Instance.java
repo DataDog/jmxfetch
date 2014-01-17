@@ -36,15 +36,17 @@ public class Instance {
     private int _maxReturnedMetrics;
     private boolean _limitReached;
     private Connection _connection;
+    private AppConfig config;
 
 
     @SuppressWarnings("unchecked")
-    public Instance(LinkedHashMap<String, Object> yaml_instance, LinkedHashMap<String, Object> init_config, String check_name) 
+    public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> init_config, String checkName, AppConfig config) 
     {
-        this._yaml = yaml_instance;
+        this.config = config;
+        this._yaml = yamlInstance;
         this._initConfig = init_config;
-        this._instanceName = (String) yaml_instance.get("name");
-        this._checkName = check_name;
+        this._instanceName = (String) this._yaml.get("name");
+        this._checkName = checkName;
         this._failingAttributes = new LinkedList<JMXAttribute>();
         this._refreshBeansPeriod = (Integer)this._yaml.get("refresh_beans");
         this._lastRefreshTime = 0;
@@ -58,7 +60,7 @@ public class Instance {
 
         // Generate an instance name that will be send as a tag with the metrics
         if (this._instanceName == null) {
-            this._instanceName = check_name + "-" + this._yaml.get("host") + "-" + this._yaml.get("port");
+            this._instanceName = this._checkName + "-" + this._yaml.get("host") + "-" + this._yaml.get("port");
         }
 
         // In case the configuration to match beans is not specified in the "instance" parameter but in the init_config one
@@ -67,8 +69,12 @@ public class Instance {
             yaml_conf = this._initConfig.get("conf");
         }
 
-        for ( LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>)(yaml_conf) ) {
-            _configurationList.add(new Configuration(conf));
+        if (yaml_conf == null) {
+            LOGGER.warn("Cannot find a \"conf\" section in " + this._instanceName);
+        } else {
+            for ( LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>)(yaml_conf) ) {
+                _configurationList.add(new Configuration(conf));
+            }
         }
 
         // Add the configuration to get the default basic metrics from the JVM
@@ -83,7 +89,7 @@ public class Instance {
         this._refreshBeansList();
         this._getMatchingAttributes();
     }
-    
+
     public void init() throws IOException, FailedLoginException, SecurityException {
         init(false);
     }
@@ -133,41 +139,60 @@ public class Instance {
     }
 
     private void _getMatchingAttributes() {
+        Reporter reporter = config.reporter;
+        String action = config.getAction();
+        boolean metricReachedDisplayed = false;
+
         this._matchingAttributes = new LinkedList<JMXAttribute>();
         int metricsCount = 0;
+
+        if ( !action.equals(AppConfig.ACTION_COLLECT)) {
+            reporter.displayInstanceName(this);
+        }
+
         for( ObjectInstance bean : this._beans) {
-        	if ( this._limitReached ) {
-        		LOGGER.debug("Limit reached. We won't browse more beans");
-        		break;
-        	}
-            ObjectName bean_name = bean.getObjectName();    
+            if ( this._limitReached) {
+                LOGGER.debug("Limit reached");
+                if(action.equals(AppConfig.ACTION_COLLECT)){
+                    break;
+                }
+            }
+            ObjectName beanName = bean.getObjectName();    
             MBeanAttributeInfo[] atr;
 
             try {
                 // Get all the attributes for bean_name
-                LOGGER.debug("Getting attributes for bean: " + bean_name);
-                atr = this._connection.getAttributesForBean( bean_name );
+                LOGGER.debug("Getting attributes for bean: " + beanName);
+                atr = this._connection.getAttributesForBean( beanName );
             } catch (Exception e) {
                 LOGGER.warn("Cannot get bean attributes " + e.getMessage());
                 continue;
-            } 
-            
+            }
+
             for ( MBeanAttributeInfo a : atr) {
+
                 if (  metricsCount >= this._maxReturnedMetrics ) {
                     this._limitReached = true;
-                    LOGGER.warn("Maximum number of metrics reached");
-                    break;
+                    if(action.equals(AppConfig.ACTION_COLLECT)){
+                        LOGGER.warn("Maximum number of metrics reached.");
+                        break;
+                    } else if(!metricReachedDisplayed &&
+                            !action.equals(AppConfig.ACTION_LIST_COLLECTED) &&
+                            !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
+                        reporter.displayMetricReached();
+                        metricReachedDisplayed = true;
+                    }
                 }
                 JMXAttribute jmxAttribute;
                 String attributeType = a.getType();
                 if( SIMPLE_TYPES.contains(attributeType) ) {
-                    LOGGER.debug("Attribute: " + bean_name + " : " + a + " has a simple type");
+                    LOGGER.debug("Attribute: " + beanName + " : " + a + " has a simple type");
                     jmxAttribute = new JMXSimpleAttribute(a, bean, this._instanceName, this._connection);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    LOGGER.debug("Attribute: " + bean_name + " : " + a + " has a complex type");
+                    LOGGER.debug("Attribute: " + beanName + " : " + a + " has a complex type");
                     jmxAttribute = new JMXComplexAttribute(a, bean, this._instanceName, this._connection);
                 } else {
-                    LOGGER.debug("Attribute: " + bean_name + " : " + a + " has an unsupported type: " + attributeType);
+                    LOGGER.debug("Attribute: " + beanName + " : " + a + " has an unsupported type: " + attributeType);
                     continue;
                 }
 
@@ -177,14 +202,26 @@ public class Instance {
                     try {
                         if ( jmxAttribute.match(conf) ) {
                             jmxAttribute.matching_conf = conf;
+                            metricsCount += jmxAttribute.getMetricsCount(); 
                             this._matchingAttributes.add(jmxAttribute);
-                            metricsCount += jmxAttribute.getMetricsCount();
+
+                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) || 
+                                    action.equals(AppConfig.ACTION_LIST_MATCHING) || 
+                                    action.equals(AppConfig.ACTION_LIST_COLLECTED) && !this._limitReached ||
+                                    action.equals(AppConfig.ACTION_LIST_LIMITED) && this._limitReached) {
+                                reporter.displayMatchingAttributeName(jmxAttribute, metricsCount);
+                            }
                             break;
                         }       
                     } catch (Exception e) {
-                        LOGGER.error("Error while trying to match a configuration with the Attribute: " + bean_name + " : " + a, e);
+                        LOGGER.error("Error while trying to match a configuration with the Attribute: " + beanName + " : " + a, e);
                     }
-                }       
+                }
+                if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) ||
+                        action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)){
+                    reporter.displayNonMatchingAttributeName(jmxAttribute);
+                }
+
             }
         }
         LOGGER.info("Found " + _matchingAttributes.size() + " matching attributes");
@@ -214,8 +251,6 @@ public class Instance {
     public int getMaxNumberOfMetrics() {
         return this._maxReturnedMetrics;
     }
-
-    
 
     public boolean isLimitReached() {
         return this._limitReached;

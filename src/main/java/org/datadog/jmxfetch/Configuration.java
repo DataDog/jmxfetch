@@ -3,7 +3,7 @@ package org.datadog.jmxfetch;
 import java.util.LinkedHashMap;
 
 public class Configuration {
-    
+
     public LinkedHashMap<String, Object> conf;
     public LinkedHashMap<String, Object> include;
     public LinkedHashMap<String, Object> exclude;
@@ -21,5 +21,9 @@ public class Configuration {
             this.exclude = new LinkedHashMap<String, Object>();
         }
     }
-    
+
+    public String toString() {
+        return "include: " + this.include + " - exclude: " + this.exclude;
+    }
+
 }

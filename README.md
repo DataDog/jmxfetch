@@ -34,5 +34,6 @@ mvn test
 
 # To run:
 ```
-java -jar jmxfetch-0.0.1-SNAPSHOT-jar-with-dependencies.jar PATH_TO_CONF_D_DIR STATSD_PORT CHECK_FREQUENCY_IN_MS PATH_TO_LOG_FILE LOG_LEVEL tomcat.yaml,activemq.yaml,solr.yaml,cassandra.yaml,jmx.yaml
+Get help on usage:
+java -jar jmxfetch-0.2.0-jar-with-dependencies.jar --help
 ```
