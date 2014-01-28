@@ -18,8 +18,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         return should_be_100;
     }
 
-    public int getShouldBe1000() {
-        return should_be_1000;
+    public Double getShouldBe1000() {
+        return Double.valueOf(should_be_1000);
     }
     
     public int getShouldBeCounter() {
