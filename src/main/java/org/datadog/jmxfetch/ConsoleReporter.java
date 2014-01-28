@@ -51,13 +51,13 @@ public class ConsoleReporter extends Reporter{
 
     @Override
     public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank) {
-        System.out.println("       Matching: " + rank + ". " + jmxAttribute);
+        System.out.println("       Matching: " + rank + ". " + jmxAttribute + "    type: " + jmxAttribute.attribute.getType());
 
     }
 
     @Override
     public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-        System.out.println("       Not Matching: " + jmxAttribute);
+        System.out.println("       Not Matching: " + jmxAttribute+ "    type: " + jmxAttribute.attribute.getType());
     }
 
     @Override
