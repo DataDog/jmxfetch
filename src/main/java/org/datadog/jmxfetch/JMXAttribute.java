@@ -58,7 +58,7 @@ public abstract class JMXAttribute {
 
     @Override
     public String toString() {
-        return this.beanName + " - " + this.attributeName;
+        return "Bean name: " + this.beanName + " - Attribute name: " + this.attributeName + "  - Attribute type: " + this.attribute.getType();
     }
 
     public abstract LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException;

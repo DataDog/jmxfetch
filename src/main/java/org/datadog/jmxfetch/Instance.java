@@ -209,7 +209,7 @@ public class Instance {
                                     action.equals(AppConfig.ACTION_LIST_MATCHING) || 
                                     action.equals(AppConfig.ACTION_LIST_COLLECTED) && !this._limitReached ||
                                     action.equals(AppConfig.ACTION_LIST_LIMITED) && this._limitReached) {
-                                reporter.displayMatchingAttributeName(jmxAttribute, metricsCount);
+                                reporter.displayMatchingAttributeName(jmxAttribute, metricsCount, this._maxReturnedMetrics);
                             }
                             break;
                         }       

@@ -110,8 +110,8 @@ public abstract class Reporter {
 
     public abstract void displayNonMatchingAttributeName(JMXAttribute jmxAttribute);
 
-    public abstract void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank);
-
     public abstract void displayInstanceName(Instance instance);
+
+    public abstract void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit);
 
 }

@@ -18,7 +18,7 @@ public class StatsdReporter extends Reporter{
         throw new UnsupportedOperationException();      
     }
 
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank) {
+    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
         throw new UnsupportedOperationException();      
     }
 

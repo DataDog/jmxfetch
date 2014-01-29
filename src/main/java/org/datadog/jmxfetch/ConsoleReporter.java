@@ -43,27 +43,31 @@ public class ConsoleReporter extends Reporter{
         System.out.println();
         System.out.println();
         System.out.println();
-        System.out.println("------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
+        System.out.println("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
         System.out.println();
         System.out.println();
         System.out.println();
     }
 
     @Override
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank) {
-        System.out.println("       Matching: " + rank + ". " + jmxAttribute + "    type: " + jmxAttribute.attribute.getType());
+    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
+        System.out.println("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
 
     }
 
     @Override
     public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-        System.out.println("       Not Matching: " + jmxAttribute+ "    type: " + jmxAttribute.attribute.getType());
+        System.out.println("       Not Matching: " + jmxAttribute);
     }
 
     @Override
     public void displayInstanceName(Instance instance) {
+        System.out.println();
+        System.out.println("#####################################");
         System.out.println("Instance: " + instance);
-
+        System.out.println("#####################################");
+        System.out.println();
+        
     }
 
 }
