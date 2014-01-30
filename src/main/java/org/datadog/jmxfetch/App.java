@@ -160,7 +160,7 @@ public class App
             } catch (IOException e) {
                 String warning = "Unable to refresh bean list for instance " + instance;
                         LOGGER.warn(warning, e);
-                        config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                        config.status.addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
                         _brokenInstances.add(instance);
                         continue;
             }
@@ -168,7 +168,7 @@ public class App
             if (metrics.size() == 0) {
                 String warning = "Instance " + instance + " didn't return any metrics";
                 LOGGER.warn(warning);
-                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
                 _brokenInstances.add(instance);
                 continue;
             } else if ( instance.isLimitReached()) { 
@@ -181,7 +181,7 @@ public class App
                 CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
             reporter.sendMetrics(metrics, instance.getName());
-            config.status.addInstanceStats(instance.getName(), metrics.size(), instanceMessage, instanceStatus);
+            config.status.addInstanceStats(instance.getCheckName(), instance.getName(), metrics.size(), instanceMessage, instanceStatus);
 
         }
 
@@ -211,19 +211,19 @@ public class App
             } catch (IOException e) {
                 String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
                 LOGGER.warn(warning);
-                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
             } catch (SecurityException e) {
                 String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
                 LOGGER.warn(warning);
-                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
             } catch (FailedLoginException e) {
                 String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
                 LOGGER.warn(warning);
-                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
             } catch (Exception e) {
                 String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
                 LOGGER.fatal(warning, e);
-                config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                config.status.addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
             }
         }
 
@@ -275,7 +275,7 @@ public class App
             if ( configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
                 LOGGER.warn(warning);
-                config.status.addInstanceStats(name, 0,  warning, Status.STATUS_ERROR);
+                config.status.addInitFailedCheck(name, warning, Status.STATUS_ERROR);
                 continue;
             }
 
@@ -286,7 +286,7 @@ public class App
                     instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) yamlConfig.getInitConfig()), name, config);
                 } catch(Exception e) {
                     String warning = "Unable to create instance. Please check your yaml file";
-                    config.status.addInstanceStats(name, 0, warning, Status.STATUS_ERROR);
+                    config.status.addInitFailedCheck(name, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
                     continue;
                 }
@@ -297,12 +297,12 @@ public class App
                 } catch (IOException e) {
                     _brokenInstances.add(instance);
                     String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
-                    config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                    config.status.addInstanceStats(name, instance.getName(), 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
                 } catch (Exception e) {
                     _brokenInstances.add(instance);
                     String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
-                    config.status.addInstanceStats(instance.getName(), 0, warning, Status.STATUS_ERROR);
+                    config.status.addInstanceStats(name, instance.getName(), 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning, e);
                 }
             }
