@@ -49,6 +49,11 @@ public class Instance {
         this._checkName = checkName;
         this._failingAttributes = new LinkedList<JMXAttribute>();
         this._refreshBeansPeriod = (Integer)this._yaml.get("refresh_beans");
+        if (this._refreshBeansPeriod == null) {
+            this._refreshBeansPeriod = 600; // Make sure to refresh the beans list every 10 minutes 
+            // Useful because sometimes if the application restarts, jmxfetch might read 
+            // a jmxtree that is not completely initialized and would be missing some attributes
+        }
         this._lastRefreshTime = 0;
         this._limitReached = false;
         Object maxReturnedMetrics = this._yaml.get("max_returned_metrics");
