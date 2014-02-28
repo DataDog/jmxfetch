@@ -4,13 +4,25 @@ import com.timgroup.statsd.StatsDClient;
 
 public class StatsdReporter extends Reporter{
 
-    private final StatsDClient STATSD_CLIENT;
+    private StatsDClient STATSD_CLIENT;
+    private int statsd_port;
+    private long initializationTime;
 
     public StatsdReporter(int statsd_port) {
-        this.STATSD_CLIENT = new NonBlockingStatsDClient(null, "localhost", statsd_port, new String[] {});      
+        this.statsd_port = statsd_port;
+        this.init();
+    }
+    
+    private void init() {
+        this.initializationTime = System.currentTimeMillis();
+        this.STATSD_CLIENT = new NonBlockingStatsDClient(null, "localhost", this.statsd_port, new String[] {});  
     }
 
     protected void _sendMetricPoint(String metricName, double value, String[] tags) {
+        if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
+            this.STATSD_CLIENT.stop();
+            init();
+        }
         STATSD_CLIENT.gauge(metricName, value, tags);
     }
 
