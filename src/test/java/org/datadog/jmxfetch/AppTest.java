@@ -83,7 +83,7 @@ public class AppTest extends TestCase
         App.doIteration(config);
         LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) config.reporter).getMetrics();
 
-        assertEquals(metrics.size(), 15); // 15 = 7 metrics from java.lang + the 4 gauges we are explicitly collecting + the 4 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 16); // 16 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + the 4 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         boolean metric_100_present = false;
@@ -92,6 +92,7 @@ public class AppTest extends TestCase
         boolean object_present = false;
         boolean metric_1000_present = false;
         boolean converted_present = false;
+        boolean boolean_present = false;
         boolean default_present = false;
         boolean counter_absent = true;
         boolean subattr_0_present = false;
@@ -121,6 +122,12 @@ public class AppTest extends TestCase
                 assertEquals(tags.length, 3);
                 assertEquals(value, 5.0);
                 converted_present = true;
+            }
+
+            else if (name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
             }
 
             else if (name.equals("test.defaulted")) {
@@ -161,6 +168,7 @@ public class AppTest extends TestCase
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
         assertTrue(converted_present);
         assertTrue(default_present);
         assertTrue(counter_absent);
@@ -173,7 +181,7 @@ public class AppTest extends TestCase
         // We run a second collection. The counter should now be present        
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 17); // 12 = 7 metrics from java.lang + the 4 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 18); // 18 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         metric_100_present = false;
@@ -181,6 +189,7 @@ public class AppTest extends TestCase
         atomic_long_present = false;
         object_present = false;
         metric_1000_present = false;
+        boolean_present = false;
         converted_present = false;
         default_present = false;
         counter_absent = true;
@@ -218,9 +227,14 @@ public class AppTest extends TestCase
                 assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
                 subattr_counter_absent = false;
 
+            } else if(name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+
             } else if(name.equals("test.converted")) {
                 assertEquals(tags.length, 3);
-                assertEquals(value, 5.0); // We didn't increment the counter, hence a value of 0.0 is what we want
+                assertEquals(value, 5.0);
                 converted_present = true;
 
             } else if(name.equals("test.defaulted")) {
@@ -249,6 +263,7 @@ public class AppTest extends TestCase
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
         assertTrue(converted_present);
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
@@ -265,13 +280,14 @@ public class AppTest extends TestCase
 
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 17); // 17 = 7 metrics from java.lang + the 4 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 18); // 18 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         metric_100_present = false;
         metric_1000_present = false;
         atomic_int_present = false;
         atomic_long_present = false;
         object_present = false;
+        boolean_present = false;
         converted_present = false;
         default_present = false;
 
@@ -309,6 +325,11 @@ public class AppTest extends TestCase
                 assertEquals(tags.length, 3);
                 assertEquals(value, 0.0);
                 subattr_0_present = true;
+
+            } else if (name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
 
             } else if (name.equals("test.converted")) {
                 assertEquals(tags.length, 3);
@@ -354,6 +375,7 @@ public class AppTest extends TestCase
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
         assertTrue(converted_present);
         assertTrue(default_present);
         assertTrue(metric_1000_present);

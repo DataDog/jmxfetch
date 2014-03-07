@@ -14,6 +14,9 @@ instances:
                     ShouldBeCounter:
                         metric_type: counter
                         alias: test.counter
+                    ShouldBeBoolean:
+                        metric_type: gauge
+                        alias: test.boolean
                     Hashmap.thisis0:
                         metric_type: gauge
                         alias: subattr.this.is.0

@@ -11,6 +11,7 @@ public interface SimpleTestJavaAppMBean {
     int getShouldBeCounter();
     String getShouldBeConverted();
     String getShouldBeDefaulted();
+    boolean getShouldBeBoolean();
     HashMap<String, Integer> getHashmap();
     AtomicInteger getAtomic42();
     AtomicLong getAtomic4242();

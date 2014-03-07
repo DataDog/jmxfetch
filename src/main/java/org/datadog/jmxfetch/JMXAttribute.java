@@ -157,6 +157,8 @@ public abstract class JMXAttribute {
 
         } else if (value instanceof Double) {
             return (Double)value;
+        } else if (value instanceof Boolean) {
+            return ((Boolean)value ? 1.0 : 0.0);
         } else if (value instanceof Long) {
             Long l = new Long((Long) value);
             return l.doubleValue();
