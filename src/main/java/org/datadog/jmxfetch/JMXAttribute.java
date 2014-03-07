@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,6 +25,7 @@ public abstract class JMXAttribute {
     protected String domain;
     protected String beanName;
     protected String attributeName;
+    protected LinkedHashMap<Object,Object> valueConversions;
     protected String[] tags;
     protected Configuration matching_conf;
     private static final String[] EXCLUDED_BEAN_PARAMS = {"domain", "bean_name", "bean", "attribute"};
@@ -125,7 +127,21 @@ public abstract class JMXAttribute {
         return metricName;
     }
 
-    protected double _getValueAsDouble(Object value) {
+    protected Object convertMetricValue(Object metricValue) {
+        Object converted = metricValue;
+
+        if (!getValueConversions().isEmpty()) {
+            converted = this.getValueConversions().get(metricValue);
+            if (converted == null && this.getValueConversions().get("default") != null) {
+                converted = this.getValueConversions().get("default");
+            }
+        }
+
+        return converted;
+    }
+
+    protected double _getValueAsDouble(Object metricValue) {
+        Object value = convertMetricValue(metricValue);
 
         if (value instanceof String) {
             return Double.parseDouble((String)value);
@@ -189,4 +205,21 @@ public abstract class JMXAttribute {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
+    protected HashMap<Object, Object> getValueConversions() {
+        if (this.valueConversions == null) {
+            if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+                LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute = ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>)(this.matching_conf.include.get("attribute"))).get(this.attribute.getName());
+
+                if (attribute != null) {
+                    this.valueConversions = attribute.get("values");
+                }
+           }
+           if (this.valueConversions == null) {
+               this.valueConversions = new LinkedHashMap<Object, Object>();
+           }
+        }
+
+        return this.valueConversions;
+    }
 }

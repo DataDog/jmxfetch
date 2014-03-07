@@ -9,6 +9,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private int should_be_100 = 100;
     private int should_be_1000 = 1000;
     private int should_be_counter = 0;
+    private String should_be_converted = "ShouldBe5";
+    private String should_be_defaulted = "DefaultMe";
     private HashMap<String, Integer> hashmap = new HashMap<String, Integer>();;
     private AtomicInteger atomic42 = new AtomicInteger(42);
     private AtomicLong atomic4242 = new AtomicLong(4242);
@@ -30,7 +32,15 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     public int getShouldBeCounter() {
         return should_be_counter;
     }
+
+    public String getShouldBeConverted() {
+        return should_be_converted;
+    }
     
+    public String getShouldBeDefaulted() {
+        return should_be_defaulted;
+    }
+
     public void incrementCounter(int inc) {
         should_be_counter += inc;
     }
@@ -54,4 +64,3 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     
 }
-    

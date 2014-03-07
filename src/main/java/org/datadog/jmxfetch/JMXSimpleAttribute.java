@@ -122,6 +122,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
 
     private double _getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException, NumberFormatException {
         Object value = this.getJmxValue();
+
         return _getValueAsDouble(value);    
     }
 

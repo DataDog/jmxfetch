@@ -9,6 +9,8 @@ public interface SimpleTestJavaAppMBean {
     int getShouldBe100();
     Double getShouldBe1000();
     int getShouldBeCounter();
+    String getShouldBeConverted();
+    String getShouldBeDefaulted();
     HashMap<String, Integer> getHashmap();
     AtomicInteger getAtomic42();
     AtomicLong getAtomic4242();
