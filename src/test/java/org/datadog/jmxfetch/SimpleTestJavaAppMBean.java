@@ -1,6 +1,8 @@
 package org.datadog.jmxfetch;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public interface SimpleTestJavaAppMBean {
     
@@ -8,5 +10,8 @@ public interface SimpleTestJavaAppMBean {
     Double getShouldBe1000();
     int getShouldBeCounter();
     HashMap<String, Integer> getHashmap();
+    AtomicInteger getAtomic42();
+    AtomicLong getAtomic4242();
+    Object getObject1337();
     
 }

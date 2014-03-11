@@ -83,10 +83,13 @@ public class AppTest extends TestCase
         App.doIteration(config);
         LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) config.reporter).getMetrics();
 
-        assertEquals(metrics.size(), 10); // 10 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 1 gauge that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 13); // 13 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 4 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         boolean metric_100_present = false;
+        boolean atomic_int_present = false;
+        boolean atomic_long_present = false;
+        boolean object_present = false;
         boolean metric_1000_present = false;
         boolean counter_absent = true;
         boolean subattr_0_present = false;
@@ -124,6 +127,22 @@ public class AppTest extends TestCase
                 subattr_counter_absent = false;
             }
 
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 42.0);
+                atomic_int_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4242.0);
+                atomic_long_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 13.37);
+                object_present = true;
+            }
+
         }
 
         assertTrue(metric_100_present);
@@ -131,14 +150,20 @@ public class AppTest extends TestCase
         assertTrue(counter_absent);
         assertTrue(subattr_0_present);
         assertTrue(subattr_counter_absent);
+        assertTrue(atomic_int_present);
+        assertTrue(atomic_long_present);
+        assertTrue(object_present);
 
         // We run a second collection. The counter should now be present        
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 15); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         metric_100_present = false;
+        atomic_int_present = false;
+        atomic_long_present = false;
+        object_present = false;
         metric_1000_present = false;
         counter_absent = true;
 
@@ -176,6 +201,22 @@ public class AppTest extends TestCase
                 subattr_counter_absent = false;
             }
 
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 42.0);
+                atomic_int_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4242.0);
+                atomic_long_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 13.37);
+                object_present = true;
+            }
+
         }
 
         assertTrue(metric_100_present);
@@ -183,6 +224,9 @@ public class AppTest extends TestCase
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
         assertFalse(subattr_counter_absent);
+        assertTrue(atomic_int_present);
+        assertTrue(atomic_long_present);
+        assertTrue(object_present);
 
 
         // We run a 3rd collection but this time we increment the counter and we sleep
@@ -192,10 +236,14 @@ public class AppTest extends TestCase
 
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 15); // 15 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         metric_100_present = false;
         metric_1000_present = false;
+        atomic_int_present = false;
+        atomic_long_present = false;
+        object_present = false;
+
         counter_absent = true;
         HashMap<String, Integer> jvm_metrics = new HashMap<String, Integer>();
         jvm_metrics.put("jvm.gc.cms.count", 2);
@@ -237,6 +285,22 @@ public class AppTest extends TestCase
                 assertTrue(value < 1.00);
                 assertTrue(value > 0.99);
                 subattr_counter_absent = false;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 42.0);
+                atomic_int_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4242.0);
+                atomic_long_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 13.37);
+                object_present = true;
+
 
             } else {
                 // Those are jvm metrics
@@ -252,6 +316,10 @@ public class AppTest extends TestCase
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
         assertFalse(subattr_counter_absent);
+        assertTrue(atomic_int_present);
+        assertTrue(atomic_long_present);
+        assertTrue(object_present);
+
 
         for (int i : jvm_metrics.values()) {
             assertEquals(i, 0);

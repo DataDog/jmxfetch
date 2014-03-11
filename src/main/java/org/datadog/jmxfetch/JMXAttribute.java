@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -124,11 +126,18 @@ public abstract class JMXAttribute {
     }
 
     protected double _getValueAsDouble(Object value) {
+
         if (value instanceof String) {
             return Double.parseDouble((String)value);
 
         } else if (value instanceof Integer) {
             return new Double((Integer)(value));
+            
+        } else if (value instanceof AtomicInteger) {
+            return new Double(((AtomicInteger)(value)).get());
+        } else if (value instanceof AtomicLong) {
+            Long l = ((AtomicLong)(value)).get();
+            return l.doubleValue();
 
         } else if (value instanceof Double) {
             return (Double)value;
@@ -136,7 +145,12 @@ public abstract class JMXAttribute {
             Long l = new Long((Long) value);
             return l.doubleValue();
         } else {
-            throw new NumberFormatException();
+            try{
+                return new Double((Double) value);
+            } catch (Exception e) {
+                throw new NumberFormatException();
+            }
+            
         }
 
     }
