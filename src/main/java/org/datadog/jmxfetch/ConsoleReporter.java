@@ -3,9 +3,13 @@ package org.datadog.jmxfetch;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import dnl.utils.text.table.TextTable;
+
 public class ConsoleReporter extends Reporter{
 
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+    private LinkedList<JMXAttribute> matchingAttributes = new LinkedList<JMXAttribute>();
+    private LinkedList<JMXAttribute> nonMatchingAttributes = new LinkedList<JMXAttribute>();
 
     @Override
     protected void _sendMetricPoint(String metricName, double value, String[] tags) {
@@ -18,7 +22,6 @@ public class ConsoleReporter extends Reporter{
         m.put("value", value);
         m.put("tags", tags);
         metrics.add(m);
-
     }
 
 
@@ -50,14 +53,16 @@ public class ConsoleReporter extends Reporter{
     }
 
     @Override
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
-        System.out.println("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
+    public void displayMatchingAttributeName(JMXAttribute jmxAttribute) {
+        matchingAttributes.add(jmxAttribute);
+        //System.out.println("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
 
     }
 
     @Override
     public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-        System.out.println("       Not Matching: " + jmxAttribute);
+        nonMatchingAttributes.add(jmxAttribute);
+        //System.out.println("       Not Matching: " + jmxAttribute);
     }
 
     @Override
@@ -67,7 +72,46 @@ public class ConsoleReporter extends Reporter{
         System.out.println("Instance: " + instance);
         System.out.println("#####################################");
         System.out.println();
-        
+
+    }
+
+    public void _printAttributesTable(LinkedList<JMXAttribute> attributes) {
+        String[] columnNames = {                                       
+                "Bean Name",                                          
+                "Attribute Name",                                           
+                "Attribute Type"
+         };
+
+        LinkedList<Object[]> dataList = new LinkedList<Object[]>();
+        for(JMXAttribute a : attributes) {
+            Object[] data = {a.beanName, a.attributeName, a.attribute.getType()};
+            dataList.add(data);
+
+        }
+
+        Object[][] data = new Object[dataList.size()][3];
+        dataList.toArray(data);
+        TextTable tt = new TextTable(columnNames,data);   
+        tt.setAddRowNumbering(true);     
+        tt.setSort(0);   
+        tt.printTable();          
+
+    }
+
+    @Override
+    public void displaySummary() {
+        _printAttributesTable(matchingAttributes);
+
+
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
+        System.out.println();
+        System.out.println();
+        System.out.println();
+
+        _printAttributesTable(nonMatchingAttributes);
     }
 
 }

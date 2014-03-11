@@ -39,6 +39,7 @@ public class App
         // Load the config from the args
         AppConfig config = AppConfig.getInstance();
         JCommander jCommander = null;
+        System.out.println("Started");
         try{
             // Try to parse the args using JCommander
             jCommander = new JCommander(config, args);

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -24,8 +23,6 @@ public abstract class JMXAttribute {
     protected String attributeName;
     protected String[] tags;
     protected Configuration matching_conf;
-    protected static final List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double"); 
-    protected static final List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData");
     private static final String[] EXCLUDED_BEAN_PARAMS = {"domain", "bean_name", "bean", "attribute"};
 
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";

@@ -30,7 +30,7 @@ public class StatsdReporter extends Reporter{
         throw new UnsupportedOperationException();      
     }
 
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
+    public void displayMatchingAttributeName(JMXAttribute jmxAttribute) {
         throw new UnsupportedOperationException();      
     }
 
@@ -42,5 +42,8 @@ public class StatsdReporter extends Reporter{
     public void displayInstanceName(Instance instance) {
         throw new UnsupportedOperationException();      
     }
+
+    @Override
+    public void displaySummary() {}
 
 }
