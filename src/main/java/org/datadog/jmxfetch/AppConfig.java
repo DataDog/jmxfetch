@@ -12,7 +12,7 @@ import com.beust.jcommander.Parameters;
 @Parameters(separators = "=")
 public class AppConfig {
     private static volatile AppConfig _instance = null;
-    private static final List<String> LOG4J_LEVELS = Arrays.asList("ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL");
+    private static final List<String> LOG4J_LEVELS = Arrays.asList("ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL", "WARN");
 
     public static final String ACTION_COLLECT = "collect";
     public static final String ACTION_LIST_EVERYTHING = "list_everything";
