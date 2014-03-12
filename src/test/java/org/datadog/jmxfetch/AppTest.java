@@ -83,7 +83,7 @@ public class AppTest extends TestCase
         App.doIteration(config);
         LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) config.reporter).getMetrics();
 
-        assertEquals(metrics.size(), 13); // 13 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 4 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 16); // 16 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + the 4 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         boolean metric_100_present = false;
@@ -91,6 +91,9 @@ public class AppTest extends TestCase
         boolean atomic_long_present = false;
         boolean object_present = false;
         boolean metric_1000_present = false;
+        boolean converted_present = false;
+        boolean boolean_present = false;
+        boolean default_present = false;
         boolean counter_absent = true;
         boolean subattr_0_present = false;
         boolean subattr_counter_absent = true;
@@ -113,6 +116,24 @@ public class AppTest extends TestCase
                 assertEquals(tags.length, 3);
                 assertEquals(value, 1000.0);
                 metric_1000_present = true;
+            }
+
+            else if (name.equals("test.converted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 5.0);
+                converted_present = true;
+            }
+
+            else if (name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+            }
+
+            else if (name.equals("test.defaulted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 32.0);
+                default_present = true;
             }
 
             else if (m.get("name").equals("test.counter")) {
@@ -147,6 +168,9 @@ public class AppTest extends TestCase
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
+        assertTrue(converted_present);
+        assertTrue(default_present);
         assertTrue(counter_absent);
         assertTrue(subattr_0_present);
         assertTrue(subattr_counter_absent);
@@ -157,7 +181,7 @@ public class AppTest extends TestCase
         // We run a second collection. The counter should now be present        
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 15); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 18); // 18 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         metric_100_present = false;
@@ -165,6 +189,9 @@ public class AppTest extends TestCase
         atomic_long_present = false;
         object_present = false;
         metric_1000_present = false;
+        boolean_present = false;
+        converted_present = false;
+        default_present = false;
         counter_absent = true;
 
         for (HashMap<String, Object> m : metrics) {
@@ -199,6 +226,21 @@ public class AppTest extends TestCase
                 assertEquals(tags.length, 3);
                 assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
                 subattr_counter_absent = false;
+
+            } else if(name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+
+            } else if(name.equals("test.converted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 5.0);
+                converted_present = true;
+
+            } else if(name.equals("test.defaulted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 32.0); // We didn't increment the counter, hence a value of 0.0 is what we want
+                default_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
@@ -221,6 +263,8 @@ public class AppTest extends TestCase
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
+        assertTrue(converted_present);
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
         assertFalse(subattr_counter_absent);
@@ -236,13 +280,16 @@ public class AppTest extends TestCase
 
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 15); // 15 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 18); // 18 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 4 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         metric_100_present = false;
         metric_1000_present = false;
         atomic_int_present = false;
         atomic_long_present = false;
         object_present = false;
+        boolean_present = false;
+        converted_present = false;
+        default_present = false;
 
         counter_absent = true;
         HashMap<String, Integer> jvm_metrics = new HashMap<String, Integer>();
@@ -279,6 +326,21 @@ public class AppTest extends TestCase
                 assertEquals(value, 0.0);
                 subattr_0_present = true;
 
+            } else if (name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+
+            } else if (name.equals("test.converted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 5.0);
+                converted_present = true;
+
+            } else if (name.equals("test.defaulted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 32.0);
+                default_present = true;
+
             } else if(name.equals("subattr.counter")) {
                 assertEquals(tags.length, 3);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
@@ -312,6 +374,10 @@ public class AppTest extends TestCase
         }
 
         assertTrue(metric_100_present);
+        assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
+        assertTrue(converted_present);
+        assertTrue(default_present);
         assertTrue(metric_1000_present);
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
