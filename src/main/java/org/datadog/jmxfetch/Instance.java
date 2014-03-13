@@ -19,7 +19,10 @@ import org.apache.log4j.Logger;
 
 public class Instance {
     private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
-    private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double", "java.lang.Double", "java.lang.Integer", "java.lang.Long", "java.util.concurrent.atomic.AtomicInteger", "java.util.concurrent.atomic.AtomicLong", "java.lang.Object", "java.lang.Boolean", "boolean"); 
+    private final static List<String> SIMPLE_TYPES = Arrays.asList("long", 
+            "java.lang.String", "int", "double", "java.lang.Double", "java.lang.Integer", "java.lang.Long", 
+            "java.util.concurrent.atomic.AtomicInteger", "java.util.concurrent.atomic.AtomicLong", 
+            "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number"); 
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
     private final static int MAX_RETURNED_METRICS = 100;
 

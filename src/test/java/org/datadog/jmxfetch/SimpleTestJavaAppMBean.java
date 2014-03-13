@@ -16,5 +16,8 @@ public interface SimpleTestJavaAppMBean {
     AtomicInteger getAtomic42();
     AtomicLong getAtomic4242();
     Object getObject1337();
+    Number getNumberBig();
+    Long getLong42424242();
+    Integer getInt424242(); 
     
 }

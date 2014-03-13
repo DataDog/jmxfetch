@@ -1,5 +1,6 @@
 package org.datadog.jmxfetch;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -16,6 +17,9 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private AtomicInteger atomic42 = new AtomicInteger(42);
     private AtomicLong atomic4242 = new AtomicLong(4242);
     private Object object1337 = new Double(13.37);
+    private Long long_42424242 = new Long(42424242);
+    private Integer int_424242 = new Integer(424242);
+    private BigDecimal number_big = new BigDecimal(123456788901234567890.0);
    
     SimpleTestJavaApp() {
         hashmap.put("thisis0", 0);
@@ -65,6 +69,18 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     }
     public Object getObject1337() {
         return object1337;
+    }
+    
+    public Number getNumberBig() {
+        return (Number)number_big;
+    }
+    
+    public Long getLong42424242() {
+        return long_42424242;
+    }
+    
+    public Integer getInt424242() {
+        return int_424242;
     }
 
     
