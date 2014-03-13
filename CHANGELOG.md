@@ -5,7 +5,7 @@ Changes
 
 #### Changes
 * [BUGFIX] Support WARN log level, See [#14][]
-* [FEATURE] Support new types: Boolean, String, java.lang.Number, AtomicInteger, AtomicLong: See [#25][] #26 (Thanks [@coupacooke][])
+* [FEATURE] Support new types: Boolean, String, java.lang.Number, AtomicInteger, AtomicLong: See [#25][] [#26][] (Thanks [@coupacooke][])
 * [BUGFIX] Reset statsd connection: See [#19][]
 * [BUGFIX] Refresh JMX tree: See [4374b92cbf1b93d88fa5bd9d7339907e16a2da4a](https://github.com/DataDog/jmxfetch/commit/4374b92cbf1b93d88fa5bd9d7339907e16a2da4a)  
 
