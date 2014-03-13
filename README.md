@@ -1,5 +1,7 @@
 [![Build Status](https://secure.travis-ci.org/DataDog/jmxfetch.png?branch=master)](http://travis-ci.org/DataDog/jmxfetch)
 
+# [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
+
 # JMXfetch
 
 JMXFetch is the new tool to collect metrics from JMX Servers in order to be sent to Datadog (http://www.datadoghq.com)
