@@ -21,9 +21,9 @@ public class JMXComplexAttribute extends JMXAttribute {
 
     private HashMap<String,HashMap<String,Object>> subAttributeList;
 
-    public JMXComplexAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection) {
+    public JMXComplexAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection, HashMap<String, String> instanceTags) {
         
-        super(a, instance, instance_name, connection);
+        super(a, instance, instance_name, connection, instanceTags);
         this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
     }
 
