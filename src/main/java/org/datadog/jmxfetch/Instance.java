@@ -24,7 +24,7 @@ public class Instance {
             "java.util.concurrent.atomic.AtomicInteger", "java.util.concurrent.atomic.AtomicLong", 
             "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number"); 
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
-    private final static int MAX_RETURNED_METRICS = 100;
+    private final static int MAX_RETURNED_METRICS = 350;
 
     private Set<ObjectInstance> _beans;
     private LinkedList<Configuration> _configurationList = new LinkedList<Configuration>();
