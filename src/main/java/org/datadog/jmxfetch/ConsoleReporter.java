@@ -8,9 +8,7 @@ import dnl.utils.text.table.TextTable;
 public class ConsoleReporter extends Reporter{
 
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-    private LinkedList<JMXAttribute> matchingAttributes = new LinkedList<JMXAttribute>();
-    private LinkedList<JMXAttribute> nonMatchingAttributes = new LinkedList<JMXAttribute>();
-
+  
     @Override
     protected void _sendMetricPoint(String metricName, double value, String[] tags) {
         String tagString = "[" + join(", ", tags) + "]";
@@ -41,39 +39,6 @@ public class ConsoleReporter extends Reporter{
         return sb.toString();
     }
 
-    @Override
-    public void displayMetricReached() {
-        System.out.println();
-        System.out.println();
-        System.out.println();
-        System.out.println("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
-        System.out.println();
-        System.out.println();
-        System.out.println();
-    }
-
-    @Override
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute) {
-        matchingAttributes.add(jmxAttribute);
-        //System.out.println("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
-
-    }
-
-    @Override
-    public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-        nonMatchingAttributes.add(jmxAttribute);
-        //System.out.println("       Not Matching: " + jmxAttribute);
-    }
-
-    @Override
-    public void displayInstanceName(Instance instance) {
-        System.out.println();
-        System.out.println("#####################################");
-        System.out.println("Instance: " + instance);
-        System.out.println("#####################################");
-        System.out.println();
-
-    }
 
     public void _printAttributesTable(LinkedList<JMXAttribute> attributes) {
         String[] columnNames = {                                       
@@ -98,20 +63,50 @@ public class ConsoleReporter extends Reporter{
 
     }
 
+
     @Override
-    public void displaySummary() {
-        _printAttributesTable(matchingAttributes);
-
-
-        System.out.println();
-        System.out.println();
-        System.out.println();
-        System.out.println("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
-        System.out.println();
-        System.out.println();
-        System.out.println();
-
-        _printAttributesTable(nonMatchingAttributes);
+    public void displaySummary(int maxReturned, String instanceName, 
+            String action, LinkedList<JMXAttribute> collectedAttributes, LinkedList<JMXAttribute> limitedAttributes,
+            LinkedList<JMXAttribute> nonMatchingAttributes) {
+        
+        if (action.equals(AppConfig.ACTION_LIST_COLLECTED)) {
+            _printAttributesTable(collectedAttributes);
+        } else if (action.equals(AppConfig.ACTION_LIST_LIMITED)) {
+            _printAttributesTable(limitedAttributes);
+        } else if (action.equals(AppConfig.ACTION_LIST_MATCHING)) {
+            _printAttributesTable(collectedAttributes);
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            System.out.println("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            _printAttributesTable(limitedAttributes);
+        } else if (action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
+            _printAttributesTable(nonMatchingAttributes);
+        } else if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)) {
+            _printAttributesTable(collectedAttributes);
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            System.out.println("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");    
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            _printAttributesTable(limitedAttributes);
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            System.out.println("       ------- ATTRIBUTES BELOW ARE NOT MATCHING ANY CONFIGURATION -------");    
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            _printAttributesTable(nonMatchingAttributes);
+            
+        }
+  
+        
     }
 
 }

@@ -83,11 +83,20 @@ public class AppTest extends TestCase
         App.doIteration(config);
         LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) config.reporter).getMetrics();
 
-        assertEquals(metrics.size(), 10); // 10 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + the 1 gauge that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 19); // 19 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         boolean metric_100_present = false;
+        boolean atomic_int_present = false;
+        boolean atomic_long_present = false;
+        boolean object_present = false;
         boolean metric_1000_present = false;
+        boolean converted_present = false;
+        boolean boolean_present = false;
+        boolean default_present = false;
+        boolean number_present = false;
+        boolean integer_present = false;
+        boolean long_present = false;
         boolean counter_absent = true;
         boolean subattr_0_present = false;
         boolean subattr_counter_absent = true;
@@ -106,10 +115,46 @@ public class AppTest extends TestCase
                 metric_100_present = true;
             }
 
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.2345678890123457E20);
+                number_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4.2424242E7);
+                long_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 424242.0);
+                integer_present = true;
+            }
+
             else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
                 assertEquals(tags.length, 3);
                 assertEquals(value, 1000.0);
                 metric_1000_present = true;
+            }
+
+            else if (name.equals("test.converted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 5.0);
+                converted_present = true;
+            }
+
+            else if (name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+            }
+
+            else if (name.equals("test.defaulted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 32.0);
+                default_present = true;
             }
 
             else if (m.get("name").equals("test.counter")) {
@@ -124,23 +169,57 @@ public class AppTest extends TestCase
                 subattr_counter_absent = false;
             }
 
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 42.0);
+                atomic_int_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4242.0);
+                atomic_long_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 13.37);
+                object_present = true;
+            }
+
         }
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
+        assertTrue(converted_present);
+        assertTrue(default_present);
         assertTrue(counter_absent);
         assertTrue(subattr_0_present);
         assertTrue(subattr_counter_absent);
+        assertTrue(atomic_int_present);
+        assertTrue(atomic_long_present);
+        assertTrue(object_present);
+        assertTrue(number_present);
+        assertTrue(long_present);
+        assertTrue(integer_present);
 
         // We run a second collection. The counter should now be present        
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 21); // 21 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         metric_100_present = false;
+        atomic_int_present = false;
+        atomic_long_present = false;
+        object_present = false;
         metric_1000_present = false;
+        boolean_present = false;
+        converted_present = false;
+        default_present = false;
         counter_absent = true;
+        number_present = false;
+        integer_present = false;
+        long_present = false;
 
         for (HashMap<String, Object> m : metrics) {
             String name = (String)(m.get("name"));
@@ -160,6 +239,24 @@ public class AppTest extends TestCase
                 assertEquals(value, 1000.0);
                 metric_1000_present = true;
 
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.2345678890123457E20);
+                number_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4.2424242E7);
+                long_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 424242.0);
+                integer_present = true;
+
+
             } else if (name.equals("test.counter")) {
                 assertEquals(tags.length, 3);
                 assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
@@ -174,15 +271,55 @@ public class AppTest extends TestCase
                 assertEquals(tags.length, 3);
                 assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
                 subattr_counter_absent = false;
+
+            } else if(name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+
+            } else if(name.equals("test.converted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 5.0);
+                converted_present = true;
+
+            } else if(name.equals("test.defaulted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 32.0); // We didn't increment the counter, hence a value of 0.0 is what we want
+                default_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 42.0);
+                atomic_int_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4242.0);
+                atomic_long_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 13.37);
+                object_present = true;
             }
 
         }
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
+        assertTrue(converted_present);
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
         assertFalse(subattr_counter_absent);
+        assertTrue(atomic_int_present);
+        assertTrue(atomic_long_present);
+        assertTrue(object_present);
+        assertTrue(number_present);
+        assertTrue(long_present);
+        assertTrue(integer_present);
+
 
 
         // We run a 3rd collection but this time we increment the counter and we sleep
@@ -192,10 +329,21 @@ public class AppTest extends TestCase
 
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
-        assertEquals(metrics.size(), 12); // 12 = 7 metrics from java.lang + the 2 gauges we are explicitly collecting + 1 gauge implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 21); // 21 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         metric_100_present = false;
         metric_1000_present = false;
+        atomic_int_present = false;
+        atomic_long_present = false;
+        object_present = false;
+        boolean_present = false;
+        converted_present = false;
+        default_present = false;
+        number_present = false;
+        integer_present = false;
+        long_present = false;
+
+
         counter_absent = true;
         HashMap<String, Integer> jvm_metrics = new HashMap<String, Integer>();
         jvm_metrics.put("jvm.gc.cms.count", 2);
@@ -216,6 +364,23 @@ public class AppTest extends TestCase
                 assertEquals(tags.length, 3);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
+                
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.2345678890123457E20);
+                number_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4.2424242E7);
+                long_present = true;
+            }
+
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 424242.0);
+                integer_present = true;
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
                 assertEquals(tags.length, 3);
                 assertEquals(value, 1000.0);
@@ -231,12 +396,43 @@ public class AppTest extends TestCase
                 assertEquals(value, 0.0);
                 subattr_0_present = true;
 
+            } else if (name.equals("test.boolean")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 1.0);
+                boolean_present = true;
+
+            } else if (name.equals("test.converted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 5.0);
+                converted_present = true;
+
+            } else if (name.equals("test.defaulted")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 32.0);
+                default_present = true;
+
             } else if(name.equals("subattr.counter")) {
                 assertEquals(tags.length, 3);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
                 assertTrue(value > 0.99);
                 subattr_counter_absent = false;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 42.0);
+                atomic_int_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 4242.0);
+                atomic_long_present = true;
+            }
+            else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
+                assertEquals(tags.length, 3);
+                assertEquals(value, 13.37);
+                object_present = true;
+
 
             } else {
                 // Those are jvm metrics
@@ -249,9 +445,20 @@ public class AppTest extends TestCase
 
         assertTrue(metric_100_present);
         assertTrue(metric_1000_present);
+        assertTrue(boolean_present);
+        assertTrue(converted_present);
+        assertTrue(default_present);
+        assertTrue(metric_1000_present);
         assertFalse(counter_absent);
         assertTrue(subattr_0_present);
         assertFalse(subattr_counter_absent);
+        assertTrue(atomic_int_present);
+        assertTrue(atomic_long_present);
+        assertTrue(object_present);
+        assertTrue(number_present);
+        assertTrue(long_present);
+        assertTrue(integer_present);
+
 
         for (int i : jvm_metrics.values()) {
             assertEquals(i, 0);

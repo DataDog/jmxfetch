@@ -1,4 +1,6 @@
 package org.datadog.jmxfetch;
+import java.util.LinkedList;
+
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 
@@ -26,24 +28,12 @@ public class StatsdReporter extends Reporter{
         STATSD_CLIENT.gauge(metricName, value, tags);
     }
 
-    public void displayMetricReached() {
-        throw new UnsupportedOperationException();      
-    }
-
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute) {
-        throw new UnsupportedOperationException();      
-    }
-
-    public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-        throw new UnsupportedOperationException();      
-    }
-
+  
     @Override
-    public void displayInstanceName(Instance instance) {
-        throw new UnsupportedOperationException();      
+    public void displaySummary(int maxReturned, String instanceName, 
+            String action, LinkedList<JMXAttribute> collectedAttributes, LinkedList<JMXAttribute> limitedAttributes,
+            LinkedList<JMXAttribute> nonMatchingAttributes) {
+        
     }
-
-    @Override
-    public void displaySummary() {}
 
 }

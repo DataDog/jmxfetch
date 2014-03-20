@@ -19,13 +19,16 @@ import org.apache.log4j.Logger;
 
 public class Instance {
     private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
-    private final static List<String> SIMPLE_TYPES = Arrays.asList("long", "java.lang.String", "int", "double", "java.lang.Double", "java.lang.Integer", "java.lang.Long"); 
+    private final static List<String> SIMPLE_TYPES = Arrays.asList("long", 
+            "java.lang.String", "int", "double", "java.lang.Double", "java.lang.Integer", "java.lang.Long", 
+            "java.util.concurrent.atomic.AtomicInteger", "java.util.concurrent.atomic.AtomicLong", 
+            "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number"); 
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
-    private final static int MAX_RETURNED_METRICS = 100;
+    private final static int MAX_RETURNED_METRICS = 350;
 
     private Set<ObjectInstance> _beans;
     private LinkedList<Configuration> _configurationList = new LinkedList<Configuration>();
-    private LinkedList<JMXAttribute> _matchingAttributes;
+    private LinkedList<JMXAttribute> _collectedAttributes;
     private LinkedList<JMXAttribute> _failingAttributes;
     private Integer _refreshBeansPeriod;
     private long _lastRefreshTime;  
@@ -115,7 +118,7 @@ public class Instance {
         }
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-        Iterator<JMXAttribute> it = _matchingAttributes.iterator();
+        Iterator<JMXAttribute> it = _collectedAttributes.iterator();
 
         while(it.hasNext()) {
             JMXAttribute jmxAttr = it.next();
@@ -146,14 +149,11 @@ public class Instance {
     private void _getMatchingAttributes() {
         Reporter reporter = config.reporter;
         String action = config.getAction();
-        boolean metricReachedDisplayed = false;
 
-        this._matchingAttributes = new LinkedList<JMXAttribute>();
+        this._collectedAttributes = new LinkedList<JMXAttribute>();
+        LinkedList<JMXAttribute> limitedAttributes = new LinkedList<JMXAttribute>();
+        LinkedList<JMXAttribute> nonMatchingAttributes = new LinkedList<JMXAttribute>();
         int metricsCount = 0;
-
-        if ( !action.equals(AppConfig.ACTION_COLLECT)) {
-            reporter.displayInstanceName(this);
-        }
 
         for( ObjectInstance bean : this._beans) {
             if ( this._limitReached) {
@@ -178,16 +178,10 @@ public class Instance {
 
                 if (  metricsCount >= this._maxReturnedMetrics ) {
                     this._limitReached = true;
-                    if(action.equals(AppConfig.ACTION_COLLECT)){
-                        LOGGER.warn("Maximum number of metrics reached.");
-                        break;
-                    } else if(!metricReachedDisplayed &&
-                            !action.equals(AppConfig.ACTION_LIST_COLLECTED) &&
-                            !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
-                        reporter.displayMetricReached();
-                        metricReachedDisplayed = true;
-                    }
+                    LOGGER.warn("Maximum number of metrics reached.");
+                    break;
                 }
+
                 JMXAttribute jmxAttribute;
                 String attributeType = a.getType();
                 if( SIMPLE_TYPES.contains(attributeType) ) {
@@ -207,14 +201,11 @@ public class Instance {
                     try {
                         if ( jmxAttribute.match(conf) ) {
                             jmxAttribute.matching_conf = conf;
-                            metricsCount += jmxAttribute.getMetricsCount(); 
-                            this._matchingAttributes.add(jmxAttribute);
-
-                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) || 
-                                    action.equals(AppConfig.ACTION_LIST_MATCHING) || 
-                                    action.equals(AppConfig.ACTION_LIST_COLLECTED) && !this._limitReached ||
-                                    action.equals(AppConfig.ACTION_LIST_LIMITED) && this._limitReached) {
-                                reporter.displayMatchingAttributeName(jmxAttribute);
+                            metricsCount += jmxAttribute.getMetricsCount();
+                            if (action.equals(AppConfig.ACTION_COLLECT)) {
+                                this._collectedAttributes.add(jmxAttribute);   
+                            } else {
+                                limitedAttributes.add(jmxAttribute);
                             }
                             break;
                         }       
@@ -222,15 +213,13 @@ public class Instance {
                         LOGGER.error("Error while trying to match a configuration with the Attribute: " + beanName + " : " + a, e);
                     }
                 }
-                if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) ||
-                        action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)){
-                    reporter.displayNonMatchingAttributeName(jmxAttribute);
+                if (jmxAttribute.matching_conf == null) {
+                    nonMatchingAttributes.add(jmxAttribute);
                 }
-
             }
         }
-        reporter.displaySummary();
-        LOGGER.info("Found " + _matchingAttributes.size() + " matching attributes");
+        reporter.displaySummary(this._maxReturnedMetrics, this._instanceName, action, this._collectedAttributes, limitedAttributes, nonMatchingAttributes);
+        LOGGER.info("Found " + _collectedAttributes.size() + " attributes to collect.");
     }
 
     private void _refreshBeansList() throws IOException {

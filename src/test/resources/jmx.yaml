@@ -14,12 +14,25 @@ instances:
                     ShouldBeCounter:
                         metric_type: counter
                         alias: test.counter
+                    ShouldBeBoolean:
+                        metric_type: gauge
+                        alias: test.boolean
                     Hashmap.thisis0:
                         metric_type: gauge
                         alias: subattr.this.is.0
                     Hashmap.thisiscounter:
                         metric_type: counter
                         alias: subattr.counter
+                    ShouldBeConverted:
+                        metric_type: gauge
+                        alias: test.converted
+                        values:
+                          ShouldBe0: 0
+                          ShouldBe5: 5
+                    ShouldBeDefaulted:
+                        metric_type: gauge
+                        alias: test.defaulted
+                        values:
+                          default: 32
             - include: 
                domain: org.datadog.jmxfetch.test
-               

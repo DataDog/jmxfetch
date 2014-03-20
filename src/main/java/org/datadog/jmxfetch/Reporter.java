@@ -106,14 +106,8 @@ public abstract class Reporter {
 
     protected abstract void _sendMetricPoint(String metricName, double value, String[] tags);
 
-    public abstract void displayMetricReached();
-
-    public abstract void displayNonMatchingAttributeName(JMXAttribute jmxAttribute);
-
-    public abstract void displayInstanceName(Instance instance);
-
-    public abstract void displayMatchingAttributeName(JMXAttribute jmxAttribute);
-
-    public abstract void displaySummary();
+    public abstract void displaySummary(int maxReturned, String instanceName, 
+            String action, LinkedList<JMXAttribute> collectedAttributes, LinkedList<JMXAttribute> limitedAttributes,
+            LinkedList<JMXAttribute> nonMatchingAttributes);
 
 }
