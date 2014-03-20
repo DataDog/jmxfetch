@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -35,7 +36,7 @@ public abstract class JMXAttribute {
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
     private static final String DOT_UNDERSCORE = "_*\\._*";
 
-    public JMXAttribute(MBeanAttributeInfo a, ObjectInstance jmxInstance, String instanceName, Connection connection) {
+    public JMXAttribute(MBeanAttributeInfo a, ObjectInstance jmxInstance, String instanceName, Connection connection, HashMap<String, String> instanceTags) {
         this.attribute = a;
         this.jmxInstance = jmxInstance;
         this.matching_conf = null;
@@ -53,6 +54,11 @@ public abstract class JMXAttribute {
         LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(split[1].replace("=",":").split(",")));
         beanTags.add("instance:"+instanceName);
         beanTags.add("jmx_domain:"+domain);
+        if (instanceTags != null) {
+            for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
+                beanTags.add(tag.getKey()+":"+tag.getValue());
+            }
+        }
         this.tags = new String[beanTags.size()];
         beanTags.toArray(this.tags);
 

@@ -18,9 +18,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
     private String _alias = null;
     private String _metricType;
 
-    public JMXSimpleAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection) {
+    public JMXSimpleAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection, HashMap<String, String> instanceTags) {
 
-        super(a, instance, instance_name, connection);
+        super(a, instance, instance_name, connection, instanceTags);
     }
 
     @Override

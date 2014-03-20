@@ -108,51 +108,53 @@ public class AppTest extends TestCase
 
             // All metrics should be tagged with "instance:jmx_test_instance"
             assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
+            assertTrue(Arrays.asList(tags).contains("env:stage"));
+            assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1.2345678890123457E20);
                 number_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 4.2424242E7);
                 long_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 424242.0);
                 integer_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1000.0);
                 metric_1000_present = true;
             }
 
             else if (name.equals("test.converted")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 5.0);
                 converted_present = true;
             }
 
             else if (name.equals("test.boolean")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1.0);
                 boolean_present = true;
             }
 
             else if (name.equals("test.defaulted")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 32.0);
                 default_present = true;
             }
@@ -161,7 +163,7 @@ public class AppTest extends TestCase
                 counter_absent = false;
 
             } else if (name.equals("subattr.this.is.0")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 0.0);
                 subattr_0_present = true;
 
@@ -170,17 +172,17 @@ public class AppTest extends TestCase
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 42.0);
                 atomic_int_present = true;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 4242.0);
                 atomic_long_present = true;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 13.37);
                 object_present = true;
             }
@@ -228,78 +230,80 @@ public class AppTest extends TestCase
 
             // All metrics should be tagged with "instance:jmx_test_instance"
             assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
+            assertTrue(Arrays.asList(tags).contains("env:stage"));
+            assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
 
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1000.0);
                 metric_1000_present = true;
 
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1.2345678890123457E20);
                 number_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 4.2424242E7);
                 long_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 424242.0);
                 integer_present = true;
 
 
             } else if (name.equals("test.counter")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
                 counter_absent = false;
 
             } else if (name.equals("subattr.this.is.0")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 0.0);
                 subattr_0_present = true;
 
             } else if(name.equals("subattr.counter")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 0.0); // We didn't increment the counter, hence a value of 0.0 is what we want
                 subattr_counter_absent = false;
 
             } else if(name.equals("test.boolean")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1.0);
                 boolean_present = true;
 
             } else if(name.equals("test.converted")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 5.0);
                 converted_present = true;
 
             } else if(name.equals("test.defaulted")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 32.0); // We didn't increment the counter, hence a value of 0.0 is what we want
                 default_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 42.0);
                 atomic_int_present = true;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 4242.0);
                 atomic_long_present = true;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 13.37);
                 object_present = true;
             }
@@ -359,77 +363,79 @@ public class AppTest extends TestCase
 
             // All metrics should be tagged with "instance:jmx_test_instance"
             assertTrue(Arrays.asList(tags).contains("instance:jmx_test_instance"));
+            assertTrue(Arrays.asList(tags).contains("env:stage"));
+            assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
                 
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1.2345678890123457E20);
                 number_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 4.2424242E7);
                 long_present = true;
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 424242.0);
                 integer_present = true;
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1000.0);
                 metric_1000_present = true;
             } else if (name.equals("test.counter")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
                 assertTrue(value > 0.99);
                 counter_absent = false;
             } else if (name.equals("subattr.this.is.0")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 0.0);
                 subattr_0_present = true;
 
             } else if (name.equals("test.boolean")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 1.0);
                 boolean_present = true;
 
             } else if (name.equals("test.converted")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 5.0);
                 converted_present = true;
 
             } else if (name.equals("test.defaulted")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 32.0);
                 default_present = true;
 
             } else if(name.equals("subattr.counter")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
                 assertTrue(value > 0.99);
                 subattr_counter_absent = false;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 42.0);
                 atomic_int_present = true;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 4242.0);
                 atomic_long_present = true;
             }
             else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
-                assertEquals(tags.length, 3);
+                assertEquals(tags.length, 5);
                 assertEquals(value, 13.37);
                 object_present = true;
 

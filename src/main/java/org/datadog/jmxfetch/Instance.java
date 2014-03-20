@@ -35,6 +35,7 @@ public class Instance {
     private LinkedHashMap<String, Object> _yaml;
     private LinkedHashMap<String, Object> _initConfig;
     private String _instanceName;
+    private LinkedHashMap<String, String> _tags;
     private String _checkName;
     private int _maxReturnedMetrics;
     private boolean _limitReached;
@@ -49,6 +50,7 @@ public class Instance {
         this._yaml = yamlInstance;
         this._initConfig = init_config;
         this._instanceName = (String) this._yaml.get("name");
+        this._tags = (LinkedHashMap<String,String>)this._yaml.get("tags");
         this._checkName = checkName;
         this._failingAttributes = new LinkedList<JMXAttribute>();
         this._refreshBeansPeriod = (Integer)this._yaml.get("refresh_beans");
@@ -195,10 +197,10 @@ public class Instance {
                 String attributeType = a.getType();
                 if( SIMPLE_TYPES.contains(attributeType) ) {
                     LOGGER.debug("Attribute: " + beanName + " : " + a + " has a simple type");
-                    jmxAttribute = new JMXSimpleAttribute(a, bean, this._instanceName, this._connection);
+                    jmxAttribute = new JMXSimpleAttribute(a, bean, this._instanceName, this._connection, this._tags);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     LOGGER.debug("Attribute: " + beanName + " : " + a + " has a complex type");
-                    jmxAttribute = new JMXComplexAttribute(a, bean, this._instanceName, this._connection);
+                    jmxAttribute = new JMXComplexAttribute(a, bean, this._instanceName, this._connection, this._tags);
                 } else {
                     LOGGER.debug("Attribute: " + beanName + " : " + a + " has an unsupported type: " + attributeType);
                     continue;
@@ -242,6 +244,10 @@ public class Instance {
 
     public String getName() {
         return this._instanceName;
+    }
+
+    public LinkedHashMap<String, String> getTags() {
+        return this._tags;
     }
 
     public LinkedHashMap<String, Object> getYaml() {
