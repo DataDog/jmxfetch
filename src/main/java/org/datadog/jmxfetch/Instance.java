@@ -225,8 +225,8 @@ public class Instance {
                         LOGGER.error("Error while trying to match a configuration with the Attribute: " + beanName + " : " + a, e);
                     }
                 }
-                if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) ||
-                        action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)){
+                if (jmxAttribute.matching_conf == null && (action.equals(AppConfig.ACTION_LIST_EVERYTHING) ||
+                        action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))){
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
 
