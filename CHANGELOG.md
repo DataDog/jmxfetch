@@ -5,6 +5,7 @@ Changes
 
 #### Changes
 * [BUGFIX] Support WARN log level, See [#14][]
++ [FEATURE] Support custom instance tags: See [#28][] (Thanks [@coupacooke][])
 * [FEATURE] Support new types: Boolean, String, java.lang.Number, AtomicInteger, AtomicLong: See [#25][] [#26][] (Thanks [@coupacooke][])
 * [BUGFIX] Reset statsd connection: See [#19][]
 * [BUGFIX] Refresh JMX tree: See [4374b92cbf1b93d88fa5bd9d7339907e16a2da4a](https://github.com/DataDog/jmxfetch/commit/4374b92cbf1b93d88fa5bd9d7339907e16a2da4a)  
@@ -14,4 +15,5 @@ Changes
 [#19]: https://github.com/DataDog/jmxfetch/issues/19
 [#25]: https://github.com/DataDog/jmxfetch/issues/25
 [#26]: https://github.com/DataDog/jmxfetch/issues/26
+[#28]: https://github.com/DataDog/jmxfetch/issues/28
 [@coupacooke]: https://github.com/coupacooke
