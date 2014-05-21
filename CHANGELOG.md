@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.3.0 - Unreleased
+# 0.3.0 / 03-25-2014
 
 #### Changes
 * [BUGFIX] Support WARN log level, See [#14][]
