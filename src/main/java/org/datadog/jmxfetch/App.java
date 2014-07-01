@@ -128,7 +128,7 @@ public class App
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
                 config.status.flush();
-                init(config, true);       
+                init(config, false);
             }
             long length = System.currentTimeMillis() - start;
             LOGGER.debug("Iteration ran in " + length  + " ms");
