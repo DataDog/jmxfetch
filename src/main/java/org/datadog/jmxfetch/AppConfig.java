@@ -48,7 +48,7 @@ public class AppConfig {
     public List<String> yamlFileList;
 
     @Parameter(names= {"--check_period", "-p"}, description = "Sleeping time during two iterations in ms", validateWith = PositiveInteger.class, required = false)
-    public int loopPeriod = 15000;
+    public int loopPeriod = 1;
 
     @Parameter(names= {"--status_location", "-s"}, description = "Absolute path of the status file. (default to null = no status file written)", converter = StatusWritableLocation.class, required = false)
     public Status status = Status.getInstance();

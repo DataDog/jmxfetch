@@ -121,7 +121,7 @@ public class Status {
 
             } catch (Exception e) {
                 LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
-            } 
+            }
             this._clearStats();
         }
 

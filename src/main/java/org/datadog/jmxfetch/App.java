@@ -25,7 +25,7 @@ public class App
 {
     private static ArrayList<Instance> _instances = new ArrayList<Instance>();
     private static LinkedList<Instance> _brokenInstances = new LinkedList<Instance>();
-    private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
+    private final static Logger LOGGER = Logger.getLogger(App.class.getName());
     private static int _loopCounter;
 
 
@@ -54,11 +54,11 @@ public class App
         }
 
         // Set up the logger to add file handler
-        try {
-            CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
-        } catch (IOException e) {
-            LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
-        }
+//        try {
+//            CustomLogger.setup(Level.toLevel(config.logLevel), config.logLocation);
+//        } catch (IOException e) {
+//            LOGGER.error("Unable to setup file handler to file: " + config.logLocation, e);
+//        }
 
 
         // The specified action is unknown
@@ -119,16 +119,16 @@ public class App
     }
 
 
-    private static void _doLoop(AppConfig config) { 
+    public static void _doLoop(AppConfig config) {
         // Main Loop that will periodically collect metrics from the JMX Server
         while(true) {
             long start = System.currentTimeMillis();
-            if (_instances.size() > 0) {
+            if (false && _instances.size() > 0) {
                 doIteration(config);
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
                 config.status.flush();
-                init(config, true);       
+                init(config, false);
             }
             long length = System.currentTimeMillis() - start;
             LOGGER.debug("Iteration ran in " + length  + " ms");
@@ -178,7 +178,7 @@ public class App
 
                 instanceStatus = Status.STATUS_WARNING;
                 // We don't want to log the warning at every iteration so we use this custom logger.
-                CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
+//                CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
             reporter.sendMetrics(metrics, instance.getName());
             config.status.addInstanceStats(instance.getCheckName(), instance.getName(), metrics.size(), instanceMessage, instanceStatus);
@@ -268,7 +268,7 @@ public class App
             Map.Entry<String, YamlParser> entry = (Map.Entry<String, YamlParser>)it.next();
             String name = entry.getKey();
             YamlParser yamlConfig = entry.getValue();
-            it.remove(); 
+            it.remove();
 
 
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
@@ -279,12 +279,14 @@ public class App
                 continue;
             }
 
-            for(Iterator<LinkedHashMap<String,Object>> i = configInstances.iterator(); i.hasNext(); ) { 
+            for(Iterator<LinkedHashMap<String,Object>> i = configInstances.iterator(); i.hasNext(); ) {
                 Instance instance = null;
                 //Create a new Instance object
                 try {
-                    instance = new Instance(i.next(),  ((LinkedHashMap<String, Object>) yamlConfig.getInitConfig()), name, config);
+                    LinkedHashMap<String, Object> initConfig = (LinkedHashMap<String, Object>) yamlConfig.getInitConfig();
+                    instance = new Instance(i.next(), new LinkedHashMap<String, Object>(), name, config);
                 } catch(Exception e) {
+                    e.printStackTrace();
                     String warning = "Unable to create instance. Please check your yaml file";
                     config.status.addInitFailedCheck(name, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
@@ -301,7 +303,7 @@ public class App
                     LOGGER.error(warning);
                 } catch (Exception e) {
                     _brokenInstances.add(instance);
-                    String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage(); 
+                    String warning = "Unexpected exception while initiating instance "+ instance + " : " + e.getMessage();
                     config.status.addInstanceStats(name, instance.getName(), 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning, e);
                 }

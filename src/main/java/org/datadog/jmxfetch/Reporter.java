@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
 
 public abstract class Reporter {
 
-    private final static Logger LOGGER = Logger.getLogger(App.class.getName()); 
+    private final static Logger LOGGER = Logger.getLogger(App.class.getName());
 
     protected HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
 

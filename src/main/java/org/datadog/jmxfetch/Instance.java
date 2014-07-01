@@ -205,24 +205,24 @@ public class Instance {
                     LOGGER.debug("Attribute: " + beanName + " : " + a + " has an unsupported type: " + attributeType);
                     continue;
                 }
-
+//
                 // For each attribute we try it with each configuration to see if there is one that matches
                 // If so, we store the attribute so metrics will be collected from it. Otherwise we discard it.
                 for ( Configuration conf : this._configurationList) {
                     try {
                         if ( jmxAttribute.match(conf) ) {
                             jmxAttribute.matching_conf = conf;
-                            metricsCount += jmxAttribute.getMetricsCount(); 
+                            metricsCount += jmxAttribute.getMetricsCount();
                             this._matchingAttributes.add(jmxAttribute);
 
-                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) || 
-                                    action.equals(AppConfig.ACTION_LIST_MATCHING) || 
+                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) ||
+                                    action.equals(AppConfig.ACTION_LIST_MATCHING) ||
                                     action.equals(AppConfig.ACTION_LIST_COLLECTED) && !this._limitReached ||
                                     action.equals(AppConfig.ACTION_LIST_LIMITED) && this._limitReached) {
                                 reporter.displayMatchingAttributeName(jmxAttribute, metricsCount, this._maxReturnedMetrics);
                             }
                             break;
-                        }       
+                        }
                     } catch (Exception e) {
                         LOGGER.error("Error while trying to match a configuration with the Attribute: " + beanName + " : " + a, e);
                     }
