@@ -1,19 +1,20 @@
 package org.datadog.jmxfetch;
-import java.io.File;
+
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import org.datadog.jmxfetch.converter.ReporterConverter;
+import org.datadog.jmxfetch.converter.StatusConverter;
+import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.validator.Log4JLevelValidator;
+import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
+import org.datadog.jmxfetch.validator.ReporterValidator;
+
 import java.util.Arrays;
 import java.util.List;
 
-import com.beust.jcommander.IParameterValidator;
-import com.beust.jcommander.IStringConverter;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
-
 @Parameters(separators = "=")
-public class AppConfig {
-    private static volatile AppConfig _instance = null;
-    private static final List<String> LOG4J_LEVELS = Arrays.asList("ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL", "WARN");
-
+class AppConfig {
     public static final String ACTION_COLLECT = "collect";
     public static final String ACTION_LIST_EVERYTHING = "list_everything";
     public static final String ACTION_LIST_COLLECTED = "list_collected_attributes";
@@ -21,142 +22,98 @@ public class AppConfig {
     public static final String ACTION_LIST_NOT_MATCHING = "list_not_matching_attributes";
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
-    public static final List<String> ACTIONS = Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING, ACTION_LIST_COLLECTED, 
-            ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP);
+    public static final List<String> ACTIONS = Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING,
+            ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP);
 
-    private boolean _isConsoleReporter = false;
+    @Parameter(names = {"--help", "-h"},
+            description = "Display this help page",
+            help = true)
+    private boolean help;
 
+    @Parameter(names = {"--log_level", "-L"},
+            description = "Level of verbosity",
+            validateWith = Log4JLevelValidator.class,
+            required = false)
+    private String logLevel = "INFO";
 
-    @Parameter(names = {"--help", "-h"}, help = true, description = "Display this help page")
-    public boolean help;
+    @Parameter(names = {"--log_location", "-l"},
+            description = "Absolute path of the log file (default to null = no logging)",
+            required = false)
+    private String logLocation;
 
+    @Parameter(names = {"--conf_directory", "-D"},
+            description = "Absolute path to the conf.d directory",
+            required = true)
+    private String confdDirectory;
 
-    @Parameter(names = {"--log_level", "-L"}, description = "Level of verbosity", validateWith = Log4JLevelValidator.class, required = false)
-    public String logLevel = "INFO";
+    @Parameter(names = {"--reporter", "-r"},
+            description = "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"",
+            validateWith = ReporterValidator.class,
+            converter = ReporterConverter.class,
+            required = false)
+    private Reporter reporter;
 
-    @Parameter(names= {"--log_location", "-l"}, description = "Absolute path of the log file (default to null = no logging)", required = false)
-    public String logLocation = null;
+    @Parameter(names = {"--check", "-c"},
+            description = "Yaml file name to read (must be in the confd directory)",
+            required = true,
+            variableArity = true)
+    private List<String> yamlFileList;
 
-    @Parameter(names = {"--conf_directory", "-D"}, description = "Absolute path to the conf.d directory", required = true)
-    public String confdDirectory = null;
+    @Parameter(names = {"--check_period", "-p"},
+            description = "Sleeping time during two iterations in ms",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int checkPeriod = 15000;
 
-    @Parameter(names = {"--reporter", "-r"}, description = "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"", 
-            validateWith = ReporterConverter.class, converter = ReporterConverter.class, required = false)
-    public Reporter reporter = new ConsoleReporter();
+    @Parameter(names = {"--status_location", "-s"},
+            description = "Absolute path of the status file. (default to null = no status file written)",
+            converter = StatusConverter.class,
+            required = false)
+    private Status status = new Status();
 
-    @Parameter(names = {"--check", "-c"}, description = "Yaml file name to read (must be in the confd directory)", required = true, variableArity = true)
-    public List<String> yamlFileList;
-
-    @Parameter(names= {"--check_period", "-p"}, description = "Sleeping time during two iterations in ms", validateWith = PositiveInteger.class, required = false)
-    public int loopPeriod = 1;
-
-    @Parameter(names= {"--status_location", "-s"}, description = "Absolute path of the status file. (default to null = no status file written)", converter = StatusWritableLocation.class, required = false)
-    public Status status = Status.getInstance();
-
-    @Parameter(description="Action to take, should be in [help, collect, list_everything, list_collected_attributes, list_matching_attributes, list_not_matching_attributes, list_limited_attributes]", required = true)
+    @Parameter(description = "Action to take, should be in [help, collect, " +
+            "list_everything, list_collected_attributes, list_matching_attributes, " +
+            "list_not_matching_attributes, list_limited_attributes]",
+            required = true)
     private List<String> action = null;
-
-    public static AppConfig getInstance() {
-        if (_instance == null) {
-            _instance = new AppConfig();
-        }
-        return _instance;
-    }
-
-    private AppConfig(){
-        // A private constructor to make sure that only one instance will be created
-    }
 
     public String getAction() {
         return this.action.get(0);
     }
 
     public boolean isConsoleReporter() {
-        return _isConsoleReporter;
+        return reporter != null && (reporter instanceof ConsoleReporter);
     }
 
-    public void setIsConsoleReporter(boolean b) {
-        _isConsoleReporter = b;
+    public boolean isHelp() {
+        return help;
     }
 
-    public static class StatusWritableLocation implements IStringConverter<Status> {
-
-        public Status convert(String value) {
-            Status status = Status.getInstance();
-            status.configure(value);
-            return status;
-        }
+    public Status getStatus() {
+        return status;
     }
 
-    public static class ReporterConverter implements IParameterValidator, IStringConverter<Reporter> {
-        private static Reporter _reporter;
-
-        public void validate(String name, String value)
-                throws ParameterException {
-
-            if(value.equals("console")){    
-                //Reporter is console
-                _reporter = new ConsoleReporter();
-                AppConfig.getInstance().setIsConsoleReporter(true);
-            } else if (!value.equals("console")) {
-
-                if(!value.contains(":")) {
-                    throw new ParameterException("Parameter " + name +
-                            " should be either \"console\" or \"statsd:[STATSD_PORT\"");
-                }
-
-                String[] split = value.split(":");
-                if (!split[0].equals("statsd")) {
-                    throw new ParameterException("Parameter " + name +
-                            "should be either \"console\" or \"statsd:[STATSD_PORT\"");
-                }
-
-                int port;
-                try {
-                    port = Integer.parseInt(split[1]);
-                } catch(Exception e) {
-                    throw new ParameterException("Statsd port should be an integer");
-                }
-
-                if(port < 1) {
-                    throw new ParameterException("Statsd port should be > 0");
-                }
-
-                _reporter = new StatsdReporter(port); 
-            } else {
-                throw new ParameterException(name + " should be either \"console\" or \"statsd:[STATSD_PORT]\"");
-            }
-        }
-
-        public Reporter convert(String value) {
-            // _reporter should have been set during validation
-            return _reporter;
-        }
+    public int getCheckPeriod() {
+        return checkPeriod;
     }
 
-    public static class Log4JLevelValidator implements IParameterValidator {
-        public void validate(String name, String value)
-                throws ParameterException {
-
-            if (!LOG4J_LEVELS.contains(value)) {
-                throw new ParameterException("Parameter " + name + 
-                        " should be in (\"ALL\", \"DEBUG\", \"ERROR\","
-                        + " \"FATAL\", \"INFO\", \"OFF\", \"TRACE\", \"LEVEL\"");
-
-            }
-
-        }
-
+    public Reporter getReporter() {
+        return reporter;
     }
 
-    public static class PositiveInteger implements IParameterValidator {
-        public void validate(String name, String value)
-                throws ParameterException {
-            int n = Integer.parseInt(value);
-            if (n < 0) {
-                throw new ParameterException("Parameter " + name + " should be positive (found " + value +")");
-            }
-        }
+    public List<String> getYamlFileList() {
+        return yamlFileList;
     }
 
+    public String getConfdDirectory() {
+        return confdDirectory;
+    }
+
+    public String getLogLevel() {
+        return logLevel;
+    }
+
+    public String getLogLocation() {
+        return logLocation;
+    }
 }
