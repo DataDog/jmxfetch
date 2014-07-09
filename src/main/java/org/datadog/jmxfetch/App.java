@@ -67,14 +67,14 @@ public class App {
 
         // The "list_*" actions can only be used with the reporter
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
-//            LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
+            LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
             System.exit(1);
         }
 
         // Set up the shutdown hook to properly close resources
         attachShutdownHook();
 
-//        LOGGER.info("JMX Fetch has started");
+        LOGGER.info("JMX Fetch has started");
 
         App app = new App(config);
 
@@ -236,7 +236,7 @@ public class App {
         try {
             appConfig.getStatus().flush();
         } catch (Exception e) {
-//            LOGGER.error("Unable to flush stats.", e);
+            LOGGER.error("Unable to flush stats.", e);
         }
 
     }
