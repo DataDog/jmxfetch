@@ -26,6 +26,13 @@
   		<artifactId>jcommander</artifactId>
   		<version>1.30</version>
 	</dependency>
+    <dependency>
+        <groupId>com.sun</groupId>
+        <artifactId>tools</artifactId>
+        <version>1.7.0</version>
+        <scope>system</scope>
+        <systemPath>${java.home}/../lib/tools.jar</systemPath>
+    </dependency>
   	<dependency>
 		<groupId>commons-io</groupId>
 		<artifactId>commons-io</artifactId>
@@ -74,14 +81,6 @@
     </scm>
     <build>
   <plugins>
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.9</version>
-        <configuration>
-            <argLine>-Dcom.sun.management.jmxremote.port=3333 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false</argLine>
-        </configuration>
-    </plugin>
     <plugin>
       <artifactId>maven-assembly-plugin</artifactId>
       <configuration>

@@ -1,8 +1,7 @@
 init_config:
 
 instances:
-    -   host: localhost
-        port: 3333
+    -   process_name_regex: .*surefire.*
         name: jmx_test_instance
         tags:
             env: stage
