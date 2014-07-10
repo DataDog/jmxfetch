@@ -22,6 +22,10 @@ class YamlParser {
         return parsedYaml.get("instances");
     }
 
+    public Object getInitConfig() {
+        return parsedYaml.get("init_config");
+    }
+
     public Object getParsedYaml() {
         return parsedYaml;
     }

@@ -295,7 +295,8 @@ public class App {
                 Instance instance;
                 //Create a new Instance object
                 try {
-                    instance = new Instance(configInstance, new LinkedHashMap<String, Object>(), name, appConfig);
+                    instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                            name, appConfig);
                 } catch (Exception e) {
                     e.printStackTrace();
                     String warning = "Unable to create instance. Please check your yaml file";
