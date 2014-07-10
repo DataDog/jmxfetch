@@ -37,8 +37,12 @@ public class Instance {
 
 
     public Instance(Instance instance, AppConfig appConfig) {
-        this(new LinkedHashMap<String, Object>(instance.getYaml()),
-                new LinkedHashMap<String, Object>(instance.getInitConfig()),
+        this(instance.getYaml() != null
+                        ? new LinkedHashMap<String, Object>(instance.getYaml())
+                        : null,
+                instance.getInitConfig() != null
+                        ? new LinkedHashMap<String, Object>(instance.getInitConfig())
+                        : null,
                 instance.getCheckName(),
                 appConfig);
     }
@@ -47,8 +51,8 @@ public class Instance {
     public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> initConfig,
                     String checkName, AppConfig appConfig) {
         this.appConfig = appConfig;
-        this.yaml = new LinkedHashMap<String, Object>(yamlInstance);
-        this.initConfig = new LinkedHashMap<String, Object>(initConfig);
+        this.yaml = yamlInstance != null ? new LinkedHashMap<String, Object>(yamlInstance) : null;
+        this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) yaml.get("name");
         this.tags = (LinkedHashMap<String, String>) yaml.get("tags");
         this.checkName = checkName;
