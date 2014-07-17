@@ -45,7 +45,7 @@ public class Connection {
     private String trustStorePath;
     private String trustStorePassword;
     private MBeanServerConnection mbs;
-	private String processRegex;
+    private String processRegex;
     private static final Long CONNECTION_TIMEOUT = new Long(10000);
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
