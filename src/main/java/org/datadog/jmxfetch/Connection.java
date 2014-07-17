@@ -108,7 +108,6 @@ public class Connection {
     private String getJMXUrlForProcessRegex(String processRegex) throws AttachNotSupportedException, IOException {
     	String jmxURL = "";
 		for (VirtualMachineDescriptor vmd : VirtualMachine.list()) {
-			System.out.println(vmd.displayName());
 			if (vmd.displayName().matches(processRegex)) {
 				VirtualMachine vm = VirtualMachine.attach(vmd);
 				String connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
