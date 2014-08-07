@@ -2,6 +2,7 @@ package org.datadog.jmxfetch;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -16,6 +17,7 @@ import javax.management.ReflectionException;
 public class JMXSimpleAttribute extends JMXAttribute {
 
     private String _alias = null;
+    private String[] _tags = null;
     private String _metricType;
 
     public JMXSimpleAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection, HashMap<String, String> instanceTags) {
@@ -24,13 +26,13 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, 
+    public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException,
     InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-        HashMap<String, Object> metric = new HashMap<String, Object>(); 
+        HashMap<String, Object> metric = new HashMap<String, Object>();
 
         metric.put("alias", _getAlias());
         metric.put("value", _getValue());
-        metric.put("tags", this.tags);
+        metric.put("tags", _getTags());
         metric.put("metric_type", _getMetricType());
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         metrics.add(metric);
@@ -39,11 +41,11 @@ public class JMXSimpleAttribute extends JMXAttribute {
 
 
     public boolean match(Configuration configuration) {
-        return matchDomain(configuration) 
-                && matchBean(configuration) 
-                && matchAttribute(configuration) 
+        return matchDomain(configuration)
+                && matchBean(configuration)
+                && matchAttribute(configuration)
                 && !(
-                        excludeMatchDomain(configuration) 
+                        excludeMatchDomain(configuration)
                         || excludeMatchBean(configuration)
                         || _excludeMatchAttribute(configuration));
     }
@@ -53,11 +55,11 @@ public class JMXSimpleAttribute extends JMXAttribute {
         if (configuration.exclude.get("attribute") == null) {
             return false;
 
-        } else if ((configuration.exclude.get("attribute") instanceof LinkedHashMap<?, ?>) 
+        } else if ((configuration.exclude.get("attribute") instanceof LinkedHashMap<?, ?>)
                 &&  ((LinkedHashMap<String, Object>)(configuration.exclude.get("attribute"))).containsKey(attributeName)) {
             return true;
 
-        } else if ((configuration.exclude.get("attribute") instanceof ArrayList<?> 
+        } else if ((configuration.exclude.get("attribute") instanceof ArrayList<?>
         && ((ArrayList<String>)(configuration.exclude.get("attribute"))).contains(attributeName))) {
             return true;
         }
@@ -69,16 +71,33 @@ public class JMXSimpleAttribute extends JMXAttribute {
         if (configuration.include.get("attribute") == null) {
             return true;
 
-        } else if ((configuration.include.get("attribute") instanceof LinkedHashMap<?, ?>) 
+        } else if ((configuration.include.get("attribute") instanceof LinkedHashMap<?, ?>)
                 &&  ((LinkedHashMap<String, Object>)(configuration.include.get("attribute"))).containsKey(attributeName)) {
             return true;
 
-        } else if ((configuration.include.get("attribute") instanceof ArrayList<?> 
+        } else if ((configuration.include.get("attribute") instanceof ArrayList<?>
         && ((ArrayList<String>)(configuration.include.get("attribute"))).contains(attributeName))) {
             return true;
         }
 
         return false;
+    }
+
+    private String[] _getTags() {
+        if(this._tags != null) {
+            return this._tags;
+        }
+
+        ArrayList<String> someTags = new ArrayList<String>(Arrays.asList(this.tags));
+        if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+            ArrayList<String> yamlTags = ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("tags");
+            if ( yamlTags != null) {
+                someTags.addAll(yamlTags);
+            }
+        }
+        this._tags = new String[someTags.size()];
+        this._tags = someTags.toArray(this._tags);
+        return this._tags;
     }
 
     @SuppressWarnings("unchecked")
@@ -87,7 +106,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
             return this._alias;
 
         } else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            this._alias =  ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attribute.getName()).get("alias");    
+            this._alias =  ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attribute.getName()).get("alias");
 
         } else if (this.matching_conf.conf.get("metric_prefix") != null) {
             this._alias = this.matching_conf.conf.get("metric_prefix") + "."+beanName.split(":")[0] + "." + this.attributeName;
@@ -97,7 +116,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
         }
 
         this._alias = convertMetricName(this._alias);
-        return this._alias; 
+        return this._alias;
     }
 
     @SuppressWarnings("unchecked")
@@ -106,11 +125,11 @@ public class JMXSimpleAttribute extends JMXAttribute {
             return this._metricType;
 
         } else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            this._metricType = ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("metric_type");    
+            this._metricType = ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("metric_type");
             if ( this._metricType == null){
                 this._metricType =((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("type");
             }
-        } 
+        }
 
         if (this._metricType == null) {
             // Default to gauge
@@ -123,7 +142,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
     private double _getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException, NumberFormatException {
         Object value = this.getJmxValue();
 
-        return _getValueAsDouble(value);    
+        return _getValueAsDouble(value);
     }
 
 }

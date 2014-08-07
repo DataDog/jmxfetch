@@ -366,11 +366,17 @@ public class AppTest extends TestCase
             assertTrue(Arrays.asList(tags).contains("env:stage"));
             assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
+            if (name.equals("jvm.thread_count")) {
+                assertTrue(Arrays.asList(tags).contains("foo"));
+                assertTrue(Arrays.asList(tags).contains("gorch"));
+                assertTrue(Arrays.asList(tags).contains("bar:baz"));
+                assertEquals(tags.length, 8);
+            }
+
             if (name.equals("this.is.100")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
-                
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, 1.2345678890123457E20);
