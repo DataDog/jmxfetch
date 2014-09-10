@@ -1,0 +1,18 @@
+instances:
+    - process_name_regex: .*Bootstrap.*
+      name: HHHH
+
+      #conf:
+      #    - include:
+      #       domain: Catalina
+
+             #bean: Catalina:type=Connector,port=8080
+             ##type: Connector
+             #attribute:
+             #     maxThreads:
+             #         metric_type: gauge
+             #         alias: jmx.my_metric_name
+          #- include:
+          #    domain: 2nd_domain
+          #- exclude:
+          #    bean: excluded_bean
