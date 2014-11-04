@@ -1,0 +1,58 @@
+package org.datadog.jmxfetch.reporter;
+
+import com.google.common.base.Joiner;
+import org.datadog.jmxfetch.Instance;
+import org.datadog.jmxfetch.JMXAttribute;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+public class ConsoleReporter extends Reporter {
+
+    private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+
+    @Override
+    protected void sendMetricPoint(String metricName, double value, String[] tags) {
+        String tagString = "[" + Joiner.on(",").join(tags) + "]";
+        System.out.println(metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
+
+        HashMap<String, Object> m = new HashMap<String, Object>();
+        m.put("name", metricName);
+        m.put("value", value);
+        m.put("tags", Arrays.asList(tags).toArray(new String[0]));
+        metrics.add(m);
+    }
+
+    public LinkedList<HashMap<String, Object>> getMetrics() {
+        LinkedList<HashMap<String, Object>> returnedMetrics = new LinkedList<HashMap<String, Object>>();
+        for (HashMap<String, Object> map : metrics) {
+            returnedMetrics.add(new HashMap<String, Object>(map));
+        }
+        metrics.clear();
+        return returnedMetrics;
+    }
+
+    @Override
+    public void displayMetricReached() {
+        System.out.println("\n\n\n       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------\n\n\n");
+    }
+
+    @Override
+    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
+        System.out.println("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
+    }
+
+    @Override
+    public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
+        System.out.println("       Not Matching: " + jmxAttribute);
+    }
+
+    @Override
+    public void displayInstanceName(Instance instance) {
+        System.out.println("\n#####################################");
+        System.out.println("Instance: " + instance);
+        System.out.println("#####################################\n");
+    }
+
+}

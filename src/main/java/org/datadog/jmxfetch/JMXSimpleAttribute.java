@@ -1,37 +1,32 @@
 package org.datadog.jmxfetch;
 
+import javax.management.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.ObjectInstance;
-import javax.management.ReflectionException;
-
+@SuppressWarnings("unchecked")
 public class JMXSimpleAttribute extends JMXAttribute {
 
-    private String _alias = null;
-    private String _metricType;
+    private String alias;
+    private String metricType;
 
-    public JMXSimpleAttribute(MBeanAttributeInfo a, ObjectInstance instance, String instance_name, Connection connection, HashMap<String, String> instanceTags) {
-
-        super(a, instance, instance_name, connection, instanceTags);
+    public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectInstance instance, String instanceName,
+                              Connection connection, HashMap<String, String> instanceTags) {
+        super(attribute, instance, instanceName, connection, instanceTags);
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, 
-    InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-        HashMap<String, Object> metric = new HashMap<String, Object>(); 
+    public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException,
+            InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+        HashMap<String, Object> metric = new HashMap<String, Object>();
 
-        metric.put("alias", _getAlias());
-        metric.put("value", _getValue());
-        metric.put("tags", this.tags);
-        metric.put("metric_type", _getMetricType());
+        metric.put("alias", getAlias());
+        metric.put("value", getValue());
+        metric.put("tags", getTags());
+        metric.put("metric_type", getMetricType());
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         metrics.add(metric);
         return metrics;
@@ -39,91 +34,85 @@ public class JMXSimpleAttribute extends JMXAttribute {
 
 
     public boolean match(Configuration configuration) {
-        return matchDomain(configuration) 
-                && matchBean(configuration) 
-                && matchAttribute(configuration) 
+        return matchDomain(configuration)
+                && matchBean(configuration)
+                && matchAttribute(configuration)
                 && !(
-                        excludeMatchDomain(configuration) 
+                excludeMatchDomain(configuration)
                         || excludeMatchBean(configuration)
-                        || _excludeMatchAttribute(configuration));
+                        || excludeMatchAttribute(configuration));
     }
 
-    @SuppressWarnings("unchecked")
-    private boolean _excludeMatchAttribute(Configuration configuration) {
-        if (configuration.exclude.get("attribute") == null) {
+    private boolean excludeMatchAttribute(Configuration configuration) {
+        LinkedHashMap<String, Object> exclude = configuration.getExclude();
+        if (exclude.get("attribute") == null) {
             return false;
-
-        } else if ((configuration.exclude.get("attribute") instanceof LinkedHashMap<?, ?>) 
-                &&  ((LinkedHashMap<String, Object>)(configuration.exclude.get("attribute"))).containsKey(attributeName)) {
+        } else if ((exclude.get("attribute") instanceof LinkedHashMap<?, ?>)
+                && ((LinkedHashMap<String, Object>) (exclude.get("attribute"))).containsKey(getAttributeName())) {
             return true;
 
-        } else if ((configuration.exclude.get("attribute") instanceof ArrayList<?> 
-        && ((ArrayList<String>)(configuration.exclude.get("attribute"))).contains(attributeName))) {
+        } else if ((exclude.get("attribute") instanceof ArrayList<?>
+                && ((ArrayList<String>) (exclude.get("attribute"))).contains(getAttributeName()))) {
             return true;
         }
         return false;
     }
 
-    @SuppressWarnings("unchecked")
     private boolean matchAttribute(Configuration configuration) {
-        if (configuration.include.get("attribute") == null) {
+        LinkedHashMap<String, Object> include = configuration.getInclude();
+        if (include.get("attribute") == null) {
             return true;
 
-        } else if ((configuration.include.get("attribute") instanceof LinkedHashMap<?, ?>) 
-                &&  ((LinkedHashMap<String, Object>)(configuration.include.get("attribute"))).containsKey(attributeName)) {
+        } else if ((include.get("attribute") instanceof LinkedHashMap<?, ?>)
+                && ((LinkedHashMap<String, Object>) (include.get("attribute"))).containsKey(getAttributeName())) {
             return true;
 
-        } else if ((configuration.include.get("attribute") instanceof ArrayList<?> 
-        && ((ArrayList<String>)(configuration.include.get("attribute"))).contains(attributeName))) {
+        } else if ((include.get("attribute") instanceof ArrayList<?>
+                && ((ArrayList<String>) (include.get("attribute"))).contains(getAttributeName()))) {
             return true;
         }
 
         return false;
     }
 
-    @SuppressWarnings("unchecked")
-    private String _getAlias() {
-        if (this._alias != null) {
-            return this._alias;
-
-        } else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            this._alias =  ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attribute.getName()).get("alias");    
-
-        } else if (this.matching_conf.conf.get("metric_prefix") != null) {
-            this._alias = this.matching_conf.conf.get("metric_prefix") + "."+beanName.split(":")[0] + "." + this.attributeName;
-
+    private String getAlias() {
+        LinkedHashMap<String, Object> include = getMatchingConf().getInclude();
+        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
+        if (alias != null) {
+            return alias;
+        } else if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.get("attribute"));
+            alias = attribute.get(getAttribute().getName()).get("alias");
+        } else if (conf.get("metric_prefix") != null) {
+            alias = conf.get("metric_prefix") + "." + new String(getBeanName().split(":")[0]) + "." + getAttributeName();
         } else {
-            this._alias = "jmx." + beanName.split(":")[0] + "." + this.attributeName;
+            alias = "attribute." + new String(getBeanName().split(":")[0]) + "." + getAttributeName();
         }
-
-        this._alias = convertMetricName(this._alias);
-        return this._alias; 
+        alias = convertMetricName(alias);
+        return alias;
     }
 
-    @SuppressWarnings("unchecked")
-    private String _getMetricType() {
-        if (this._metricType != null) {
-            return this._metricType;
-
-        } else if (this.matching_conf.include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            this._metricType = ((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("metric_type");    
-            if ( this._metricType == null){
-                this._metricType =((LinkedHashMap<String, LinkedHashMap<String, String>>)(this.matching_conf.include.get("attribute"))).get(this.attributeName).get("type");
+    private String getMetricType() {
+        LinkedHashMap<String, Object> include = getMatchingConf().getInclude();
+        if (metricType != null) {
+            return metricType;
+        } else if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.get("attribute"));
+            metricType = attribute.get(getAttributeName()).get("metric_type");
+            if (metricType == null) {
+                metricType = attribute.get(getAttributeName()).get("type");
             }
-        } 
-
-        if (this._metricType == null) {
-            // Default to gauge
-            this._metricType = "gauge";
         }
 
-        return this._metricType;
+        if (metricType == null) { // Default to gauge
+            metricType = "gauge";
+        }
+
+        return metricType;
     }
 
-    private double _getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException, NumberFormatException {
-        Object value = this.getJmxValue();
-
-        return _getValueAsDouble(value);    
+    private double getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+            ReflectionException, IOException, NumberFormatException {
+        return getValueAsDouble(this.getJmxValue());
     }
-
 }

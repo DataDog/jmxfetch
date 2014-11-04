@@ -1,50 +1,33 @@
 package org.datadog.jmxfetch;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import org.yaml.snakeyaml.Yaml;
+
 import java.io.InputStream;
 import java.util.HashMap;
 
-import org.yaml.snakeyaml.Yaml;
+@SuppressWarnings("unchecked")
+class YamlParser {
 
-public class YamlParser {
-    
     private HashMap<Object, Object> parsedYaml;
-    
-    public YamlParser(String path) throws FileNotFoundException {
-        InputStream yaml_file = new FileInputStream(path);
-        init(yaml_file);
-    }
-    
+
     public YamlParser(InputStream yamlInputStream) {
-        init(yamlInputStream);
+        parsedYaml = (HashMap<Object, Object>) new Yaml().load(yamlInputStream);
     }
-        
-    @SuppressWarnings("unchecked")
-    private void init(InputStream yamlInputStream) {
-        Yaml yaml = new Yaml();
-        parsedYaml = (HashMap<Object, Object>) yaml.load(yamlInputStream);     
+
+    public YamlParser(YamlParser other) {
+        parsedYaml = new HashMap<Object, Object>((HashMap<Object, Object>) other.getParsedYaml());
     }
-    
-    public Object getInitConfig() {
-        return parsedYaml.get("init_config");
-    }
-    
+
     public Object getYamlInstances() {
         return parsedYaml.get("instances");
     }
-    
+
+    public Object getInitConfig() {
+        return parsedYaml.get("init_config");
+    }
+
     public Object getParsedYaml() {
         return parsedYaml;
     }
-    
-    @SuppressWarnings("unchecked")
-    public boolean isJmx() {
-        try {
-            return (Boolean) ((HashMap<Object, Object>) parsedYaml.get("init_config")).get("is_jmx");
-        } catch(Exception e) {
-            return false;
-        }
-    }
-    
+
 }
