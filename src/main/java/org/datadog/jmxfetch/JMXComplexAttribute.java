@@ -1,9 +1,20 @@
 package org.datadog.jmxfetch;
 
-import javax.management.*;
-import javax.management.openmbean.CompositeData;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
+import javax.management.ObjectInstance;
+import javax.management.ReflectionException;
+import javax.management.openmbean.CompositeData;
 
 @SuppressWarnings("unchecked")
 public class JMXComplexAttribute extends JMXAttribute {

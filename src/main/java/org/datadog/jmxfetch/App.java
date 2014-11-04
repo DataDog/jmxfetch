@@ -1,20 +1,29 @@
 package org.datadog.jmxfetch;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.security.auth.login.FailedLoginException;
+
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 
-import javax.security.auth.login.FailedLoginException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 
 @SuppressWarnings("unchecked")
 public class App {

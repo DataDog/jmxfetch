@@ -1,10 +1,10 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+
+import org.apache.log4j.Logger;
 
 
 /**

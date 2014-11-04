@@ -1,12 +1,12 @@
 package org.datadog.jmxfetch;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+import org.yaml.snakeyaml.Yaml;
 
 public class Status {
 

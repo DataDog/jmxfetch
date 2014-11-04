@@ -1,11 +1,17 @@
 package org.datadog.jmxfetch;
 
-import javax.management.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
+import javax.management.ObjectInstance;
+import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
 public class JMXSimpleAttribute extends JMXAttribute {

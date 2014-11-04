@@ -1,7 +1,7 @@
 package org.datadog.jmxfetch;
+import java.util.Arrays;
+import java.util.List;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.converter.StatusConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
@@ -10,8 +10,8 @@ import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
 
-import java.util.Arrays;
-import java.util.List;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
 @Parameters(separators = "=")
 class AppConfig {

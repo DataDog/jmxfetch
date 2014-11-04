@@ -1,14 +1,22 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
-import org.datadog.jmxfetch.reporter.Reporter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
-import java.io.IOException;
-import java.util.*;
+
+import org.apache.log4j.Logger;
+import org.datadog.jmxfetch.reporter.Reporter;
 
 public class Instance {
     private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
@@ -201,7 +209,11 @@ public class Instance {
                     LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo complex type");
                     jmxAttribute = new JMXComplexAttribute(attributeInfo, bean, instanceName, connection, tags);
                 } else {
-                    LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
+                    try {
+                        LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
+                    } catch (NullPointerException e) {
+                        LOGGER.warn("Caught unexpected NullPointerException");
+                    }
                     continue;
                 }
 
