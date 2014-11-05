@@ -8,7 +8,6 @@ public class ReporterValidator implements IParameterValidator {
     private static final String STATSD_PREFIX = "statsd:";
     private final PositiveIntegerValidator positiveIntegerValidator = new PositiveIntegerValidator();
 
-    @Override
     public void validate(String name, String value) throws ParameterException {
         if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) {
             String port = new String(value.split(":")[1]);

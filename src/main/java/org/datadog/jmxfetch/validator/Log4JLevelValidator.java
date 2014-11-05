@@ -11,7 +11,6 @@ public class Log4JLevelValidator implements IParameterValidator {
     public static final List<String> LOG4J_LEVELS = Arrays.asList("ALL", "DEBUG", "ERROR", "FATAL",
             "INFO", "OFF", "TRACE", "LEVEL", "WARN");
 
-    @Override
     public void validate(String name, String value)
             throws ParameterException {
 

@@ -5,7 +5,6 @@ import org.datadog.jmxfetch.Status;
 
 public class StatusConverter implements IStringConverter<Status> {
 
-    @Override
     public Status convert(String value) {
         return new Status(value);
     }
