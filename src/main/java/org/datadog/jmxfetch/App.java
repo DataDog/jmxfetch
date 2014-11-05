@@ -142,6 +142,7 @@ public class App {
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
                 appConfig.getStatus().flush();
+                configs = getConfigs(appConfig);
                 init(true);
             }
             long length = System.currentTimeMillis() - start;
