@@ -1,13 +1,12 @@
 package org.datadog.jmxfetch.util;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
-import java.io.IOException;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 
 public class CustomLogger {
     private static final Logger LOGGER = Logger.getLogger(CustomLogger.class.getName());
@@ -15,9 +14,11 @@ public class CustomLogger {
 
     public static void setup(Level level, String logLocation) {
         if (logLocation != null) {
-            FileAppender fa = new FileAppender();
+            RollingFileAppender fa = new RollingFileAppender();
             fa.setName("FileLogger");
             fa.setFile(logLocation);
+            fa.setMaxFileSize("5MB");
+            fa.setMaxBackupIndex(1);
             fa.setLayout(new PatternLayout("%d | %-5p| %c{1} | %m%n"));
             fa.setThreshold(level);
             fa.setAppend(true);
