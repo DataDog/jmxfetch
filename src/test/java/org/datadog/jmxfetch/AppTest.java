@@ -49,7 +49,7 @@ public class AppTest extends TestCase
     {
         // We expose a few metrics through JMX
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName name = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp");       
+        ObjectName name = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
         mbs.registerMBean(testApp, name);
 
         // We initialize the main app that will collect these metrics using JMX
@@ -75,7 +75,7 @@ public class AppTest extends TestCase
 
     /**
      * The actual test
-     * @throws Exception 
+     * @throws Exception
      */
     public void testApp() throws Exception {
         // We do a first collection
@@ -112,9 +112,13 @@ public class AppTest extends TestCase
             assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 5);
+                assertEquals(tags.length, 8);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
+
+                assertTrue(Arrays.asList(tags).contains("foo"));
+                assertTrue(Arrays.asList(tags).contains("gorch"));
+                assertTrue(Arrays.asList(tags).contains("bar:baz"));
             }
 
             else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
@@ -204,7 +208,7 @@ public class AppTest extends TestCase
         assertTrue(long_present);
         assertTrue(integer_present);
 
-        // We run a second collection. The counter should now be present        
+        // We run a second collection. The counter should now be present
         App.doIteration(config);
         metrics = ((ConsoleReporter) config.reporter).getMetrics();
         assertEquals(metrics.size(), 21); // 21 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
@@ -234,7 +238,7 @@ public class AppTest extends TestCase
             assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 5);
+                assertEquals(tags.length, 8);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
 
@@ -366,15 +370,8 @@ public class AppTest extends TestCase
             assertTrue(Arrays.asList(tags).contains("env:stage"));
             assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
-            if (name.equals("jvm.thread_count")) {
-                assertTrue(Arrays.asList(tags).contains("foo"));
-                assertTrue(Arrays.asList(tags).contains("gorch"));
-                assertTrue(Arrays.asList(tags).contains("bar:baz"));
-                assertEquals(tags.length, 8);
-            }
-
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 5);
+                assertEquals(tags.length, 8);
                 assertEquals(value, 100.0);
                 metric_100_present = true;
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {

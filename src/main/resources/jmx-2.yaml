@@ -9,8 +9,4 @@ include:
         ThreadCount:
             alias: jvm.thread_count
             metric_type: gauge
-            tags:
-                - "foo"
-                - "bar:baz"
-                - gorch
     domain: java.lang

@@ -8,12 +8,16 @@ instances:
             env: stage
             newTag: test
         conf:
-            - include: 
+            - include:
                domain: org.datadog.jmxfetch.test
                attribute:
                     ShouldBe100:
                         metric_type: gauge
                         alias: this.is.100
+                        tags:
+                            - "foo"
+                            - "bar:baz"
+                            - gorch
                     ShouldBeCounter:
                         metric_type: counter
                         alias: test.counter
@@ -37,5 +41,5 @@ instances:
                         alias: test.defaulted
                         values:
                           default: 32
-            - include: 
+            - include:
                domain: org.datadog.jmxfetch.test
