@@ -26,6 +26,7 @@ public class Instance {
             "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number");
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
     private final static int MAX_RETURNED_METRICS = 350;
+    private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
 
     private Set<ObjectInstance> beans;
     private LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
@@ -46,18 +47,18 @@ public class Instance {
 
     public Instance(Instance instance, AppConfig appConfig) {
         this(instance.getYaml() != null
-                        ? new LinkedHashMap<String, Object>(instance.getYaml())
+                ? new LinkedHashMap<String, Object>(instance.getYaml())
                         : null,
-                instance.getInitConfig() != null
+                        instance.getInitConfig() != null
                         ? new LinkedHashMap<String, Object>(instance.getInitConfig())
-                        : null,
-                instance.getCheckName(),
-                appConfig);
+                                : null,
+                                instance.getCheckName(),
+                                appConfig);
     }
 
     @SuppressWarnings("unchecked")
     public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> initConfig,
-                    String checkName, AppConfig appConfig) {
+            String checkName, AppConfig appConfig) {
         this.appConfig = appConfig;
         this.yaml = yamlInstance != null ? new LinkedHashMap<String, Object>(yamlInstance) : null;
         this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
@@ -67,7 +68,7 @@ public class Instance {
         this.failingAttributes = new LinkedList<JMXAttribute>();
         this.refreshBeansPeriod = (Integer) yaml.get("refresh_beans");
         if (this.refreshBeansPeriod == null) {
-            this.refreshBeansPeriod = 600; // Make sure to refresh the beans list every 10 minutes
+            this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
             // Useful because sometimes if the application restarts, jmxfetch might read 
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
@@ -82,7 +83,11 @@ public class Instance {
 
         // Generate an instance name that will be send as a tag with the metrics
         if (this.instanceName == null) {
-            this.instanceName = this.checkName + "-" + this.yaml.get("host") + "-" + this.yaml.get("port");
+            if (this.yaml.get("process_name_regex") == null) {
+                this.instanceName = this.checkName + "-" + this.yaml.get("host") + "-" + this.yaml.get("port");
+            } else {
+                this.instanceName = this.checkName + "-" + this.yaml.get("process_name_regex");
+            }
         }
 
         // In case the configuration to match beans is not specified in the "instance" parameter but in the initConfig one
@@ -114,7 +119,11 @@ public class Instance {
 
     @Override
     public String toString() {
-        return this.yaml.get("host") + ":" + this.yaml.get("port");
+        if (this.yaml.get("process_name_regex") != null) {
+            return "process_regex: " + this.yaml.get("process_name_regex");
+        } else {
+            return this.yaml.get("host") + ":" + this.yaml.get("port");
+        }
     }
 
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
@@ -156,6 +165,7 @@ public class Instance {
     }
 
     private void getMatchingAttributes() {
+        limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
         boolean metricReachedDisplayed = false;
@@ -240,7 +250,7 @@ public class Instance {
                 }
                 if (jmxAttribute.getMatchingConf() == null
                         && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                        || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                                || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
 
@@ -250,6 +260,7 @@ public class Instance {
     }
 
     private void refreshBeansList() throws IOException {
+
         this.beans = connection.queryMBeans();
         this.lastRefreshTime = System.currentTimeMillis();
     }
@@ -281,7 +292,7 @@ public class Instance {
     public void cleanUp() {
         this.appConfig = null;
         if (connection != null) {
-            connection.close();
+            connection.closeConnector();
         }
     }
 }

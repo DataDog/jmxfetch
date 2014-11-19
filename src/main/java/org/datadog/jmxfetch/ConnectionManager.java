@@ -27,7 +27,26 @@ public class ConnectionManager {
     }
 
     private static String generateKey(LinkedHashMap<String, Object> connectionParams) {
+        if (connectionParams.get("process_name_regex") != null) {
+            return (String) connectionParams.get("process_name_regex");
+        }
         return connectionParams.get("host") + ":" + connectionParams.get("port") + ":" + connectionParams.get("user");
+    }
+
+    private Connection createConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
+        if (connectionParams.get("process_name_regex") != null) {
+            try {
+                Class.forName( "com.sun.tools.attach.AttachNotSupportedException" );
+            } catch (ClassNotFoundException e) {
+                throw new IOException("Unable to find tools.jar. Are you using a JDK and did you set the pass to tools.jar ?");
+            }
+            LOGGER.info("Connecting using Attach API");
+            return new AttachApiConnection(connectionParams);
+
+        }
+        LOGGER.info("Connecting using JMX Remote");
+        return new RemoteConnection(connectionParams);
+
     }
 
     public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
@@ -35,12 +54,12 @@ public class ConnectionManager {
         Connection existingConnection = cache.get(key);
         if (existingConnection == null || !existingConnection.isAlive()) {
             LOGGER.info("Connection closed or does not exist. Creating a new connection!");
-            cache.put(key, new Connection(connectionParams));
+            cache.put(key, createConnection(connectionParams));
         } else {
             if (forceNewConnection) {
                 LOGGER.info("Forcing the creation of a new connection");
-                cache.get(key).close();
-                cache.put(key, new Connection(connectionParams));
+                cache.get(key).closeConnector();
+                cache.put(key, createConnection(connectionParams));
             } else {
                 LOGGER.info("Connection already exists for key: " + key + " . Using it...");
             }
