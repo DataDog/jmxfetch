@@ -13,6 +13,10 @@ instances:
                     ShouldBe100:
                         metric_type: gauge
                         alias: this.is.100
+                        tags:
+                            - "foo"
+                            - "bar:baz"
+                            - gorch
                     ShouldBeCounter:
                         metric_type: counter
                         alias: test.counter

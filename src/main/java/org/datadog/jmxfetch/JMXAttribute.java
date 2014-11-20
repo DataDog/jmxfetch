@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -31,11 +32,12 @@ public abstract class JMXAttribute {
     private String beanName;
     private String attributeName;
     private LinkedHashMap<Object, Object> valueConversions;
-    private String[] tags;
+    protected String[] tags;
     private Configuration matchingConf;
+    private LinkedList<String> defaultTags;
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectInstance jmxInstance, String instanceName,
-                        Connection connection, HashMap<String, String> instanceTags) {
+            Connection connection, HashMap<String, String> instanceTags) {
         this.attribute = attribute;
         this.jmxInstance = jmxInstance;
         this.matchingConf = null;
@@ -45,11 +47,9 @@ public abstract class JMXAttribute {
         // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
         String[] split = this.beanName.split(":");
-        this.domain = new String(split[0]);
+        this.domain = split[0];
         this.attributeName = attribute.getName();
 
-
-        // We add the instance name as a tag. We need to convert the Array of strings to List in order to do that
         LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(new String(split[1]).replace("=", ":").split(",")));
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
@@ -58,8 +58,7 @@ public abstract class JMXAttribute {
                 beanTags.add(tag.getKey() + ":" + tag.getValue());
             }
         }
-        this.tags = new String[beanTags.size()];
-        beanTags.toArray(this.tags);
+        this.defaultTags = beanTags;
 
     }
 
@@ -201,7 +200,7 @@ public abstract class JMXAttribute {
             }
 
             HashMap<String, String> beanParams = new HashMap<String, String>();
-            for (String param : this.tags) {
+            for (String param : this.defaultTags) {
                 String[] paramSplit = param.split(":");
                 beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
             }
@@ -240,13 +239,33 @@ public abstract class JMXAttribute {
 
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
+        getTags();
     }
 
     MBeanAttributeInfo getAttribute() {
         return attribute;
     }
 
-    String[] getTags() {
+    @SuppressWarnings("unchecked")
+    protected String[] getTags() {
+        if(tags != null) {
+            return tags;
+        }
+
+        LinkedHashMap<String, Object> include = matchingConf.getInclude();
+        if (include != null) {
+            if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
+                LinkedHashMap<String, ArrayList<String>> attributeParams = ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)(include.get("attribute"))).get(attributeName);
+                if (attributeParams != null) {
+                    ArrayList<String> yamlTags = attributeParams.get("tags");
+                    if ( yamlTags != null) {
+                        defaultTags.addAll(yamlTags);
+                    }
+                }
+            }
+        }
+        tags = new String[defaultTags.size()];
+        tags = defaultTags.toArray(tags);
         return tags;
     }
 

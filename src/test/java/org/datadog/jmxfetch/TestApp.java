@@ -79,9 +79,13 @@ public class TestApp {
             assertNotNull(value);
 
             if (name.equals("this.is.100")) {
-                assertEquals(5, tags.length);
+                assertEquals(8, tags.length);
                 assertEquals(new Double(100.0), value);
                 metric100Present = true;
+                
+                assertTrue(Arrays.asList(tags).contains("foo"));
+                assertTrue(Arrays.asList(tags).contains("gorch"));
+                assertTrue(Arrays.asList(tags).contains("bar:baz"));
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(1.2345678890123457E20), value);
@@ -117,6 +121,8 @@ public class TestApp {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(0.0), value);
                 subattr0Present = true;
+
+
 
             } else if (name.equals("subattr.counter")) {
                 subattrCounterAbsent = false;
@@ -184,7 +190,7 @@ public class TestApp {
             assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 5);
+                assertEquals(tags.length, 8);
                 assertEquals(value, new Double(100.0));
                 metric100Present = true;
 
@@ -312,7 +318,7 @@ public class TestApp {
             assertTrue(Arrays.asList(tags).contains("newTag:test"));
 
             if (name.equals("this.is.100")) {
-                assertEquals(tags.length, 5);
+                assertEquals(tags.length, 8);
                 assertEquals(value, new Double(100.0));
                 metric100Present = true;
 
