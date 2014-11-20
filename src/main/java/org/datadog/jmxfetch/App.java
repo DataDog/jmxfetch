@@ -169,7 +169,7 @@ public class App {
             String instanceStatus = Status.STATUS_OK;
             String instanceMessage = null;
             try {
-                metrics = new LinkedList<HashMap<String, Object>>(instance.getMetrics());
+                metrics = instance.getMetrics();
             } catch (IOException e) {
                 String warning = "Unable to refresh bean list for instance " + instance;
                 LOGGER.warn(warning, e);
@@ -192,7 +192,7 @@ public class App {
 
                 instanceStatus = Status.STATUS_WARNING;
                 // We don't want to log the warning at every iteration so we use this custom logger.
-                CustomLogger.log(LOGGER, Level.WARN, instanceMessage, 0);
+                CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
             reporter.sendMetrics(metrics, instance.getName());
             appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(),
@@ -289,8 +289,8 @@ public class App {
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, YamlParser> entry = it.next();
-            String name = new String(entry.getKey());
-            YamlParser yamlConfig = new YamlParser(entry.getValue());
+            String name = entry.getKey();
+            YamlParser yamlConfig = entry.getValue();
             it.remove();
 
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());

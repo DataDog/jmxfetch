@@ -1,12 +1,12 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.google.common.base.Joiner;
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JMXAttribute;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
+import com.google.common.base.Joiner;
 
 public class ConsoleReporter extends Reporter {
 
@@ -20,7 +20,7 @@ public class ConsoleReporter extends Reporter {
         HashMap<String, Object> m = new HashMap<String, Object>();
         m.put("name", metricName);
         m.put("value", value);
-        m.put("tags", Arrays.asList(tags).toArray(new String[0]));
+        m.put("tags", tags);
         metrics.add(m);
     }
 

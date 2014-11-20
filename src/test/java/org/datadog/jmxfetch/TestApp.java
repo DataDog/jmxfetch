@@ -82,19 +82,19 @@ public class TestApp {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(100.0), value);
                 metric100Present = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.number_big")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(1.2345678890123457E20), value);
                 numberPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.long42424242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(4.2424242E7), value);
                 longPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.int424242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(424242.0), value);
                 integerPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.should_be1000")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(1000.0), value);
                 metric1000Present = true;
@@ -120,15 +120,15 @@ public class TestApp {
 
             } else if (name.equals("subattr.counter")) {
                 subattrCounterAbsent = false;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.atomic42")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(42.0), value);
                 atomicIntPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.atomic4242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(4242.0), value);
                 atomicLongPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.object1337")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
                 assertEquals(5, tags.length);
                 assertEquals(new Double(13.37), value);
                 objectPresent = true;
@@ -188,20 +188,20 @@ public class TestApp {
                 assertEquals(value, new Double(100.0));
                 metric100Present = true;
 
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.should_be1000")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(1000.0));
                 metric1000Present = true;
 
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.number_big")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(1.2345678890123457E20));
                 numberPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.long42424242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(4.2424242E7));
                 longPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.int424242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(424242.0));
                 integerPresent = true;
@@ -236,15 +236,15 @@ public class TestApp {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(32.0)); // We didn't increment the counter, hence a value of 0.0 is what we want
                 defaultPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.atomic42")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(42.0));
                 atomicIntPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.atomic4242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(4242.0));
                 atomicLongPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.object1337")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(13.37));
                 objectPresent = true;
@@ -316,19 +316,19 @@ public class TestApp {
                 assertEquals(value, new Double(100.0));
                 metric100Present = true;
 
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.number_big")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.number_big")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(1.2345678890123457E20));
                 numberPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.long42424242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.long42424242")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(4.2424242E7));
                 longPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.int424242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.int424242")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(424242.0));
                 integerPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.should_be1000")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.should_be1000")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(1000.0));
                 metric1000Present = true;
@@ -364,15 +364,15 @@ public class TestApp {
                 assertTrue(value < 1.00);
                 assertTrue(value > 0.99);
                 subattrCounterAbsent = false;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.atomic42")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(42.0));
                 atomicIntPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.atomic4242")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic4242")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(4242.0));
                 atomicLongPresent = true;
-            } else if (name.equals("attribute.org.datadog.jmxfetch.test.object1337")) {
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.object1337")) {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(13.37));
                 objectPresent = true;

@@ -30,7 +30,7 @@ public class CustomLogger {
         }
     }
 
-    public static void log(Logger logger, Level level, String message, int max) {
+    public static void laconic(Logger logger, Level level, String message, int max) {
         if (messageCount.count(message) <= max) {
             logger.log(level, message);
             messageCount.add(message);

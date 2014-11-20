@@ -9,7 +9,7 @@ public class ReporterFactory {
         if ("console".equals(type)) {
             return new ConsoleReporter();
         } else if (type.startsWith("statsd:")) {
-            return new StatsdReporter(Integer.valueOf(new String(type.split(":")[1])));
+            return new StatsdReporter(Integer.valueOf(type.split(":")[1]));
         } else {
             throw new IllegalArgumentException("Invalid reporter type: " + type);
         }
