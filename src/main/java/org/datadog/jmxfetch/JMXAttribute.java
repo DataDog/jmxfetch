@@ -239,7 +239,6 @@ public abstract class JMXAttribute {
 
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
-        getTags();
     }
 
     MBeanAttributeInfo getAttribute() {
