@@ -124,7 +124,7 @@ public abstract class JMXAttribute {
             }
 
             HashMap<String, String> beanParams = new HashMap<String, String>();
-            for (String param : this.tags) {
+            for (String param : this.defaultTags) {
                 String[] paramSplit = param.split(":");
                 beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
             }
