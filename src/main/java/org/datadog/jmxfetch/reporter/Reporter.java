@@ -103,7 +103,7 @@ public abstract class Reporter {
     }
 
     private void postProcessCassandra(HashMap<String, Object> metric) {
-        metric.put("alias", ((String) metric.get("alias")).replace("attribute.org.apache.", ""));
+        metric.put("alias", ((String) metric.get("alias")).replace("jmx.org.apache.", ""));
     }
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
