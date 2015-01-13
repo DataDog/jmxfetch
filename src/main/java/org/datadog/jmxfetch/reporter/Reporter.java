@@ -108,6 +108,8 @@ public abstract class Reporter {
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
 
+    public abstract void sendServiceCheck(String checkName, String status, String message, String[] tags);
+
     public abstract void displayMetricReached();
 
     public abstract void displayNonMatchingAttributeName(JMXAttribute jmxAttribute);

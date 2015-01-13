@@ -33,6 +33,10 @@ public class ConsoleReporter extends Reporter {
         return returnedMetrics;
     }
 
+    public void sendServiceCheck(String checkName, String status, String message, String[] tags) {
+        // NOT IMPLEMENTED
+    }
+
     @Override
     public void displayMetricReached() {
         System.out.println("\n\n\n       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------\n\n\n");
