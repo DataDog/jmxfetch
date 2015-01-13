@@ -59,6 +59,12 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         hashmap.put("thisiscounter", hashmap.get("thisiscounter") + inc);
     }
 
+    public void populateHashMap(int count) {
+        for (Integer i =1;i <= count ; i++ ) {
+            hashmap.put(i.toString(), i);
+        }
+    }
+
     public HashMap<String, Integer> getHashmap() {
         return hashmap;
     }

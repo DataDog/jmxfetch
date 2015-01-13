@@ -1,0 +1,8 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*non_running_process_test.*
+        name: jmx_test_instance
+        tags:
+            env: stage
+            newTag: test
