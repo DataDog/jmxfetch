@@ -49,6 +49,9 @@ public class AttachApiConnection extends Connection {
                 return connectorAddress;
             }
         }
+        for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
+            LOGGER.warn("JVM " + vmd.displayName() + " is not matching regex \"" + processRegex + "\"");
+        }
         throw new IOException("Cannot find JVM matching regex: " + processRegex);
     }
 
