@@ -33,7 +33,7 @@ public class ConsoleReporter extends Reporter {
         return returnedMetrics;
     }
 
-    public void sendServiceCheck(String checkName, String status, String message, String[] tags) {
+    public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags) {
         // NOT IMPLEMENTED
     }
 

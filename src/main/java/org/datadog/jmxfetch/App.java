@@ -283,10 +283,21 @@ public class App {
 
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
                               int metricCount, String message, String status) {
-        appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(),
+        String checkName = instance.getCheckName();
+        appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, message, status);
-        var String[] tags = {String.format("instance:%s", instance.getName())}
-        reporter.sendServiceCheck(checkName, status, message, tags);
+
+        LinkedHashMap<String, Object> yaml = instance.getYaml();
+        String[] tags;
+        if (yaml.get("process_name_regex") == null) {
+            tags = new String[1];
+            tags[0] = "port:" + yaml.get("port");
+        } else {
+            tags = new String[2];
+            tags[0] = "port:" + yaml.get("port");
+            tags[1] = "process:" + yaml.get("process_name_regex");
+        }
+        reporter.sendServiceCheck(checkName, status, message, yaml.get("host").toString(), tags);
     }
 
     public void init(boolean forceNewConnection) {
