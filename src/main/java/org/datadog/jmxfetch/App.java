@@ -287,17 +287,8 @@ public class App {
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, message, status);
 
-        LinkedHashMap<String, Object> yaml = instance.getYaml();
-        String[] tags;
-        if (yaml.get("process_name_regex") == null) {
-            tags = new String[1];
-            tags[0] = "port:" + yaml.get("port");
-        } else {
-            tags = new String[2];
-            tags[0] = "port:" + yaml.get("port");
-            tags[1] = "process:" + yaml.get("process_name_regex");
-        }
-        reporter.sendServiceCheck(checkName, status, message, yaml.get("host").toString(), tags);
+        reporter.sendServiceCheck(checkName, status, message, instance.getHostname(),
+                                  instance.getServiceCheckTags());
     }
 
     public void init(boolean forceNewConnection) {
