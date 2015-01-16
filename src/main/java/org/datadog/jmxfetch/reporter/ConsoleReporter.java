@@ -11,6 +11,7 @@ import com.google.common.base.Joiner;
 public class ConsoleReporter extends Reporter {
 
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+    private LinkedList<HashMap<String, Object>> serviceChecks = new LinkedList<HashMap<String, Object>>();
 
     @Override
     protected void sendMetricPoint(String metricName, double value, String[] tags) {
@@ -34,7 +35,28 @@ public class ConsoleReporter extends Reporter {
     }
 
     public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags) {
-        // NOT IMPLEMENTED
+        String tagString = "";
+        if (tags != null && tags.length > 0) {
+            tagString = "[" + Joiner.on(",").join(tags) + "]";
+        }
+        System.out.println(checkName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
+
+        HashMap<String, Object> sc = new HashMap<String, Object>();
+        sc.put("name", checkName);
+        sc.put("status", status);
+        sc.put("message", message);
+        sc.put("hostname", hostname);
+        sc.put("tags", tags);
+        serviceChecks.add(sc);
+    }
+
+    public LinkedList<HashMap<String, Object>> getServiceChecks() {
+        LinkedList<HashMap<String, Object>> returnedServiceChecks = new LinkedList<HashMap<String, Object>>();
+        for (HashMap<String, Object> map : serviceChecks) {
+            returnedServiceChecks.add(new HashMap<String, Object>(map));
+        }
+        serviceChecks.clear();
+        return returnedServiceChecks;
     }
 
     @Override

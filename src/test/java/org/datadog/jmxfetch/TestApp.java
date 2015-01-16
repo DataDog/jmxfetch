@@ -42,7 +42,29 @@ public class TestApp {
         App app = new App(appConfig);
         app.init(false);
         app.doIteration();
-        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+        // Test that an OK service check status is sent
+        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+
+        assertEquals(1, serviceChecks.size());
+        HashMap<String, Object> sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+        assertNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        String scName = (String) (sc.get("name"));
+        String scStatus = (String) (sc.get("status"));
+        String[] scTags = (String[]) (sc.get("tags"));
+
+        assertEquals(scName, "jmx");
+        assertEquals(scStatus, Status.STATUS_OK);
+        assertEquals(3, scTags.length);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+
+        LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
 
         assertEquals(19, metrics.size()); // 19 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
@@ -82,7 +104,7 @@ public class TestApp {
                 assertEquals(8, tags.length);
                 assertEquals(new Double(100.0), value);
                 metric100Present = true;
-                
+
                 assertTrue(Arrays.asList(tags).contains("foo"));
                 assertTrue(Arrays.asList(tags).contains("gorch"));
                 assertTrue(Arrays.asList(tags).contains("bar:baz"));
