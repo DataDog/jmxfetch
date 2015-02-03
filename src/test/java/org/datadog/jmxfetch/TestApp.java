@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import com.beust.jcommander.JCommander;
+
 import org.apache.log4j.Level;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.util.CustomLogger;
@@ -9,10 +10,13 @@ import org.junit.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -22,6 +26,202 @@ public class TestApp {
     public static void init() {
         CustomLogger.setup(Level.toLevel("ALL"), "/tmp/jmxfetch_test.log");
     }
+
+    public static App initApp(String yamlFileName, AppConfig appConfig){
+        // We do a first collection
+        // We initialize the main app that will collect these metrics using JMX
+        String confdDirectory = Thread.currentThread().getContextClassLoader().getResource(yamlFileName).getPath();
+        confdDirectory = new String(confdDirectory.substring(0, confdDirectory.length() - yamlFileName.length()));
+        String[] params = {"--reporter", "console", "-c", yamlFileName, "--conf_directory", confdDirectory, "collect"};
+        new JCommander(appConfig, params);
+
+        App app = new App(appConfig);
+        app.init(false);
+
+        return app;
+    }
+
+
+    @Test
+    public void testBeanTags() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=CoolScope");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, objectName);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_bean_tags.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
+
+
+        // Fetching our 'defined' metric tags
+        for (HashMap<String, Object> m : metrics) {
+        	String name = (String) (m.get("name"));
+        	if(!name.equals("this.is.100")){
+        		continue;
+        	}
+        	String[] tags = (String[]) (m.get("tags"));
+        	Set<String> tagsSet = new HashSet<String>(Arrays.asList(tags));
+
+        	// We should find bean parameters as tags
+        	assertEquals(4, tags.length);
+        	assertEquals(true, tagsSet.contains("type:SimpleTestJavaApp"));
+        	assertEquals(true, tagsSet.contains("scope:CoolScope"));
+        	assertEquals(true, tagsSet.contains("instance:jmx_test_instance"));
+        	assertEquals(true, tagsSet.contains("jmx_domain:org.datadog.jmxfetch.test"));
+        }
+        mbs.unregisterMBean(objectName);
+    }
+
+    @Test
+    public void testDomainInclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeObjectName = new ObjectName("org.datadog.jmxfetch.includeme:type=AType");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeObjectName);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_domain_include.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 26 = 13 metrics from java.lang + 13 metrics implicitly defined
+        assertEquals(26, metrics.size());
+
+        mbs.unregisterMBean(includeObjectName);
+    }
+
+    @Test
+    public void testDomainExclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeMe = new ObjectName("org.datadog.jmxfetch.includeme:type=AType");
+        ObjectName excludeMe = new ObjectName("org.datadog.jmxfetch.excludeme:type=AnotherType");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeMe);
+        mbs.registerMBean(testApp, excludeMe);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_domain_exclude.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly defined in the exclude section
+        assertEquals(14, metrics.size());
+
+    	mbs.unregisterMBean(includeMe);
+    	mbs.unregisterMBean(excludeMe);
+    }
+
+    @Test
+    public void testListParamsInclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeObjectName = new ObjectName("org.datadog.jmxfetch.test:type=RightType");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeObjectName);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_params_include.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
+
+        mbs.unregisterMBean(includeObjectName);
+    }
+
+    @Test
+    public void testListParamsExclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeObjectName = new ObjectName("org.datadog.jmxfetch.test:type=RightType");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeObjectName);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_params_exclude.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 13 = 13 metrics from java.lang + 2 metrics explicitly defined - 2 explicitly defined
+        assertEquals(13, metrics.size());
+
+        mbs.unregisterMBean(includeObjectName);
+    }
+
+    @Test
+    public void testListBeansInclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeMe = new ObjectName("org.datadog.jmxfetch.test:type=IncludeMe");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeMe);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_beans_include.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
+
+        mbs.unregisterMBean(includeMe);
+    }
+
+    @Test
+    public void testListBeansExclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeMe = new ObjectName("org.datadog.jmxfetch.test:type=IncludeMe");
+        ObjectName excludeMe = new ObjectName("org.datadog.jmxfetch.test:type=ExcludeMe");
+        ObjectName excludeMeToo = new ObjectName("org.datadog.jmxfetch.test:type=ExcludeMeToo");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeMe);
+        mbs.registerMBean(testApp, excludeMe);
+        mbs.registerMBean(testApp, excludeMeToo);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_beans_exclude.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
+
+        mbs.unregisterMBean(includeMe);
+        mbs.unregisterMBean(excludeMe);
+        mbs.unregisterMBean(excludeMeToo);
+    }
+
 
     @Test
     public void testApp() throws Exception {
@@ -33,14 +233,8 @@ public class TestApp {
 
         // We do a first collection
         AppConfig appConfig = new AppConfig();
-        // We initialize the main app that will collect these metrics using JMX
-        String confdDirectory = Thread.currentThread().getContextClassLoader().getResource("jmx.yaml").getPath();
-        confdDirectory = new String(confdDirectory.substring(0, confdDirectory.length() - 8));
-        String[] params = {"--reporter", "console", "-c", "jmx.yaml", "--conf_directory", confdDirectory, "collect"};
-        new JCommander(appConfig, params);
+        App app = initApp("jmx.yaml", appConfig);
 
-        App app = new App(appConfig);
-        app.init(false);
         app.doIteration();
         LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
 
@@ -396,8 +590,6 @@ public class TestApp {
                 assertTrue(jvm_metrics.containsKey(name));
                 jvm_metrics.put(name, jvm_metrics.get(name) - 1);
             }
-
-
         }
 
         assertTrue(metric100Present);
@@ -419,5 +611,7 @@ public class TestApp {
         for (int i : jvm_metrics.values()) {
             assertEquals(0, i);
         }
+        // Unregistering MBean
+        mbs.unregisterMBean(objectName);
     }
 }

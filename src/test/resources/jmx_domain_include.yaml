@@ -1,0 +1,11 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+                domain: org.datadog.jmxfetch.includeme
+
+
+

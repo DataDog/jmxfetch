@@ -30,11 +30,12 @@ public abstract class JMXAttribute {
     private ObjectInstance jmxInstance;
     private String domain;
     private String beanName;
+    private HashMap<String, String> beanParameters;
     private String attributeName;
     private LinkedHashMap<Object, Object> valueConversions;
     protected String[] tags;
     private Configuration matchingConf;
-    private LinkedList<String> defaultTags;
+    private LinkedList<String> defaultTagsList;
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectInstance jmxInstance, String instanceName,
             Connection connection, HashMap<String, String> instanceTags) {
@@ -44,22 +45,44 @@ public abstract class JMXAttribute {
         this.connection = connection;
 
         this.beanName = jmxInstance.getObjectName().toString();
-        // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
-        // i.e. : domain:bean_parameter1,bean_parameter2
-        String[] split = this.beanName.split(":");
-        this.domain = split[0];
         this.attributeName = attribute.getName();
 
-        LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(new String(split[1]).replace("=", ":").split(",")));
+        // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
+        // i.e. : domain:bean_parameter1,bean_parameter2
+        String[] splitBeanName = this.beanName.split(":");
+        String domain = splitBeanName[0];
+        String beanParameters = splitBeanName[1];
+        LinkedList<String> defaultTags = getBeanTags(instanceName, domain, beanParameters, instanceTags);
+        HashMap<String, String> beanParametersHash = getBeanParametersHash(defaultTags);
+
+        this.domain = domain;
+        this.beanParameters = beanParametersHash;
+        this.defaultTagsList = defaultTags;
+    }
+
+    private static HashMap<String, String> getBeanParametersHash(LinkedList<String> beanParameters) {
+        HashMap<String, String> beanParams = new HashMap<String, String>();
+        for (String param : beanParameters) {
+            String[] paramSplit = param.split(":");
+            beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
+        }
+
+        return beanParams;
+    }
+
+
+    private static LinkedList<String> getBeanTags(String instanceName, String domain, String beanParameters, HashMap<String, String> instanceTags) {
+        LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(new String(beanParameters).replace("=", ":").split(",")));
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
+
         if (instanceTags != null) {
             for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
                 beanTags.add(tag.getKey() + ":" + tag.getValue());
             }
         }
-        this.defaultTags = beanTags;
 
+        return beanTags;
     }
 
     static String convertMetricName(String metricName) {
@@ -100,39 +123,39 @@ public abstract class JMXAttribute {
     }
 
     boolean matchDomain(Configuration conf) {
-        LinkedHashMap<String, Object> include = conf.getInclude();
-        return include.get("domain") == null || include.get("domain").equals(domain);
+        String includeDomain = conf.getInclude().getDomain();
+        return includeDomain == null || includeDomain.equals(domain);
     }
 
     boolean excludeMatchDomain(Configuration conf) {
-        LinkedHashMap<String, Object> exclude = conf.getExclude();
-        return exclude.get("domain") != null && exclude.get("domain").equals(domain);
+        String excludeDomain = conf.getExclude().getDomain();
+        return excludeDomain != null && excludeDomain.equals(domain);
     }
 
     boolean excludeMatchBean(Configuration conf) {
-        LinkedHashMap<String, Object> exclude = conf.getExclude();
-        String bean = (String) exclude.get("bean");
-        String confBeanName = (String) exclude.get("bean_name");
+       Filter exclude = conf.getExclude();
+       ArrayList<String> beanNames = exclude.getBeanNames();
 
-        if (beanName.equals(bean) || beanName.equals(confBeanName)) {
-            return true;
-        }
+       if(beanNames.contains(beanName)){
+    	   return true;
+       }
 
-        for (String bean_attr : exclude.keySet()) {
-            if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
-                continue;
-            }
+       for (String bean_attr : exclude.keySet()) {
+           if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
+               continue;
+           }
 
-            HashMap<String, String> beanParams = new HashMap<String, String>();
-            for (String param : this.defaultTags) {
-                String[] paramSplit = param.split(":");
-                beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
-            }
+           if (beanParameters.get(bean_attr) == null) {
+               continue;
+           }
 
-            if (exclude.get(bean_attr).equals(beanParams.get(bean_attr))) {
-                return true;
-            }
-        }
+           ArrayList<String> beanValues = exclude.getParameterValues(bean_attr);
+           for (String beanVal : beanValues) {
+               if (beanParameters.get(bean_attr).equals(beanVal)) {
+                   return true;
+               }
+           }
+       }
         return false;
     }
 
@@ -180,17 +203,9 @@ public abstract class JMXAttribute {
     }
 
     boolean matchBean(Configuration configuration) {
-        boolean matchBeanName = false;
-        LinkedHashMap<String, Object> include = configuration.getInclude();
-        if (include.get("bean") == null && include.get("bean_name") == null) {
-            matchBeanName = true;
-        } else if (include.get("bean") != null) {
-            matchBeanName = include.get("bean").equals(beanName);
-        } else if (include.get("bean_name") != null) {
-            matchBeanName = include.get("bean_name").equals(beanName);
-        }
+        Filter include = configuration.getInclude();
 
-        if (!matchBeanName) {
+        if (!include.isEmptyBeanName() && !include.getBeanNames().contains(beanName)) {
             return false;
         }
 
@@ -198,14 +213,21 @@ public abstract class JMXAttribute {
             if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
                 continue;
             }
-
-            HashMap<String, String> beanParams = new HashMap<String, String>();
-            for (String param : this.defaultTags) {
-                String[] paramSplit = param.split(":");
-                beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
+            if (beanParameters.get(bean_attr) == null) {
+                continue;
             }
 
-            if (beanParams.get(bean_attr) == null || !beanParams.get(bean_attr).equals(include.get(bean_attr))) {
+            ArrayList<String> beanValues = include.getParameterValues(bean_attr);
+
+            boolean matchBeanAttr = false;
+            for (String beanVal : beanValues) {
+                if (!beanParameters.get(bean_attr).equals(beanVal)) {
+                    continue;
+                }
+                return true;
+            }
+            // We havent' found a match among our attribute values list
+            if (!matchBeanAttr) {
                 return false;
             }
         }
@@ -215,7 +237,7 @@ public abstract class JMXAttribute {
     @SuppressWarnings("unchecked")
     HashMap<Object, Object> getValueConversions() {
         if (valueConversions == null) {
-            Object includedAttribute = matchingConf.getInclude().get("attribute");
+            Object includedAttribute = matchingConf.getInclude().getAttribute();
             if (includedAttribute instanceof LinkedHashMap<?, ?>) {
                 String attributeName = this.attribute.getName();
                 LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute =
@@ -251,20 +273,21 @@ public abstract class JMXAttribute {
             return tags;
         }
 
-        LinkedHashMap<String, Object> include = matchingConf.getInclude();
+        Filter include = matchingConf.getInclude();
         if (include != null) {
-            if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-                LinkedHashMap<String, ArrayList<String>> attributeParams = ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)(include.get("attribute"))).get(attributeName);
+            Object includeAttribute = include.getAttribute();
+            if (includeAttribute instanceof LinkedHashMap<?, ?>) {
+                LinkedHashMap<String, ArrayList<String>> attributeParams = ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)includeAttribute).get(attributeName);
                 if (attributeParams != null) {
                     ArrayList<String> yamlTags = attributeParams.get("tags");
                     if ( yamlTags != null) {
-                        defaultTags.addAll(yamlTags);
+                        defaultTagsList.addAll(yamlTags);
                     }
                 }
             }
         }
-        tags = new String[defaultTags.size()];
-        tags = defaultTags.toArray(tags);
+        tags = new String[defaultTagsList.size()];
+        tags = defaultTagsList.toArray(tags);
         return tags;
     }
 

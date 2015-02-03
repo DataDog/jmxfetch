@@ -94,9 +94,9 @@ public class JMXComplexAttribute extends JMXAttribute {
         String subAttributeName = getAttribute().getName() + "." + subAttribute;
         String metricType = null;
 
-        LinkedHashMap<String, Object> include = getMatchingConf().getInclude();
-        if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.get("attribute"));
+        Filter include = getMatchingConf().getInclude();
+        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             metricType = attribute.get(subAttributeName).get("metric_type");
             if (metricType == null) {
                 metricType = attribute.get(subAttributeName).get("type");
@@ -113,10 +113,10 @@ public class JMXComplexAttribute extends JMXAttribute {
     private String getAlias(String subAttribute) {
         String subAttributeName = getAttribute().getName() + "." + subAttribute;
 
-        LinkedHashMap<String, Object> include = getMatchingConf().getInclude();
+        Filter include = getMatchingConf().getInclude();
         LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
-        if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.get("attribute"))).get(subAttributeName).get("alias");
+        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
+            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get("alias");
         } else if (conf.get("metric_prefix") != null) {
             return conf.get("metric_prefix") + "." + getBeanName().split(":")[0] + "." + subAttributeName;
         }
@@ -142,14 +142,14 @@ public class JMXComplexAttribute extends JMXAttribute {
         return matchAttribute(configuration) && !excludeMatchAttribute(configuration);
     }
 
-    private boolean matchSubAttribute(LinkedHashMap<String, Object> params, String subAttributeName, boolean matchOnEmpty) {
-        if ((params.get("attribute") instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (params.get("attribute"))).containsKey(subAttributeName)) {
+    private boolean matchSubAttribute(Filter params, String subAttributeName, boolean matchOnEmpty) {
+        if ((params.getAttribute() instanceof LinkedHashMap<?, ?>)
+                && ((LinkedHashMap<String, Object>) (params.getAttribute())).containsKey(subAttributeName)) {
             return true;
-        } else if ((params.get("attribute") instanceof ArrayList<?>
-                && ((ArrayList<String>) (params.get("attribute"))).contains(subAttributeName))) {
+        } else if ((params.getAttribute() instanceof ArrayList<?>
+                && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {
             return true;
-        } else if (params.get("attribute") == null) {
+        } else if (params.getAttribute() == null) {
             return matchOnEmpty;
         }
         return false;
@@ -175,8 +175,8 @@ public class JMXComplexAttribute extends JMXAttribute {
 
     private boolean excludeMatchAttribute(Configuration configuration) {
 
-        LinkedHashMap<String, Object> exclude = configuration.getExclude();
-        if (exclude.get("attribute") != null && matchSubAttribute(exclude, getAttributeName(), false)) {
+        Filter exclude = configuration.getExclude();
+        if (exclude.getAttribute() != null && matchSubAttribute(exclude, getAttributeName(), false)) {
             return true;
         }
 

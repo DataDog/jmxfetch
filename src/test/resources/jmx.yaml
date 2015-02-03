@@ -7,7 +7,7 @@ instances:
             env: stage
             newTag: test
         conf:
-            - include: 
+            - include:
                domain: org.datadog.jmxfetch.test
                attribute:
                     ShouldBe100:
@@ -40,5 +40,5 @@ instances:
                         alias: test.defaulted
                         values:
                           default: 32
-            - include: 
+            - include:
                domain: org.datadog.jmxfetch.test
