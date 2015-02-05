@@ -37,6 +37,7 @@ public class Status {
 
     private void clearStats() {
         instanceStats.put(INITIALIZED_CHECKS, new HashMap<String, Object>());
+        instanceStats.put(FAILED_CHECKS, new HashMap<String, Object>());
     }
 
     public void addInstanceStats(String checkName, String instance, int metricCount, String message, String status) {
@@ -92,8 +93,8 @@ public class Status {
             } catch (Exception e) {
                 LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
             }
-            this.clearStats();
         }
+        this.clearStats();
     }
 
     public String getStatusFileLocation() {
