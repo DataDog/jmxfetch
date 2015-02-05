@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -31,7 +32,7 @@ public class Instance {
     private Set<ObjectInstance> beans;
     private LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
     private LinkedList<JMXAttribute> matchingAttributes;
-    private LinkedList<JMXAttribute> failingAttributes;
+    private HashSet<JMXAttribute> failingAttributes;
     private Integer refreshBeansPeriod;
     private long lastRefreshTime;
     private LinkedHashMap<String, Object> yaml;
@@ -65,11 +66,12 @@ public class Instance {
         this.instanceName = (String) yaml.get("name");
         this.tags = (LinkedHashMap<String, String>) yaml.get("tags");
         this.checkName = checkName;
-        this.failingAttributes = new LinkedList<JMXAttribute>();
+        this.matchingAttributes = new LinkedList<JMXAttribute>();
+        this.failingAttributes = new HashSet<JMXAttribute>();
         this.refreshBeansPeriod = (Integer) yaml.get("refresh_beans");
         if (this.refreshBeansPeriod == null) {
             this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
-            // Useful because sometimes if the application restarts, jmxfetch might read 
+            // Useful because sometimes if the application restarts, jmxfetch might read
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
         this.lastRefreshTime = 0;
@@ -170,7 +172,8 @@ public class Instance {
         String action = appConfig.getAction();
         boolean metricReachedDisplayed = false;
 
-        this.matchingAttributes = new LinkedList<JMXAttribute>();
+        this.matchingAttributes.clear();
+        this.failingAttributes.clear();
         int metricsCount = 0;
 
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
