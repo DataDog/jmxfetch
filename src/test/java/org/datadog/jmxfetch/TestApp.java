@@ -349,7 +349,7 @@ public class TestApp {
                 assertEquals(tags.length, 5);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
-                assertTrue(value > 0.99);
+                assertTrue(value > 0.98);
                 counterAbsent = false;
             } else if (name.equals("subattr.this.is.0")) {
                 assertEquals(tags.length, 5);
@@ -375,7 +375,7 @@ public class TestApp {
                 assertEquals(tags.length, 5);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
-                assertTrue(value > 0.99);
+                assertTrue(value > 0.98);
                 subattrCounterAbsent = false;
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
                 assertEquals(tags.length, 5);
