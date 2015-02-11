@@ -69,7 +69,7 @@ public class Instance {
         this.refreshBeansPeriod = (Integer) yaml.get("refresh_beans");
         if (this.refreshBeansPeriod == null) {
             this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
-            // Useful because sometimes if the application restarts, jmxfetch might read 
+            // Useful because sometimes if the application restarts, jmxfetch might read
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
         this.lastRefreshTime = 0;
