@@ -66,7 +66,7 @@ public class TestApp {
 
         LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
 
-        assertEquals(19, metrics.size()); // 19 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(25, metrics.size()); // 25 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         boolean metric100Present = false;
@@ -181,7 +181,7 @@ public class TestApp {
         // We run a second collection. The counter should now be present
         app.doIteration();
         metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-        assertEquals(21, metrics.size()); // 21 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(27, metrics.size()); // 27 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         metric100Present = false;
@@ -302,7 +302,7 @@ public class TestApp {
 
         app.doIteration();
         metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-        assertEquals(metrics.size(), 21); // 21 = 7 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 27); // 27 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         metric100Present = false;
         metric1000Present = false;
@@ -322,7 +322,14 @@ public class TestApp {
         jvm_metrics.put("jvm.gc.cms.count", 2);
         jvm_metrics.put("jvm.gc.parnew.time", 2);
         jvm_metrics.put("jvm.heap_memory", 1);
+        jvm_metrics.put("jvm.heap_memory_committed", 1);
+        jvm_metrics.put("jvm.heap_memory_init", 1);
+        jvm_metrics.put("jvm.heap_memory_max", 1);
         jvm_metrics.put("jvm.non_heap_memory", 1);
+        jvm_metrics.put("jvm.non_heap_memory_committed", 1);
+        jvm_metrics.put("jvm.non_heap_memory_init", 1);
+        jvm_metrics.put("jvm.non_heap_memory_max", 1);
+
         jvm_metrics.put("jvm.thread_count", 1);
 
         for (HashMap<String, Object> m : metrics) {
@@ -364,7 +371,7 @@ public class TestApp {
                 assertEquals(tags.length, 5);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
-                assertTrue(value > 0.99);
+                assertTrue(value > 0.98);
                 counterAbsent = false;
             } else if (name.equals("subattr.this.is.0")) {
                 assertEquals(tags.length, 5);
@@ -390,7 +397,7 @@ public class TestApp {
                 assertEquals(tags.length, 5);
                 // The value should be a bit less than 1.0, as we incremented the counter by 5 and we slept for 5 seconds
                 assertTrue(value < 1.00);
-                assertTrue(value > 0.99);
+                assertTrue(value > 0.98);
                 subattrCounterAbsent = false;
             } else if (name.equals("jmx.org.datadog.jmxfetch.test.atomic42")) {
                 assertEquals(tags.length, 5);

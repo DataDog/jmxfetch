@@ -16,6 +16,7 @@ public class RemoteConnection extends Connection {
     private Integer port;
     private String user;
     private String password;
+    private String path = "jmxrmi";
     private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
@@ -26,6 +27,9 @@ public class RemoteConnection extends Connection {
         port = (Integer) connectionParams.get("port");
         user = (String) connectionParams.get("user");
         password = (String) connectionParams.get("password");
+        if (connectionParams.containsKey("path")){
+            path = (String) connectionParams.get("path");
+        }
         env = getEnv(connectionParams);
         address = getAddress(connectionParams);
         
@@ -57,7 +61,7 @@ public class RemoteConnection extends Connection {
 
     private JMXServiceURL getAddress(
             LinkedHashMap<String, Object> connectionParams) throws MalformedURLException {
-        return new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/jmxrmi"); 
+        return new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/" + this.path); 
     }
 
 
