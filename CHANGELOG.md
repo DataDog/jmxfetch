@@ -1,6 +1,9 @@
 Changes
 =======
 
+# 0.4.2 / 03-12-2014
+* [FEATURE] Send service checks for JMX integrations
+
 # 0.4.1 / 02-11-2014
 * [FEATURE/BUGFIX] Fetch more JVM (Non)Heap variables by default. See[bd8915c2f1eec794f406414b678ce6110407dce1](https://github.com/DataDog/jmxfetch/commit/bd8915c2f1eec794f406414b678ce6110407dce1)
 * [BUGFIX] Memory leak fix when fetching attributes value is failing. See [#30][]

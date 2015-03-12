@@ -3,7 +3,7 @@
 
 	<groupId>datadog</groupId>
 	<artifactId>jmxfetch</artifactId>
-	<version>0.4.1</version>
+	<version>0.4.2</version>
 	<packaging>jar</packaging>
 
 	<name>jmxfetch</name>
@@ -12,7 +12,7 @@
 	<properties>
 		<commons-io.version>2.4</commons-io.version>
 		<guava.version>17.0</guava.version>
-		<java-dogstatsd-client.version>2.0.9-SNAPSHOT</java-dogstatsd-client.version>
+		<java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
 		<jcommander.version>1.35</jcommander.version>
 		<junit.version>4.11</junit.version>
 		<log4j.version>1.2.17</log4j.version>
@@ -53,7 +53,7 @@
 			<version>${commons-io.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.datadog</groupId>
+			<groupId>com.datadoghq</groupId>
 			<artifactId>java-dogstatsd-client</artifactId>
 			<version>${java-dogstatsd-client.version}</version>
 		</dependency>
