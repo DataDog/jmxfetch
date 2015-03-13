@@ -75,6 +75,54 @@ public class TestApp {
     }
 
     @Test
+    public void testServiceCheckWarning() throws Exception {
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=ServiceCheckTest");
+
+        //  Test application
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        // Populate it with a lot of metrics (>350) !
+        testApp.populateHashMap(400);
+
+        // Exposing a few metrics through JMX
+        mbs.registerMBean(testApp, objectName);
+
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("too_many_metrics.yaml", appConfig);
+
+        // JMX configuration should return > 350 metrics
+        app.doIteration();
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+
+        // Test that an WARNING service check status is sent
+        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+        LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
+        assertTrue(metrics.size() >= 350 );
+
+        assertEquals(1, serviceChecks.size());
+        HashMap<String, Object> sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+
+        // Message should not be null anymore and reports a high number of metrics warning
+        assertNotNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        String scName = (String) (sc.get("name"));
+        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String[] scTags = (String[]) (sc.get("tags"));
+
+        assertEquals("too_many_metrics", scName);
+        // We should have a warning status
+        assertEquals(Status.STATUS_WARNING, scStatus);
+        assertEquals(scTags.length, 3);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+        mbs.unregisterMBean(objectName);
+    }
+
+    @Test
     public void testServiceCheckCRITICAL() throws Exception {
         // Test that a non-running service sends a critical service check
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
