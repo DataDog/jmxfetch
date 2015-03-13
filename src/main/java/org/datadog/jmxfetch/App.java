@@ -166,7 +166,7 @@ public class App {
         while (it.hasNext()) {
             Instance instance = it.next();
             LinkedList<HashMap<String, Object>> metrics;
-            String instanceStatus = Status.STATUS_OK;
+            int instanceStatus = Status.STATUS_OK;
             String instanceMessage = null;
             try {
                 metrics = instance.getMetrics();
@@ -282,7 +282,7 @@ public class App {
     }
 
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
-                              int metricCount, String message, String status) {
+                              int metricCount, String message, int status) {
         String checkName = instance.getCheckName();
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, message, status);

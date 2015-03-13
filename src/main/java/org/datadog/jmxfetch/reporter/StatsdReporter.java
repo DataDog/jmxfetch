@@ -31,19 +31,7 @@ public class StatsdReporter extends Reporter {
         statsDClient.gauge(metricName, value, tags);
     }
 
-    private int statusToInt(String status) {
-        if (status == Status.STATUS_OK) {
-            return 0;
-        } else if (status == Status.STATUS_WARNING) {
-            return 1;
-        } else if (status == Status.STATUS_ERROR) {
-            // critical
-            return 2;
-        }
-        return 3;
-    }
-
-    public void sendServiceCheck(String checkName, String status, String message,
+    public void sendServiceCheck(String checkName, int status, String message,
                                  String hostname, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();
@@ -51,7 +39,7 @@ public class StatsdReporter extends Reporter {
         }
 
         ServiceCheck sc = new ServiceCheck(String.format("%s.can_connect", checkName),
-            this.statusToInt(status), message, hostname, tags);
+            status, message, hostname, tags);
         statsDClient.serviceCheck(sc);
     }
 

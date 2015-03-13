@@ -108,7 +108,7 @@ public abstract class Reporter {
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
 
-    public abstract void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags);
+    public abstract void sendServiceCheck(String checkName, int status, String message, String hostname, String[] tags);
 
     public abstract void displayMetricReached();
 

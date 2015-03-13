@@ -34,7 +34,7 @@ public class ConsoleReporter extends Reporter {
         return returnedMetrics;
     }
 
-    public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags) {
+    public void sendServiceCheck(String checkName, int status, String message, String hostname, String[] tags) {
         String tagString = "";
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";
@@ -43,7 +43,7 @@ public class ConsoleReporter extends Reporter {
 
         HashMap<String, Object> sc = new HashMap<String, Object>();
         sc.put("name", checkName);
-        sc.put("status", status);
+        sc.put("status", Integer.toString(status));
         sc.put("message", message);
         sc.put("hostname", hostname);
         sc.put("tags", tags);
