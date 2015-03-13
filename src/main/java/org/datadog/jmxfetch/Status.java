@@ -10,9 +10,9 @@ import org.yaml.snakeyaml.Yaml;
 
 public class Status {
 
-    public final static String STATUS_WARNING = "WARNING";
-    public final static String STATUS_OK = "OK";
-    public final static String STATUS_ERROR = "ERROR";
+    public final static int STATUS_WARNING = 1;
+    public final static int STATUS_OK = 0;
+    public final static int STATUS_ERROR = 2;
     private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
     private final static String INITIALIZED_CHECKS = "initialized_checks";
     private final static String FAILED_CHECKS = "failed_checks";
@@ -40,12 +40,12 @@ public class Status {
         instanceStats.put(FAILED_CHECKS, new HashMap<String, Object>());
     }
 
-    public void addInstanceStats(String checkName, String instance, int metricCount, String message, String status) {
+    public void addInstanceStats(String checkName, String instance, int metricCount, String message, int status) {
         addStats(checkName, instance, metricCount, message, status, INITIALIZED_CHECKS);
     }
 
     @SuppressWarnings("unchecked")
-    private void addStats(String checkName, String instance, int metricCount, String message, String status, String key) {
+    private void addStats(String checkName, String instance, int metricCount, String message, int status, String key) {
         LinkedList<HashMap<String, Object>> checkStats;
         HashMap<String, Object> initializedChecks;
         initializedChecks = (HashMap<String, Object>) this.instanceStats.get(key);
@@ -70,7 +70,7 @@ public class Status {
         this.instanceStats.put(key, initializedChecks);
     }
 
-    public void addInitFailedCheck(String checkName, String message, String status) {
+    public void addInitFailedCheck(String checkName, String message, int status) {
         addStats(checkName, null, -1, message, status, FAILED_CHECKS);
     }
 

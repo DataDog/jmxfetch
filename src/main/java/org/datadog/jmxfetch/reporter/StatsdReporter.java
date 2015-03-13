@@ -2,8 +2,10 @@ package org.datadog.jmxfetch.reporter;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import com.timgroup.statsd.ServiceCheck;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JMXAttribute;
+import org.datadog.jmxfetch.Status;
 
 public class StatsdReporter extends Reporter {
 
@@ -27,6 +29,18 @@ public class StatsdReporter extends Reporter {
             init();
         }
         statsDClient.gauge(metricName, value, tags);
+    }
+
+    public void sendServiceCheck(String checkName, int status, String message,
+                                 String hostname, String[] tags) {
+        if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
+            this.statsDClient.stop();
+            init();
+        }
+
+        ServiceCheck sc = new ServiceCheck(String.format("%s.can_connect", checkName),
+            status, message, hostname, tags);
+        statsDClient.serviceCheck(sc);
     }
 
     public void displayMetricReached() {
