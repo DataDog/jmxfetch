@@ -140,6 +140,46 @@ public class TestApp {
     }
 
     @Test
+    public void testServiceCheckWARNING() throws Exception {
+        // Test that a non-running service sends a critical service check
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.too_many_metrics:type=ServiceCheckTest3");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, objectName);
+
+        AppConfig appConfig = new AppConfig();
+
+        App app = initApp("too_many_metrics.yaml", appConfig);
+        app.doIteration();
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+
+        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+        assertEquals(1, serviceChecks.size());
+
+        HashMap<String, Object> sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+        assertNotNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        String scName = (String) (sc.get("name"));
+        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String scMessage = (String) (sc.get("message"));
+        String[] scTags = (String[]) (sc.get("tags"));
+
+        assertEquals("too_many_metrics", scName);
+        assertEquals(Status.STATUS_WARNING, scStatus);
+        assertTrue(scMessage.contains("Number of returned metrics is too high for instance"));
+        assertEquals(scTags.length, 3);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+
+        mbs.unregisterMBean(objectName);
+    }
+
+
+    @Test
     public void testApp() throws Exception {
         // We expose a few metrics through JMX
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
