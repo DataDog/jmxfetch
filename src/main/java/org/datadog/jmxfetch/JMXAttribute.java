@@ -18,8 +18,11 @@ import javax.management.MBeanException;
 import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 
+import org.apache.log4j.Logger;
+
 public abstract class JMXAttribute {
 
+    private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
     private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "bean_name", "bean", "attribute");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
@@ -114,6 +117,7 @@ public abstract class JMXAttribute {
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
+            LOGGER.warn("Unable to get metrics from " + beanName);
             return 0;
         }
     }
