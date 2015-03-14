@@ -50,31 +50,31 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     private boolean excludeMatchAttribute(Configuration configuration) {
-        LinkedHashMap<String, Object> exclude = configuration.getExclude();
-        if (exclude.get("attribute") == null) {
+        Filter exclude = configuration.getExclude();
+        if (exclude.getAttribute() == null) {
             return false;
-        } else if ((exclude.get("attribute") instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (exclude.get("attribute"))).containsKey(getAttributeName())) {
+        } else if ((exclude.getAttribute() instanceof LinkedHashMap<?, ?>)
+                && ((LinkedHashMap<String, Object>) (exclude.getAttribute())).containsKey(getAttributeName())) {
             return true;
 
-        } else if ((exclude.get("attribute") instanceof ArrayList<?>
-                && ((ArrayList<String>) (exclude.get("attribute"))).contains(getAttributeName()))) {
+        } else if ((exclude.getAttribute() instanceof ArrayList<?>
+                && ((ArrayList<String>) (exclude.getAttribute())).contains(getAttributeName()))) {
             return true;
         }
         return false;
     }
 
     private boolean matchAttribute(Configuration configuration) {
-        LinkedHashMap<String, Object> include = configuration.getInclude();
-        if (include.get("attribute") == null) {
+        Filter include = configuration.getInclude();
+        if (include.getAttribute() == null) {
             return true;
 
-        } else if ((include.get("attribute") instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (include.get("attribute"))).containsKey(getAttributeName())) {
+        } else if ((include.getAttribute() instanceof LinkedHashMap<?, ?>)
+                && ((LinkedHashMap<String, Object>) (include.getAttribute())).containsKey(getAttributeName())) {
             return true;
 
-        } else if ((include.get("attribute") instanceof ArrayList<?>
-                && ((ArrayList<String>) (include.get("attribute"))).contains(getAttributeName()))) {
+        } else if ((include.getAttribute() instanceof ArrayList<?>
+                && ((ArrayList<String>) (include.getAttribute())).contains(getAttributeName()))) {
             return true;
         }
 
@@ -82,12 +82,12 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     private String getAlias() {
-        LinkedHashMap<String, Object> include = getMatchingConf().getInclude();
+        Filter include = getMatchingConf().getInclude();
         LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
         if (alias != null) {
             return alias;
-        } else if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.get("attribute"));
+        } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
             alias = conf.get("metric_prefix") + "." + getBeanName().split(":")[0] + "." + getAttributeName();
@@ -99,11 +99,11 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     private String getMetricType() {
-        LinkedHashMap<String, Object> include = getMatchingConf().getInclude();
+        Filter include = getMatchingConf().getInclude();
         if (metricType != null) {
             return metricType;
-        } else if (include.get("attribute") instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.get("attribute"));
+        } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             metricType = attribute.get(getAttributeName()).get("metric_type");
             if (metricType == null) {
                 metricType = attribute.get(getAttributeName()).get("type");
