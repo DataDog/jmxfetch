@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
@@ -268,8 +269,38 @@ public class Instance {
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
+    public String[] getServiceCheckTags() {
+        LinkedHashMap<String, Object> yaml = this.getYaml();
+        List<String> tags = new ArrayList<String>();
+        LinkedHashMap<String, String> instanceTags;
+        instanceTags = (LinkedHashMap<String, String>) yaml.get("tags");
+        if (instanceTags != null) {
+            for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
+                tags.add(tag.getKey() + ":" + tag.getValue());
+            }
+        }
+
+        if (yaml.get("process_name_regex") != null) {
+            tags.add("process:" + yaml.get("process_name_regex"));
+        }
+        if (yaml.get("port") != null) {
+            tags.add("port:" + yaml.get("port"));
+        }
+
+        return tags.toArray(new String[tags.size()]);
+    }
+
     public String getName() {
         return this.instanceName;
+    }
+
+    public String getHostname(){
+        Object host = this.yaml.get("host");
+        if (host != null) {
+            return host.toString();
+        } else {
+            return null;
+        }
     }
 
     LinkedHashMap<String, Object> getYaml() {

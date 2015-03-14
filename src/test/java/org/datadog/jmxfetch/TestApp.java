@@ -224,6 +224,156 @@ public class TestApp {
 
 
     @Test
+    public void testServiceCheckOK() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=ServiceCheckTest");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, objectName);
+
+        // We do a first collection
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx.yaml", appConfig);
+
+        app.doIteration();
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+        // Test that an OK service check status is sent
+        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+
+        assertEquals(1, serviceChecks.size());
+        HashMap<String, Object> sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+        assertNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        String scName = (String) (sc.get("name"));
+        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String[] scTags = (String[]) (sc.get("tags"));
+
+        assertEquals("jmx", scName);
+        assertEquals(Status.STATUS_OK, scStatus);
+        assertEquals(scTags.length, 3);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+        mbs.unregisterMBean(objectName);
+    }
+
+    @Test
+    public void testServiceCheckWarning() throws Exception {
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=ServiceCheckTest");
+
+        //  Test application
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        // Populate it with a lot of metrics (>350) !
+        testApp.populateHashMap(400);
+
+        // Exposing a few metrics through JMX
+        mbs.registerMBean(testApp, objectName);
+
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("too_many_metrics.yaml", appConfig);
+
+        // JMX configuration should return > 350 metrics
+        app.doIteration();
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+
+        // Test that an WARNING service check status is sent
+        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+        LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
+        assertTrue(metrics.size() >= 350 );
+
+        assertEquals(1, serviceChecks.size());
+        HashMap<String, Object> sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+
+        // Message should not be null anymore and reports a high number of metrics warning
+        assertNotNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        String scName = (String) (sc.get("name"));
+        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String[] scTags = (String[]) (sc.get("tags"));
+
+        assertEquals("too_many_metrics", scName);
+        // We should have a warning status
+        assertEquals(Status.STATUS_WARNING, scStatus);
+        assertEquals(scTags.length, 3);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+        mbs.unregisterMBean(objectName);
+    }
+
+    @Test
+    public void testServiceCheckCRITICAL() throws Exception {
+        // Test that a non-running service sends a critical service check
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test_non_running:type=ServiceCheckTest2");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, objectName);
+
+        AppConfig appConfig = new AppConfig();
+
+        App app = initApp("non_running_process.yaml", appConfig);
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+
+        // Test that a CRITICAL service check status is sent on initialization
+        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+        assertEquals(1, serviceChecks.size());
+
+        HashMap<String, Object> sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+        assertNotNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        String scName = (String) (sc.get("name"));
+        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String scMessage = (String) (sc.get("message"));
+        String[] scTags = (String[]) (sc.get("tags"));
+
+        assertEquals("non_running_process", scName);
+        assertEquals(Status.STATUS_ERROR, scStatus);
+        assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.* Cannot find JVM matching regex: .*non_running_process_test.*", scMessage);
+        assertEquals(scTags.length, 3);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*non_running_process_test.*"));
+
+
+        // Test that a CRITICAL service check status is sent on iteration
+        app.doIteration();
+
+        serviceChecks = reporter.getServiceChecks();
+        assertEquals(1, serviceChecks.size());
+
+        sc = serviceChecks.getFirst();
+        assertNotNull(sc.get("name"));
+        assertNotNull(sc.get("status"));
+        assertNotNull(sc.get("message"));
+        assertNotNull(sc.get("tags"));
+
+        scName = (String) (sc.get("name"));
+        scStatus = Integer.parseInt((String) (sc.get("status")));
+        scMessage = (String) (sc.get("message"));
+        scTags = (String[]) (sc.get("tags"));
+
+        assertEquals("non_running_process", scName);
+        assertEquals(Status.STATUS_ERROR, scStatus);
+        assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.*. Is a JMX Server running at this address?", scMessage);
+        assertEquals(scTags.length, 3);
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
+        assertTrue(Arrays.asList(scTags).contains("process:.*non_running_process_test.*"));
+
+        mbs.unregisterMBean(objectName);
+    }
+
+    @Test
     public void testApp() throws Exception {
         // We expose a few metrics through JMX
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -236,7 +386,9 @@ public class TestApp {
         App app = initApp("jmx.yaml", appConfig);
 
         app.doIteration();
-        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+
+        LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
 
         assertEquals(25, metrics.size()); // 25 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 

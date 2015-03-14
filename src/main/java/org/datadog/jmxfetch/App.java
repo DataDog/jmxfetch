@@ -166,14 +166,14 @@ public class App {
         while (it.hasNext()) {
             Instance instance = it.next();
             LinkedList<HashMap<String, Object>> metrics;
-            String instanceStatus = Status.STATUS_OK;
+            int instanceStatus = Status.STATUS_OK;
             String instanceMessage = null;
             try {
                 metrics = instance.getMetrics();
             } catch (IOException e) {
                 String warning = "Unable to refresh bean list for instance " + instance;
                 LOGGER.warn(warning, e);
-                appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
+                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                 brokenInstances.add(instance);
                 continue;
             }
@@ -181,7 +181,7 @@ public class App {
             if (metrics.size() == 0) {
                 String warning = "Instance " + instance + " didn't return any metrics";
                 LOGGER.warn(warning);
-                appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
+                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                 brokenInstances.add(instance);
                 continue;
             } else if (instance.isLimitReached()) {
@@ -195,8 +195,8 @@ public class App {
                 CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
             }
             reporter.sendMetrics(metrics, instance.getName());
-            appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(),
-                    metrics.size(), instanceMessage, instanceStatus);
+
+            reportStatus(appConfig, reporter, instance, metrics.size(), instanceMessage, instanceStatus);
         }
 
 
@@ -227,19 +227,19 @@ public class App {
             } catch (IOException e) {
                 String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
                 LOGGER.warn(warning);
-                appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
+                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
             } catch (SecurityException e) {
                 String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
                 LOGGER.warn(warning);
-                appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
+                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
             } catch (FailedLoginException e) {
                 String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
                 LOGGER.warn(warning);
-                appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
+                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
             } catch (Exception e) {
                 String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
                 LOGGER.fatal(warning, e);
-                appConfig.getStatus().addInstanceStats(instance.getCheckName(), instance.getName(), 0, warning, Status.STATUS_ERROR);
+                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
             }
         }
 
@@ -248,7 +248,6 @@ public class App {
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
         }
-
     }
 
     private HashMap<String, YamlParser> getConfigs(AppConfig config) {
@@ -282,9 +281,21 @@ public class App {
         return configs;
     }
 
+    private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
+                              int metricCount, String message, int status) {
+        String checkName = instance.getCheckName();
+        appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
+                                               metricCount, message, status);
+
+        reporter.sendServiceCheck(checkName, status, message, instance.getHostname(),
+                                  instance.getServiceCheckTags());
+    }
+
     public void init(boolean forceNewConnection) {
         clearInstances(instances);
         clearInstances(brokenInstances);
+
+        Reporter reporter = appConfig.getReporter();
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         while (it.hasNext()) {
@@ -322,13 +333,13 @@ public class App {
                     instance.cleanUp();
                     brokenInstances.add(instance);
                     String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
-                    appConfig.getStatus().addInstanceStats(name, instance.getName(), 0, warning, Status.STATUS_ERROR);
+                    reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
                 } catch (Exception e) {
                     instance.cleanUp();
                     brokenInstances.add(instance);
                     String warning = "Unexpected exception while initiating instance " + instance + " : " + e.getMessage();
-                    appConfig.getStatus().addInstanceStats(name, instance.getName(), 0, warning, Status.STATUS_ERROR);
+                    reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning, e);
                 }
             }

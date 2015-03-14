@@ -1,0 +1,12 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        tags:
+            env: stage
+            newTag: test
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+
