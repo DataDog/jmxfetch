@@ -129,6 +129,29 @@ public class TestApp {
     }
 
     @Test
+    public void testParameterMatch() throws Exception {
+        // Do not match beans which do not contain types specified in the conf
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName matchParam = new ObjectName("org.datadog.jmxfetch.test:param=AParameter");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, matchParam);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_params_include.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // 13 default metrics from java.lang
+        assertEquals(13, metrics.size());
+
+        mbs.unregisterMBean(matchParam);
+
+    }
+
+    @Test
     public void testListParamsInclude() throws Exception {
         // We expose a few metrics through JMX
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
