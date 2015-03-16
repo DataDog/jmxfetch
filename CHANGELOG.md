@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.4.2 / 03-12-2014
+# 0.5.0 / Unreleased
 * [FEATURE] Send service checks for JMX integrations
 * [FEATURE] Support list of filters instead of simple filters: See [#20][]
 
