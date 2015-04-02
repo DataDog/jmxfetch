@@ -271,7 +271,7 @@ public class TestApp {
         assertNotNull(sc.get("tags"));
 
         String scName = (String) (sc.get("name"));
-        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String scStatus = (String) (sc.get("status"));
         String[] scTags = (String[]) (sc.get("tags"));
 
         assertEquals("jmx", scName);
@@ -318,7 +318,7 @@ public class TestApp {
         assertNotNull(sc.get("tags"));
 
         String scName = (String) (sc.get("name"));
-        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String scStatus = (String) (sc.get("status"));
         String[] scTags = (String[]) (sc.get("tags"));
 
         assertEquals("too_many_metrics", scName);
@@ -355,7 +355,7 @@ public class TestApp {
         assertNotNull(sc.get("tags"));
 
         String scName = (String) (sc.get("name"));
-        int scStatus = Integer.parseInt((String) (sc.get("status")));
+        String scStatus = (String) (sc.get("status"));
         String scMessage = (String) (sc.get("message"));
         String[] scTags = (String[]) (sc.get("tags"));
 
@@ -381,7 +381,7 @@ public class TestApp {
         assertNotNull(sc.get("tags"));
 
         scName = (String) (sc.get("name"));
-        scStatus = Integer.parseInt((String) (sc.get("status")));
+        scStatus = (String) (sc.get("status"));
         scMessage = (String) (sc.get("message"));
         scTags = (String[]) (sc.get("tags"));
 
