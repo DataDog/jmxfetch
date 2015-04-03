@@ -1,7 +1,10 @@
 Changes
 =======
 
-# 0.5.0 / Unreleased
+# 0.5.1 / 04-02-2015
+* [BUGFIX] Fix bad regression with `Status` type. See [#49][]
+
+# 0.5.0 / 03-16-2015
 * [FEATURE] Send service checks for JMX integrations
 * [FEATURE] Support list of filters instead of simple filters: See [#20][]
 
@@ -26,4 +29,5 @@ Changes
 [#26]: https://github.com/DataDog/jmxfetch/issues/26
 [#28]: https://github.com/DataDog/jmxfetch/issues/28
 [#30]: https://github.com/DataDog/jmxfetch/issues/30
+[#49]: https://github.com/DataDog/jmxfetch/issues/49
 [@coupacooke]: https://github.com/coupacooke
