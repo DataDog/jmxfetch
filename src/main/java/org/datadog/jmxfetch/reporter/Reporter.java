@@ -60,8 +60,6 @@ public abstract class Reporter {
             // We need to edit metrics for legacy reasons (rename metrics, etc)
             HashMap<String, Object> metric = new HashMap<String, Object>(m);
 
-            postProcess(metric);
-
             Double currentValue = (Double) metric.get("value");
             if (currentValue.isNaN() || currentValue.isInfinite()) {
                 continue;
@@ -102,22 +100,11 @@ public abstract class Reporter {
         ratesAggregator.put(instanceName, instanceRatesAggregator);
     }
 
-
-    void postProcess(HashMap<String, Object> metric) {
-        if (metric.get("check_name").equals("cassandra")) {
-            postProcessCassandra(metric);
-        }
-    }
-
     public void sendServiceCheck(String checkName, String status, String message, String[] tags){
         this.incrementServiceCheckCount(checkName);
         String dataName = Reporter.formatServiceCheckPrefix(checkName);
 
         this.doSendServiceCheck(dataName, status, message, tags);
-    }
-
-    private void postProcessCassandra(HashMap<String, Object> metric) {
-        metric.put("alias", ((String) metric.get("alias")).replace("jmx.org.apache.", ""));
     }
 
     public void incrementServiceCheckCount(String checkName){
@@ -129,7 +116,7 @@ public abstract class Reporter {
         Integer scCount = this.serviceCheckCount.get(checkName);
         return (scCount == null) ? 0 : scCount.intValue();
     }
-    
+
     public void resetServiceCheckCount(String checkName){
         this.serviceCheckCount.put(checkName, new Integer(0));
     }

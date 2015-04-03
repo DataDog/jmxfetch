@@ -57,6 +57,55 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testCassandraBean() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks");
+        initApplication("jmx_cassandra.yaml");
+
+
+        // Collecting metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
+
+        ArrayList<String> tags = new ArrayList<String>() {{
+            add("type:ColumnFamily");
+            add("keyspace:MyKeySpace");
+            add("ColumnFamily:MyColumnFamily");
+            add("jmx_domain:org.apache.cassandra.metrics");
+            add("instance:jmx_test_instance");
+        }};
+
+        assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
+    }
+
+    @Test
+    public void testCassandraDeprecatedBean() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.apache.cassandra.db:type=ColumnFamilies,keyspace=MyKeySpace,columnfamily=MyColumnFamily");
+        initApplication("jmx_cassandra_deprecated.yaml");
+
+        // Collecting metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
+
+        ArrayList<String> tags = new ArrayList<String>() {{
+            add("type:ColumnFamilies");
+            add("keyspace:MyKeySpace");
+            add("columnfamily:MyColumnFamily");
+            add("jmx_domain:org.apache.cassandra.db");
+            add("instance:jmx_test_instance");
+        }};
+
+        assertMetric("cassandra.db.should_be100", tags, 5);
+    }
+
+    @Test
     public void testDomainInclude() throws Exception {
         // We expose a few metrics through JMX
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.includeme:type=AType");

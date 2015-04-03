@@ -88,8 +88,7 @@ public class Configuration {
                     String[] splitBeanName = beanName.split(":");
                     String domain = splitBeanName[0];
                     String rawBeanParameters = splitBeanName[1];
-                    LinkedList<String> beanParameters = new LinkedList<String>(Arrays.asList(new String(rawBeanParameters).replace("=", ":").split(",")));
-                    HashMap<String, String> beanParametersHash = JMXAttribute.getBeanParametersHash(beanParameters);
+                    HashMap<String, String> beanParametersHash = JMXAttribute.getBeanParametersHash(rawBeanParameters);
                     beanParametersHash.put("domain", domain);
                     filters.add(new Filter(beanParametersHash));
                 }

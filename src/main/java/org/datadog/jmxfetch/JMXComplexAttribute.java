@@ -118,9 +118,9 @@ public class JMXComplexAttribute extends JMXAttribute {
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
             return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get("alias");
         } else if (conf.get("metric_prefix") != null) {
-            return conf.get("metric_prefix") + "." + getBeanStringName().split(":")[0] + "." + subAttributeName;
+            return conf.get("metric_prefix") + "." + getDomain() + "." + subAttributeName;
         }
-        return "jmx." + getBeanStringName().split(":")[0] + "." + subAttributeName;
+        return "jmx." + getDomain() + "." + subAttributeName;
     }
 
 
