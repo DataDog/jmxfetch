@@ -90,9 +90,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
-            alias = conf.get("metric_prefix") + "." + getBeanName().split(":")[0] + "." + getAttributeName();
+            alias = conf.get("metric_prefix") + "." + getDomain() + "." + getAttributeName();
         } else {
-            alias = "jmx." + getBeanName().split(":")[0] + "." + getAttributeName();
+            alias = "jmx." + getDomain() + "." + getAttributeName();
         }
         alias = convertMetricName(alias);
         return alias;

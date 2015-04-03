@@ -301,11 +301,11 @@ public abstract class JMXAttribute {
         return tags;
     }
 
-    String getBeanName() {
-        return beanName;
-    }
-
     String getAttributeName() {
         return attributeName;
+    }
+
+    protected String getDomain() {
+        return domain;
     }
 }
