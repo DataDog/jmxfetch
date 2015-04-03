@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -101,6 +102,17 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     private String getCassandraAlias() {
+        if (getDomain().equals("org.apache.cassandra.metrics")) {
+            Map<String, String> beanParameters = getBeanParameters();
+            String type = beanParameters.get("type");
+            String metricName = beanParameters.get("name");
+            String attributeName = getAttributeName();
+            if (attributeName.equals("Value")) {
+                return "cassandra." + metricName;
+            }
+            return "cassandra." + metricName + "." + attributeName;
+        }
+        //Deprecated Cassandra metric.  Remove domain prefix.
         return getDomain().replace("org.apache.", "") + "." + getAttributeName();
     }
 

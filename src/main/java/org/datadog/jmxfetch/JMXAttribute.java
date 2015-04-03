@@ -308,4 +308,8 @@ public abstract class JMXAttribute {
     protected String getDomain() {
         return domain;
     }
+
+    protected HashMap<String, String> getBeanParameters() {
+        return beanParameters;
+    }
 }
