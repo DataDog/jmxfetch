@@ -60,8 +60,6 @@ public abstract class Reporter {
             // We need to edit metrics for legacy reasons (rename metrics, etc)
             HashMap<String, Object> metric = new HashMap<String, Object>(m);
 
-            postProcess(metric);
-
             Double currentValue = (Double) metric.get("value");
             if (currentValue.isNaN() || currentValue.isInfinite()) {
                 continue;
@@ -129,7 +127,7 @@ public abstract class Reporter {
         Integer scCount = this.serviceCheckCount.get(checkName);
         return (scCount == null) ? 0 : scCount.intValue();
     }
-    
+
     public void resetServiceCheckCount(String checkName){
         this.serviceCheckCount.put(checkName, new Integer(0));
     }

@@ -91,11 +91,17 @@ public class JMXSimpleAttribute extends JMXAttribute {
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
             alias = conf.get("metric_prefix") + "." + getDomain() + "." + getAttributeName();
+        } else if (getDomain().startsWith("org.apache.cassandra")) {
+            alias = getCassandraAlias();
         } else {
             alias = "jmx." + getDomain() + "." + getAttributeName();
         }
         alias = convertMetricName(alias);
         return alias;
+    }
+
+    private String getCassandraAlias() {
+        return getDomain().replace("org.apache.", "") + "." + getAttributeName();
     }
 
     private String getMetricType() {
