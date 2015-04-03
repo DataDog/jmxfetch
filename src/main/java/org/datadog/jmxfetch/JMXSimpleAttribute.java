@@ -102,7 +102,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     private String getCassandraAlias() {
-        if (getDomain().equals("org.apache.cassandra.metrics")) {
+        if (getDomain().equals(CASSANDRA_DOMAIN)) {
             Map<String, String> beanParameters = getBeanParameters();
             String type = beanParameters.get("type");
             String metricName = beanParameters.get("name");

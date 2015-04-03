@@ -3,6 +3,7 @@ package org.datadog.jmxfetch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -28,6 +29,7 @@ public abstract class JMXAttribute {
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
     private static final String DOT_UNDERSCORE = "_*\\._*";
+    protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
     private MBeanAttributeInfo attribute;
     private Connection connection;
     private ObjectInstance jmxInstance;
@@ -79,8 +81,12 @@ public abstract class JMXAttribute {
         LinkedList<String> beanTags = new LinkedList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
-        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
-            beanTags.add(param.getKey() + ":" + param.getValue());
+        if (domain.equals(CASSANDRA_DOMAIN)) {
+            beanTags.addAll(getCassandraBeanTags(beanParameters));
+        } else {
+            for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+                beanTags.add(param.getKey() + ":" + param.getValue());
+            }
         }
 
         if (instanceTags != null) {
@@ -90,6 +96,22 @@ public abstract class JMXAttribute {
         }
 
         return beanTags;
+    }
+
+    private static Collection<String> getCassandraBeanTags(Map<String, String> beanParameters) {
+        Collection<String> tags = new LinkedList<String>();
+        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+            if (param.getKey().equals("name")) {
+                //This is already in the alias
+                continue;
+            } else if (param.getKey().equals("scope")) {
+                String type = beanParameters.get("type");
+                tags.add(type + ":" + param.getValue());
+            } else {
+                tags.add(param.getKey() + ":" + param.getValue());
+            }
+        }
+        return tags;
     }
 
     static String convertMetricName(String metricName) {
