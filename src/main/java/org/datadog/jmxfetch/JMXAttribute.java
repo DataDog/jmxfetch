@@ -55,29 +55,33 @@ public abstract class JMXAttribute {
         String[] splitBeanName = this.beanName.split(":");
         String domain = splitBeanName[0];
         String beanParameters = splitBeanName[1];
-        LinkedList<String> defaultTags = getBeanTags(instanceName, domain, beanParameters, instanceTags);
-        HashMap<String, String> beanParametersHash = getBeanParametersHash(defaultTags);
+        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
+        LinkedList<String> defaultTags = getBeanTags(instanceName, domain, beanParametersHash, instanceTags);
 
         this.domain = domain;
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = defaultTags;
     }
 
-    private static HashMap<String, String> getBeanParametersHash(LinkedList<String> beanParameters) {
-        HashMap<String, String> beanParams = new HashMap<String, String>();
+    private static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
+        String[] beanParameters = beanParametersString.split(",");
+        HashMap<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
         for (String param : beanParameters) {
-            String[] paramSplit = param.split(":");
-            beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
+            String[] paramSplit = param.split("=");
+            beanParamsMap.put(new String(paramSplit[0]), new String(paramSplit[1]));
         }
 
-        return beanParams;
+        return beanParamsMap;
     }
 
 
-    private static LinkedList<String> getBeanTags(String instanceName, String domain, String beanParameters, HashMap<String, String> instanceTags) {
-        LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(new String(beanParameters).replace("=", ":").split(",")));
+    private static LinkedList<String> getBeanTags(String instanceName, String domain, Map<String, String> beanParameters, Map<String, String> instanceTags) {
+        LinkedList<String> beanTags = new LinkedList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
+        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+            beanTags.add(param.getKey() + ":" + param.getValue());
+        }
 
         if (instanceTags != null) {
             for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
