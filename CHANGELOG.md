@@ -1,6 +1,9 @@
 Changes
 =======
 
+# 0.5.2 / 04-08-2015
+* [ENHANCEMENT] Only send instance name in service check tags. See [#51][]
+
 # 0.5.1 / 04-02-2015
 * [BUGFIX] Fix bad regression with `Status` type. See [#49][]
 
@@ -30,4 +33,5 @@ Changes
 [#28]: https://github.com/DataDog/jmxfetch/issues/28
 [#30]: https://github.com/DataDog/jmxfetch/issues/30
 [#49]: https://github.com/DataDog/jmxfetch/issues/49
+[#51]: https://github.com/DataDog/jmxfetch/issues/51
 [@coupacooke]: https://github.com/coupacooke
