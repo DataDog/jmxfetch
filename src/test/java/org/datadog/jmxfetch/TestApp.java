@@ -276,10 +276,8 @@ public class TestApp {
 
         assertEquals("jmx", scName);
         assertEquals(Status.STATUS_OK, scStatus);
-        assertEquals(scTags.length, 3);
-        assertTrue(Arrays.asList(scTags).contains("env:stage"));
-        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
-        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+        assertEquals(scTags.length, 1);
+        assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
         mbs.unregisterMBean(objectName);
     }
 
@@ -324,10 +322,8 @@ public class TestApp {
         assertEquals("too_many_metrics", scName);
         // We should have a warning status
         assertEquals(Status.STATUS_WARNING, scStatus);
-        assertEquals(scTags.length, 3);
-        assertTrue(Arrays.asList(scTags).contains("env:stage"));
-        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
-        assertTrue(Arrays.asList(scTags).contains("process:.*surefire.*"));
+        assertEquals(scTags.length, 1);
+        assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
         mbs.unregisterMBean(objectName);
     }
 
@@ -362,10 +358,8 @@ public class TestApp {
         assertEquals("non_running_process", scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.* Cannot find JVM matching regex: .*non_running_process_test.*", scMessage);
-        assertEquals(scTags.length, 3);
-        assertTrue(Arrays.asList(scTags).contains("env:stage"));
-        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
-        assertTrue(Arrays.asList(scTags).contains("process:.*non_running_process_test.*"));
+        assertEquals(scTags.length, 1);
+        assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
 
         // Test that a CRITICAL service check status is sent on iteration
@@ -388,10 +382,8 @@ public class TestApp {
         assertEquals("non_running_process", scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.*. Is a JMX Server running at this address?", scMessage);
-        assertEquals(scTags.length, 3);
-        assertTrue(Arrays.asList(scTags).contains("env:stage"));
-        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
-        assertTrue(Arrays.asList(scTags).contains("process:.*non_running_process_test.*"));
+        assertEquals(scTags.length, 1);
+        assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
         mbs.unregisterMBean(objectName);
     }

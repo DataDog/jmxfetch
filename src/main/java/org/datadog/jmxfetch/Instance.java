@@ -270,23 +270,9 @@ public class Instance {
     }
 
     public String[] getServiceCheckTags() {
-        LinkedHashMap<String, Object> yaml = this.getYaml();
+
         List<String> tags = new ArrayList<String>();
-        LinkedHashMap<String, String> instanceTags;
-        instanceTags = (LinkedHashMap<String, String>) yaml.get("tags");
-        if (instanceTags != null) {
-            for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
-                tags.add(tag.getKey() + ":" + tag.getValue());
-            }
-        }
-
-        if (yaml.get("process_name_regex") != null) {
-            tags.add("process:" + yaml.get("process_name_regex"));
-        }
-        if (yaml.get("port") != null) {
-            tags.add("port:" + yaml.get("port"));
-        }
-
+        tags.add("instance:" + this.instanceName);
         return tags.toArray(new String[tags.size()]);
     }
 
