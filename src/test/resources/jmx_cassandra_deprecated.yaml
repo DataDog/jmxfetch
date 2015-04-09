@@ -1,0 +1,10 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+               bean: org.apache.cassandra.db:type=ColumnFamilies,keyspace=MyKeySpace,columnfamily=MyColumnFamily
+               attribute:
+                    - ShouldBe100

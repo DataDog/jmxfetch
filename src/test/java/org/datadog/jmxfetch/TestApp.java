@@ -127,6 +127,49 @@ public class TestApp {
     }
 
     @Test
+    public void testCassandraDeprecatedBean() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = new ObjectName("org.apache.cassandra.db:type=ColumnFamilies,keyspace=MyKeySpace,columnfamily=MyColumnFamily");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, objectName);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_cassandra_deprecated.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
+
+
+        // Fetching our 'defined' metric tags
+        Boolean foundCassandraBean = false;
+        for (HashMap<String, Object> m : metrics) {
+            String name = (String) (m.get("name"));
+            if(!name.equals("cassandra.db.should_be100")){
+                continue;
+            }
+            foundCassandraBean = true;
+            String[] tags = (String[]) (m.get("tags"));
+            Set<String> tagsSet = new HashSet<String>(Arrays.asList(tags));
+
+            // We should find bean parameters as tags
+            assertEquals(5, tags.length);
+            assertTrue(tagsSet.contains("type:ColumnFamilies"));
+            assertTrue(tagsSet.contains("keyspace:MyKeySpace"));
+            assertTrue(tagsSet.contains("columnfamily:MyColumnFamily"));
+            assertTrue(tagsSet.contains("jmx_domain:org.apache.cassandra.db"));
+            assertTrue(tagsSet.contains("instance:jmx_test_instance"));
+        }
+        assertTrue(foundCassandraBean);
+        mbs.unregisterMBean(objectName);
+    }
+
+    @Test
     public void testDomainInclude() throws Exception {
         // We expose a few metrics through JMX
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
