@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JMXAttribute;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -104,6 +105,16 @@ public abstract class Reporter {
 
     private void postProcessCassandra(HashMap<String, Object> metric) {
         metric.put("alias", ((String) metric.get("alias")).replace("jmx.org.apache.", ""));
+    }
+
+    public static String formatDataName(String name){
+        String[] chunks = name.split("\\.");
+        
+        // Escaping the prefix name 
+        chunks[0] = chunks[0].replaceAll("[A-Z0-9:_\\-]", "");
+
+        // Putting the chunks together
+        return StringUtils.join(chunks, ".");
     }
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
