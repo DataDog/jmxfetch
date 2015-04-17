@@ -35,6 +35,8 @@ public class ConsoleReporter extends Reporter {
     }
 
     public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags) {
+        this.incrementServiceCheckCount(checkName); 
+	    
         String tagString = "";
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";

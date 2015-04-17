@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
+import org.apache.commons.io.FileUtils;
 
 public class Status {
 
@@ -40,12 +40,14 @@ public class Status {
         instanceStats.put(FAILED_CHECKS, new HashMap<String, Object>());
     }
 
-    public void addInstanceStats(String checkName, String instance, int metricCount, String message, String status) {
-        addStats(checkName, instance, metricCount, message, status, INITIALIZED_CHECKS);
+    public void addInstanceStats(String checkName, String instance, int metricCount, 
+                                 int serviceCheckCount, String message, String status) {
+        addStats(checkName, instance, metricCount, serviceCheckCount, message, 
+                 status, INITIALIZED_CHECKS);
     }
 
     @SuppressWarnings("unchecked")
-    private void addStats(String checkName, String instance, int metricCount, String message, String status, String key) {
+    private void addStats(String checkName, String instance, int metricCount, int serviceCheckCount, String message, String status, String key) {
         LinkedList<HashMap<String, Object>> checkStats;
         HashMap<String, Object> initializedChecks;
         initializedChecks = (HashMap<String, Object>) this.instanceStats.get(key);
@@ -63,6 +65,9 @@ public class Status {
         if (metricCount != -1) {
             instStats.put("metric_count", metricCount);
         }
+        if(serviceCheckCount != -1){
+            instStats.put("service_check_count", serviceCheckCount);
+        }
         instStats.put("message", message);
         instStats.put("status", status);
         checkStats.add(instStats);
@@ -71,7 +76,7 @@ public class Status {
     }
 
     public void addInitFailedCheck(String checkName, String message, String status) {
-        addStats(checkName, null, -1, message, status, FAILED_CHECKS);
+        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS);
     }
 
     private String generateYaml() {
@@ -80,7 +85,6 @@ public class Status {
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         return yaml.dump(status);
-
     }
 
     public void flush() {

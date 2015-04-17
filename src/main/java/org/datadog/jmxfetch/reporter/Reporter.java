@@ -7,6 +7,7 @@ import org.datadog.jmxfetch.JMXAttribute;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.lang.Integer;
 import java.util.LinkedList;
 
 
@@ -14,7 +15,12 @@ public abstract class Reporter {
 
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
 
+    private HashMap<String, Integer> serviceCheckCount;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
+
+    public Reporter() {
+        this.serviceCheckCount = new HashMap<String, Integer>();
+    }
 
     String generateId(HashMap<String, Object> metric) {
         String key = (String) metric.get("alias");
@@ -104,6 +110,24 @@ public abstract class Reporter {
 
     private void postProcessCassandra(HashMap<String, Object> metric) {
         metric.put("alias", ((String) metric.get("alias")).replace("jmx.org.apache.", ""));
+    }
+
+    public void incrementServiceCheckCount(String checkName){
+        int scCount = this.getServiceCheckCount(checkName);
+        this.getServiceCheckCountMap().put(checkName, new Integer(scCount+1));
+    }
+
+    public int getServiceCheckCount(String checkName){
+        Integer scCount = this.serviceCheckCount.get(checkName);
+        return (scCount == null) ? 0 : scCount.intValue();
+    }
+    
+    public void resetServiceCheckCount(String checkName){
+        this.serviceCheckCount.put(checkName, new Integer(0));
+    }
+
+    protected HashMap<String, Integer> getServiceCheckCountMap(){
+        return this.serviceCheckCount;
     }
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);

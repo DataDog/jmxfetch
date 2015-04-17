@@ -50,6 +50,8 @@ public class StatsdReporter extends Reporter {
             init();
         }
 
+        this.incrementServiceCheckCount(checkName); 
+
         ServiceCheck sc = new ServiceCheck(String.format("%s.can_connect", checkName),
             this.statusToInt(status), message, hostname, tags);
         statsDClient.serviceCheck(sc);

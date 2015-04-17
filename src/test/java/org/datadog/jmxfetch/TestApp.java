@@ -3,6 +3,8 @@ package org.datadog.jmxfetch;
 import com.beust.jcommander.JCommander;
 
 import org.apache.log4j.Level;
+import org.datadog.jmxfetch.Status;
+import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.junit.BeforeClass;
@@ -386,6 +388,32 @@ public class TestApp {
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
         mbs.unregisterMBean(objectName);
+    }
+
+    @Test
+    public void testServiceCheckCounter() throws Exception {
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx.yaml", appConfig);
+        Reporter repo = appConfig.getReporter();
+
+        // Let's check that the counter is null
+        assertEquals(0, repo.getServiceCheckCount("jmx"));
+        
+        // Let's put a service check in the pipeline (we cannot call doIteration()
+        // here unfortunately because it would call reportStatus which will flush 
+        // the count to the jmx_status.yaml file and reset the counter. 
+        repo.sendServiceCheck("jmx", Status.STATUS_OK, "This is a test", "jmx_test_instance", null);
+        
+        // Let's check that the counter has been updated
+        assertEquals(1, repo.getServiceCheckCount("jmx"));
+
+        // Let's check that each service check counter is reset after each app
+        // app iteration
+        app.doIteration();
+        assertEquals(0, repo.getServiceCheckCount("jmx"));
     }
 
     @Test
