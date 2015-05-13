@@ -11,6 +11,7 @@
 
 	<properties>
 		<commons-io.version>2.4</commons-io.version>
+		<commons-lang.version>2.6</commons-lang.version>
 		<guava.version>17.0</guava.version>
 		<java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
 		<jcommander.version>1.35</jcommander.version>
@@ -51,6 +52,11 @@
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>${commons-io.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>${commons-lang.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.datadoghq</groupId>

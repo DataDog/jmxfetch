@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JMXAttribute;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -110,8 +111,9 @@ public abstract class Reporter {
 
     public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags){
         this.incrementServiceCheckCount(checkName);
+        String dataName = Reporter.formatServiceCheckPrefix(checkName);
 
-        this.doSendServiceCheck(checkName, status, message, hostname, tags);
+        this.doSendServiceCheck(dataName, status, message, hostname, tags);
     }
 
     private void postProcessCassandra(HashMap<String, Object> metric) {
@@ -134,6 +136,12 @@ public abstract class Reporter {
 
     protected HashMap<String, Integer> getServiceCheckCountMap(){
         return this.serviceCheckCount;
+    }
+
+    public static String formatServiceCheckPrefix(String fullname){
+        String[] chunks = fullname.split("\\.");
+        chunks[0] = chunks[0].replaceAll("[A-Z0-9:_\\-]", "");
+        return StringUtils.join(chunks, ".");
     }
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
