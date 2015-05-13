@@ -284,11 +284,13 @@ public class App {
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
                               int metricCount, String message, String status) {
         String checkName = instance.getCheckName();
-        appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
-                                               metricCount, message, status);
-
         reporter.sendServiceCheck(checkName, status, message, instance.getHostname(),
                                   instance.getServiceCheckTags());
+
+        appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
+                                               metricCount, reporter.getServiceCheckCount(checkName), 
+                                               message, status);
+        reporter.resetServiceCheckCount(checkName);
     }
 
     public void init(boolean forceNewConnection) {

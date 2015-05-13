@@ -34,7 +34,7 @@ public class ConsoleReporter extends Reporter {
         return returnedMetrics;
     }
 
-    public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags) {
+    public void doSendServiceCheck(String checkName, String status, String message, String hostname, String[] tags) {
         String tagString = "";
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";
