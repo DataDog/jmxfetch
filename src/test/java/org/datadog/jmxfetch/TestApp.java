@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 
 import org.apache.log4j.Level;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -386,6 +387,20 @@ public class TestApp {
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
         mbs.unregisterMBean(objectName);
+    }
+
+    @Test
+    public void testPrefixFormatter() throws Exception {
+        // Let's get a list of Strings to test (add real versionned check names
+        // here when you add  new versionned check)
+        String[][] data = {
+            {"activemq_58.foo.bar12", "activemq.foo.bar12"},
+            {"test_package-X86_64-VER1:0.weird.metric_name", "testpackage.weird.metric_name" }
+        };
+
+        // Let's test them all
+        for(int i=0; i<data.length; ++i)
+            assertEquals(data[i][1], Reporter.formatDataName(data[i][0]));
     }
 
     @Test
