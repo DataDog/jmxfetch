@@ -276,7 +276,7 @@ public class TestApp {
         String scStatus = (String) (sc.get("status"));
         String[] scTags = (String[]) (sc.get("tags"));
 
-        assertEquals("jmx", scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("jmx"), scName);
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 1);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
@@ -321,7 +321,7 @@ public class TestApp {
         String scStatus = (String) (sc.get("status"));
         String[] scTags = (String[]) (sc.get("tags"));
 
-        assertEquals("too_many_metrics", scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("too_many_metrics"), scName);
         // We should have a warning status
         assertEquals(Status.STATUS_WARNING, scStatus);
         assertEquals(scTags.length, 1);
@@ -357,7 +357,7 @@ public class TestApp {
         String scMessage = (String) (sc.get("message"));
         String[] scTags = (String[]) (sc.get("tags"));
 
-        assertEquals("non_running_process", scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.* Cannot find JVM matching regex: .*non_running_process_test.*", scMessage);
         assertEquals(scTags.length, 1);
@@ -381,7 +381,7 @@ public class TestApp {
         scMessage = (String) (sc.get("message"));
         scTags = (String[]) (sc.get("tags"));
 
-        assertEquals("non_running_process", scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.*. Is a JMX Server running at this address?", scMessage);
         assertEquals(scTags.length, 1);
