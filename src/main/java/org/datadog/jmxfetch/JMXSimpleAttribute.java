@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -90,12 +91,29 @@ public class JMXSimpleAttribute extends JMXAttribute {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
-            alias = conf.get("metric_prefix") + "." + getBeanName().split(":")[0] + "." + getAttributeName();
+            alias = conf.get("metric_prefix") + "." + getDomain() + "." + getAttributeName();
+        } else if (getDomain().startsWith("org.apache.cassandra")) {
+            alias = getCassandraAlias();
         } else {
-            alias = "jmx." + getBeanName().split(":")[0] + "." + getAttributeName();
+            alias = "jmx." + getDomain() + "." + getAttributeName();
         }
         alias = convertMetricName(alias);
         return alias;
+    }
+
+    private String getCassandraAlias() {
+        if (getDomain().equals(CASSANDRA_DOMAIN)) {
+            Map<String, String> beanParameters = getBeanParameters();
+            String type = beanParameters.get("type");
+            String metricName = beanParameters.get("name");
+            String attributeName = getAttributeName();
+            if (attributeName.equals("Value")) {
+                return "cassandra." + metricName;
+            }
+            return "cassandra." + metricName + "." + attributeName;
+        }
+        //Deprecated Cassandra metric.  Remove domain prefix.
+        return getDomain().replace("org.apache.", "") + "." + getAttributeName();
     }
 
     private String getMetricType() {

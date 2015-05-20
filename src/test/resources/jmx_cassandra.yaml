@@ -1,0 +1,10 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+               bean: org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks
+               attribute:
+                    - ShouldBe100
