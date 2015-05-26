@@ -13,6 +13,7 @@ import org.junit.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -401,12 +402,12 @@ public class TestApp {
 
         // Let's check that the counter is null
         assertEquals(0, repo.getServiceCheckCount("jmx"));
-        
+
         // Let's put a service check in the pipeline (we cannot call doIteration()
-        // here unfortunately because it would call reportStatus which will flush 
-        // the count to the jmx_status.yaml file and reset the counter. 
+        // here unfortunately because it would call reportStatus which will flush
+        // the count to the jmx_status.yaml file and reset the counter.
         repo.sendServiceCheck("jmx", Status.STATUS_OK, "This is a test", "jmx_test_instance", null);
-        
+
         // Let's check that the counter has been updated
         assertEquals(1, repo.getServiceCheckCount("jmx"));
 
@@ -428,6 +429,21 @@ public class TestApp {
         // Let's test them all
         for(int i=0; i<data.length; ++i)
             assertEquals(data[i][1], Reporter.formatServiceCheckPrefix(data[i][0]));
+    }
+
+    @Test
+    public void testExitWatcher() throws Exception {
+        // Test the ExitWatcher logic
+
+        // Create a temp file
+        File temp = File.createTempFile("exit-jmxfetch-file-name", ".tmp");
+        temp.deleteOnExit();
+
+        ExitWatcher exitWatcher = new ExitWatcher(temp.getAbsolutePath());
+        assertTrue(exitWatcher.shouldExit());
+
+        temp.delete();
+        assertFalse(exitWatcher.shouldExit());
     }
 
     @Test

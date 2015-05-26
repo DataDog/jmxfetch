@@ -2,6 +2,7 @@ package org.datadog.jmxfetch;
 import java.util.Arrays;
 import java.util.List;
 
+import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.converter.StatusConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
@@ -71,6 +72,12 @@ class AppConfig {
             required = false)
     private Status status = new Status();
 
+    @Parameter(names = {"--exit_file_location", "-e"},
+            description = "Absolute path of the trigger file to watch to exit. (default to null = no exit on file)",
+            converter = ExitWatcherConverter.class,
+            required = false)
+    private ExitWatcher exitWatcher = new ExitWatcher();
+
     @Parameter(description = "Action to take, should be in [help, collect, " +
             "list_everything, list_collected_attributes, list_matching_attributes, " +
             "list_not_matching_attributes, list_limited_attributes]",
@@ -91,6 +98,10 @@ class AppConfig {
 
     public Status getStatus() {
         return status;
+    }
+
+    public ExitWatcher getExitWatcher(){
+    	return exitWatcher;
     }
 
     public int getCheckPeriod() {
