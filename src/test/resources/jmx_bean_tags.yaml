@@ -5,13 +5,13 @@ instances:
         name: jmx_test_instance
         conf:
             - include:
-               bean: org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=CoolScope
+               bean: org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=CoolScope,host=localhost
                attribute:
                     ShouldBe100:
                         metric_type: gauge
                         alias: this.is.100
             - include:
-               bean: org.datadog.jmxfetch.test:type=WrongType,scope=WrongScope
+               bean: org.datadog.jmxfetch.test:type=WrongType,scope=WrongScope,host=localhost
                attribute:
                     Hashmap.thisis0:
                         metric_type: gauge
