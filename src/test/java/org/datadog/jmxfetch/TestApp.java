@@ -48,7 +48,7 @@ public class TestApp {
     public void testBeanTags() throws Exception {
         // We expose a few metrics through JMX
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=CoolScope");
+        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=CoolScope,host=localhost");
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
         mbs.registerMBean(testApp, objectName);
 
@@ -66,19 +66,21 @@ public class TestApp {
 
         // Fetching our 'defined' metric tags
         for (HashMap<String, Object> m : metrics) {
-        	String name = (String) (m.get("name"));
-        	if(!name.equals("this.is.100")){
-        		continue;
-        	}
-        	String[] tags = (String[]) (m.get("tags"));
-        	Set<String> tagsSet = new HashSet<String>(Arrays.asList(tags));
+            String name = (String) (m.get("name"));
+            if(!name.equals("this.is.100")){
+                continue;
+            }
+            String[] tags = (String[]) (m.get("tags"));
+            Set<String> tagsSet = new HashSet<String>(Arrays.asList(tags));
 
-        	// We should find bean parameters as tags
-        	assertEquals(4, tags.length);
-        	assertEquals(true, tagsSet.contains("type:SimpleTestJavaApp"));
-        	assertEquals(true, tagsSet.contains("scope:CoolScope"));
-        	assertEquals(true, tagsSet.contains("instance:jmx_test_instance"));
-        	assertEquals(true, tagsSet.contains("jmx_domain:org.datadog.jmxfetch.test"));
+            // We should find bean parameters as tags
+            assertEquals(5, tags.length);
+            assertEquals(true, tagsSet.contains("type:SimpleTestJavaApp"));
+            assertEquals(true, tagsSet.contains("scope:CoolScope"));
+            assertEquals(true, tagsSet.contains("instance:jmx_test_instance"));
+            assertEquals(true, tagsSet.contains("jmx_domain:org.datadog.jmxfetch.test"));
+            // Special case of the 'host' parameter which tag is renamed to 'bean_host'
+            assertEquals(true, tagsSet.contains("bean_host:localhost"));
         }
         mbs.unregisterMBean(objectName);
     }
@@ -126,8 +128,8 @@ public class TestApp {
         // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly defined in the exclude section
         assertEquals(14, metrics.size());
 
-    	mbs.unregisterMBean(includeMe);
-    	mbs.unregisterMBean(excludeMe);
+        mbs.unregisterMBean(includeMe);
+        mbs.unregisterMBean(excludeMe);
     }
 
     @Test

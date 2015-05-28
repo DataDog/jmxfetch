@@ -55,12 +55,12 @@ public abstract class JMXAttribute {
         String[] splitBeanName = this.beanName.split(":");
         String domain = splitBeanName[0];
         String beanParameters = splitBeanName[1];
-        LinkedList<String> defaultTags = getBeanTags(instanceName, domain, beanParameters, instanceTags);
-        HashMap<String, String> beanParametersHash = getBeanParametersHash(defaultTags);
+        LinkedList<String> beanParametersList = getBeanParametersList(instanceName, domain, beanParameters, instanceTags);
+        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParametersList);
 
         this.domain = domain;
         this.beanParameters = beanParametersHash;
-        this.defaultTagsList = defaultTags;
+        this.defaultTagsList = renameConflictingParameters(beanParametersList);
     }
 
     private static HashMap<String, String> getBeanParametersHash(LinkedList<String> beanParameters) {
@@ -74,7 +74,7 @@ public abstract class JMXAttribute {
     }
 
 
-    private static LinkedList<String> getBeanTags(String instanceName, String domain, String beanParameters, HashMap<String, String> instanceTags) {
+    private static LinkedList<String> getBeanParametersList(String instanceName, String domain, String beanParameters, HashMap<String, String> instanceTags) {
         LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(new String(beanParameters).replace("=", ":").split(",")));
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
@@ -86,6 +86,20 @@ public abstract class JMXAttribute {
         }
 
         return beanTags;
+    }
+
+    private static LinkedList<String> renameConflictingParameters(LinkedList<String> beanParametersList) {
+        LinkedList<String> defaultTagsList = new LinkedList<String>();
+        for (String beanParameter: beanParametersList) {
+            // the 'host' parameter is renamed to 'bean_host'
+            if (beanParameter.startsWith("host:")) {
+                defaultTagsList.add("bean_host:" + beanParameter.substring("host:".length()));
+            } else {
+                defaultTagsList.add(beanParameter);
+            }
+        }
+
+        return defaultTagsList;
     }
 
     static String convertMetricName(String metricName) {
