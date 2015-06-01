@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.7.0 / 06-??-2015
+
+#### Changes
+* [ENHANCEMENT] Add option to exit JMXFetch when a specified file is created. See [#58][]
+* [BUGFIX] Rename 'host' bean parameter to 'bean_host' in tags to avoid conflicts. See [#59][]
+
 # 0.6.0 / 05-20-2015
 
 #### Changes
@@ -52,4 +58,6 @@ Changes
 [#51]: https://github.com/DataDog/jmxfetch/issues/51
 [#53]: https://github.com/DataDog/jmxfetch/issues/53
 [#54]: https://github.com/DataDog/jmxfetch/issues/54
+[#58]: https://github.com/DataDog/jmxfetch/issues/58
+[#59]: https://github.com/DataDog/jmxfetch/issues/59
 [@coupacooke]: https://github.com/coupacooke
