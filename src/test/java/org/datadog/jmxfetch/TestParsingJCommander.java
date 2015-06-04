@@ -21,7 +21,8 @@ public class TestParsingJCommander {
     private static final String REPORTER_CONSOLE = "console";
     private static final String SINGLE_CHECK = "jmx.yaml";
     private static final List<String> MULTI_CHECK = Arrays.asList("jmx.yaml", "jmx-2.yaml");
-    private static final String STATUS_LOCATION = "/status/loaction";
+    private static final String STATUS_LOCATION = "/status/status_location";
+    private static final String EXIT_FILE_LOCATION = "/status/exit_locationt";
 
     private static AppConfig testCommand(String[] params) throws ParameterException {
         AppConfig appConfig = new AppConfig();
@@ -233,6 +234,21 @@ public class TestParsingJCommander {
         assertNotNull(appConfig.getStatus());
         assertEquals(STATUS_LOCATION, appConfig.getStatus().getStatusFileLocation());
         assertTrue(appConfig.getStatus().isEnabled());
+    }
+
+    @Test
+    public void testParsingExitWatcher() {
+        String[] params = new String[]{
+                "--reporter", REPORTER_CONSOLE,
+                "--check", SINGLE_CHECK,
+                "--conf_directory", CONF_DIR,
+                "--exit_file_location", EXIT_FILE_LOCATION,
+                AppConfig.ACTION_COLLECT
+        };
+        AppConfig appConfig = testCommand(params);
+        assertNotNull(appConfig.getExitWatcher());
+        assertEquals(EXIT_FILE_LOCATION, appConfig.getExitWatcher().getExitFileLocation());
+        assertTrue(appConfig.getExitWatcher().isEnabled());
     }
 
     @Test

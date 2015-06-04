@@ -136,6 +136,12 @@ public class App {
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         while (true) {
+            // Exit on exit file trigger
+            if (appConfig.getExitWatcher().shouldExit()){
+                LOGGER.info("Exit file detected: stopping JMXFetch.");
+                System.exit(0);
+            }
+
             long start = System.currentTimeMillis();
             if (instances.size() > 0) {
                 doIteration();
@@ -288,7 +294,7 @@ public class App {
                                   instance.getServiceCheckTags());
 
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
-                                               metricCount, reporter.getServiceCheckCount(checkName), 
+                                               metricCount, reporter.getServiceCheckCount(checkName),
                                                message, status);
         reporter.resetServiceCheckCount(checkName);
     }
