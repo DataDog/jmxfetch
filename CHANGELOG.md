@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.7.0 / 06-??-2015
+# 0.7.0 / 06-04-2015
 
 #### Changes
 * [ENHANCEMENT] Add option to exit JMXFetch when a specified file is created. See [#58][]
