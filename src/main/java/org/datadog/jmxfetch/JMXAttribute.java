@@ -67,7 +67,11 @@ public abstract class JMXAttribute {
         HashMap<String, String> beanParams = new HashMap<String, String>();
         for (String param : beanParameters) {
             String[] paramSplit = param.split(":");
-            beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
+            if (paramSplit.length > 1) {
+                beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
+            } else {
+                beanParams.put(new String(paramSplit[0]), "");
+            }
         }
 
         return beanParams;
@@ -94,6 +98,9 @@ public abstract class JMXAttribute {
             // the 'host' parameter is renamed to 'bean_host'
             if (beanParameter.startsWith("host:")) {
                 defaultTagsList.add("bean_host:" + beanParameter.substring("host:".length()));
+            } else if (beanParameter.endsWith(":")) {
+                // If the parameter's value is empty, remove the colon in the tag
+                defaultTagsList.add(beanParameter.substring(0, beanParameter.length() - 1));
             } else {
                 defaultTagsList.add(beanParameter);
             }
