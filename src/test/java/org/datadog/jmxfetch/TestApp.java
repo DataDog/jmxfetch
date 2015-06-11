@@ -3,7 +3,6 @@ package org.datadog.jmxfetch;
 import com.beust.jcommander.JCommander;
 
 import org.apache.log4j.Level;
-import org.datadog.jmxfetch.Status;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.util.CustomLogger;
@@ -136,6 +135,35 @@ public class TestApp {
     }
 
     @Test
+    public void testDomainRegex() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+
+        ObjectName includeObjectName1 = new ObjectName("org.datadog.jmxfetch.includeme:type=AType");
+        ObjectName includeObjectName2 = new ObjectName("org.datadog.jmxfetch.includeme.too:type=AType");
+        ObjectName excludeObjectName = new ObjectName("org.datadog.jmxfetch.includeme.not.me:type=AType");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeObjectName1);
+        mbs.registerMBean(testApp, includeObjectName2);
+        mbs.registerMBean(testApp, excludeObjectName);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_domain_regex.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly defined in exclude section
+        assertEquals(15, metrics.size());
+
+        mbs.unregisterMBean(includeObjectName1);
+        mbs.unregisterMBean(includeObjectName2);
+        mbs.unregisterMBean(excludeObjectName);
+    }
+
+    @Test
     public void testParameterMatch() throws Exception {
         // Do not match beans which do not contain types specified in the conf
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -222,6 +250,62 @@ public class TestApp {
         assertEquals(14, metrics.size());
 
         mbs.unregisterMBean(includeMe);
+    }
+
+    @Test
+    public void testListBeansRegexInclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeMe = new ObjectName("org.datadog.jmxfetch.test:type=IncludeMe");
+        ObjectName includeMeToo = new ObjectName("org.datadog.jmxfetch.test:type=IncludeMeToo");
+        ObjectName notIncludeMe = new ObjectName("org.datadog.jmxfetch.test:type=RightType");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeMe);
+        mbs.registerMBean(testApp, includeMeToo);
+        mbs.registerMBean(testApp, notIncludeMe);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_beans_regex_include.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 15 = 13 metrics from java.lang + 2 metrics explicitly defined
+        assertEquals(15, metrics.size());
+
+        mbs.unregisterMBean(includeMe);
+        mbs.unregisterMBean(includeMeToo);
+        mbs.unregisterMBean(notIncludeMe);
+    }
+
+    @Test
+    public void testListBeansRegexExclude() throws Exception {
+        // We expose a few metrics through JMX
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName includeMe = new ObjectName("org.datadog.jmxfetch.test:type=IncludeMe");
+        ObjectName excludeMe = new ObjectName("org.datadog.jmxfetch.test:type=ExcludeMe,scope=InScope");
+        ObjectName excludeMeToo = new ObjectName("org.datadog.jmxfetch.test:scope=OutOfScope");
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        mbs.registerMBean(testApp, includeMe);
+        mbs.registerMBean(testApp, excludeMe);
+        mbs.registerMBean(testApp, excludeMeToo);
+
+        // Initializing application
+        AppConfig appConfig = new AppConfig();
+        App app = initApp("jmx_list_beans_regex_exclude.yaml", appConfig);
+
+        // Collecting metrics
+        app.doIteration();
+        LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
+
+        mbs.unregisterMBean(includeMe);
+        mbs.unregisterMBean(excludeMe);
+        mbs.unregisterMBean(excludeMeToo);
     }
 
     @Test
