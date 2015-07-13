@@ -4,16 +4,19 @@ import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.Set;
 import java.lang.ClassCastException;
+import java.util.regex.Pattern;
 
 
 class Filter {
     LinkedHashMap<String, Object> filter;
+    Pattern domainRegex;
+    ArrayList<Pattern> beanRegexes = null;
 
     /**
      * A simple class to manipulate include/exclude filter elements more easily
      * A filter may contain:
-     * - A domain (key: 'domain')
-     * - Bean names (key: 'bean' or 'bean_name')
+     * - A domain (key: 'domain') or a domain regex (key: 'domain_regex')
+     * - Bean names (key: 'bean' or 'bean_name') or bean regexes (key: 'bean_regex')
      * - Attributes (key: 'attribute')
      * - Additional bean parameters (other keys)
      */
@@ -23,7 +26,7 @@ class Filter {
         LinkedHashMap<String, Object> castFilter;
         if (filter != null) {
             castFilter = (LinkedHashMap<String, Object>) filter;
-        } else{
+        } else {
             castFilter = new LinkedHashMap<String, Object>();
         }
         this.filter = castFilter;
@@ -78,8 +81,46 @@ class Filter {
         return toStringArrayList(beanNames);
     }
 
+    private static ArrayList<Pattern> toPatternArrayList(final Object toCast) {
+        ArrayList<Pattern> patternArrayList = new ArrayList<Pattern>();
+        ArrayList<String> stringArrayList = toStringArrayList(toCast);
+        for (String string : stringArrayList) {
+            patternArrayList.add(Pattern.compile(string));
+        }
+
+        return patternArrayList;
+    }
+
+    public ArrayList<Pattern> getBeanRegexes() {
+        // Return bean regexes as an ArrayList of Pattern whether it's defined as
+        // a list or not
+
+        if (this.beanRegexes == null) {
+            if (filter.get("bean_regex") == null){
+                this.beanRegexes = new ArrayList<Pattern>();
+            } else {
+                final Object beanRegexNames = filter.get("bean_regex");
+                this.beanRegexes = toPatternArrayList(beanRegexNames);
+            }
+        }
+
+        return this.beanRegexes;
+    }
+
     public String getDomain() {
         return (String) filter.get("domain");
+    }
+
+    public Pattern getDomainRegex() {
+        if (this.filter.get("domain_regex") == null) {
+            return null;
+        }
+
+        if (this.domainRegex == null) {
+            this.domainRegex = Pattern.compile((String) this.filter.get("domain_regex"));
+        }
+
+        return this.domainRegex;
     }
 
     public Object getAttribute() {

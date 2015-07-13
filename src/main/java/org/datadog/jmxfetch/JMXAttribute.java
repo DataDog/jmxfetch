@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -23,7 +24,7 @@ import org.apache.log4j.Logger;
 public abstract class JMXAttribute {
 
     private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
-    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "bean_name", "bean", "attribute");
+    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean", "bean_regex", "attribute");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
@@ -149,39 +150,18 @@ public abstract class JMXAttribute {
 
     boolean matchDomain(Configuration conf) {
         String includeDomain = conf.getInclude().getDomain();
-        return includeDomain == null || includeDomain.equals(domain);
+        Pattern includeDomainRegex = conf.getInclude().getDomainRegex();
+
+        return (includeDomain == null || includeDomain.equals(domain))
+            && (includeDomainRegex == null || includeDomainRegex.matcher(domain).matches());
     }
 
     boolean excludeMatchDomain(Configuration conf) {
         String excludeDomain = conf.getExclude().getDomain();
-        return excludeDomain != null && excludeDomain.equals(domain);
-    }
+        Pattern excludeDomainRegex = conf.getExclude().getDomainRegex();
 
-    boolean excludeMatchBean(Configuration conf) {
-       Filter exclude = conf.getExclude();
-       ArrayList<String> beanNames = exclude.getBeanNames();
-
-       if(beanNames.contains(beanName)){
-    	   return true;
-       }
-
-       for (String bean_attr : exclude.keySet()) {
-           if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
-               continue;
-           }
-
-           if (beanParameters.get(bean_attr) == null) {
-               continue;
-           }
-
-           ArrayList<String> beanValues = exclude.getParameterValues(bean_attr);
-           for (String beanVal : beanValues) {
-               if (beanParameters.get(bean_attr).equals(beanVal)) {
-                   return true;
-               }
-           }
-       }
-        return false;
+        return excludeDomain != null  && excludeDomain.equals(domain)
+            || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
     }
 
     Object convertMetricValue(Object metricValue) {
@@ -227,7 +207,22 @@ public abstract class JMXAttribute {
         }
     }
 
-    boolean matchBean(Configuration configuration) {
+    private boolean matchBeanRegex(Filter filter, boolean matchIfNoRegex) {
+        ArrayList<Pattern> beanRegexes = filter.getBeanRegexes();
+        if (beanRegexes.isEmpty()) {
+            return matchIfNoRegex;
+        }
+
+        for (Pattern beanRegex : beanRegexes) {
+            if(beanRegex.matcher(beanName).matches()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean matchBeanName(Configuration configuration) {
         boolean matchBeanAttr = true;
         Filter include = configuration.getInclude();
 
@@ -259,6 +254,41 @@ public abstract class JMXAttribute {
         }
         // Returns true if all bean_attr belong to EXCLUDED_BEAN_PARAMS otherwise false
         return matchBeanAttr;
+    }
+
+    private boolean excludeMatchBeanName(Configuration conf) {
+        Filter exclude = conf.getExclude();
+        ArrayList<String> beanNames = exclude.getBeanNames();
+
+        if(beanNames.contains(beanName)){
+            return true;
+        }
+
+        for (String bean_attr : exclude.keySet()) {
+            if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
+                continue;
+            }
+
+            if (beanParameters.get(bean_attr) == null) {
+                continue;
+            }
+
+            ArrayList<String> beanValues = exclude.getParameterValues(bean_attr);
+            for (String beanVal : beanValues) {
+                if (beanParameters.get(bean_attr).equals(beanVal)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    boolean matchBean(Configuration configuration) {
+        return matchBeanName(configuration) && matchBeanRegex(configuration.getInclude(), true);
+    }
+
+    boolean excludeMatchBean(Configuration configuration) {
+        return excludeMatchBeanName(configuration) || matchBeanRegex(configuration.getExclude(), false);
     }
 
     @SuppressWarnings("unchecked")

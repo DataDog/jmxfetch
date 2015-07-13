@@ -1,0 +1,17 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        tags:
+            env: stage
+            newTag: test
+        conf:
+            - include:
+               bean_regex:
+                    - .*type=\w*WrongType
+                    - .*type=Include.*
+               attribute:
+                    ShouldBe100:
+                        metric_type: gauge
+                        alias: this.is.100

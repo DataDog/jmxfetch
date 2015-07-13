@@ -1,0 +1,14 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+                domain_regex: .*includeme.*
+                attribute:
+                    ShouldBe100:
+                        metric_type: gauge
+                        alias: this.is.100
+              exclude:
+                domain_regex: .*\.me$
