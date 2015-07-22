@@ -48,8 +48,10 @@ public class Connection {
         return mbs.getMBeanInfo(bean_name).getAttributes();
     }
 
-    public Set<ObjectInstance> queryMBeans() throws IOException {
-        return mbs.queryMBeans(null, null);
+    public Set<ObjectInstance> queryMBeans(ObjectName name) throws IOException {
+        String scope = (name != null) ? name.toString() : "*:*";
+        LOGGER.debug("Querying beans on scope: " + scope);
+        return mbs.queryMBeans(name, null);
     }
 
     protected void createConnection() throws IOException {

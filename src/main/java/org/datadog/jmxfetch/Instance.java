@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
@@ -31,6 +30,7 @@ public class Instance {
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
 
     private Set<ObjectInstance> beans;
+    private LinkedList<String> beanScopes;
     private LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
     private LinkedList<JMXAttribute> matchingAttributes;
     private HashSet<JMXAttribute> failingAttributes;
@@ -263,9 +263,26 @@ public class Instance {
         LOGGER.info("Found " + matchingAttributes.size() + " matching attributes");
     }
 
-    private void refreshBeansList() throws IOException {
+    public LinkedList<String> getBeansScopes(){
+        if(this.beanScopes == null){
+            this.beanScopes = Configuration.getGreatestCommonScopes(configurationList);
+        }
+        return this.beanScopes;
+    }
 
-        this.beans = connection.queryMBeans();
+    private void refreshBeansList() throws IOException {
+        this.beans = new HashSet<ObjectInstance>();
+        try {
+            LinkedList<String> beanScopes = getBeansScopes();
+            for (String scope : beanScopes) {
+                ObjectName name = new ObjectName(scope);
+                this.beans.addAll(connection.queryMBeans(name));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            this.beans = connection.queryMBeans(null);
+        }
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
