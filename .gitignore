@@ -1,12 +1,10 @@
 *.class
 *~
 *.DS_Store
-target/*
 .euml2
 .umlproject
 .classpath
 .project
-/target
 
 *.ucls
 
