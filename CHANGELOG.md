@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.8.0 / ??-??-????
+# 0.8.0 / Unreleased
 
 #### Changes
 * [FEATURE] Wildcard support on domains and bean names. See [#57][]
