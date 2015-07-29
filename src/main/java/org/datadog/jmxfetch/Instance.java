@@ -281,6 +281,7 @@ public class Instance {
         }
         catch (Exception e) {
             e.printStackTrace();
+            LOGGER.error("Unable to compute a common bean scope, querying all beans as a fallback");
             this.beans = connection.queryMBeans(null);
         }
         this.lastRefreshTime = System.currentTimeMillis();

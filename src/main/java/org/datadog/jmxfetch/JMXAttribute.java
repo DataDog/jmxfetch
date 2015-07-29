@@ -356,7 +356,7 @@ public abstract class JMXAttribute {
         return attributeName;
     }
 
-    public static List<String> getExcludeBeanParams(){
+    public static List<String> getExcludedBeanParams(){
         return EXCLUDED_BEAN_PARAMS;
     }
 }
