@@ -290,8 +290,7 @@ public class App {
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
                               int metricCount, String message, String status) {
         String checkName = instance.getCheckName();
-        reporter.sendServiceCheck(checkName, status, message, instance.getHostname(),
-                                  instance.getServiceCheckTags());
+        reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
 
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, reporter.getServiceCheckCount(checkName),

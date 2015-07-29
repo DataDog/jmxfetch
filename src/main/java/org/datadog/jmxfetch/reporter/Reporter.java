@@ -109,11 +109,11 @@ public abstract class Reporter {
         }
     }
 
-    public void sendServiceCheck(String checkName, String status, String message, String hostname, String[] tags){
+    public void sendServiceCheck(String checkName, String status, String message, String[] tags){
         this.incrementServiceCheckCount(checkName);
         String dataName = Reporter.formatServiceCheckPrefix(checkName);
 
-        this.doSendServiceCheck(dataName, status, message, hostname, tags);
+        this.doSendServiceCheck(dataName, status, message, tags);
     }
 
     private void postProcessCassandra(HashMap<String, Object> metric) {
@@ -146,7 +146,7 @@ public abstract class Reporter {
 
     protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
 
-    protected abstract void doSendServiceCheck(String checkName, String status, String message, String hostname, String[] tags);
+    protected abstract void doSendServiceCheck(String checkName, String status, String message, String[] tags);
 
     public abstract void displayMetricReached();
 
