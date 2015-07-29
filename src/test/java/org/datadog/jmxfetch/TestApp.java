@@ -481,9 +481,6 @@ public class TestApp {
 
     @Test
     public void testServiceCheckCounter() throws Exception {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-
         AppConfig appConfig = new AppConfig();
         App app = initApp("jmx.yaml", appConfig);
         Reporter repo = appConfig.getReporter();
@@ -494,7 +491,7 @@ public class TestApp {
         // Let's put a service check in the pipeline (we cannot call doIteration()
         // here unfortunately because it would call reportStatus which will flush
         // the count to the jmx_status.yaml file and reset the counter.
-        repo.sendServiceCheck("jmx", Status.STATUS_OK, "This is a test", "jmx_test_instance", null);
+        repo.sendServiceCheck("jmx", Status.STATUS_OK, "This is a test", null);
 
         // Let's check that the counter has been updated
         assertEquals(1, repo.getServiceCheckCount("jmx"));

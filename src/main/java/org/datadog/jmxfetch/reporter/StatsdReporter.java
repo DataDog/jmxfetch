@@ -43,15 +43,14 @@ public class StatsdReporter extends Reporter {
         return 3;
     }
 
-    public void doSendServiceCheck(String checkName, String status, String message,
-                                 String hostname, String[] tags) {
+    public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();
             init();
         }
 
         ServiceCheck sc = new ServiceCheck(String.format("%s.can_connect", checkName),
-            this.statusToInt(status), message, hostname, tags);
+            this.statusToInt(status), message, tags);
         statsDClient.serviceCheck(sc);
     }
 

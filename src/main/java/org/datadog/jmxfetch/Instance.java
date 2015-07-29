@@ -298,15 +298,6 @@ public class Instance {
         return this.instanceName;
     }
 
-    public String getHostname(){
-        Object host = this.yaml.get("host");
-        if (host != null) {
-            return host.toString();
-        } else {
-            return null;
-        }
-    }
-
     LinkedHashMap<String, Object> getYaml() {
         return this.yaml;
     }
