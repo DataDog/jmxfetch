@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Set;
 import java.lang.ClassCastException;
@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 
 class Filter {
-    LinkedHashMap<String, Object> filter;
+    HashMap<String, Object> filter;
     Pattern domainRegex;
     ArrayList<Pattern> beanRegexes = null;
 
@@ -23,11 +23,11 @@ class Filter {
 
     @SuppressWarnings("unchecked")
     public Filter(Object filter) {
-        LinkedHashMap<String, Object> castFilter;
+        HashMap<String, Object> castFilter;
         if (filter != null) {
-            castFilter = (LinkedHashMap<String, Object>) filter;
+            castFilter = (HashMap<String, Object>) filter;
         } else {
-            castFilter = new LinkedHashMap<String, Object>();
+            castFilter = new HashMap<String, Object>();
         }
         this.filter = castFilter;
     }
@@ -39,7 +39,6 @@ class Filter {
     public Set<String> keySet() {
         return filter.keySet();
     }
-
 
     @SuppressWarnings({ "unchecked", "serial" })
     private static ArrayList<String> toStringArrayList(final Object toCast) {

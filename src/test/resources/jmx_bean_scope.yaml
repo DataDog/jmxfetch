@@ -1,0 +1,28 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+               scope: sameScope
+               type: sameType
+               param: sameParam
+               additional: additionalParam
+            - include:
+               domain: org.datadog.jmxfetch.test
+               scope: sameScope
+               type: sameType
+               param: sameParam
+            - include:
+               domain: org.datadog.jmxfetch.test
+               scope: sameScope
+               type:
+                 - sameType
+                 - notTheSameType
+               param: sameParam
+            - include:
+               bean:
+                - org.datadog.jmxfetch.test:scope=sameScope,param=sameParam,type=sameType
+                - org.datadog.jmxfetch.test:scope=sameScope,param=notTheSameParam,type=sameType

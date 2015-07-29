@@ -64,7 +64,7 @@ public abstract class JMXAttribute {
         this.defaultTagsList = renameConflictingParameters(beanParametersList);
     }
 
-    private static HashMap<String, String> getBeanParametersHash(LinkedList<String> beanParameters) {
+    public static HashMap<String, String> getBeanParametersHash(LinkedList<String> beanParameters) {
         HashMap<String, String> beanParams = new HashMap<String, String>();
         for (String param : beanParameters) {
             String[] paramSplit = param.split(":");
@@ -354,5 +354,9 @@ public abstract class JMXAttribute {
 
     String getAttributeName() {
         return attributeName;
+    }
+
+    public static List<String> getExcludedBeanParams(){
+        return EXCLUDED_BEAN_PARAMS;
     }
 }
