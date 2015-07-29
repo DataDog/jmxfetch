@@ -176,19 +176,18 @@ public class Configuration {
                     if (parameterValues.size() != 1 || (commonValue != null && !commonValue.equals(parameterValues.get(0)))) {
                         hasCommonValue = false;
                         break;
-                 }
+                    }
+                    commonValue = parameterValues.get(0);
 
-                commonValue = parameterValues.get(0);
+                }
+                if (hasCommonValue) {
+                    commonScope.put(parameter, commonValue);
+                }
+            }
+            commonScopeByDomain.put(domainName, commonScope);
+        }
 
-             }
-             if (hasCommonValue) {
-                commonScope.put(parameter, commonValue);
-             }
-         }
-        commonScopeByDomain.put(domainName, commonScope);
-     }
-
-    return commonScopeByDomain;
+        return commonScopeByDomain;
     }
 
     /**

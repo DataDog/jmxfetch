@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.8.0 / 07-29-2015
+
+#### Changes
+* [FEATURE] Wildcard support on domains and bean names. See [#57][]
+* [IMPROVEMENT] Memory saving by limiting MBeans queries to certain scopes. See [#63][]
+
 # 0.7.0 / 06-04-2015
 
 #### Changes
@@ -58,6 +64,8 @@ Changes
 [#51]: https://github.com/DataDog/jmxfetch/issues/51
 [#53]: https://github.com/DataDog/jmxfetch/issues/53
 [#54]: https://github.com/DataDog/jmxfetch/issues/54
+[#57]: https://github.com/DataDog/jmxfetch/issues/57
 [#58]: https://github.com/DataDog/jmxfetch/issues/58
 [#59]: https://github.com/DataDog/jmxfetch/issues/59
+[#63]: https://github.com/DataDog/jmxfetch/issues/63
 [@coupacooke]: https://github.com/coupacooke
