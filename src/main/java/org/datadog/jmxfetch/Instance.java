@@ -290,21 +290,16 @@ public class Instance {
     public String[] getServiceCheckTags() {
 
         List<String> tags = new ArrayList<String>();
+        if (this.yaml.get("host") != null) {
+            tags.add("jmx_server:" + this.yaml.get("host"));
+        }
         tags.add("instance:" + this.instanceName);
+        tags.add("is_jmx");
         return tags.toArray(new String[tags.size()]);
     }
 
     public String getName() {
         return this.instanceName;
-    }
-
-    public String getHostname(){
-        Object host = this.yaml.get("host");
-        if (host != null) {
-            return host.toString();
-        } else {
-            return null;
-        }
     }
 
     LinkedHashMap<String, Object> getYaml() {

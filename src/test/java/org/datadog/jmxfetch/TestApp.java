@@ -367,7 +367,7 @@ public class TestApp {
 
         assertEquals(Reporter.formatServiceCheckPrefix("jmx"), scName);
         assertEquals(Status.STATUS_OK, scStatus);
-        assertEquals(scTags.length, 1);
+        assertEquals(scTags.length, 2);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
         mbs.unregisterMBean(objectName);
     }
@@ -413,7 +413,7 @@ public class TestApp {
         assertEquals(Reporter.formatServiceCheckPrefix("too_many_metrics"), scName);
         // We should have a warning status
         assertEquals(Status.STATUS_WARNING, scStatus);
-        assertEquals(scTags.length, 1);
+        assertEquals(scTags.length, 2);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
         mbs.unregisterMBean(objectName);
     }
@@ -449,7 +449,7 @@ public class TestApp {
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.* Cannot find JVM matching regex: .*non_running_process_test.*", scMessage);
-        assertEquals(scTags.length, 1);
+        assertEquals(scTags.length, 2);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
 
@@ -473,7 +473,7 @@ public class TestApp {
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.*. Is a JMX Server running at this address?", scMessage);
-        assertEquals(scTags.length, 1);
+        assertEquals(scTags.length, 2);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
         mbs.unregisterMBean(objectName);
@@ -481,9 +481,6 @@ public class TestApp {
 
     @Test
     public void testServiceCheckCounter() throws Exception {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-
         AppConfig appConfig = new AppConfig();
         App app = initApp("jmx.yaml", appConfig);
         Reporter repo = appConfig.getReporter();
@@ -494,7 +491,7 @@ public class TestApp {
         // Let's put a service check in the pipeline (we cannot call doIteration()
         // here unfortunately because it would call reportStatus which will flush
         // the count to the jmx_status.yaml file and reset the counter.
-        repo.sendServiceCheck("jmx", Status.STATUS_OK, "This is a test", "jmx_test_instance", null);
+        repo.sendServiceCheck("jmx", Status.STATUS_OK, "This is a test", null);
 
         // Let's check that the counter has been updated
         assertEquals(1, repo.getServiceCheckCount("jmx"));
