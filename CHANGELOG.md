@@ -4,6 +4,8 @@ Changes
 # 0.8.0 / Unreleased
 
 #### Changes
+* [BUGFIX] Log exception stack traces instead of printing them. See [#67][]
+* [BUGFIX] Use `jmx_server` tag instead of `host` to tag JMX host's service checks. See [#66][]
 * [FEATURE] Wildcard support on domains and bean names. See [#57][]
 * [IMPROVEMENT] Memory saving by limiting MBeans queries to certain scopes. See [#63][]
 
@@ -68,4 +70,6 @@ Changes
 [#58]: https://github.com/DataDog/jmxfetch/issues/58
 [#59]: https://github.com/DataDog/jmxfetch/issues/59
 [#63]: https://github.com/DataDog/jmxfetch/issues/63
+[#66]: https://github.com/DataDog/jmxfetch/issues/66
+[#67]: https://github.com/DataDog/jmxfetch/issues/67
 [@coupacooke]: https://github.com/coupacooke
