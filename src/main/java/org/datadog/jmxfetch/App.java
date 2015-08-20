@@ -327,10 +327,9 @@ public class App {
                     instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
                             name, appConfig);
                 } catch (Exception e) {
-                    e.printStackTrace();
                     String warning = "Unable to create instance. Please check your yaml file";
                     appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning);
+                    LOGGER.error(warning, e);
                     continue;
                 }
                 try {
