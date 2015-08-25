@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -29,7 +28,7 @@ public class Instance {
     private final static int MAX_RETURNED_METRICS = 350;
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
 
-    private Set<ObjectInstance> beans;
+    private Set<ObjectName> beans;
     private LinkedList<String> beanScopes;
     private LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
     private LinkedList<JMXAttribute> matchingAttributes;
@@ -181,14 +180,13 @@ public class Instance {
             reporter.displayInstanceName(this);
         }
 
-        for (ObjectInstance bean : beans) {
+        for (ObjectName beanName : beans) {
             if (limitReached) {
                 LOGGER.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
                     break;
                 }
             }
-            ObjectName beanName = bean.getObjectName();
             MBeanAttributeInfo[] attributeInfos;
 
             try {
@@ -218,10 +216,10 @@ public class Instance {
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
                     LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo simple type");
-                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, bean, instanceName, connection, tags);
+                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo complex type");
-                    jmxAttribute = new JMXComplexAttribute(attributeInfo, bean, instanceName, connection, tags);
+                    jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else {
                     try {
                         LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
@@ -271,17 +269,17 @@ public class Instance {
     }
 
     private void refreshBeansList() throws IOException {
-        this.beans = new HashSet<ObjectInstance>();
+        this.beans = new HashSet<ObjectName>();
         try {
             LinkedList<String> beanScopes = getBeansScopes();
             for (String scope : beanScopes) {
                 ObjectName name = new ObjectName(scope);
-                this.beans.addAll(connection.queryMBeans(name));
+                this.beans.addAll(connection.queryNames(name));
             }
         }
         catch (Exception e) {
             LOGGER.error("Unable to compute a common bean scope, querying all beans as a fallback", e);
-            this.beans = connection.queryMBeans(null);
+            this.beans = connection.queryNames(null);
         }
         this.lastRefreshTime = System.currentTimeMillis();
     }

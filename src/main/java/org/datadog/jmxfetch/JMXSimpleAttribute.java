@@ -10,7 +10,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
@@ -19,9 +19,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
     private String alias;
     private String metricType;
 
-    public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectInstance instance, String instanceName,
+    public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
                               Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, instance, instanceName, connection, instanceTags);
+        super(attribute, beanName, instanceName, connection, instanceTags);
     }
 
     @Override
@@ -90,9 +90,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
-            alias = conf.get("metric_prefix") + "." + getBeanName().split(":")[0] + "." + getAttributeName();
+            alias = conf.get("metric_prefix") + "." + getBeanStringName().split(":")[0] + "." + getAttributeName();
         } else {
-            alias = "jmx." + getBeanName().split(":")[0] + "." + getAttributeName();
+            alias = "jmx." + getBeanStringName().split(":")[0] + "." + getAttributeName();
         }
         alias = convertMetricName(alias);
         return alias;
