@@ -268,19 +268,30 @@ public class Instance {
         return this.beanScopes;
     }
 
+
+    /**
+     * Query and refresh the instance's list of beans.
+     * Limit the query scope when possible on certain actions, and fallback if necessary.
+     */
     private void refreshBeansList() throws IOException {
         this.beans = new HashSet<ObjectName>();
-        try {
-            LinkedList<String> beanScopes = getBeansScopes();
-            for (String scope : beanScopes) {
-                ObjectName name = new ObjectName(scope);
-                this.beans.addAll(connection.queryNames(name));
+        String action = appConfig.getAction();
+        Boolean limitQueryScopes = !action.equals(AppConfig.ACTION_LIST_EVERYTHING) && !action.equals(AppConfig.ACTION_LIST_EVERYTHING);
+
+        if (limitQueryScopes) {
+            try {
+                LinkedList<String> beanScopes = getBeansScopes();
+                for (String scope : beanScopes) {
+                    ObjectName name = new ObjectName(scope);
+                    this.beans.addAll(connection.queryNames(name));
+                }
+            }
+            catch (Exception e) {
+                LOGGER.error("Unable to compute a common bean scope, querying all beans as a fallback", e);
             }
         }
-        catch (Exception e) {
-            LOGGER.error("Unable to compute a common bean scope, querying all beans as a fallback", e);
-            this.beans = connection.queryNames(null);
-        }
+
+        this.beans = (this.beans.isEmpty()) ? connection.queryNames(null): this.beans;
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
