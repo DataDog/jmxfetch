@@ -10,7 +10,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
@@ -19,9 +19,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
     private String alias;
     private String metricType;
 
-    public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectInstance instance, String instanceName,
+    public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
                               Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, instance, instanceName, connection, instanceTags);
+        super(attribute, beanName, instanceName, connection, instanceTags);
     }
 
     @Override

@@ -16,7 +16,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 import org.apache.log4j.Logger;
@@ -31,9 +31,9 @@ public abstract class JMXAttribute {
     private static final String DOT_UNDERSCORE = "_*\\._*";
     private MBeanAttributeInfo attribute;
     private Connection connection;
-    private ObjectInstance jmxInstance;
+    private ObjectName jmxInstance;
     private String domain;
-    private String beanName;
+    private String beanStringName;
     private HashMap<String, String> beanParameters;
     private String attributeName;
     private LinkedHashMap<Object, Object> valueConversions;
@@ -41,19 +41,18 @@ public abstract class JMXAttribute {
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
 
-    JMXAttribute(MBeanAttributeInfo attribute, ObjectInstance jmxInstance, String instanceName,
+    JMXAttribute(MBeanAttributeInfo attribute, ObjectName jmxInstance, String instanceName,
             Connection connection, HashMap<String, String> instanceTags) {
         this.attribute = attribute;
         this.jmxInstance = jmxInstance;
         this.matchingConf = null;
         this.connection = connection;
-
-        this.beanName = jmxInstance.getObjectName().toString();
         this.attributeName = attribute.getName();
+        this.beanStringName = jmxInstance.toString();
 
         // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
-        String[] splitBeanName = this.beanName.split(":");
+        String[] splitBeanName = beanStringName.split(":");
         String domain = splitBeanName[0];
         String beanParameters = splitBeanName[1];
         LinkedList<String> beanParametersList = getBeanParametersList(instanceName, domain, beanParameters, instanceTags);
@@ -120,7 +119,7 @@ public abstract class JMXAttribute {
 
     @Override
     public String toString() {
-        return "Bean name: " + beanName +
+        return "Bean name: " + beanStringName +
                 " - Attribute name: " + attributeName +
                 "  - Attribute type: " + attribute.getType();
     }
@@ -139,13 +138,13 @@ public abstract class JMXAttribute {
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
-            LOGGER.warn("Unable to get metrics from " + beanName);
+            LOGGER.warn("Unable to get metrics from " + beanStringName);
             return 0;
         }
     }
 
     Object getJmxValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-        return this.connection.getAttribute(this.jmxInstance.getObjectName(), this.attribute.getName());
+        return this.connection.getAttribute(this.jmxInstance, this.attribute.getName());
     }
 
     boolean matchDomain(Configuration conf) {
@@ -214,7 +213,7 @@ public abstract class JMXAttribute {
         }
 
         for (Pattern beanRegex : beanRegexes) {
-            if(beanRegex.matcher(beanName).matches()) {
+            if(beanRegex.matcher(beanStringName).matches()) {
                 return true;
             }
         }
@@ -226,7 +225,7 @@ public abstract class JMXAttribute {
         boolean matchBeanAttr = true;
         Filter include = configuration.getInclude();
 
-        if (!include.isEmptyBeanName() && !include.getBeanNames().contains(beanName)) {
+        if (!include.isEmptyBeanName() && !include.getBeanNames().contains(beanStringName)) {
             return false;
         }
 
@@ -260,7 +259,7 @@ public abstract class JMXAttribute {
         Filter exclude = conf.getExclude();
         ArrayList<String> beanNames = exclude.getBeanNames();
 
-        if(beanNames.contains(beanName)){
+        if(beanNames.contains(beanStringName)){
             return true;
         }
 
@@ -349,7 +348,7 @@ public abstract class JMXAttribute {
     }
 
     String getBeanName() {
-        return beanName;
+        return beanStringName;
     }
 
     String getAttributeName() {
