@@ -12,7 +12,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
@@ -21,9 +21,9 @@ public class JMXComplexAttribute extends JMXAttribute {
 
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
-    public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectInstance instance, String instanceName,
+    public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
                                Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, instance, instanceName, connection, instanceTags);
+        super(attribute, beanName, instanceName, connection, instanceTags);
         this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
     }
 

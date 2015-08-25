@@ -290,8 +290,7 @@ public class App {
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
                               int metricCount, String message, String status) {
         String checkName = instance.getCheckName();
-        reporter.sendServiceCheck(checkName, status, message, instance.getHostname(),
-                                  instance.getServiceCheckTags());
+        reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
 
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, reporter.getServiceCheckCount(checkName),
@@ -327,10 +326,9 @@ public class App {
                     instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
                             name, appConfig);
                 } catch (Exception e) {
-                    e.printStackTrace();
                     String warning = "Unable to create instance. Please check your yaml file";
                     appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning);
+                    LOGGER.error(warning, e);
                     continue;
                 }
                 try {

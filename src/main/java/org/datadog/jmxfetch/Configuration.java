@@ -113,7 +113,7 @@ public class Configuration {
             }
         }
         return includeFiltersByDomain;
-   }
+    }
 
     /**
      * Extract, among filters, bean key parameters in common.
@@ -125,11 +125,9 @@ public class Configuration {
     private static HashMap<String, Set<String>> getCommonBeanKeysByDomain(HashMap<String, LinkedList<Filter>> filtersByDomain){
         HashMap<String, Set<String>> beanKeysIntersectionByDomain = new HashMap<String,Set<String>>();
 
-        Iterator<Entry<String, LinkedList<Filter>>> filtersByDomainItr = filtersByDomain.entrySet().iterator();
-        while (filtersByDomainItr.hasNext()) {
-            Entry<String, LinkedList<Filter>> filtersEntry = filtersByDomainItr.next();
-            String domainName = (String) filtersEntry.getKey();
-            LinkedList<Filter> mFilters= (LinkedList<Filter>) filtersEntry.getValue();
+        for (Entry<String, LinkedList<Filter>> filtersEntry : filtersByDomain.entrySet()) {
+            String domainName = filtersEntry.getKey();
+            LinkedList<Filter> mFilters= filtersEntry.getValue();
 
             // Compute keys intersection
             Set<String> keysIntersection = new HashSet<String>(mFilters.getFirst().keySet());
@@ -139,12 +137,13 @@ public class Configuration {
             }
 
             // Remove special parameters
-            for(String param : JMXAttribute.getExcludeBeanParams()){
+            for(String param : JMXAttribute.getExcludedBeanParams()){
                 keysIntersection.remove(param);
             }
 
             beanKeysIntersectionByDomain.put(domainName, keysIntersection);
         }
+
         return beanKeysIntersectionByDomain;
     }
 
@@ -160,39 +159,35 @@ public class Configuration {
         // Compute a common scope a among filters by domain name
         HashMap<String, LinkedHashMap<String, String>> commonScopeByDomain = new HashMap<String, LinkedHashMap<String, String>>();
 
-        Iterator<Entry<String, Set<String>>> commonParametersByDomainItr = beanKeysByDomain.entrySet().iterator();
-        while(commonParametersByDomainItr.hasNext()){
-           Entry<String, Set<String>> commonParametersByDomainEntry = commonParametersByDomainItr.next();
-           String domainName = (String) commonParametersByDomainEntry.getKey();
-           Set<String> commonParameters = (Set<String>) commonParametersByDomainEntry.getValue();
-           LinkedList<Filter> filters = filtersByDomain.get(domainName);
-           LinkedHashMap<String, String> commonScope = new LinkedHashMap<String, String>();
+        for (Entry<String, Set<String>> commonParametersByDomainEntry : beanKeysByDomain.entrySet()) {
+            String domainName = commonParametersByDomainEntry.getKey();
+            Set<String> commonParameters = commonParametersByDomainEntry.getValue();
+            LinkedList<Filter> filters = filtersByDomain.get(domainName);
+            LinkedHashMap<String, String> commonScope = new LinkedHashMap<String, String>();
 
-           for (String parameter : commonParameters) {
+            for (String parameter : commonParameters) {
                 // Check if all values associated with the parameters are the same
                 String commonValue = null;
                 Boolean hasCommonValue = true;
-                Iterator<Filter> filtersItr = filters.iterator();
 
-                while(filtersItr.hasNext() && hasCommonValue){
-                    Filter f = filtersItr.next();
+                for (Filter f : filters) {
                     ArrayList<String> parameterValues = f.getParameterValues(parameter);
 
                     if (parameterValues.size() != 1 || (commonValue != null && !commonValue.equals(parameterValues.get(0)))) {
                         hasCommonValue = false;
-                        continue;
+                        break;
                     }
-
                     commonValue = parameterValues.get(0);
 
                 }
                 if (hasCommonValue) {
                     commonScope.put(parameter, commonValue);
                 }
-           }
-           commonScopeByDomain.put(domainName, commonScope);
-       }
-       return commonScopeByDomain;
+            }
+            commonScopeByDomain.put(domainName, commonScope);
+        }
+
+        return commonScopeByDomain;
     }
 
     /**
@@ -211,11 +206,9 @@ public class Configuration {
         result += domain + ":";
 
         // Scope parameters
-        Iterator<Entry<String, String>> beanScopeItr = beanScope.entrySet().iterator();
-        while(beanScopeItr.hasNext()){
-            Entry<String, String> beanScopeEntry = beanScopeItr.next();
-            String param = (String) beanScopeEntry.getKey();
-            String value = (String) beanScopeEntry.getValue();
+        for (Entry<String, String> beanScopeEntry : beanScope.entrySet()) {
+            String param = beanScopeEntry.getKey();
+            String value = beanScopeEntry.getValue();
 
             result += param + "=" + value + ",";
         }
@@ -238,11 +231,10 @@ public class Configuration {
         HashMap<String, LinkedHashMap<String, String>> commonBeanScopeByDomain = getCommonScopeByDomain(parametersIntersectionByDomain, includeFiltersByDomain);
 
         LinkedList<String> result = new LinkedList<String>();
-        Iterator<Entry<String, LinkedHashMap<String, String>>> commonBeanScopeItr = commonBeanScopeByDomain.entrySet().iterator();
-        while(commonBeanScopeItr.hasNext()){
-            Entry<String, LinkedHashMap<String, String>> beanScopeEntry = commonBeanScopeItr.next();
-            String domain = (String) beanScopeEntry.getKey();
-            LinkedHashMap<String, String> beanScope = (LinkedHashMap<String, String>) beanScopeEntry.getValue();
+
+        for (Entry<String, LinkedHashMap<String, String>> beanScopeEntry: commonBeanScopeByDomain.entrySet()) {
+            String domain = beanScopeEntry.getKey();
+            LinkedHashMap<String, String> beanScope = beanScopeEntry.getValue();
 
             result.add(beanScopeToString(domain, beanScope));
         }
