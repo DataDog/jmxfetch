@@ -1,5 +1,6 @@
 package org.datadog.jmxfetch;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
@@ -23,8 +24,8 @@ class AppConfig {
     public static final String ACTION_LIST_NOT_MATCHING = "list_not_matching_attributes";
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
-    public static final List<String> ACTIONS = Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING,
-            ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP);
+    public static final HashSet<String> ACTIONS = new HashSet<String>(Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING,
+            ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP));
 
     @Parameter(names = {"--help", "-h"},
             description = "Display this help page",
