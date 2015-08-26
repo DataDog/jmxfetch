@@ -12,7 +12,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
@@ -21,9 +21,9 @@ public class JMXComplexAttribute extends JMXAttribute {
 
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
-    public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectInstance instance, String instanceName,
+    public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
                                Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, instance, instanceName, connection, instanceTags);
+        super(attribute, beanName, instanceName, connection, instanceTags);
         this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
     }
 
@@ -118,9 +118,9 @@ public class JMXComplexAttribute extends JMXAttribute {
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
             return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get("alias");
         } else if (conf.get("metric_prefix") != null) {
-            return conf.get("metric_prefix") + "." + getBeanName().split(":")[0] + "." + subAttributeName;
+            return conf.get("metric_prefix") + "." + getBeanStringName().split(":")[0] + "." + subAttributeName;
         }
-        return "jmx." + getBeanName().split(":")[0] + "." + subAttributeName;
+        return "jmx." + getBeanStringName().split(":")[0] + "." + subAttributeName;
     }
 
 
