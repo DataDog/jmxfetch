@@ -8,12 +8,13 @@ Changes
 * [BUGFIX] Use `jmx_server` tag instead of `host` to tag JMX host's service checks. See [#66][]
 * [FEATURE] Wildcard support on domains and bean names. See [#57][]
 * [IMPROVEMENT] Memory saving by limiting MBeans queries to certain scopes. See [#63][]
+* [IMPROVEMENT] Memory saving by query bean names instead of full bean objects. See [#71][]
 
 # 0.7.0 / 06-04-2015
 
 #### Changes
-* [ENHANCEMENT] Add option to exit JMXFetch when a specified file is created. See [#58][]
 * [BUGFIX] Rename 'host' bean parameter to 'bean_host' in tags to avoid conflicts. See [#59][]
+* [ENHANCEMENT] Add option to exit JMXFetch when a specified file is created. See [#58][]
 
 # 0.6.0 / 05-20-2015
 
@@ -41,14 +42,14 @@ Changes
 
 #### Changes
 * [BUGFIX] Memory leak fix when fetching attributes value is failing. See [#30][]
-* [FEATURE/BUGFIX] Fetch more JVM (Non)Heap variables by default. See[bd8915c2f1eec794f406414b678ce6110407dce1](https://github.com/DataDog/jmxfetch/commit/bd8915c2f1eec794f406414b678ce6110407dce1)
+* [FEATURE/BUGFIX] Fetch more JVM (Non)Heap variables by default. See [bd8915c2f1eec794f406414b678ce6110407dce1](https://github.com/DataDog/jmxfetch/commit/bd8915c2f1eec794f406414b678ce6110407dce1)
 
 # 0.3.0 / 03-25-2014
 
 #### Changes
-* [BUGFIX] Support WARN log level, See [#14][]
-* [BUGFIX] Reset statsd connection: See [#19][]
 * [BUGFIX] Refresh JMX tree: See [4374b92cbf1b93d88fa5bd9d7339907e16a2da4a](https://github.com/DataDog/jmxfetch/commit/4374b92cbf1b93d88fa5bd9d7339907e16a2da4a)
+* [BUGFIX] Reset statsd connection: See [#19][]
+* [BUGFIX] Support WARN log level, See [#14][]
 * [FEATURE] Support custom instance tags: See [#28][] (Thanks [@coupacooke][])
 * [FEATURE] Support new types: Boolean, String, java.lang.Number, AtomicInteger, AtomicLong: See [#25][] [#26][] (Thanks [@coupacooke][])
 
@@ -72,4 +73,5 @@ Changes
 [#63]: https://github.com/DataDog/jmxfetch/issues/63
 [#66]: https://github.com/DataDog/jmxfetch/issues/66
 [#67]: https://github.com/DataDog/jmxfetch/issues/67
+[#71]: https://github.com/DataDog/jmxfetch/issues/71
 [@coupacooke]: https://github.com/coupacooke

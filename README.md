@@ -2,7 +2,7 @@
 
 # [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
 
-# JMXfetch
+# JMXFetch
 
 JMXFetch is the new tool to collect metrics from JMX Servers in order to be sent to Datadog (http://www.datadoghq.com)
 It is called by the Datadog Agent (https://github.com/Datadog/dd-agent) and send metrics back to the Agent using the dogstatsd library https://github.com/indeedeng/java-dogstatsd-client
