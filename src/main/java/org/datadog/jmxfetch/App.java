@@ -173,36 +173,44 @@ public class App {
             Instance instance = it.next();
             LinkedList<HashMap<String, Object>> metrics;
             String instanceStatus = Status.STATUS_OK;
+            String scStatus = Status.STATUS_OK;
             String instanceMessage = null;
+            int numberOfMetrics = 0;
+
             try {
                 metrics = instance.getMetrics();
+                numberOfMetrics = metrics.size();
+
+                if (numberOfMetrics == 0) {
+                    instanceMessage = "Instance " + instance + " didn't return any metrics";
+                    LOGGER.warn(instanceMessage);
+                    instanceStatus = Status.STATUS_ERROR;
+                    scStatus = Status.STATUS_ERROR;
+                    brokenInstances.add(instance);
+                } else if (instance.isLimitReached()) {
+                    instanceMessage = "Number of returned metrics is too high for instance: "
+                            + instance.getName()
+                            + ". Please read http://docs.datadoghq.com/integrations/java/ or get in touch with Datadog "
+                            + "Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
+
+                    instanceStatus = Status.STATUS_WARNING;
+                    // We don't want to log the warning at every iteration so we use this custom logger.
+                    CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
+                }
+
+                if(numberOfMetrics > 0)
+                    reporter.sendMetrics(metrics, instance.getName());
+
             } catch (IOException e) {
-                String warning = "Unable to refresh bean list for instance " + instance;
-                LOGGER.warn(warning, e);
-                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                instanceMessage = "Unable to refresh bean list for instance " + instance;
+                LOGGER.warn(instanceMessage, e);
+                instanceStatus = Status.STATUS_ERROR;
+                scStatus = Status.STATUS_ERROR;
                 brokenInstances.add(instance);
-                continue;
             }
 
-            if (metrics.size() == 0) {
-                String warning = "Instance " + instance + " didn't return any metrics";
-                LOGGER.warn(warning);
-                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-                brokenInstances.add(instance);
-                continue;
-            } else if (instance.isLimitReached()) {
-                instanceMessage = "Number of returned metrics is too high for instance: "
-                        + instance.getName()
-                        + ". Please read http://docs.datadoghq.com/integrations/java/ or get in touch with Datadog "
-                        + "Support for more details. Truncating to " + instance.getMaxNumberOfMetrics() + " metrics.";
-
-                instanceStatus = Status.STATUS_WARNING;
-                // We don't want to log the warning at every iteration so we use this custom logger.
-                CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
-            }
-            reporter.sendMetrics(metrics, instance.getName());
-
-            reportStatus(appConfig, reporter, instance, metrics.size(), instanceMessage, instanceStatus);
+            this.reportStatus(appConfig, reporter, instance, numberOfMetrics, instanceMessage, instanceStatus);
+            this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
         }
 
 
@@ -230,22 +238,25 @@ public class App {
                 // If we are here, the connection succeeded, the instance is fixed. It can be readded to the good instances list
                 instances.add(newInstance);
                 it.remove();
-            } catch (IOException e) {
-                String warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
-                LOGGER.warn(warning);
-                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            } catch (SecurityException e) {
-                String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
-                LOGGER.warn(warning);
-                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            } catch (FailedLoginException e) {
-                String warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
-                LOGGER.warn(warning);
-                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            } catch (Exception e) {
-                String warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
-                LOGGER.fatal(warning, e);
-                reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+            } catch(Exception e) {
+                String warning = null;
+
+                if(e instanceof IOException ) {
+                    warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
+                    LOGGER.warn(warning);
+                } else if (e instanceof SecurityException) {
+                    warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
+                    LOGGER.warn(warning);
+                } else if (e instanceof FailedLoginException) {
+                    warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
+                    LOGGER.warn(warning);
+                } else {
+                    warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
+                    LOGGER.fatal(warning, e);
+                }
+
+                this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
             }
         }
 
@@ -290,11 +301,17 @@ public class App {
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
                               int metricCount, String message, String status) {
         String checkName = instance.getCheckName();
-        reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
 
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, reporter.getServiceCheckCount(checkName),
                                                message, status);
+    }
+
+    private void sendServiceCheck(Reporter reporter, Instance instance, String message,
+                                  String status) {
+        String checkName = instance.getCheckName();
+
+        reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
         reporter.resetServiceCheckCount(checkName);
     }
 
@@ -339,13 +356,15 @@ public class App {
                     instance.cleanUp();
                     brokenInstances.add(instance);
                     String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
-                    reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
                 } catch (Exception e) {
                     instance.cleanUp();
                     brokenInstances.add(instance);
                     String warning = "Unexpected exception while initiating instance " + instance + " : " + e.getMessage();
-                    reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning, e);
                 }
             }

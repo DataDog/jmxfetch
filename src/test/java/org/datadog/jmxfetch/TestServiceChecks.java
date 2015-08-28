@@ -95,8 +95,8 @@ public class TestServiceChecks {
         String[] scTags = (String[]) (sc.get("tags"));
 
         assertEquals(Reporter.formatServiceCheckPrefix("too_many_metrics"), scName);
-        // We should have a warning status
-        assertEquals(Status.STATUS_WARNING, scStatus);
+        // We should have an OK service check status when too many metrics are getting sent
+        assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 1);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
         mbs.unregisterMBean(objectName);
