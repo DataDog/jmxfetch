@@ -4,6 +4,7 @@ Changes
 # 0.8.0 / Unreleased
 
 #### Changes
+* [BUGFIX] Do not send service check warnings on metric limit violation. See [#73][]
 * [BUGFIX] Log exception stack traces instead of printing them. See [#67][]
 * [BUGFIX] Use `jmx_server` tag instead of `host` to tag JMX host's service checks. See [#66][]
 * [FEATURE] Wildcard support on domains and bean names. See [#57][]
@@ -74,4 +75,5 @@ Changes
 [#66]: https://github.com/DataDog/jmxfetch/issues/66
 [#67]: https://github.com/DataDog/jmxfetch/issues/67
 [#71]: https://github.com/DataDog/jmxfetch/issues/71
+[#73]: https://github.com/DataDog/jmxfetch/issues/73
 [@coupacooke]: https://github.com/coupacooke
