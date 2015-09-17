@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.8.0 / Unreleased
+# 0.8.0 / 09-17-2015
 
 #### Changes
 * [BUGFIX] Do not send service check warnings on metric limit violation. See [#73][]
