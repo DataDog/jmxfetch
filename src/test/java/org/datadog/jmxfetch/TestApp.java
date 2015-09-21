@@ -83,8 +83,8 @@ public class TestApp {
         app.doIteration();
         LinkedList<HashMap<String, Object>> metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
 
-        // First filter 26 = 13 metrics from java.lang + 13 metrics implicitly defined
-        assertEquals(26, metrics.size());
+        // First filter 27 = 13 metrics from java.lang + 13 metrics implicitly defined
+        assertEquals(27, metrics.size());
 
         mbs.unregisterMBean(includeObjectName);
     }
@@ -349,7 +349,7 @@ public class TestApp {
 
         LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
 
-        assertEquals(25, metrics.size()); // 25 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(26, metrics.size()); // 26 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + the 7 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         boolean metric100Present = false;
@@ -464,7 +464,7 @@ public class TestApp {
         // We run a second collection. The counter should now be present
         app.doIteration();
         metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-        assertEquals(27, metrics.size()); // 27 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(28, metrics.size()); // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 8 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         metric100Present = false;
@@ -585,7 +585,7 @@ public class TestApp {
 
         app.doIteration();
         metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-        assertEquals(metrics.size(), 27); // 27 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 7 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 28); // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 8 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         metric100Present = false;
         metric1000Present = false;
@@ -694,7 +694,10 @@ public class TestApp {
                 assertEquals(tags.length, 5);
                 assertEquals(value, new Double(13.37));
                 objectPresent = true;
-
+            } else if (name.equals("jmx.org.datadog.jmxfetch.test.some_float")) {
+                assertEquals(tags.length, 5);
+                assertEquals(value, new Double(123.4f));
+                objectPresent = true;
 
             } else {
                 // Those are jvm metrics

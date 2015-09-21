@@ -20,6 +20,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final Long long42424242 = new Long(42424242);
     private final Integer int424242 = new Integer(424242);
     private final BigDecimal numberBig = new BigDecimal(123456788901234567890.0);
+    private final float someFloat = 123.4f;
 
     SimpleTestJavaApp() {
         hashmap.put("thisis0", 0);
@@ -93,5 +94,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         return int424242;
     }
 
-
+    public float getSomeFloat(){
+        return someFloat;
+    }
 }
