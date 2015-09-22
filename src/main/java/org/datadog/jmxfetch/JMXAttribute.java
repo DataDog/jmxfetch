@@ -138,7 +138,7 @@ public abstract class JMXAttribute {
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
-            LOGGER.warn("Unable to get metrics from " + beanStringName);
+            LOGGER.warn("Unable to get metrics from " + beanStringName, e);
             return 0;
         }
     }
