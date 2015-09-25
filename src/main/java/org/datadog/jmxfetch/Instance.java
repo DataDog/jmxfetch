@@ -26,7 +26,7 @@ public class Instance {
             "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number");
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
     private final static int MAX_RETURNED_METRICS = 350;
-    private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
+    private final static int DEFAULT_REFRESH_BEANS_PERIOD = 3600;
 
     private Set<ObjectName> beans;
     private LinkedList<String> beanScopes;
@@ -69,12 +69,7 @@ public class Instance {
         this.checkName = checkName;
         this.matchingAttributes = new LinkedList<JMXAttribute>();
         this.failingAttributes = new HashSet<JMXAttribute>();
-        this.refreshBeansPeriod = (Integer) yaml.get("refresh_beans");
-        if (this.refreshBeansPeriod == null) {
-            this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
-            // Useful because sometimes if the application restarts, jmxfetch might read
-            // a jmxtree that is not completely initialized and would be missing some attributes
-        }
+        this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD;
         this.lastRefreshTime = 0;
         this.limitReached = false;
         Object maxReturnedMetrics = this.yaml.get("max_returned_metrics");

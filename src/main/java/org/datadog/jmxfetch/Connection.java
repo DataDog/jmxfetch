@@ -50,8 +50,10 @@ public class Connection {
 
     public Set<ObjectName> queryNames(ObjectName name) throws IOException {
         String scope = (name != null) ? name.toString() : "*:*";
-        LOGGER.debug("Querying bean names on scope: " + scope);
-        return mbs.queryNames(name, null);
+        LOGGER.info("Querying bean names on scope: " + scope);
+        Set<ObjectName> result = mbs.queryNames(name, null);
+        LOGGER.info("Query returned: " + result.size()+ " beans.");
+        return result;
     }
 
     protected void createConnection() throws IOException {
