@@ -17,6 +17,7 @@ import javax.security.auth.login.FailedLoginException;
 
 import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.util.Timer;
 
 public class Instance {
     private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
@@ -118,11 +119,22 @@ public class Instance {
     }
 
     public void init(boolean forceNewConnection) throws IOException, FailedLoginException, SecurityException {
+        // Mesure CPU usage
+        long percent;
+        long startCpuTimeNano = Timer.getCpuTime();
+        long startSystemTimeNano = System.nanoTime();
+
         LOGGER.info("Trying to connect to JMX Server at " + this.toString());
         connection = ConnectionManager.getInstance().getConnection(yaml, forceNewConnection);
         LOGGER.info("Connected to JMX Server at " + this.toString());
         this.refreshBeansList();
         this.getMatchingAttributes();
+
+        // Report CPU usage
+        long taskCpuTimeNano  = Timer.getCpuTime( ) - startCpuTimeNano;
+        long taskSystemTimeNano = System.nanoTime() - startSystemTimeNano;
+        percent  = (taskSystemTimeNano>0)?(taskCpuTimeNano*100L)/taskSystemTimeNano:0;
+        LOGGER.info("INIT: refreshBeansList+getMatchingAttributes CPU time: " + taskCpuTimeNano + "ns (" +percent + "%)");
     }
 
     @Override
@@ -137,6 +149,10 @@ public class Instance {
     }
 
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
+        // Mesure CPU usage
+        long percent;
+        long startCpuTimeNano = Timer.getCpuTime();
+        long startSystemTimeNano = System.nanoTime();
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
         // To enable this, a "refresh_beans" parameter must be specified in the yaml config file
@@ -144,6 +160,12 @@ public class Instance {
             LOGGER.info("Refreshing bean list");
             this.refreshBeansList();
             this.getMatchingAttributes();
+
+            // Report CPU usage
+            long taskCpuTimeNano  = Timer.getCpuTime( ) - startCpuTimeNano;
+            long taskSystemTimeNano = System.nanoTime() - startSystemTimeNano;
+            percent  = (taskSystemTimeNano>0)?(taskCpuTimeNano*100L)/taskSystemTimeNano:0;
+            LOGGER.info("refreshBeansList+getMatchingAttributes CPU time: " + taskCpuTimeNano + "ns (" +percent + "%)");
         }
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
@@ -175,6 +197,11 @@ public class Instance {
     }
 
     private void getMatchingAttributes() {
+        // Mesure CPU usage
+        long percent;
+        long startCpuTimeNano = Timer.getCpuTime();
+        long startSystemTimeNano = System.nanoTime();
+
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -267,6 +294,11 @@ public class Instance {
             }
         }
         LOGGER.info("Found " + matchingAttributes.size() + " matching attributes");
+        // Report CPU usage
+        long taskCpuTimeNano  = Timer.getCpuTime( ) - startCpuTimeNano;
+        long taskSystemTimeNano = System.nanoTime() - startSystemTimeNano;
+        percent  = (taskSystemTimeNano>0)?(taskCpuTimeNano*100L)/taskSystemTimeNano:0;
+        LOGGER.info("getMatchingAttributes CPU time: " + taskCpuTimeNano + "ns (" +percent + "%)");
     }
 
     public LinkedList<String> getBeansScopes(){
@@ -282,6 +314,11 @@ public class Instance {
      * Limit the query scope when possible on certain actions, and fallback if necessary.
      */
     private void refreshBeansList() throws IOException {
+        // Mesure CPU usage
+        long percent;
+        long startCpuTimeNano = Timer.getCpuTime();
+        long startSystemTimeNano = System.nanoTime();
+
         this.beans = new HashSet<ObjectName>();
         String action = appConfig.getAction();
         Boolean limitQueryScopes = !action.equals(AppConfig.ACTION_LIST_EVERYTHING) && !action.equals(AppConfig.ACTION_LIST_EVERYTHING);
@@ -301,6 +338,12 @@ public class Instance {
 
         this.beans = (this.beans.isEmpty()) ? connection.queryNames(null): this.beans;
         this.lastRefreshTime = System.currentTimeMillis();
+
+        // Report CPU usage
+        long taskCpuTimeNano  = Timer.getCpuTime( ) - startCpuTimeNano;
+        long taskSystemTimeNano = System.nanoTime() - startSystemTimeNano;
+        percent  = (taskSystemTimeNano>0)?(taskCpuTimeNano*100L)/taskSystemTimeNano:0;
+        LOGGER.info("refreshBeansList CPU time: " + taskCpuTimeNano + "ns (" +percent + "%)");
     }
 
     public String[] getServiceCheckTags() {

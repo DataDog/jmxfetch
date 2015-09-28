@@ -27,6 +27,7 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 import org.apache.log4j.Logger;
+import org.datadog.jmxfetch.util.Timer;
 
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
@@ -49,10 +50,22 @@ public class Connection {
     }
 
     public Set<ObjectName> queryNames(ObjectName name) throws IOException {
+        // Mesure CPU usage
+        long percent;
+        long startCpuTimeNano = Timer.getCpuTime();
+        long startSystemTimeNano = System.nanoTime();
+
         String scope = (name != null) ? name.toString() : "*:*";
         LOGGER.info("Querying bean names on scope: " + scope);
         Set<ObjectName> result = mbs.queryNames(name, null);
         LOGGER.info("Query returned: " + result.size()+ " beans.");
+
+        // Report CPU usage
+        long taskCpuTimeNano  = Timer.getCpuTime( ) - startCpuTimeNano;
+        long taskSystemTimeNano = System.nanoTime() - startSystemTimeNano;
+        percent  = (taskSystemTimeNano>0)?(taskCpuTimeNano*100L)/taskSystemTimeNano:0;
+        LOGGER.info("queryNames CPU time: " + taskCpuTimeNano + "ns (" +percent + "%)");
+
         return result;
     }
 
