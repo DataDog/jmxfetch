@@ -30,7 +30,7 @@ public class Instance {
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 3600;
 
     private Set<ObjectName> beans;
-    private LinkedList<String> beanScopes;
+    private List<String> beanScopes;
     private LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
     private LinkedList<JMXAttribute> matchingAttributes;
     private HashSet<JMXAttribute> failingAttributes;
@@ -301,9 +301,10 @@ public class Instance {
         LOGGER.info("getMatchingAttributes CPU time: " + taskCpuTimeNano + "ns (" +percent + "%)");
     }
 
-    public LinkedList<String> getBeansScopes(){
+    public List<String> getBeansScopes(){
         if(this.beanScopes == null){
-            this.beanScopes = Configuration.getGreatestCommonScopes(configurationList);
+            // this.beanScopes = Configuration.getGreatestCommonScopes(configurationList);
+            this.beanScopes = Configuration.getScopes(configurationList);
         }
         return this.beanScopes;
     }
@@ -325,7 +326,7 @@ public class Instance {
 
         if (limitQueryScopes) {
             try {
-                LinkedList<String> beanScopes = getBeansScopes();
+                List<String> beanScopes = getBeansScopes();
                 for (String scope : beanScopes) {
                     ObjectName name = new ObjectName(scope);
                     this.beans.addAll(connection.queryNames(name));

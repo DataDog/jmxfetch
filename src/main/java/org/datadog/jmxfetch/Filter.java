@@ -1,10 +1,11 @@
 package org.datadog.jmxfetch;
 
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Set;
 import java.lang.ClassCastException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
+import java.util.Set;
 
 
 class Filter {
@@ -30,6 +31,37 @@ class Filter {
             castFilter = new HashMap<String, Object>();
         }
         this.filter = castFilter;
+    }
+
+
+    /**
+     * Process `filter` to return the corresponding bean map (key->values).
+     *
+     * FIXME: Add support for list in bean parameters.
+     */
+    public HashMap<String, String> getBeanFilter(){
+        HashMap<String, String> beanHash = new HashMap<String, String>();
+
+        for (Entry<String, Object> filterEntry: filter.entrySet()) {
+
+            String beanParam = filterEntry.getKey();
+
+            // Remove non bean params
+            if (JMXAttribute.getExcludedBeanParams().contains(beanParam)) {
+                continue;
+            }
+
+            // FIXME: support list of values
+            String beanValue;
+            try{
+                beanValue = (String) filterEntry.getValue();
+            } catch (ClassCastException e){
+                continue;
+            }
+            beanHash.put(beanParam, beanValue);
+        }
+
+        return beanHash;
     }
 
     public String toString() {

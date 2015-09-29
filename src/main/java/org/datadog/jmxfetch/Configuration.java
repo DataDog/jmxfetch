@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -190,6 +191,30 @@ public class Configuration {
     }
 
     /**
+     * Build a list of bean scopes (keys->values map) by domain, among the given filters.
+     *
+     * @param filtersByDomain       filters by domain name
+     *
+     * @return                      list of bean scopes (keys->values map) by domain name
+     */
+    private static HashMap<String, ArrayList<HashMap<String,String>>> getBeanScopesByDomain(HashMap<String, LinkedList<Filter>> filtersByDomain){
+        HashMap<String, ArrayList<HashMap<String,String>>> beanScopesByDomain = new HashMap<String, ArrayList<HashMap<String,String>>>();
+
+        for (Entry<String, LinkedList<Filter>> filtersEntry : filtersByDomain.entrySet()) {
+            ArrayList<HashMap<String,String>> beanScopes = new ArrayList<HashMap<String,String>>();
+            String domainName = filtersEntry.getKey();
+            LinkedList<Filter> mFilters= filtersEntry.getValue();
+
+            for (Filter f: mFilters) {
+                beanScopes.add(f.getBeanFilter());
+            }
+            beanScopesByDomain.put(domainName, beanScopes);
+        }
+
+        return beanScopesByDomain;
+    }
+
+    /**
      * Stringify a bean pattern.
      *
      * @param domain                domain name
@@ -197,7 +222,7 @@ public class Configuration {
      *
      * @return                      string pattern identifying the bean scope
      */
-    private static String beanScopeToString(String domain, LinkedHashMap<String, String> beanScope){
+    private static String beanScopeToString(String domain, Map<String, String> beanScope){
         String result = "";
 
         // Domain
@@ -239,6 +264,33 @@ public class Configuration {
         }
 
         return result;
+    }
+
+    /**
+     * Find, among the configuration list, the list of bean scopes.
+     *
+     * @param configurationList         the configuration list to process
+     *
+     * @return                          list of bean scopes
+     */
+    public static ArrayList<String> getScopes(LinkedList<Configuration> configurationList){
+        ArrayList<String> beanScopes = new ArrayList<String>();
+
+        LinkedList<Configuration> includeConfigList = getIncludeConfigurationList(configurationList);
+        HashMap<String, LinkedList<Filter>> includeFiltersByDomain = getIncludeFiltersByDomain(includeConfigList);
+        HashMap<String, ArrayList<HashMap<String,String>>> beanScopesByDomain = getBeanScopesByDomain(includeFiltersByDomain);
+
+        for (Entry<String,ArrayList<HashMap<String,String>>> beanScopeEntry: beanScopesByDomain.entrySet()) {
+            String domain = beanScopeEntry.getKey();
+            ArrayList<HashMap<String,String>> domainBeanScopes = beanScopeEntry.getValue();
+
+            for (HashMap<String,String>  beanScope: domainBeanScopes) {
+                beanScopes.add(beanScopeToString(domain, beanScope));
+            }
+
+        }
+
+        return beanScopes;
     }
 
 }

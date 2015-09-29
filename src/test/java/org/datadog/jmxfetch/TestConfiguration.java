@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.BeforeClass;
@@ -149,7 +150,7 @@ public class TestConfiguration {
 	@Test
 	public void testBeanScopeToString() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		// Private method reflection
-		Method beanScopeToString = Configuration.class.getDeclaredMethod("beanScopeToString", String.class, LinkedHashMap.class);
+		Method beanScopeToString = Configuration.class.getDeclaredMethod("beanScopeToString", String.class, Map.class);
 		beanScopeToString.setAccessible(true);
 
 		// Mock parameters

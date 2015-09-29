@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
@@ -374,8 +376,8 @@ public abstract class JMXAttribute {
         return attributeName;
     }
 
-    public static List<String> getExcludedBeanParams(){
-        return EXCLUDED_BEAN_PARAMS;
+    public static Set<String> getExcludedBeanParams(){
+        return new HashSet(EXCLUDED_BEAN_PARAMS);
     }
 
     protected String getDomain() {
