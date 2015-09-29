@@ -1,0 +1,10 @@
+include:
+    attribute:
+        CollectionCount:
+            alias: jvm.gc.cms.count
+            metric_type: gauge
+        CollectionTime:
+            alias: jvm.gc.parnew.time
+            metric_type: gauge
+    domain: java.lang
+    type: GarbageCollector
