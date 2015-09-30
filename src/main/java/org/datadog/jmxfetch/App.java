@@ -136,6 +136,8 @@ public class App {
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         while (true) {
+            LOGGER.debug("Top of start loop");
+
             // Exit on exit file trigger
             if (appConfig.getExitWatcher().shouldExit()){
                 LOGGER.info("Exit file detected: stopping JMXFetch.");
@@ -143,6 +145,7 @@ public class App {
             }
 
             long start = System.currentTimeMillis();
+            LOGGER.debug("Calling doIteration() at " + start + ". Instances.size(): " + instances.size());
             if (instances.size() > 0) {
                 doIteration();
             } else {
@@ -158,9 +161,11 @@ public class App {
                 int loopPeriod = appConfig.getCheckPeriod();
                 LOGGER.debug("Sleeping for " + loopPeriod + " ms.");
                 Thread.sleep(loopPeriod);
+                LOGGER.debug("Done sleeping!");
             } catch (InterruptedException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
+            LOGGER.debug("End of start loop");
         }
     }
 
@@ -180,6 +185,7 @@ public class App {
             try {
                 metrics = instance.getMetrics();
                 numberOfMetrics = metrics.size();
+                LOGGER.debug("Instance " + instance + " returned " + numberOfMetrics + " metrics");
 
                 if (numberOfMetrics == 0) {
                     instanceMessage = "Instance " + instance + " didn't return any metrics";
@@ -198,8 +204,10 @@ public class App {
                     CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
                 }
 
-                if(numberOfMetrics > 0)
+                if (numberOfMetrics > 0) {
+                    LOGGER.debug("Sending metrics");
                     reporter.sendMetrics(metrics, instance.getName());
+                }
 
             } catch (IOException e) {
                 instanceMessage = "Unable to refresh bean list for instance " + instance;

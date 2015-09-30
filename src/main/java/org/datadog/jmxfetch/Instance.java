@@ -129,7 +129,7 @@ public class Instance {
     }
 
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
-
+        LOGGER.debug("Getting metrics!");
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
         // To enable this, a "refresh_beans" parameter must be specified in the yaml config file
         if (this.refreshBeansPeriod != null && (System.currentTimeMillis() - this.lastRefreshTime) / 1000 > this.refreshBeansPeriod) {
@@ -137,20 +137,25 @@ public class Instance {
             this.refreshBeansList();
             this.getMatchingAttributes();
         }
+        LOGGER.debug("No need to refresh bean list.");
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         Iterator<JMXAttribute> it = matchingAttributes.iterator();
 
+        LOGGER.debug("Looping through matching JMX attributes");
         while (it.hasNext()) {
             JMXAttribute jmxAttr = it.next();
+            LOGGER.debug("Checking JMX attribute " + jmxAttr);
             try {
                 LinkedList<HashMap<String, Object>> jmxAttrMetrics = jmxAttr.getMetrics();
                 for (HashMap<String, Object> m : jmxAttrMetrics) {
+                    LOGGER.debug("Adding metric check " + this.checkName);
                     m.put("check_name", this.checkName);
                     metrics.add(m);
                 }
 
                 if (this.failingAttributes.contains(jmxAttr)) {
+                    LOGGER.debug(jmxAttr + " was a failing attribute. Removing from failing list...");
                     this.failingAttributes.remove(jmxAttr);
                 }
             } catch (Exception e) {
