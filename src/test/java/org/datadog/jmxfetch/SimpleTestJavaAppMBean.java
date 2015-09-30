@@ -32,6 +32,6 @@ public interface SimpleTestJavaAppMBean {
 
     Integer getInt424242();
 
-    float getSomeFloat();
+    float getPrimitiveFloat();
 
 }
