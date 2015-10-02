@@ -46,6 +46,7 @@ public class App {
      * See AppConfig class for more details on the args
      */
     public static void main(String[] args) {
+        LOGGER.info("Entering main function");
 
         // Load the config from the args
         AppConfig config = new AppConfig();
@@ -136,7 +137,7 @@ public class App {
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         while (true) {
-            LOGGER.debug("Top of start loop");
+            LOGGER.info("Top of start loop");
 
             // Exit on exit file trigger
             if (appConfig.getExitWatcher().shouldExit()){
@@ -145,7 +146,7 @@ public class App {
             }
 
             long start = System.currentTimeMillis();
-            LOGGER.debug("Calling doIteration() at " + start + ". Instances.size(): " + instances.size());
+            LOGGER.info("Calling doIteration() at " + start + ". Instances.size(): " + instances.size());
             if (instances.size() > 0) {
                 doIteration();
             } else {
@@ -155,21 +156,22 @@ public class App {
                 init(true);
             }
             long length = System.currentTimeMillis() - start;
-            LOGGER.debug("Iteration ran in " + length + " ms");
+            LOGGER.info("Iteration ran in " + length + " ms");
             // Sleep until next collection
             try {
                 int loopPeriod = appConfig.getCheckPeriod();
-                LOGGER.debug("Sleeping for " + loopPeriod + " ms.");
+                LOGGER.info("Sleeping for " + loopPeriod + " ms.");
                 Thread.sleep(loopPeriod);
-                LOGGER.debug("Done sleeping!");
+                LOGGER.info("Done sleeping!");
             } catch (InterruptedException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
-            LOGGER.debug("End of start loop");
+            LOGGER.info("End of start loop");
         }
     }
 
     public void doIteration() {
+        LOGGER.info("Entering doIteration()");
         loopCounter++;
         Reporter reporter = appConfig.getReporter();
 
@@ -185,7 +187,7 @@ public class App {
             try {
                 metrics = instance.getMetrics();
                 numberOfMetrics = metrics.size();
-                LOGGER.debug("Instance " + instance + " returned " + numberOfMetrics + " metrics");
+                LOGGER.info("Instance " + instance + " returned " + numberOfMetrics + " metrics");
 
                 if (numberOfMetrics == 0) {
                     instanceMessage = "Instance " + instance + " didn't return any metrics";
@@ -205,7 +207,7 @@ public class App {
                 }
 
                 if (numberOfMetrics > 0) {
-                    LOGGER.debug("Sending metrics");
+                    LOGGER.info("Sending metrics");
                     reporter.sendMetrics(metrics, instance.getName());
                 }
 
@@ -273,11 +275,13 @@ public class App {
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
         }
+        LOGGER.info("Leaving doIteration()");
     }
 
     private HashMap<String, YamlParser> getConfigs(AppConfig config) {
         HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
         YamlParser fileConfig;
+        LOGGER.info("Grabbing configs");
         for (String fileName : config.getYamlFileList()) {
             File f = new File(config.getConfdDirectory(), fileName);
             String name = f.getName().replace(".yaml", "");
@@ -310,6 +314,7 @@ public class App {
                               int metricCount, String message, String status) {
         String checkName = instance.getCheckName();
 
+        LOGGER.info("Reporting status for " + checkName);
         appConfig.getStatus().addInstanceStats(checkName, instance.getName(),
                                                metricCount, reporter.getServiceCheckCount(checkName),
                                                message, status);
@@ -319,11 +324,13 @@ public class App {
                                   String status) {
         String checkName = instance.getCheckName();
 
+        LOGGER.info("Sending service check for " + checkName);
         reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
         reporter.resetServiceCheckCount(checkName);
     }
 
     public void init(boolean forceNewConnection) {
+        LOGGER.info("Initializing...");
         clearInstances(instances);
         clearInstances(brokenInstances);
 
@@ -336,6 +343,7 @@ public class App {
             YamlParser yamlConfig = entry.getValue();
             it.remove();
 
+            LOGGER.info("init while loop" + name);
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;

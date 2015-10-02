@@ -53,7 +53,7 @@ public abstract class Reporter {
                 LOGGER.info("Next collections will be logged only every 10 collections.");
             }
         } else {
-            LOGGER.debug(sendingMessage);
+            LOGGER.info(sendingMessage);
         }
 
         for (HashMap<String, Object> m : metrics) {

@@ -129,7 +129,7 @@ public class Instance {
     }
 
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
-        LOGGER.debug("Getting metrics!");
+        LOGGER.info("Getting metrics!");
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
         // To enable this, a "refresh_beans" parameter must be specified in the yaml config file
         if (this.refreshBeansPeriod != null && (System.currentTimeMillis() - this.lastRefreshTime) / 1000 > this.refreshBeansPeriod) {
@@ -137,31 +137,31 @@ public class Instance {
             this.refreshBeansList();
             this.getMatchingAttributes();
         }
-        LOGGER.debug("No need to refresh bean list.");
+        LOGGER.info("No need to refresh bean list.");
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         Iterator<JMXAttribute> it = matchingAttributes.iterator();
 
-        LOGGER.debug("Looping through matching JMX attributes");
+        LOGGER.info("Looping through matching JMX attributes");
         while (it.hasNext()) {
             JMXAttribute jmxAttr = it.next();
-            LOGGER.debug("Checking JMX attribute " + jmxAttr);
+            LOGGER.info("Checking JMX attribute " + jmxAttr);
             try {
                 LinkedList<HashMap<String, Object>> jmxAttrMetrics = jmxAttr.getMetrics();
                 for (HashMap<String, Object> m : jmxAttrMetrics) {
-                    LOGGER.debug("Adding metric check " + this.checkName);
+                    LOGGER.info("Adding metric check " + this.checkName);
                     m.put("check_name", this.checkName);
                     metrics.add(m);
                 }
 
                 if (this.failingAttributes.contains(jmxAttr)) {
-                    LOGGER.debug(jmxAttr + " was a failing attribute. Removing from failing list...");
+                    LOGGER.info(jmxAttr + " was a failing attribute. Removing from failing list...");
                     this.failingAttributes.remove(jmxAttr);
                 }
             } catch (Exception e) {
-                LOGGER.debug("Cannot get metrics for attribute: " + jmxAttr, e);
+                LOGGER.info("Cannot get metrics for attribute: " + jmxAttr, e);
                 if (this.failingAttributes.contains(jmxAttr)) {
-                    LOGGER.debug("Cannot generate metrics for attribute: " + jmxAttr + " twice in a row. Removing it from the attribute list");
+                    LOGGER.info("Cannot generate metrics for attribute: " + jmxAttr + " twice in a row. Removing it from the attribute list");
                     it.remove();
                 } else {
                     this.failingAttributes.add(jmxAttr);
@@ -187,7 +187,7 @@ public class Instance {
 
         for (ObjectName beanName : beans) {
             if (limitReached) {
-                LOGGER.debug("Limit reached");
+                LOGGER.info("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
                     break;
                 }
@@ -196,7 +196,7 @@ public class Instance {
 
             try {
                 // Get all the attributes for bean_name
-                LOGGER.debug("Getting attributes for bean: " + beanName);
+                LOGGER.info("Getting attributes for bean: " + beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (Exception e) {
                 LOGGER.warn("Cannot get bean attributes " + e.getMessage());
@@ -220,14 +220,14 @@ public class Instance {
                 JMXAttribute jmxAttribute;
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
-                    LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo simple type");
+                    LOGGER.info("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo simple type");
                     jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo complex type");
+                    LOGGER.info("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo complex type");
                     jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else {
                     try {
-                        LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
+                        LOGGER.info("Attribute: " + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
                     } catch (NullPointerException e) {
                         LOGGER.warn("Caught unexpected NullPointerException");
                     }

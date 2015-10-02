@@ -92,7 +92,7 @@ public class Status {
             String yaml = generateYaml();
             try {
                 File f = new File(this.statusFileLocation);
-                LOGGER.debug("Writing status to temp yaml file: " + f.getAbsolutePath());
+                LOGGER.info("Writing status to temp yaml file: " + f.getAbsolutePath());
                 FileUtils.writeStringToFile(f, yaml);
             } catch (Exception e) {
                 LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
