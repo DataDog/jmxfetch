@@ -137,7 +137,7 @@ public class App {
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         while (true) {
-            LOGGER.info("Top of start loop");
+            LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Top of start loop");
 
             // Exit on exit file trigger
             if (appConfig.getExitWatcher().shouldExit()){
@@ -146,7 +146,8 @@ public class App {
             }
 
             long start = System.currentTimeMillis();
-            LOGGER.info("Calling doIteration() at " + start + ". Instances.size(): " + instances.size());
+            LOGGER.info("[" + Thread.currentThread().getId() + "]" +
+                    "Calling doIteration() at " + start + ". Instances.size(): " + instances.size());
             if (instances.size() > 0) {
                 doIteration();
             } else {
@@ -156,13 +157,13 @@ public class App {
                 init(true);
             }
             long length = System.currentTimeMillis() - start;
-            LOGGER.info("Iteration ran in " + length + " ms");
+            LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Iteration ran in " + length + " ms");
             // Sleep until next collection
             try {
                 int loopPeriod = appConfig.getCheckPeriod();
-                LOGGER.info("Sleeping for " + loopPeriod + " ms.");
+                LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Sleeping for " + loopPeriod + " ms.");
                 Thread.sleep(loopPeriod);
-                LOGGER.info("Done sleeping!");
+                LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Done sleeping:" + );
             } catch (InterruptedException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
