@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.lang.management.ManagementFactory;
 
 import javax.security.auth.login.FailedLoginException;
 
@@ -137,7 +138,7 @@ public class App {
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         while (true) {
-            LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Top of start loop");
+            LOGGER.info("[" + ManagementFactory.getRuntimeMXBean().getName() + "]" + "Top of start loop");
 
             // Exit on exit file trigger
             if (appConfig.getExitWatcher().shouldExit()){
