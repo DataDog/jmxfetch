@@ -163,7 +163,7 @@ public class App {
                 int loopPeriod = appConfig.getCheckPeriod();
                 LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Sleeping for " + loopPeriod + " ms.");
                 Thread.sleep(loopPeriod);
-                LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Done sleeping:" + );
+                LOGGER.info("[" + Thread.currentThread().getId() + "]" + "Done sleeping:");
             } catch (InterruptedException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
