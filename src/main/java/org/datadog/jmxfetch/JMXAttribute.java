@@ -124,7 +124,8 @@ public abstract class JMXAttribute {
                 "  - Attribute type: " + attribute.getType();
     }
 
-    public abstract LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException;
+    public abstract LinkedList<HashMap<String, Object>> getMetrics() throws
+        AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException, Exception;
 
     /**
      * An abstract function implemented in the inherited classes JMXSimpleAttribute and JMXComplexAttribute
@@ -134,12 +135,13 @@ public abstract class JMXAttribute {
      */
     public abstract boolean match(Configuration conf);
 
-    public int getMetricsCount() {
+    public int getMetricsCount() throws Exception{
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
             LOGGER.warn("Unable to get metrics from " + beanStringName);
-            return 0;
+            //return 0;
+            throw e;
         }
     }
 

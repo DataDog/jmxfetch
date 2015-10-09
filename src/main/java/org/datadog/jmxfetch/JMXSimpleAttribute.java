@@ -29,7 +29,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
 
     @Override
     public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException,
-            InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+            InstanceNotFoundException, MBeanException, ReflectionException, IOException, Exception {
         HashMap<String, Object> metric = new HashMap<String, Object>();
 
         try {
