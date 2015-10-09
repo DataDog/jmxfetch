@@ -13,11 +13,14 @@ import javax.management.MBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+import org.apache.log4j.Logger;
+
 @SuppressWarnings("unchecked")
 public class JMXSimpleAttribute extends JMXAttribute {
 
     private String alias;
     private String metricType;
+    private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
 
     public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
                               Connection connection, HashMap<String, String> instanceTags) {
@@ -29,10 +32,15 @@ public class JMXSimpleAttribute extends JMXAttribute {
             InstanceNotFoundException, MBeanException, ReflectionException, IOException {
         HashMap<String, Object> metric = new HashMap<String, Object>();
 
-        metric.put("alias", getAlias());
-        metric.put("value", getValue());
-        metric.put("tags", getTags());
-        metric.put("metric_type", getMetricType());
+        try {
+            metric.put("alias", getAlias());
+            metric.put("value", getValue());
+            metric.put("tags", getTags());
+            metric.put("metric_type", getMetricType());
+        } catch(Exception e) {
+            LOGGER.info("Failed getting metrics: ", e);
+            throw e;
+        }
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         metrics.add(metric);
         return metrics;
