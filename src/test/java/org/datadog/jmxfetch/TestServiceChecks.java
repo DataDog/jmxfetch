@@ -93,6 +93,7 @@ public class TestServiceChecks extends TestCommon {
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test_non_running:type=ServiceCheckTest2");
         initApplication("non_running_process.yaml");
 
+
         // Test that a CRITICAL service check status is sent on initialization
         LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(1, serviceChecks.size());
