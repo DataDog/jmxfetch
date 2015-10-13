@@ -34,4 +34,6 @@ public interface SimpleTestJavaAppMBean {
 
     float getPrimitiveFloat();
 
+    Float getInstanceFloat();
+
 }

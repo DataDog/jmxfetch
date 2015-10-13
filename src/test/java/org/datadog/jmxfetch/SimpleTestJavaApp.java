@@ -107,4 +107,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     public float getPrimitiveFloat(){
         return primitiveFloat;
     }
+
+    public Float getInstanceFloat(){
+        return instanceFloat;
+    }
 }

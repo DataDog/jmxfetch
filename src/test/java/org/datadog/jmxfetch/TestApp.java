@@ -66,8 +66,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 27 = 13 metrics from java.lang + 13 metrics implicitly defined
-        assertEquals(27, metrics.size());
+        // First filter 28 = 13 metrics from java.lang + 15 metrics implicitly defined
+        assertEquals(28, metrics.size());
     }
 
     @Test
@@ -258,7 +258,7 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        assertEquals(26, metrics.size()); // 26 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + the 8 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
+        assertEquals(27, metrics.size()); // 27 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + the 9 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
         ArrayList<String> commonTags = new ArrayList<String>() {{
@@ -281,12 +281,13 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertCoverage();
 
         // We run a second collection. The counter should now be present
         run();
         metrics = getMetrics();
-        assertEquals(28, metrics.size()); // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 8 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(29, metrics.size()); // 29 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // We test for the same metrics but this time, the counter should be here
         // Previous metrics
@@ -304,6 +305,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
 
         // Counters
         assertMetric("subattr.counter", 0.0, commonTags, 5);
@@ -317,7 +319,7 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        assertEquals(metrics.size(), 28); // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 8 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(metrics.size(), 29); // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected + 2 counter, see jmx.yaml in the test/resources folder
 
         // Previous metrics
         assertMetric("this.is.100", 100.0, commonTags, 8);
@@ -334,6 +336,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
 
         // Counter
         assertMetric("subattr.counter", 0.98, 1, commonTags, 5);
