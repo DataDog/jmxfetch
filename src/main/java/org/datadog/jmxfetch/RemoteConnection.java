@@ -61,7 +61,7 @@ public class RemoteConnection extends Connection {
 
     private JMXServiceURL getAddress(
             LinkedHashMap<String, Object> connectionParams) throws MalformedURLException {
-        return new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/" + this.path); 
+        return new JMXServiceURL("service:jmx:remoting-jmx://" + this.host + ":" + this.port +"/" + this.path);
     }
 
 
