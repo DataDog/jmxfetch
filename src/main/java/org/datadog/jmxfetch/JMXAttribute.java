@@ -221,8 +221,8 @@ public abstract class JMXAttribute {
         return false;
     }
 
+
     private boolean matchBeanName(Configuration configuration) {
-        boolean matchBeanAttr = true;
         Filter include = configuration.getInclude();
 
         if (!include.isEmptyBeanName() && !include.getBeanNames().contains(beanStringName)) {
@@ -233,26 +233,14 @@ public abstract class JMXAttribute {
             if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
                 continue;
             }
-            matchBeanAttr = false;
-
-            if (beanParameters.get(bean_attr) == null) {
-                continue;
-            }
 
             ArrayList<String> beanValues = include.getParameterValues(bean_attr);
 
-
-            for (String beanVal : beanValues) {
-                if (!beanParameters.get(bean_attr).equals(beanVal)) {
-                    continue;
+            if (beanParameters.get(bean_attr) == null || !(beanValues.contains(beanParameters.get(bean_attr)))){
+                    return false;
                 }
-                return true;
-            }
-            // We havent' found a match among our attribute values list
-            return false;
         }
-        // Returns true if all bean_attr belong to EXCLUDED_BEAN_PARAMS otherwise false
-        return matchBeanAttr;
+        return true;
     }
 
     private boolean excludeMatchBeanName(Configuration conf) {
