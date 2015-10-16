@@ -126,7 +126,7 @@ public class TestApp extends TestCommon {
     @Test
     public void testListParamsInclude() throws Exception {
         // We expose a few metrics through JMX
-        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=RightType");
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=bar,type=RightType");
 
         // Initializing application
         initApplication("jmx_list_params_include.yaml");
