@@ -9,6 +9,10 @@ instances:
         conf:
             - include:
                domain: org.datadog.jmxfetch.test
+               foo: bar
+               type: WrongType
+            - include:
+               domain: org.datadog.jmxfetch.test
                type:
                     - WrongType
                     - RightType

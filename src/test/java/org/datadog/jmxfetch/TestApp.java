@@ -126,7 +126,7 @@ public class TestApp extends TestCommon {
     @Test
     public void testListParamsInclude() throws Exception {
         // We expose a few metrics through JMX
-        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=RightType");
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=bar,type=RightType");
 
         // Initializing application
         initApplication("jmx_list_params_include.yaml");
@@ -276,7 +276,6 @@ public class TestApp extends TestCommon {
         assertMetric("test.boolean", 1.0, commonTags, 5);
         assertMetric("test.defaulted", 32.0, commonTags, 5);
         assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
@@ -299,7 +298,6 @@ public class TestApp extends TestCommon {
         assertMetric("test.converted", 5.0, commonTags, 5);
         assertMetric("test.boolean", 1.0, commonTags, 5);
         assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
         assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
@@ -330,7 +328,6 @@ public class TestApp extends TestCommon {
         assertMetric("test.converted", 5.0, commonTags, 5);
         assertMetric("test.boolean", 1.0, commonTags, 5);
         assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
         assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
