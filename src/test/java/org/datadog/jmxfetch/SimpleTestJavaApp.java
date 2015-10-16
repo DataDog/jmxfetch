@@ -7,19 +7,30 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
+    // Integers
     private final int shouldBe100 = 100;
     private final int shouldBe1000 = 1000;
+    private final Integer int424242 = new Integer(424242);
+    private final AtomicInteger atomic42 = new AtomicInteger(42);
+
     private int shouldBeCounter = 0;
+
+    // Floats & Long
+    private final float primitiveFloat = 123.4f;
+    private final Float instanceFloat = 567.8f;
+    private final AtomicLong atomic4242 = new AtomicLong(4242);
+    private final Long long42424242 = new Long(42424242);
+
+    // String
     private final String shouldBeConverted = "ShouldBe5";
     private final String shouldBeDefaulted = "DefaultMe";
+
+    // Others
     private final boolean shouldBeBoolean = true;
     private final HashMap<String, Integer> hashmap = new HashMap<String, Integer>();
-    private final AtomicInteger atomic42 = new AtomicInteger(42);
-    private final AtomicLong atomic4242 = new AtomicLong(4242);
     private final Object object1337 = new Double(13.37);
-    private final Long long42424242 = new Long(42424242);
-    private final Integer int424242 = new Integer(424242);
     private final BigDecimal numberBig = new BigDecimal(123456788901234567890.0);
+
 
     SimpleTestJavaApp() {
         hashmap.put("thisis0", 0);
@@ -93,5 +104,11 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         return int424242;
     }
 
+    public float getPrimitiveFloat(){
+        return primitiveFloat;
+    }
 
+    public Float getInstanceFloat(){
+        return instanceFloat;
+    }
 }

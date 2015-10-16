@@ -1,0 +1,23 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+                domain: org.datadog.jmxfetch.test
+                subType:
+                  - Uris
+                resource:
+                  - "\"/v1/MyMixUser/{userGuid}/{channelGuid}/tune\""
+                executionTimes:
+                  - MethodTimes
+
+            - include:
+                domain: org.datadog.jmxfetch.test
+                subType:
+                  - Uris
+                resource:
+                  - "\"/v1/MyMixUser/{userGuid}/{channelGuid}/clips/play\""
+                executionTimes:
+                  - MethodTimes

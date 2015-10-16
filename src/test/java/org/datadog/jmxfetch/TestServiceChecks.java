@@ -14,29 +14,21 @@ import java.util.LinkedList;
 
 import static org.junit.Assert.*;
 
-public class TestServiceChecks {
-
-    @BeforeClass
-    public static void init() {
-        CommonTestSetup.setupLogger();
-    }
+public class TestServiceChecks extends TestCommon {
 
     @Test
     public void testServiceCheckOK() throws Exception {
         // We expose a few metrics through JMX
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=ServiceCheckTest");
-        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        mbs.registerMBean(testApp, objectName);
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=ServiceCheckTest");
 
         // We do a first collection
-        AppConfig appConfig = new AppConfig();
-        App app = CommonTestSetup.initApp("jmx.yaml", appConfig);
+        initApplication("jmx.yaml");
 
-        app.doIteration();
-        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
         // Test that an OK service check status is sent
-        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+        LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
 
         assertEquals(1, serviceChecks.size());
         HashMap<String, Object> sc = serviceChecks.getFirst();
@@ -53,32 +45,26 @@ public class TestServiceChecks {
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 1);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
-        mbs.unregisterMBean(objectName);
     }
 
     @Test
     public void testServiceCheckWarning() throws Exception {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test:type=ServiceCheckTest");
-
         //  Test application
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
         // Populate it with a lot of metrics (>350) !
         testApp.populateHashMap(400);
 
         // Exposing a few metrics through JMX
-        mbs.registerMBean(testApp, objectName);
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=ServiceCheckTest");
 
-        AppConfig appConfig = new AppConfig();
-        App app = CommonTestSetup.initApp("too_many_metrics.yaml", appConfig);
+        initApplication("too_many_metrics.yaml");
 
         // JMX configuration should return > 350 metrics
-        app.doIteration();
-        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
+        run();
 
         // Test that an WARNING service check status is sent
-        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
-        LinkedList<HashMap<String, Object>> metrics = reporter.getMetrics();
+        LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
         assertTrue(metrics.size() >= 350 );
 
         assertEquals(1, serviceChecks.size());
@@ -99,24 +85,17 @@ public class TestServiceChecks {
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 1);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
-        mbs.unregisterMBean(objectName);
     }
 
     @Test
     public void testServiceCheckCRITICAL() throws Exception {
         // Test that a non-running service sends a critical service check
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName objectName = new ObjectName("org.datadog.jmxfetch.test_non_running:type=ServiceCheckTest2");
-        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        mbs.registerMBean(testApp, objectName);
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test_non_running:type=ServiceCheckTest2");
+        initApplication("non_running_process.yaml");
 
-        AppConfig appConfig = new AppConfig();
-
-        App app = CommonTestSetup.initApp("non_running_process.yaml", appConfig);
-        ConsoleReporter reporter = ((ConsoleReporter) appConfig.getReporter());
 
         // Test that a CRITICAL service check status is sent on initialization
-        LinkedList<HashMap<String, Object>> serviceChecks = reporter.getServiceChecks();
+        LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(1, serviceChecks.size());
 
         HashMap<String, Object> sc = serviceChecks.getFirst();
@@ -138,9 +117,9 @@ public class TestServiceChecks {
 
 
         // Test that a CRITICAL service check status is sent on iteration
-        app.doIteration();
+        run();
 
-        serviceChecks = reporter.getServiceChecks();
+        serviceChecks = getServiceChecks();
         assertEquals(1, serviceChecks.size());
 
         sc = serviceChecks.getFirst();
@@ -160,14 +139,13 @@ public class TestServiceChecks {
         assertEquals(scTags.length, 1);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
-        mbs.unregisterMBean(objectName);
     }
 
     @Test
     public void testServiceCheckCounter() throws Exception {
-        AppConfig appConfig = new AppConfig();
-        App app = CommonTestSetup.initApp("jmx.yaml", appConfig);
-        Reporter repo = appConfig.getReporter();
+        initApplication("jmx.yaml");
+
+        Reporter repo = getReporter();
 
         // Let's check that the counter is null
         assertEquals(0, repo.getServiceCheckCount("jmx"));
@@ -182,7 +160,7 @@ public class TestServiceChecks {
 
         // Let's check that each service check counter is reset after each app
         // app iteration
-        app.doIteration();
+        run();
         assertEquals(0, repo.getServiceCheckCount("jmx"));
     }
 

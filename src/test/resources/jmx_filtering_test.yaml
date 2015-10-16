@@ -1,0 +1,32 @@
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+
+
+init_config:
+  conf:
+    - include:
+        domain: org.glassfish.jersey
+        subType:
+          - Uris
+        resource:
+          - "\"/v1/MyMixUser/{userGuid}/{channelGuid}/tune\""
+        executionTimes:
+          - MethodTimes
+        # attribute:
+        #   "AverageTime[ms]_1m":
+        #     alias: jmx.siriusxm.sequencer.tune.ave_time
+        #     metric_type: gauge
+    - include:
+        domain: org.glassfish.jersey
+        subType:
+          - Uris
+        resource:
+          - "\"/v1/MyMixUser/{userGuid}/{channelGuid}/clips/play\""
+        executionTimes:
+          - MethodTimes
+        # attribute:
+        #   "AverageTime[ms]_1m":
+        #     alias: jmx.siriusxm.sequencer.play.ave_time
+        #     metric_type: gauge
+
