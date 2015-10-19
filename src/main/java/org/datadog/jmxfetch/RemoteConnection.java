@@ -17,6 +17,7 @@ public class RemoteConnection extends Connection {
     private String user;
     private String password;
     private String path = "jmxrmi";
+    private String jmx_url;
     private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
@@ -27,12 +28,13 @@ public class RemoteConnection extends Connection {
         port = (Integer) connectionParams.get("port");
         user = (String) connectionParams.get("user");
         password = (String) connectionParams.get("password");
+        jmx_url = (String) connectionParams.get("jmx_url");
         if (connectionParams.containsKey("path")){
             path = (String) connectionParams.get("path");
         }
         env = getEnv(connectionParams);
         address = getAddress(connectionParams);
-        
+
         String trustStorePath;
         String trustStorePassword;
         if (connectionParams.containsKey(TRUST_STORE_PATH_KEY)
@@ -42,7 +44,7 @@ public class RemoteConnection extends Connection {
             if (trustStorePath != null && trustStorePassword != null) {
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
-                
+
                 LOGGER.info("Setting trustStore path: " + trustStorePath + " and trustStorePassword");
             }
 
@@ -61,7 +63,10 @@ public class RemoteConnection extends Connection {
 
     private JMXServiceURL getAddress(
             LinkedHashMap<String, Object> connectionParams) throws MalformedURLException {
-        return new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/" + this.path); 
+        if (this.jmx_url != null) {
+            return new JMXServiceURL(this.jmx_url);
+        }
+        return new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port +"/" + this.path);
     }
 
 
