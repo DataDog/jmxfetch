@@ -56,6 +56,12 @@ public class TestApp extends TestCommon {
         }
     }
 
+    /**
+     * Check JMXFetch Cassandra metric aliasing logic, i.e. compliant with CASSANDRA-4009
+     * when `cassandra4009` flag is enabled, or default.
+     *
+     * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+     */
     @Test
     public void testCassandraBean() throws Exception {
         // We expose a few metrics through JMX
@@ -67,18 +73,31 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(14, metrics.size());
+        // 14 = 2*13 metrics from java.lang + 2*1 metric explicitly defined in the yaml config file
+        assertEquals(28, metrics.size());
 
+        // Assert compliancy with CASSANDRA-4009
         ArrayList<String> tags = new ArrayList<String>() {{
             add("type:ColumnFamily");
             add("keyspace:MyKeySpace");
             add("ColumnFamily:MyColumnFamily");
             add("jmx_domain:org.apache.cassandra.metrics");
-            add("instance:jmx_test_instance");
+            add("instance:jmx_first_instance");
         }};
 
         assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
+
+        // Default behavior
+        tags = new ArrayList<String>() {{
+            add("type:ColumnFamily");
+            add("scope:MyColumnFamily");
+            add("keyspace:MyKeySpace");
+            add("jmx_domain:org.apache.cassandra.metrics");
+            add("instance:jmx_second_instance");
+            add("name:PendingTasks");
+        }};
+
+        assertMetric("cassandra.metrics.should_be1000", tags, 6);
     }
 
     @Test

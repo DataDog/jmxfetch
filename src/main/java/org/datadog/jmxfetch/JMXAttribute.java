@@ -42,25 +42,28 @@ public abstract class JMXAttribute {
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
+    private Boolean cassandraAliasing;
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-            Connection connection, HashMap<String, String> instanceTags) {
+            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.matchingConf = null;
         this.connection = connection;
         this.attributeName = attribute.getName();
         this.beanStringName = beanName.toString();
+        this.cassandraAliasing = cassandraAliasing;
 
         // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
         String[] splitBeanName = beanStringName.split(":");
         String domain = splitBeanName[0];
         String beanParameters = splitBeanName[1];
-        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
-        LinkedList<String> beanParametersList = getBeanParametersList(instanceName, domain, beanParametersHash, instanceTags);
-
         this.domain = domain;
+
+        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
+        LinkedList<String> beanParametersList = getBeanParametersList(instanceName, beanParametersHash, instanceTags);
+
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = renameConflictingParameters(beanParametersList);
     }
@@ -80,12 +83,12 @@ public abstract class JMXAttribute {
         return beanParamsMap;
     }
 
-    private static LinkedList<String> getBeanParametersList(String instanceName, String domain, Map<String, String> beanParameters, HashMap<String, String> instanceTags) {
+    private LinkedList<String> getBeanParametersList(String instanceName, Map<String, String> beanParameters, HashMap<String, String> instanceTags) {
         LinkedList<String> beanTags = new LinkedList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
 
-        if (domain.equals(CASSANDRA_DOMAIN)) {
+        if (renameCassandraMetrics()) {
             beanTags.addAll(getCassandraBeanTags(beanParameters));
         } else {
             for (Map.Entry<String, String> param : beanParameters.entrySet()) {
@@ -117,6 +120,10 @@ public abstract class JMXAttribute {
         }
 
         return defaultTagsList;
+    }
+
+    protected Boolean renameCassandraMetrics(){
+        return cassandraAliasing && domain.equals(CASSANDRA_DOMAIN);
     }
 
     private static Collection<String> getCassandraBeanTags(Map<String, String> beanParameters) {

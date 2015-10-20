@@ -21,8 +21,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
     private String metricType;
 
     public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                              Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, beanName, instanceName, connection, instanceTags);
+                              Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing) {
+        super(attribute, beanName, instanceName, connection, instanceTags, cassandraAliasing);
     }
 
     @Override
@@ -105,7 +105,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
     }
 
     private String getCassandraAlias() {
-        if (getDomain().equals(CASSANDRA_DOMAIN)) {
+        if (renameCassandraMetrics()) {
             Map<String, String> beanParameters = getBeanParameters();
             String metricName = beanParameters.get("name");
             String attributeName = getAttributeName();
