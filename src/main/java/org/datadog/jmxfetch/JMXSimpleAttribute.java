@@ -91,7 +91,10 @@ public class JMXSimpleAttribute extends JMXAttribute {
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
             alias = conf.get("metric_prefix") + "." + getBeanStringName().split(":")[0] + "." + getAttributeName();
-        } else {
+        }
+
+        //If still null - generate generic alias,
+        if (alias == null) {
             alias = "jmx." + getBeanStringName().split(":")[0] + "." + getAttributeName();
         }
         alias = convertMetricName(alias);
