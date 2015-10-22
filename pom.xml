@@ -93,6 +93,11 @@
 			<artifactId>snakeyaml</artifactId>
 			<version>${snakeyaml.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-catalina-jmx-remote</artifactId>
+			<version>8.0.28</version>
+		</dependency>
 	</dependencies>
 	<scm>
 		<connection>scm:git:git@github.com:Datadog/jmxfetch.git</connection>
