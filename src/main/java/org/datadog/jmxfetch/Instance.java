@@ -85,10 +85,13 @@ public class Instance {
 
         // Generate an instance name that will be send as a tag with the metrics
         if (this.instanceName == null) {
-            if (this.yaml.get("process_name_regex") == null) {
+            if (this.yaml.get("process_name_regex") != null) {
+                this.instanceName = this.checkName + "-" + this.yaml.get("process_name_regex");
+            } else if (this.yaml.get("host") != null) {
                 this.instanceName = this.checkName + "-" + this.yaml.get("host") + "-" + this.yaml.get("port");
             } else {
-                this.instanceName = this.checkName + "-" + this.yaml.get("process_name_regex");
+                LOGGER.warn("Cannot determine a unique instance name. Please define a name in your instance configuration");
+                this.instanceName = this.checkName;
             }
         }
 
@@ -123,6 +126,8 @@ public class Instance {
     public String toString() {
         if (this.yaml.get("process_name_regex") != null) {
             return "process_regex: " + this.yaml.get("process_name_regex");
+        } else if (this.yaml.get("jmx_url") != null) {
+            return (String) this.yaml.get("jmx_url");
         } else {
             return this.yaml.get("host") + ":" + this.yaml.get("port");
         }
