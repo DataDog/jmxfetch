@@ -29,6 +29,8 @@ public class ConnectionManager {
     private static String generateKey(LinkedHashMap<String, Object> connectionParams) {
         if (connectionParams.get("process_name_regex") != null) {
             return (String) connectionParams.get("process_name_regex");
+        } else if (connectionParams.get("jmx_url") != null) {
+            return (String) connectionParams.get("jmx_url");
         }
         return connectionParams.get("host") + ":" + connectionParams.get("port") + ":" + connectionParams.get("user");
     }
