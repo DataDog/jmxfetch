@@ -1,0 +1,18 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_first_instance
+        cassandra_aliasing: true
+        conf:
+            - include:
+               bean: org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks
+               attribute:
+                    - ShouldBe100
+    -   process_name_regex: .*surefire.*
+        name: jmx_second_instance
+        conf:
+            - include:
+               bean: org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks
+               attribute:
+                    - ShouldBe1000

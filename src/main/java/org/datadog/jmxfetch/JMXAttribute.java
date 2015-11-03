@@ -3,6 +3,7 @@ package org.datadog.jmxfetch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -29,6 +30,7 @@ public abstract class JMXAttribute {
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
     private static final String DOT_UNDERSCORE = "_*\\._*";
+    protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
     private MBeanAttributeInfo attribute;
     private Connection connection;
     private ObjectName beanName;
@@ -40,48 +42,59 @@ public abstract class JMXAttribute {
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
+    private Boolean cassandraAliasing;
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-            Connection connection, HashMap<String, String> instanceTags) {
+            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.matchingConf = null;
         this.connection = connection;
         this.attributeName = attribute.getName();
         this.beanStringName = beanName.toString();
+        this.cassandraAliasing = cassandraAliasing;
 
         // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
         String[] splitBeanName = beanStringName.split(":");
         String domain = splitBeanName[0];
         String beanParameters = splitBeanName[1];
-        LinkedList<String> beanParametersList = getBeanParametersList(instanceName, domain, beanParameters, instanceTags);
-        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParametersList);
-
         this.domain = domain;
+
+        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
+        LinkedList<String> beanParametersList = getBeanParametersList(instanceName, beanParametersHash, instanceTags);
+
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = renameConflictingParameters(beanParametersList);
     }
 
-    public static HashMap<String, String> getBeanParametersHash(LinkedList<String> beanParameters) {
-        HashMap<String, String> beanParams = new HashMap<String, String>();
+    public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
+        String[] beanParameters = beanParametersString.split(",");
+        HashMap<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
         for (String param : beanParameters) {
-            String[] paramSplit = param.split(":");
+            String[] paramSplit = param.split("=");
             if (paramSplit.length > 1) {
-                beanParams.put(new String(paramSplit[0]), new String(paramSplit[1]));
+                beanParamsMap.put(new String(paramSplit[0]), new String(paramSplit[1]));
             } else {
-                beanParams.put(new String(paramSplit[0]), "");
+                beanParamsMap.put(new String(paramSplit[0]), "");
             }
         }
 
-        return beanParams;
+        return beanParamsMap;
     }
 
-
-    private static LinkedList<String> getBeanParametersList(String instanceName, String domain, String beanParameters, HashMap<String, String> instanceTags) {
-        LinkedList<String> beanTags = new LinkedList<String>(Arrays.asList(new String(beanParameters).replace("=", ":").split(",")));
+    private LinkedList<String> getBeanParametersList(String instanceName, Map<String, String> beanParameters, HashMap<String, String> instanceTags) {
+        LinkedList<String> beanTags = new LinkedList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
+
+        if (renameCassandraMetrics()) {
+            beanTags.addAll(getCassandraBeanTags(beanParameters));
+        } else {
+            for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+                beanTags.add(param.getKey() + ":" + param.getValue());
+            }
+        }
 
         if (instanceTags != null) {
             for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
@@ -107,6 +120,26 @@ public abstract class JMXAttribute {
         }
 
         return defaultTagsList;
+    }
+
+    protected Boolean renameCassandraMetrics(){
+        return cassandraAliasing && domain.equals(CASSANDRA_DOMAIN);
+    }
+
+    private static Collection<String> getCassandraBeanTags(Map<String, String> beanParameters) {
+        Collection<String> tags = new LinkedList<String>();
+        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+            if (param.getKey().equals("name")) {
+                //This is already in the alias
+                continue;
+            } else if (param.getKey().equals("scope")) {
+                String type = beanParameters.get("type");
+                tags.add(type + ":" + param.getValue());
+            } else {
+                tags.add(param.getKey() + ":" + param.getValue());
+            }
+        }
+        return tags;
     }
 
     static String convertMetricName(String metricName) {
@@ -343,5 +376,13 @@ public abstract class JMXAttribute {
 
     public static List<String> getExcludedBeanParams(){
         return EXCLUDED_BEAN_PARAMS;
+    }
+
+    protected String getDomain() {
+        return domain;
+    }
+
+    protected HashMap<String, String> getBeanParameters() {
+        return beanParameters;
     }
 }

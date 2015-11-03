@@ -151,9 +151,9 @@ public class TestCommon {
 
             if (mName.equals(name)) {
 
-                if (lowerBound.equals(-1) && upperBound.equals(-1)){
+                if (!value.equals(-1)){
                     assertEquals((Double)value.doubleValue(), mValue);
-                }else{
+                } else if (!lowerBound.equals(-1) || !upperBound.equals(-1)){
                     assertTrue(mValue > (Double)lowerBound.doubleValue());
                     assertTrue(mValue < (Double)upperBound.doubleValue());
                 }
@@ -185,8 +185,12 @@ public class TestCommon {
         assertMetric(name, value, tags, new ArrayList<String>(), countTags);
     }
 
-    public void assertMetric(String name,Number lowerBound, Number upperBound, ArrayList<String> tags, int countTags){
+    public void assertMetric(String name, Number lowerBound, Number upperBound, ArrayList<String> tags, int countTags){
         assertMetric(name, lowerBound, upperBound, tags, new ArrayList<String>(), countTags);
+    }
+
+    public void assertMetric(String name, ArrayList<String> tags, int countTags){
+        assertMetric(name, -1, tags, new ArrayList<String>(), countTags);
     }
 
     /**

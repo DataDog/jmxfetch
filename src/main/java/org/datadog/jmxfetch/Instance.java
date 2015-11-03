@@ -44,6 +44,7 @@ public class Instance {
     private boolean limitReached;
     private Connection connection;
     private AppConfig appConfig;
+    private Boolean cassandraAliasing;
 
 
     public Instance(Instance instance, AppConfig appConfig) {
@@ -93,6 +94,13 @@ public class Instance {
                 LOGGER.warn("Cannot determine a unique instance name. Please define a name in your instance configuration");
                 this.instanceName = this.checkName;
             }
+        }
+
+        // Alternative aliasing for CASSANDRA-4009 metrics
+        // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+        this.cassandraAliasing = (Boolean) yaml.get("cassandra_aliasing");
+        if (this.cassandraAliasing == null){
+            this.cassandraAliasing = false;
         }
 
         // In case the configuration to match beans is not specified in the "instance" parameter but in the initConfig one
@@ -221,7 +229,7 @@ public class Instance {
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
                     LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo simple type");
-                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags);
+                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo complex type");
                     jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
