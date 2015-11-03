@@ -1,6 +1,15 @@
 Changes
 =======
 
+# 0.9.0 / Unreleased
+
+#### Changes
+* [BUGFIX] Fix bean name matching logic: `OR`→`AND`. See [#81][]
+* [FEATURE] Support `float` and `java.lang.Float` attribute types as simple JMX attributes. See [#76][]
+* [FEATURE] Support Cassandra > 2.2 metric name structure (CASSANDRA-4009). See [#79][]
+* [FEATURE] Support custom JMX Service URL to connect to, on a per-instance basis. See [#80][]
+* [IMPROVEMENT] Assign generic alias if not defined. See [#78][]
+
 # 0.8.0 / 09-17-2015
 
 #### Changes
@@ -76,4 +85,9 @@ Changes
 [#67]: https://github.com/DataDog/jmxfetch/issues/67
 [#71]: https://github.com/DataDog/jmxfetch/issues/71
 [#73]: https://github.com/DataDog/jmxfetch/issues/73
+[#76]: https://github.com/DataDog/jmxfetch/issues/76
+[#78]: https://github.com/DataDog/jmxfetch/issues/78
+[#79]: https://github.com/DataDog/jmxfetch/issues/79
+[#80]: https://github.com/DataDog/jmxfetch/issues/80
+[#81]: https://github.com/DataDog/jmxfetch/issues/81
 [@coupacooke]: https://github.com/coupacooke
