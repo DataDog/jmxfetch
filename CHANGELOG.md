@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.9.0 / Unreleased
+# 0.9.0 / 11-05-2015
 
 #### Changes
 * [BUGFIX] Fix bean name matching logic: `OR`→`AND`. See [#81][]
