@@ -166,6 +166,8 @@ public class Instance {
                 if (this.failingAttributes.contains(jmxAttr)) {
                     this.failingAttributes.remove(jmxAttr);
                 }
+            } catch (IOException e) {
+                throw e;
             } catch (Exception e) {
                 LOGGER.debug("Cannot get metrics for attribute: " + jmxAttr, e);
                 if (this.failingAttributes.contains(jmxAttr)) {
