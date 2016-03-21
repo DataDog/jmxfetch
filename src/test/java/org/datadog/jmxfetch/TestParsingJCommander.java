@@ -122,6 +122,33 @@ public class TestParsingJCommander {
         appConfig = testCommand(params);
         assertNotNull(appConfig.getReporter());
         assertTrue(appConfig.getReporter() instanceof StatsdReporter);
+        assertEquals("localhost", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
+        assertEquals(10, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
+
+        // statsd reporter with custom ipv4 host
+        params = new String[]{
+                "--reporter", "statsd:127.0.0.1:10",
+                "--check", SINGLE_CHECK,
+                "--conf_directory", CONF_DIR,
+                AppConfig.ACTION_COLLECT
+        };
+        appConfig = testCommand(params);
+        assertNotNull(appConfig.getReporter());
+        assertTrue(appConfig.getReporter() instanceof StatsdReporter);
+        assertEquals("127.0.0.1", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
+        assertEquals(10, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
+
+        // statsd reporter with custom ipv6 host
+        params = new String[]{
+                "--reporter", "statsd:[::1]:10",
+                "--check", SINGLE_CHECK,
+                "--conf_directory", CONF_DIR,
+                AppConfig.ACTION_COLLECT
+        };
+        appConfig = testCommand(params);
+        assertNotNull(appConfig.getReporter());
+        assertTrue(appConfig.getReporter() instanceof StatsdReporter);
+        assertEquals("[::1]", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
         assertEquals(10, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
 
         // invalid reporter
@@ -135,7 +162,7 @@ public class TestParsingJCommander {
             testCommand(params);
             fail("Should have failed because reporter is invalid");
         } catch (ParameterException pe) {
-            assertEquals("Parameter --reporter should be either 'console' or 'statsd:[STATSD_PORT]'", pe.getMessage());
+            assertEquals("Parameter --reporter should be either 'console', 'statsd:[STATSD_PORT]' or 'statsd:[STATSD_HOST]:[STATSD_PORT]'", pe.getMessage());
         }
 
         // invalid port

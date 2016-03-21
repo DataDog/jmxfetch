@@ -10,17 +10,19 @@ import org.datadog.jmxfetch.Status;
 public class StatsdReporter extends Reporter {
 
     private StatsDClient statsDClient;
+    private String statsdHost;
     private int statsdPort;
     private long initializationTime;
 
-    public StatsdReporter(int statsdPort) {
+    public StatsdReporter(String statsdHost, int statsdPort) {
+        this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
         this.init();
     }
 
     private void init() {
         initializationTime = System.currentTimeMillis();
-        statsDClient = new NonBlockingStatsDClient(null, "localhost", this.statsdPort, new String[]{});
+        statsDClient = new NonBlockingStatsDClient(null, this.statsdHost, this.statsdPort, new String[]{});
     }
 
     protected void sendMetricPoint(String metricName, double value, String[] tags) {
@@ -69,6 +71,10 @@ public class StatsdReporter extends Reporter {
     @Override
     public void displayInstanceName(Instance instance) {
         throw new UnsupportedOperationException();
+    }
+
+    public String getStatsdHost() {
+        return statsdHost;
     }
 
     public int getStatsdPort() {

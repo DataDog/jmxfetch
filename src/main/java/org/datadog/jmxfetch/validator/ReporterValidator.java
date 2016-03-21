@@ -10,7 +10,8 @@ public class ReporterValidator implements IParameterValidator {
 
     public void validate(String name, String value) throws ParameterException {
         if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) {
-            String port = new String(value.split(":")[1]);
+            String[] splitValue = value.split(":");
+            String port = splitValue[splitValue.length - 1];
             try {
                 positiveIntegerValidator.validate(name, port);
             } catch (ParameterException pe) {
@@ -19,7 +20,7 @@ public class ReporterValidator implements IParameterValidator {
             return;
         }
         if (!value.equals("console")) {
-            throw new ParameterException("Parameter " + name + " should be either 'console' or 'statsd:[STATSD_PORT]'");
+            throw new ParameterException("Parameter " + name + " should be either 'console', 'statsd:[STATSD_PORT]' or 'statsd:[STATSD_HOST]:[STATSD_PORT]'");
         }
     }
 }
