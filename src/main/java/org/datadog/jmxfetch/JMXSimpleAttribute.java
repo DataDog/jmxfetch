@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -89,7 +91,15 @@ public class JMXSimpleAttribute extends JMXAttribute {
             return alias;
         } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
-            alias = attribute.get(getAttribute().getName()).get("alias");
+            if (attribute.get(getAttribute().getName()).get("alias_match") != null) {
+              Pattern p = Pattern.compile(attribute.get(getAttribute().getName()).get("alias_match"));
+              Matcher m = p.matcher(getBeanName().getCanonicalName() + "." + getAttribute().getName());
+              if (m.find()) {
+                alias = m.replaceFirst(attribute.get(getAttribute().getName()).get("alias"));
+              }
+            } else {
+              alias = attribute.get(getAttribute().getName()).get("alias");
+            }
         } else if (conf.get("metric_prefix") != null) {
             alias = conf.get("metric_prefix") + "." + getDomain() + "." + getAttributeName();
         } else if (getDomain().startsWith("org.apache.cassandra")) {

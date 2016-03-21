@@ -342,6 +342,10 @@ public abstract class JMXAttribute {
         return attribute;
     }
 
+    public ObjectName getBeanName() {
+      return beanName;
+    }
+
     @SuppressWarnings("unchecked")
     protected String[] getTags() {
         if(tags != null) {
