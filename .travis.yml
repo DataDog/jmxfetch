@@ -6,3 +6,6 @@ jdk:
 notifications:
   slack:
     secure: bUPdpDtrBYvlJ93AmfqvPU6ZSZhFHZJiIoNf0bXJVNZyxp2rjfMC8BG6XkesbKk62s7NJM0yfZhhLAzjNG3tSA9iL5i3npbl8kRaUi2zEDOCEG0zZ+FX2NxTiNH937S6QRmCBHe9/KEkSRuMY3HNRUidAq8w6dVCrWxxj5NwxjU=
+
+addons:
+  hostname: dd-jmxfetch-testhost
