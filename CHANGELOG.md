@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.10.0 / 03-23-2016
+
+#### Changes
+* [FEATURE] Allow configuration of StatsD host. See [#85][]
+* [IMPROVEMENT] Re-throw IOException caught at the instance-level to handle them properly. See [#83][]
+
 # 0.9.0 / 11-05-2015
 
 #### Changes
@@ -90,4 +96,6 @@ Changes
 [#79]: https://github.com/DataDog/jmxfetch/issues/79
 [#80]: https://github.com/DataDog/jmxfetch/issues/80
 [#81]: https://github.com/DataDog/jmxfetch/issues/81
+[#83]: https://github.com/DataDog/jmxfetch/issues/83
+[#85]: https://github.com/DataDog/jmxfetch/issues/85
 [@coupacooke]: https://github.com/coupacooke
