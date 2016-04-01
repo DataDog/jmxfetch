@@ -15,6 +15,7 @@ import java.util.LinkedList;
 public abstract class Reporter {
 
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
+    public static final String VALUE = "value";
 
     private HashMap<String, Integer> serviceCheckCount;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
@@ -60,7 +61,7 @@ public abstract class Reporter {
             // We need to edit metrics for legacy reasons (rename metrics, etc)
             HashMap<String, Object> metric = new HashMap<String, Object>(m);
 
-            Double currentValue = (Double) metric.get("value");
+            Double currentValue = (Double) metric.get(VALUE);
             if (currentValue.isNaN() || currentValue.isInfinite()) {
                 continue;
             }
@@ -75,13 +76,13 @@ public abstract class Reporter {
                 if (!instanceRatesAggregator.containsKey(key)) {
                     HashMap<String, Object> rateInfo = new HashMap<String, Object>();
                     rateInfo.put("ts", System.currentTimeMillis());
-                    rateInfo.put("value", currentValue);
+                    rateInfo.put(VALUE, currentValue);
                     instanceRatesAggregator.put(key, rateInfo);
                     continue;
                 }
 
                 long oldTs = (Long) instanceRatesAggregator.get(key).get("ts");
-                double oldValue = (Double) instanceRatesAggregator.get(key).get("value");
+                double oldValue = (Double) instanceRatesAggregator.get(key).get(VALUE);
 
                 long now = System.currentTimeMillis();
                 double rate = 1000 * (currentValue - oldValue) / (now - oldTs);
@@ -91,7 +92,7 @@ public abstract class Reporter {
                 }
 
                 instanceRatesAggregator.get(key).put("ts", now);
-                instanceRatesAggregator.get(key).put("value", currentValue);
+                instanceRatesAggregator.get(key).put(VALUE, currentValue);
             } else { // The metric is a gauge
                 sendMetricPoint(metricName, currentValue, tags);
             }
