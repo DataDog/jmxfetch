@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-import org.apache.commons.io.FileUtils;
 
 public class Status {
 

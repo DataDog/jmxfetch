@@ -1,11 +1,12 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import com.timgroup.statsd.ServiceCheck;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JMXAttribute;
 import org.datadog.jmxfetch.Status;
+
+import com.timgroup.statsd.NonBlockingStatsDClient;
+import com.timgroup.statsd.ServiceCheck;
+import com.timgroup.statsd.StatsDClient;
 
 public class StatsdReporter extends Reporter {
 

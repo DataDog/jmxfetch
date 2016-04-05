@@ -1,18 +1,21 @@
 package org.datadog.jmxfetch;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
-import com.google.common.base.Joiner;
+import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.StatsdReporter;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static junit.framework.TestCase.fail;
-import static org.junit.Assert.*;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
+import com.google.common.base.Joiner;
 
 public class TestParsingJCommander {
 

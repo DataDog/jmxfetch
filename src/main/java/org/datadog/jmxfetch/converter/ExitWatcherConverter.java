@@ -1,7 +1,8 @@
 package org.datadog.jmxfetch.converter;
 
-import com.beust.jcommander.IStringConverter;
 import org.datadog.jmxfetch.ExitWatcher;
+
+import com.beust.jcommander.IStringConverter;
 
 public class ExitWatcherConverter implements IStringConverter<ExitWatcher> {
 
