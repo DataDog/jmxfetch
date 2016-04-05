@@ -56,9 +56,10 @@ public abstract class JMXAttribute {
 
         // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
-        String[] splitBeanName = beanStringName.split(":");
-        String domain = splitBeanName[0];
-        String beanParameters = splitBeanName[1];
+        //Note: some beans have a ':' in the name. Example:  some.domain:name="some.bean.0.0.0.0:80.some-metric"
+        int splitPosition = beanStringName.indexOf(':');
+       	String domain = beanStringName.substring(0, splitPosition);
+       	String beanParameters = beanStringName.substring(splitPosition+1);
         this.domain = domain;
 
         HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
