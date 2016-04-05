@@ -20,10 +20,15 @@ import static org.junit.Assert.*;
 
 public class TestApp extends TestCommon {
 
+
+    /**
+     * Tag metrics with MBeans parameters.
+     *
+     */
     @Test
     public void testBeanTags() throws Exception {
         // We expose a few metrics through JMX
-        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=CoolScope,host=localhost,component=");
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=Co|olScope,host=localhost,component=");
         initApplication("jmx_bean_tags.yaml");
 
         // Collecting metrics
@@ -34,26 +39,16 @@ public class TestApp extends TestCommon {
         assertEquals(14, metrics.size());
 
 
-        // Fetching our 'defined' metric tags
-        for (HashMap<String, Object> m : metrics) {
-            String name = (String) (m.get("name"));
-            if(!name.equals("this.is.100")){
-                continue;
-            }
-            String[] tags = (String[]) (m.get("tags"));
-            Set<String> tagsSet = new HashSet<String>(Arrays.asList(tags));
+        ArrayList<String> tags = new ArrayList<String>() {{
+            add("type:SimpleTestJavaApp");
+            add("scope:CoolScope");
+            add("instance:jmx_test_instance");
+            add("jmx_domain:org.datadog.jmxfetch.test");
+            add("bean_host:localhost");
+            add("component");
+        }};
 
-            // We should find bean parameters as tags
-            assertEquals(6, tags.length);
-            assertEquals(true, tagsSet.contains("type:SimpleTestJavaApp"));
-            assertEquals(true, tagsSet.contains("scope:CoolScope"));
-            assertEquals(true, tagsSet.contains("instance:jmx_test_instance"));
-            assertEquals(true, tagsSet.contains("jmx_domain:org.datadog.jmxfetch.test"));
-            // Special case of the 'host' parameter which tag is renamed to 'bean_host'
-            assertEquals(true, tagsSet.contains("bean_host:localhost"));
-            // Empty values should also be added as tags, without the colon
-            assertEquals(true, tagsSet.contains("component"));
-        }
+        assertMetric("this.is.100", tags, 6);
     }
 
     /**
