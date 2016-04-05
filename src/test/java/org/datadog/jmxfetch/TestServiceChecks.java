@@ -1,18 +1,16 @@
 package org.datadog.jmxfetch;
 
-import org.datadog.jmxfetch.reporter.ConsoleReporter;
-import org.datadog.jmxfetch.reporter.Reporter;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import static org.junit.Assert.*;
+import org.datadog.jmxfetch.reporter.Reporter;
+import org.junit.Test;
 
 public class TestServiceChecks extends TestCommon {
 

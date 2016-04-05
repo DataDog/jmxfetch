@@ -1,8 +1,8 @@
 package org.datadog.jmxfetch;
 
-import org.datadog.jmxfetch.reporter.ConsoleReporter;
-import org.datadog.jmxfetch.reporter.Reporter;
-import org.datadog.jmxfetch.util.CustomLogger;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -15,18 +15,20 @@ import java.util.Set;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
-import javax.management.MalformedObjectNameException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+
+import org.apache.log4j.Level;
+import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.util.CustomLogger;
 import org.junit.After;
 import org.junit.BeforeClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+
 import com.beust.jcommander.JCommander;
-import org.apache.log4j.Level;
 
 
 public class TestCommon {
@@ -140,7 +142,7 @@ public class TestCommon {
      *
      * @return                  fail if the metric was not found
      */
-    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, ArrayList<String> commonTags, ArrayList<String> additionalTags, int countTags){
+    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags){
         List<String> tags = new ArrayList<String>(commonTags);
         tags.addAll(additionalTags);
 
@@ -173,23 +175,23 @@ public class TestCommon {
         fail("Metric assertion failed (name: "+name+", value: "+value+", tags: "+tags+", #tags: "+countTags+").");
     }
 
-    public void assertMetric(String name, Number value, ArrayList<String> commonTags, ArrayList<String> additionalTags, int countTags){
+    public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags){
         assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags);
     }
 
-    public void assertMetric(String name, Number lowerBound, Number upperBound, ArrayList<String> commonTags, ArrayList<String> additionalTags, int countTags){
+    public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags){
         assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags);
     }
 
-    public void assertMetric(String name, Number value, ArrayList<String> tags, int countTags){
+    public void assertMetric(String name, Number value, List<String> tags, int countTags){
         assertMetric(name, value, tags, new ArrayList<String>(), countTags);
     }
 
-    public void assertMetric(String name, Number lowerBound, Number upperBound, ArrayList<String> tags, int countTags){
+    public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> tags, int countTags){
         assertMetric(name, lowerBound, upperBound, tags, new ArrayList<String>(), countTags);
     }
 
-    public void assertMetric(String name, ArrayList<String> tags, int countTags){
+    public void assertMetric(String name, List<String> tags, int countTags){
         assertMetric(name, -1, tags, new ArrayList<String>(), countTags);
     }
 
@@ -204,8 +206,8 @@ public class TestCommon {
 
         for (HashMap<String, Object> m: metrics) {
             String mName = (String) (m.get("name"));
-            Double mValue = (Double) (m.get("value"));
-            Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
+            //Double mValue = (Double) (m.get("value"));
+            //Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
 
             // Exclusion logic
             if (mName.startsWith("jvm.")) {

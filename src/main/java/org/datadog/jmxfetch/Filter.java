@@ -1,9 +1,8 @@
 package org.datadog.jmxfetch;
 
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
-import java.lang.ClassCastException;
 import java.util.regex.Pattern;
 
 
