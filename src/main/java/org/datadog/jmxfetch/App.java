@@ -28,6 +28,7 @@ import com.beust.jcommander.ParameterException;
 @SuppressWarnings("unchecked")
 public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
+    public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static int loopCounter;
     private HashMap<String, YamlParser> configs;
     private ArrayList<Instance> instances = new ArrayList<Instance>();
@@ -242,16 +243,16 @@ public class App {
                 String warning = null;
 
                 if(e instanceof IOException ) {
-                    warning = "Cannot connect to instance " + instance + ". Is a JMX Server running at this address?";
+                    warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". Is a JMX Server running at this address?";
                     LOGGER.warn(warning);
                 } else if (e instanceof SecurityException) {
-                    warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
+                    warning = CANNOT_CONNECT_TO_INSTANCE + instance + " because of bad credentials. Please check your credentials";
                     LOGGER.warn(warning);
                 } else if (e instanceof FailedLoginException) {
-                    warning = "Cannot connect to instance " + instance + " because of bad credentials. Please check your credentials";
+                    warning = CANNOT_CONNECT_TO_INSTANCE + instance + " because of bad credentials. Please check your credentials";
                     LOGGER.warn(warning);
                 } else {
-                    warning = "Cannot connect to instance " + instance + " for an unknown reason." + e.getMessage();
+                    warning = CANNOT_CONNECT_TO_INSTANCE + instance + " for an unknown reason." + e.getMessage();
                     LOGGER.fatal(warning, e);
                 }
 
@@ -355,7 +356,7 @@ public class App {
                 } catch (IOException e) {
                     instance.cleanUp();
                     brokenInstances.add(instance);
-                    String warning = "Cannot connect to instance " + instance + " " + e.getMessage();
+                    String warning = CANNOT_CONNECT_TO_INSTANCE + instance + " " + e.getMessage();
                     this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);

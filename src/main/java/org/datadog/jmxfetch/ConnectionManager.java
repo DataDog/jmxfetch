@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
  */
 public class ConnectionManager {
     private final static Logger LOGGER = Logger.getLogger(ConnectionManager.class.getName());
+    public static final String PROCESS_NAME_REGEX = "process_name_regex";
     private static ConnectionManager connectionManager = null;
     private HashMap<String, Connection> cache;
 
@@ -27,8 +28,8 @@ public class ConnectionManager {
     }
 
     private static String generateKey(LinkedHashMap<String, Object> connectionParams) {
-        if (connectionParams.get("process_name_regex") != null) {
-            return (String) connectionParams.get("process_name_regex");
+        if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
+            return (String) connectionParams.get(PROCESS_NAME_REGEX);
         } else if (connectionParams.get("jmx_url") != null) {
             return (String) connectionParams.get("jmx_url");
         }
@@ -36,7 +37,7 @@ public class ConnectionManager {
     }
 
     private Connection createConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
-        if (connectionParams.get("process_name_regex") != null) {
+        if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
             try {
                 Class.forName( "com.sun.tools.attach.AttachNotSupportedException" );
             } catch (ClassNotFoundException e) {

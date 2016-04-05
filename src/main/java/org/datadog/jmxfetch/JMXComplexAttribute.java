@@ -19,6 +19,8 @@ import javax.management.openmbean.CompositeData;
 @SuppressWarnings("unchecked")
 public class JMXComplexAttribute extends JMXAttribute {
 
+    public static final String ALIAS = "alias";
+    public static final String METRIC_TYPE = "metric_type";
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
     public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
@@ -53,12 +55,12 @@ public class JMXComplexAttribute extends JMXAttribute {
             String subAttribute = pair.getKey();
             HashMap<String, Object> metric = pair.getValue();
 
-            if (metric.get("alias") == null) {
-                metric.put("alias", convertMetricName(getAlias(subAttribute)));
+            if (metric.get(ALIAS) == null) {
+                metric.put(ALIAS, convertMetricName(getAlias(subAttribute)));
             }
 
-            if (metric.get("metric_type") == null) {
-                metric.put("metric_type", getMetricType(subAttribute));
+            if (metric.get(METRIC_TYPE) == null) {
+                metric.put(METRIC_TYPE, getMetricType(subAttribute));
             }
 
             if (metric.get("tags") == null) {
@@ -97,7 +99,7 @@ public class JMXComplexAttribute extends JMXAttribute {
         Filter include = getMatchingConf().getInclude();
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
-            metricType = attribute.get(subAttributeName).get("metric_type");
+            metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(subAttributeName).get("type");
             }
@@ -116,7 +118,7 @@ public class JMXComplexAttribute extends JMXAttribute {
         Filter include = getMatchingConf().getInclude();
         LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get("alias");
+            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get(ALIAS);
         } else if (conf.get("metric_prefix") != null) {
             return conf.get("metric_prefix") + "." + getDomain() + "." + subAttributeName;
         }

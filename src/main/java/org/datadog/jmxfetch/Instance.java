@@ -27,6 +27,8 @@ public class Instance {
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
     private final static int MAX_RETURNED_METRICS = 350;
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
+    public static final String PROCESS_NAME_REGEX = "process_name_regex";
+    public static final String ATTRIBUTE = "Attribute: ";
 
     private Set<ObjectName> beans;
     private LinkedList<String> beanScopes;
@@ -86,8 +88,8 @@ public class Instance {
 
         // Generate an instance name that will be send as a tag with the metrics
         if (this.instanceName == null) {
-            if (this.yaml.get("process_name_regex") != null) {
-                this.instanceName = this.checkName + "-" + this.yaml.get("process_name_regex");
+            if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
+                this.instanceName = this.checkName + "-" + this.yaml.get(PROCESS_NAME_REGEX);
             } else if (this.yaml.get("host") != null) {
                 this.instanceName = this.checkName + "-" + this.yaml.get("host") + "-" + this.yaml.get("port");
             } else {
@@ -132,8 +134,8 @@ public class Instance {
 
     @Override
     public String toString() {
-        if (this.yaml.get("process_name_regex") != null) {
-            return "process_regex: " + this.yaml.get("process_name_regex");
+        if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
+            return "process_regex: " + this.yaml.get(PROCESS_NAME_REGEX);
         } else if (this.yaml.get("jmx_url") != null) {
             return (String) this.yaml.get("jmx_url");
         } else {
@@ -230,14 +232,14 @@ public class Instance {
                 JMXAttribute jmxAttribute;
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
-                    LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo simple type");
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo simple type");
                     jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has attributeInfo complex type");
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo complex type");
                     jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else {
                     try {
-                        LOGGER.debug("Attribute: " + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
+                        LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
                     } catch (NullPointerException e) {
                         LOGGER.warn("Caught unexpected NullPointerException");
                     }
