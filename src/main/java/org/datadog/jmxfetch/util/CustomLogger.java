@@ -37,4 +37,5 @@ public class CustomLogger {
         }
     }
 
+    private CustomLogger() {}
 } 

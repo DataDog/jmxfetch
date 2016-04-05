@@ -23,4 +23,6 @@ public class ReporterFactory {
             throw new IllegalArgumentException("Invalid reporter type: " + type);
         }
     }
+
+    private ReporterFactory() {}
 }
