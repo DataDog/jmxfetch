@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
@@ -63,7 +64,11 @@ public class Connection {
     }
 
     public Object getAttribute(ObjectName objectName, String attributeName) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-        return mbs.getAttribute(objectName, attributeName);
+        Object o = mbs.getAttribute(objectName, attributeName);
+        if (o instanceof javax.management.Attribute){
+            return ((Attribute)o).getValue();
+        }
+        return o;
     }
 
     /**
