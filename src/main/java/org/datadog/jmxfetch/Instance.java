@@ -191,7 +191,7 @@ public class Instance {
 
         this.matchingAttributes.clear();
         this.failingAttributes.clear();
-        int metricsCount = 0;
+        int metricMatchCount = 0;
 
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
@@ -217,7 +217,7 @@ public class Instance {
 
             for (MBeanAttributeInfo attributeInfo : attributeInfos) {
 
-                if (metricsCount >= maxReturnedMetrics) {
+                if (metricMatchCount >= maxReturnedMetrics) {
                     limitReached = true;
                     if (action.equals(AppConfig.ACTION_COLLECT)) {
                         LOGGER.warn("Maximum number of metrics reached.");
@@ -252,14 +252,14 @@ public class Instance {
                     try {
                         if (jmxAttribute.match(conf)) {
                             jmxAttribute.setMatchingConf(conf);
-                            metricsCount += jmxAttribute.getMetricsCount();
+                            metricMatchCount += 1;
                             this.matchingAttributes.add(jmxAttribute);
 
                             if (action.equals(AppConfig.ACTION_LIST_EVERYTHING) ||
                                     action.equals(AppConfig.ACTION_LIST_MATCHING) ||
                                     action.equals(AppConfig.ACTION_LIST_COLLECTED) && !limitReached ||
                                     action.equals(AppConfig.ACTION_LIST_LIMITED) && limitReached) {
-                                reporter.displayMatchingAttributeName(jmxAttribute, metricsCount, maxReturnedMetrics);
+                                reporter.displayMatchingAttributeName(jmxAttribute, metricMatchCount, maxReturnedMetrics);
                             }
                             break;
                         }
