@@ -65,7 +65,7 @@ public abstract class JMXAttribute {
         LinkedList<String> beanParametersList = getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
-        this.defaultTagsList = renameConflictingParameters(beanParametersList);
+        this.defaultTagsList = sanitizeParameters(beanParametersList);
     }
 
     public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
@@ -105,10 +105,18 @@ public abstract class JMXAttribute {
         return beanTags;
     }
 
-    private static LinkedList<String> renameConflictingParameters(LinkedList<String> beanParametersList) {
+    /**
+     * Sanitize MBean parameter names and values, i.e.
+     * - Rename parameter names conflicting with existing tags
+     * - Remove illegal characters
+     */
+    private static LinkedList<String> sanitizeParameters(LinkedList<String> beanParametersList) {
         LinkedList<String> defaultTagsList = new LinkedList<String>();
-        for (String beanParameter: beanParametersList) {
-            // the 'host' parameter is renamed to 'bean_host'
+        for (String rawBeanParameter: beanParametersList) {
+            // Remove `|` characters
+            String beanParameter = rawBeanParameter.replace("|", "");
+
+            // 'host' parameter is renamed to 'bean_host'
             if (beanParameter.startsWith("host:")) {
                 defaultTagsList.add("bean_host:" + beanParameter.substring("host:".length()));
             } else if (beanParameter.endsWith(":")) {
