@@ -1,7 +1,8 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.google.common.base.Joiner;
 import java.util.Arrays;
+
+import com.google.common.base.Joiner;
 
 public class ReporterFactory {
 

@@ -1,5 +1,8 @@
 package org.datadog.jmxfetch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,8 +16,6 @@ import java.util.Set;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class TestConfiguration {
 	static LinkedList<Configuration> configurations = new LinkedList<Configuration>();
@@ -48,6 +49,7 @@ public class TestConfiguration {
 	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testFiltersByDomain() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		// Private method reflection
@@ -74,6 +76,7 @@ public class TestConfiguration {
 	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testCommonBeanKeys() throws FileNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		// Private method reflection
@@ -107,6 +110,7 @@ public class TestConfiguration {
 	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testCommonScope() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		// Private method reflection
