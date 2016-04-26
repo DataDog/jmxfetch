@@ -313,10 +313,12 @@ public class Instance {
     }
 
     public String[] getServiceCheckTags() {
-
         List<String> tags = new ArrayList<String>();
         if (this.yaml.get("host") != null) {
             tags.add("jmx_server:" + this.yaml.get("host"));
+        }
+        if (this.tags != null) {
+            tags.addAll(this.tags.values());
         }
         tags.add("instance:" + this.instanceName);
         return tags.toArray(new String[tags.size()]);
