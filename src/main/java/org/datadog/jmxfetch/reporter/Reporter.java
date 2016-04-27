@@ -1,15 +1,14 @@
 package org.datadog.jmxfetch.reporter;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JMXAttribute;
-import org.apache.commons.lang.StringUtils;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.lang.Integer;
-import java.util.LinkedList;
 
 
 public abstract class Reporter {

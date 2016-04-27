@@ -1,22 +1,18 @@
 package org.datadog.jmxfetch;
 
-import org.datadog.jmxfetch.reporter.ConsoleReporter;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class TestApp extends TestCommon {
 
@@ -39,14 +35,14 @@ public class TestApp extends TestCommon {
         assertEquals(14, metrics.size());
 
 
-        ArrayList<String> tags = new ArrayList<String>() {{
-            add("type:SimpleTestJavaApp");
-            add("scope:CoolScope");
-            add("instance:jmx_test_instance");
-            add("jmx_domain:org.datadog.jmxfetch.test");
-            add("bean_host:localhost");
-            add("component");
-        }};
+        List<String> tags = Arrays.asList(
+            "type:SimpleTestJavaApp",
+            "scope:CoolScope",
+            "instance:jmx_test_instance",
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "bean_host:localhost",
+            "component"
+        );
 
         assertMetric("this.is.100", tags, 6);
     }
@@ -72,25 +68,24 @@ public class TestApp extends TestCommon {
         assertEquals(28, metrics.size());
 
         // Assert compliancy with CASSANDRA-4009
-        ArrayList<String> tags = new ArrayList<String>() {{
-            add("type:ColumnFamily");
-            add("keyspace:MyKeySpace");
-            add("ColumnFamily:MyColumnFamily");
-            add("jmx_domain:org.apache.cassandra.metrics");
-            add("instance:jmx_first_instance");
-        }};
+        List<String> tags = Arrays.asList(
+            "type:ColumnFamily",
+            "keyspace:MyKeySpace",
+            "ColumnFamily:MyColumnFamily",
+            "jmx_domain:org.apache.cassandra.metrics",
+            "instance:jmx_first_instance"
+        );
 
         assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
 
         // Default behavior
-        tags = new ArrayList<String>() {{
-            add("type:ColumnFamily");
-            add("scope:MyColumnFamily");
-            add("keyspace:MyKeySpace");
-            add("jmx_domain:org.apache.cassandra.metrics");
-            add("instance:jmx_second_instance");
-            add("name:PendingTasks");
-        }};
+        tags = Arrays.asList(
+            "type:ColumnFamily",
+            "scope:MyColumnFamily",
+            "keyspace:MyKeySpace",
+            "jmx_domain:org.apache.cassandra.metrics",
+            "instance:jmx_second_instance",
+            "name:PendingTasks");
 
         assertMetric("cassandra.metrics.should_be1000", tags, 6);
     }
@@ -108,13 +103,12 @@ public class TestApp extends TestCommon {
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
         assertEquals(14, metrics.size());
 
-        ArrayList<String> tags = new ArrayList<String>() {{
-            add("type:ColumnFamilies");
-            add("keyspace:MyKeySpace");
-            add("columnfamily:MyColumnFamily");
-            add("jmx_domain:org.apache.cassandra.db");
-            add("instance:jmx_test_instance");
-        }};
+        List<String> tags = Arrays.asList(
+            "type:ColumnFamilies",
+            "keyspace:MyKeySpace",
+            "columnfamily:MyColumnFamily",
+            "jmx_domain:org.apache.cassandra.db",
+            "instance:jmx_test_instance");
 
         assertMetric("cassandra.db.should_be100", tags, 5);
     }
@@ -324,13 +318,12 @@ public class TestApp extends TestCommon {
         assertEquals(27, metrics.size()); // 27 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + the 9 gauges that is implicitly collected, see jmx.yaml in the test/resources folder
 
         // We test for the presence and the value of the metrics we want to collect
-        ArrayList<String> commonTags = new ArrayList<String>() {{
-            add("instance:jmx_test_instance");
-            add("env:stage");
-            add("newTag:test");
-        }};
+        List<String> commonTags = Arrays.asList(
+            "instance:jmx_test_instance",
+            "env:stage",
+            "newTag:test");
 
-        assertMetric("this.is.100", 100.0, commonTags, new ArrayList<String>() {{add("foo");add("gorch");add("bar:baz");}} , 8);
+        assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo","gorch","bar:baz") , 8);
         assertMetric("jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.long42424242",4.2424242E7, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);

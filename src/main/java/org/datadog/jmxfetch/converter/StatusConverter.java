@@ -1,7 +1,8 @@
 package org.datadog.jmxfetch.converter;
 
-import com.beust.jcommander.IStringConverter;
 import org.datadog.jmxfetch.Status;
+
+import com.beust.jcommander.IStringConverter;
 
 public class StatusConverter implements IStringConverter<Status> {
 

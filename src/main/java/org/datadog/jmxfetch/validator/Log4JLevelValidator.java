@@ -1,11 +1,11 @@
 package org.datadog.jmxfetch.validator;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.beust.jcommander.IParameterValidator;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Joiner;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class Log4JLevelValidator implements IParameterValidator {
     public static final List<String> LOG4J_LEVELS = Arrays.asList("ALL", "DEBUG", "ERROR", "FATAL",

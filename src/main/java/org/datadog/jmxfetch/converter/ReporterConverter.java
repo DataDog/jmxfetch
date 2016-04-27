@@ -1,8 +1,9 @@
 package org.datadog.jmxfetch.converter;
 
-import com.beust.jcommander.IStringConverter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.reporter.ReporterFactory;
+
+import com.beust.jcommander.IStringConverter;
 
 public class ReporterConverter implements IStringConverter<Reporter> {
 
