@@ -206,8 +206,6 @@ public class TestCommon {
 
         for (HashMap<String, Object> m: metrics) {
             String mName = (String) (m.get("name"));
-            //Double mValue = (Double) (m.get("value"));
-            //Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
 
             // Exclusion logic
             if (mName.startsWith("jvm.")) {

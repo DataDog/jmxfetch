@@ -35,14 +35,14 @@ public class TestApp extends TestCommon {
         assertEquals(14, metrics.size());
 
 
-        ArrayList<String> tags = new ArrayList<String>() {{
-            add("type:SimpleTestJavaApp");
-            add("scope:CoolScope");
-            add("instance:jmx_test_instance");
-            add("jmx_domain:org.datadog.jmxfetch.test");
-            add("bean_host:localhost");
-            add("component");
-        }};
+        List<String> tags = Arrays.asList(
+            "type:SimpleTestJavaApp",
+            "scope:CoolScope",
+            "instance:jmx_test_instance",
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "bean_host:localhost",
+            "component"
+        );
 
         assertMetric("this.is.100", tags, 6);
     }
