@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
@@ -24,6 +25,8 @@ import org.apache.log4j.Logger;
 
 public abstract class JMXAttribute {
 
+    protected static final String ALIAS = "alias";
+    protected static final String METRIC_TYPE = "metric_type";
     private final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
     private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean", "bean_regex", "attribute");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
@@ -31,6 +34,7 @@ public abstract class JMXAttribute {
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
     private static final String DOT_UNDERSCORE = "_*\\._*";
     protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
+
     private MBeanAttributeInfo attribute;
     private Connection connection;
     private ObjectName beanName;
@@ -354,6 +358,104 @@ public abstract class JMXAttribute {
     public ObjectName getBeanName() {
       return beanName;
     }
+
+    /**
+     * Get attribute alias.
+     *
+     * In order, tries to:
+     * * Use `alias_match` to generate an alias with a regular expression
+     * * Use `alias` directly
+     * * Create an generic alias prefixed with user's `metric_prefix` preference or default to `jmx`
+     *
+     * Argument(s):
+     * * (Optional) `field`
+     *   `Null` for `JMXSimpleAttribute`.
+     */
+    protected String getAlias(String field) {
+        String alias = null;
+
+        Filter include = getMatchingConf().getInclude();
+        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
+
+        String fullAttributeName =(field!=null)?(getAttribute().getName() + "." + field):(getAttribute().getName());
+
+        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+            alias = getUserAlias(attribute, fullAttributeName);
+        } else if (conf.get("metric_prefix") != null) {
+            alias = conf.get("metric_prefix") + "." + getDomain() + "." + fullAttributeName;
+        } else if (getDomain().startsWith("org.apache.cassandra")) {
+            alias = getCassandraAlias();
+        }
+
+        //If still null - generate generic alias,
+        if (alias == null) {
+            alias = "jmx." + getDomain() + "." + fullAttributeName;
+        }
+        alias = convertMetricName(alias);
+        return alias;
+    }
+
+    /**
+     * Metric name aliasing specific to Cassandra.
+     *
+     * * (Default) `cassandra_aliasing` == False.
+     *   Legacy aliasing: drop `org.apache` prefix.
+     * * `cassandra_aliasing` == True
+     *   Comply with CASSANDRA-4009
+     *
+     * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+     */
+    private String getCassandraAlias() {
+        if (renameCassandraMetrics()) {
+            Map<String, String> beanParameters = getBeanParameters();
+            String metricName = beanParameters.get("name");
+            String attributeName = getAttributeName();
+            if (attributeName.equals("Value")) {
+                return "cassandra." + metricName;
+            }
+            return "cassandra." + metricName + "." + attributeName;
+        }
+        //Deprecated Cassandra metric.  Remove domain prefix.
+        return getDomain().replace("org.apache.", "") + "." + getAttributeName();
+    }
+
+    /**
+     * Retrieve user defined alias. Substitute regular expression named groups.
+     *
+     * Example:
+     *   ```
+     *   bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz
+     *   attribute:
+     *     toto:
+     *       alias: my.metric.$foo.$attribute
+     *   ```
+     *   returns a metric name `my.metric.bar.toto`
+     */
+    private String getUserAlias(LinkedHashMap<String, LinkedHashMap<String, String>> attribute, String fullAttributeName){
+        String alias = attribute.get(fullAttributeName).get(ALIAS);
+
+        // Bean parameters
+        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+            alias = alias.replace("$" + param.getKey(), param.getValue());
+        }
+
+        // Attribute & domain
+        alias = alias.replace("$attribute", fullAttributeName);
+        alias = alias.replace("$domain", domain);
+
+        return alias;
+    }
+
+    /**
+     * Overload `getAlias` method.
+     *
+     * Note: used for `JMXSimpleAttribute` only, as `field` is null.
+     */
+    protected String getAlias(){
+        return getAlias(null);
+    }
+
 
     @SuppressWarnings("unchecked")
     protected String[] getTags() {
