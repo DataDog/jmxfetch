@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 
 public abstract class JMXAttribute {
 
-    private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
     private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean", "bean_regex", "attribute");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
@@ -180,7 +180,7 @@ public abstract class JMXAttribute {
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
-            LOGGER.warn("Unable to get metrics from " + beanStringName);
+            LOGGER.warn("Unable to get metrics from " + beanStringName + " - " + attributeName, e);
             return 0;
         }
     }
