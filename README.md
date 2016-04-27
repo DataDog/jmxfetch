@@ -7,7 +7,7 @@
 JMXFetch is the new tool to collect metrics from JMX Servers in order to be sent to Datadog (http://www.datadoghq.com)
 It is called by the Datadog Agent (https://github.com/Datadog/dd-agent) and send metrics back to the Agent using the dogstatsd library https://github.com/indeedeng/java-dogstatsd-client
 
-# How to contribute code
+# How to contribute code?
 
 First of all and most importantly, **thank you** for sharing.
 
@@ -20,8 +20,7 @@ If you do **not** agree with the licensing terms and wish to contribute code non
 please email us at <info@datadoghq.com> before submitting your
 pull request.
 
-
-# Building from Source
+# Building from source
 
 JMXFetch uses Maven: http://maven.apache.org for its build system.
 
@@ -31,7 +30,20 @@ The distribution will be created under ```target/```.
 
 Once the jar is created, you can update the one in the Datadog Agent repo.
 
-# To run tests
+# Coding standards
+
+JMXFetch uses [Checkstyle](http://checkstyle.sourceforge.net/) with [Google Java Style](http://google.github.io/styleguide/javaguide.html) to enforce coding standards.
+
+To perform a `Checkstyle` analysis and outputs violations, run:
+```
+mvn checkstyle::check
+```
+
+`Checkstyle` analysis is automatically executed prior to compiling the code, testing.
+
+# Testing
+
+To run unit test, issue the following command:
 ```
 mvn test
 ```
