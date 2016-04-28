@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
@@ -313,10 +314,14 @@ public class Instance {
     }
 
     public String[] getServiceCheckTags() {
-
         List<String> tags = new ArrayList<String>();
         if (this.yaml.get("host") != null) {
             tags.add("jmx_server:" + this.yaml.get("host"));
+        }
+        if (this.tags != null) {
+        	for (Entry<String, String> e : this.tags.entrySet()) {
+        		tags.add(e.getKey() + ":" + e.getValue());
+        	}
         }
         tags.add("instance:" + this.instanceName);
         return tags.toArray(new String[tags.size()]);
