@@ -3,7 +3,7 @@ package org.datadog.jmxfetch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -54,8 +54,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         Filter exclude = configuration.getExclude();
         if (exclude.getAttribute() == null) {
             return false;
-        } else if ((exclude.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (exclude.getAttribute())).containsKey(getAttributeName())) {
+        } else if ((exclude.getAttribute() instanceof HashMap<?, ?>)
+                && ((HashMap<String, Object>) (exclude.getAttribute())).containsKey(getAttributeName())) {
             return true;
 
         } else if ((exclude.getAttribute() instanceof ArrayList<?>
@@ -70,8 +70,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         if (include.getAttribute() == null) {
             return true;
 
-        } else if ((include.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (include.getAttribute())).containsKey(getAttributeName())) {
+        } else if ((include.getAttribute() instanceof HashMap<?, ?>)
+                && ((HashMap<String, Object>) (include.getAttribute())).containsKey(getAttributeName())) {
             return true;
 
         } else if ((include.getAttribute() instanceof ArrayList<?>
@@ -84,11 +84,11 @@ public class JMXSimpleAttribute extends JMXAttribute {
 
     private String getAlias() {
         Filter include = getMatchingConf().getInclude();
-        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
+        HashMap<String, Object> conf = getMatchingConf().getConf();
         if (alias != null) {
             return alias;
-        } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+        } else if (include.getAttribute() instanceof HashMap<?, ?>) {
+            HashMap<String, HashMap<String, String>> attribute = (HashMap<String, HashMap<String, String>>) (include.getAttribute());
             alias = attribute.get(getAttribute().getName()).get("alias");
         } else if (conf.get("metric_prefix") != null) {
             alias = conf.get("metric_prefix") + "." + getDomain() + "." + getAttributeName();
@@ -122,8 +122,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         Filter include = getMatchingConf().getInclude();
         if (metricType != null) {
             return metricType;
-        } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+        } else if (include.getAttribute() instanceof HashMap<?, ?>) {
+            HashMap<String, HashMap<String, String>> attribute = (HashMap<String, HashMap<String, String>>) (include.getAttribute());
             metricType = attribute.get(getAttributeName()).get("metric_type");
             if (metricType == null) {
                 metricType = attribute.get(getAttributeName()).get("type");

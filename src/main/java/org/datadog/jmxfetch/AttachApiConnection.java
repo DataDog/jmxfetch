@@ -3,7 +3,7 @@ package org.datadog.jmxfetch;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 
 import javax.management.remote.JMXServiceURL;
 
@@ -14,14 +14,14 @@ public class AttachApiConnection extends Connection {
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private String processRegex;
 
-    public AttachApiConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
+    public AttachApiConnection(HashMap<String, Object> connectionParams) throws IOException {
         processRegex = (String) connectionParams.get("process_name_regex");
         this.env = new HashMap<String, Object>();
         this.address = getAddress(connectionParams);
         createConnection();
       }
 
-    private JMXServiceURL getAddress(LinkedHashMap<String, Object> connectionParams) throws IOException {
+    private JMXServiceURL getAddress(HashMap<String, Object> connectionParams) throws IOException {
         JMXServiceURL address;
         try {
             address = new JMXServiceURL(getJMXUrlForProcessRegex(processRegex));

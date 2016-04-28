@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ public abstract class JMXAttribute {
     private String beanStringName;
     private HashMap<String, String> beanParameters;
     private String attributeName;
-    private LinkedHashMap<Object, Object> valueConversions;
+    private HashMap<Object, Object> valueConversions;
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
@@ -322,17 +322,17 @@ public abstract class JMXAttribute {
     HashMap<Object, Object> getValueConversions() {
         if (valueConversions == null) {
             Object includedAttribute = matchingConf.getInclude().getAttribute();
-            if (includedAttribute instanceof LinkedHashMap<?, ?>) {
+            if (includedAttribute instanceof HashMap<?, ?>) {
                 String attributeName = this.attribute.getName();
-                LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute =
-                        ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>) includedAttribute).get(attributeName);
+                HashMap<String, HashMap<Object, Object>> attribute =
+                        ((HashMap<String, HashMap<String, HashMap<Object, Object>>>) includedAttribute).get(attributeName);
 
                 if (attribute != null) {
                     valueConversions = attribute.get("values");
                 }
             }
             if (valueConversions == null) {
-                valueConversions = new LinkedHashMap<Object, Object>();
+                valueConversions = new HashMap<Object, Object>();
             }
         }
 
@@ -360,8 +360,8 @@ public abstract class JMXAttribute {
         Filter include = matchingConf.getInclude();
         if (include != null) {
             Object includeAttribute = include.getAttribute();
-            if (includeAttribute instanceof LinkedHashMap<?, ?>) {
-                LinkedHashMap<String, ArrayList<String>> attributeParams = ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)includeAttribute).get(attributeName);
+            if (includeAttribute instanceof HashMap<?, ?>) {
+                HashMap<String, ArrayList<String>> attributeParams = ((HashMap<String, HashMap<String, ArrayList<String>>>)includeAttribute).get(attributeName);
                 if (attributeParams != null) {
                     ArrayList<String> yamlTags = attributeParams.get("tags");
                     if ( yamlTags != null) {

@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -31,11 +31,11 @@ public class TestConfiguration {
 		String yamlPath = f.getAbsolutePath();
 		FileInputStream yamlInputStream = new FileInputStream(yamlPath);
 		YamlParser fileConfig = new YamlParser(yamlInputStream);
-		ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) fileConfig.getYamlInstances());
+		ArrayList<HashMap<String, Object>> configInstances = ((ArrayList<HashMap<String, Object>>) fileConfig.getYamlInstances());
 
-		for (LinkedHashMap<String, Object> config : configInstances) {
+		for (HashMap<String, Object> config : configInstances) {
 			Object yamlConf = config.get("conf");
-			for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (yamlConf)) {
+			for (HashMap<String, Object> conf : (ArrayList<HashMap<String, Object>>) (yamlConf)) {
 			    configurations.add(new Configuration(conf));
 			}
 		}
@@ -126,12 +126,12 @@ public class TestConfiguration {
 		// Assert
 		HashMap<String, LinkedList<Filter>> filtersByDomain = (HashMap<String, LinkedList<Filter>>) getIncludeFiltersByDomain.invoke(null, configurations);
 		HashMap<String, Set<String>> parametersIntersectionByDomain = (HashMap<String, Set<String>>) getCommonBeanKeysByDomain.invoke(null, filtersByDomain);
-		HashMap<String, LinkedHashMap<String, String>> commonBeanScopeByDomain = (HashMap<String, LinkedHashMap<String, String>>) getCommonScopeByDomain.invoke(null, parametersIntersectionByDomain, filtersByDomain);
+		HashMap<String, HashMap<String, String>> commonBeanScopeByDomain = (HashMap<String, HashMap<String, String>>) getCommonScopeByDomain.invoke(null, parametersIntersectionByDomain, filtersByDomain);
 
 		// Only contains 'org.datadog.jmxfetch.test' domain
 		assertEquals(commonBeanScopeByDomain.size(), 1);
 		assertTrue(commonBeanScopeByDomain.containsKey("org.datadog.jmxfetch.test"));
-		LinkedHashMap<String, String> beanScope = commonBeanScopeByDomain.get("org.datadog.jmxfetch.test");
+		HashMap<String, String> beanScope = commonBeanScopeByDomain.get("org.datadog.jmxfetch.test");
 
 		// Bean scope contains 'scope' parameter only
 		assertEquals(beanScope.size(), 1);
@@ -153,24 +153,24 @@ public class TestConfiguration {
 	@Test
 	public void testBeanScopeToString() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		// Private method reflection
-		Method beanScopeToString = Configuration.class.getDeclaredMethod("beanScopeToString", String.class, LinkedHashMap.class);
+		Method beanScopeToString = Configuration.class.getDeclaredMethod("beanScopeToString", String.class, HashMap.class);
 		beanScopeToString.setAccessible(true);
 
 		// Mock parameters
-		LinkedHashMap<String, String> beanScope = new LinkedHashMap<String, String>();
+		HashMap<String, String> beanScope = new HashMap<String, String>();
 		beanScope.put("type", "someType");
 		beanScope.put("param", "someParam");
 
 		// No domain name, no parameters
-		assertEquals((String) beanScopeToString.invoke(null, null, new LinkedHashMap<String, String>()), "*:*");
+		assertEquals((String) beanScopeToString.invoke(null, null, new HashMap<String, String>()), "*:*");
 
 		// No domain but parameters
-		assertEquals((String) beanScopeToString.invoke(null, null, beanScope), "*:type=someType,param=someParam,*");
+		assertEquals((String) beanScopeToString.invoke(null, null, beanScope), "*:param=someParam,type=someType,*");
 
 		// Domain name with no parameters
-		assertEquals((String) beanScopeToString.invoke(null, "org.datadog.com", new LinkedHashMap<String, String>()), "org.datadog.com:*");
+		assertEquals((String) beanScopeToString.invoke(null, "org.datadog.com", new HashMap<String, String>()), "org.datadog.com:*");
 
 		// Domain name with parameters
-		assertEquals((String) beanScopeToString.invoke(null, "org.datadog.com", beanScope), "org.datadog.com:type=someType,param=someParam,*");
+		assertEquals((String) beanScopeToString.invoke(null, "org.datadog.com", beanScope), "org.datadog.com:param=someParam,type=someType,*");
 	}
 }

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -97,8 +97,8 @@ public class JMXComplexAttribute extends JMXAttribute {
         String metricType = null;
 
         Filter include = getMatchingConf().getInclude();
-        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+        if (include.getAttribute() instanceof HashMap<?, ?>) {
+            HashMap<String, HashMap<String, String>> attribute = (HashMap<String, HashMap<String, String>>) (include.getAttribute());
             metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(subAttributeName).get("type");
@@ -116,9 +116,9 @@ public class JMXComplexAttribute extends JMXAttribute {
         String subAttributeName = getAttribute().getName() + "." + subAttribute;
 
         Filter include = getMatchingConf().getInclude();
-        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
-        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get(ALIAS);
+        HashMap<String, Object> conf = getMatchingConf().getConf();
+        if (include.getAttribute() instanceof HashMap<?, ?>) {
+            return ((HashMap<String, HashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get(ALIAS);
         } else if (conf.get("metric_prefix") != null) {
             return conf.get("metric_prefix") + "." + getDomain() + "." + subAttributeName;
         }
@@ -145,8 +145,8 @@ public class JMXComplexAttribute extends JMXAttribute {
     }
 
     private boolean matchSubAttribute(Filter params, String subAttributeName, boolean matchOnEmpty) {
-        if ((params.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (params.getAttribute())).containsKey(subAttributeName)) {
+        if ((params.getAttribute() instanceof HashMap<?, ?>)
+                && ((HashMap<String, Object>) (params.getAttribute())).containsKey(subAttributeName)) {
             return true;
         } else if ((params.getAttribute() instanceof ArrayList<?>
                 && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {

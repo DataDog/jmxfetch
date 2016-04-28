@@ -3,7 +3,7 @@ package org.datadog.jmxfetch;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
@@ -22,7 +22,7 @@ public class RemoteConnection extends Connection {
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
 
-    public RemoteConnection(LinkedHashMap<String, Object> connectionParams)
+    public RemoteConnection(HashMap<String, Object> connectionParams)
             throws IOException {
         host = (String) connectionParams.get("host");
         port = (Integer) connectionParams.get("port");
@@ -54,7 +54,7 @@ public class RemoteConnection extends Connection {
     }
 
     private HashMap<String, Object> getEnv(
-            LinkedHashMap<String, Object> connectionParams) {
+            HashMap<String, Object> connectionParams) {
 
         HashMap<String, Object> environment = new HashMap<String, Object>();
         environment.put(JMXConnector.CREDENTIALS, new String[]{user, password});
@@ -62,7 +62,7 @@ public class RemoteConnection extends Connection {
     }
 
     private JMXServiceURL getAddress(
-            LinkedHashMap<String, Object> connectionParams) throws MalformedURLException {
+            HashMap<String, Object> connectionParams) throws MalformedURLException {
         if (this.jmx_url != null) {
             return new JMXServiceURL(this.jmx_url);
         }

@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 
 public class Configuration {
 
-    private LinkedHashMap<String, Object> conf;
+    private HashMap<String, Object> conf;
     private Filter include;
     private Filter exclude;
 
@@ -20,13 +20,13 @@ public class Configuration {
      *
      * Also provides helper methods to extract common information among filters.
      */
-    public Configuration(LinkedHashMap<String, Object> conf) {
+    public Configuration(HashMap<String, Object> conf) {
         this.conf = conf;
         this.include = new Filter(conf.get("include"));
         this.exclude = new Filter(conf.get("exclude"));
     }
 
-    public LinkedHashMap<String, Object> getConf() {
+    public HashMap<String, Object> getConf() {
         return conf;
     }
     public Filter getInclude() {
@@ -153,15 +153,15 @@ public class Configuration {
      *
      * @return                      bean pattern (keys->values) by domain name
      */
-    private static HashMap<String, LinkedHashMap<String, String>> getCommonScopeByDomain(HashMap<String, Set<String>> beanKeysByDomain, HashMap<String, LinkedList<Filter>> filtersByDomain){
+    private static HashMap<String, HashMap<String, String>> getCommonScopeByDomain(HashMap<String, Set<String>> beanKeysByDomain, HashMap<String, LinkedList<Filter>> filtersByDomain){
         // Compute a common scope a among filters by domain name
-        HashMap<String, LinkedHashMap<String, String>> commonScopeByDomain = new HashMap<String, LinkedHashMap<String, String>>();
+        HashMap<String, HashMap<String, String>> commonScopeByDomain = new HashMap<String, HashMap<String, String>>();
 
         for (Entry<String, Set<String>> commonParametersByDomainEntry : beanKeysByDomain.entrySet()) {
             String domainName = commonParametersByDomainEntry.getKey();
             Set<String> commonParameters = commonParametersByDomainEntry.getValue();
             LinkedList<Filter> filters = filtersByDomain.get(domainName);
-            LinkedHashMap<String, String> commonScope = new LinkedHashMap<String, String>();
+            HashMap<String, String> commonScope = new HashMap<String, String>();
 
             for (String parameter : commonParameters) {
                 // Check if all values associated with the parameters are the same
@@ -196,7 +196,7 @@ public class Configuration {
      *
      * @return                      string pattern identifying the bean scope
      */
-    private static String beanScopeToString(String domain, LinkedHashMap<String, String> beanScope){
+    private static String beanScopeToString(String domain, HashMap<String, String> beanScope){
         String result = "";
 
         // Domain
@@ -226,13 +226,13 @@ public class Configuration {
         LinkedList<Configuration> includeConfigList = getIncludeConfigurationList(configurationList);
         HashMap<String, LinkedList<Filter>> includeFiltersByDomain = getIncludeFiltersByDomain(includeConfigList);
         HashMap<String, Set<String>> parametersIntersectionByDomain = getCommonBeanKeysByDomain(includeFiltersByDomain);
-        HashMap<String, LinkedHashMap<String, String>> commonBeanScopeByDomain = getCommonScopeByDomain(parametersIntersectionByDomain, includeFiltersByDomain);
+        HashMap<String, HashMap<String, String>> commonBeanScopeByDomain = getCommonScopeByDomain(parametersIntersectionByDomain, includeFiltersByDomain);
 
         LinkedList<String> result = new LinkedList<String>();
 
-        for (Entry<String, LinkedHashMap<String, String>> beanScopeEntry: commonBeanScopeByDomain.entrySet()) {
+        for (Entry<String, HashMap<String, String>> beanScopeEntry: commonBeanScopeByDomain.entrySet()) {
             String domain = beanScopeEntry.getKey();
-            LinkedHashMap<String, String> beanScope = beanScopeEntry.getValue();
+            HashMap<String, String> beanScope = beanScopeEntry.getValue();
 
             result.add(beanScopeToString(domain, beanScope));
         }

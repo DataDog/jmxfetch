@@ -2,7 +2,7 @@ package org.datadog.jmxfetch;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
@@ -27,7 +27,7 @@ public class ConnectionManager {
         return connectionManager;
     }
 
-    private static String generateKey(LinkedHashMap<String, Object> connectionParams) {
+    private static String generateKey(HashMap<String, Object> connectionParams) {
         if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
             return (String) connectionParams.get(PROCESS_NAME_REGEX);
         } else if (connectionParams.get("jmx_url") != null) {
@@ -36,7 +36,7 @@ public class ConnectionManager {
         return connectionParams.get("host") + ":" + connectionParams.get("port") + ":" + connectionParams.get("user");
     }
 
-    private Connection createConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
+    private Connection createConnection(HashMap<String, Object> connectionParams) throws IOException {
         if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
             try {
                 Class.forName( "com.sun.tools.attach.AttachNotSupportedException" );
@@ -52,7 +52,7 @@ public class ConnectionManager {
 
     }
 
-    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
+    public Connection getConnection(HashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
         String key = generateKey(connectionParams);
         Connection existingConnection = cache.get(key);
         if (existingConnection == null || !existingConnection.isAlive()) {

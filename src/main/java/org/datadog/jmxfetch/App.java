@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -329,7 +329,7 @@ public class App {
             YamlParser yamlConfig = entry.getValue();
             it.remove();
 
-            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
+            ArrayList<HashMap<String, Object>> configInstances = ((ArrayList<HashMap<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
                 LOGGER.warn(warning);
@@ -337,11 +337,11 @@ public class App {
                 continue;
             }
 
-            for (LinkedHashMap<String, Object> configInstance : configInstances) {
+            for (HashMap<String, Object> configInstance : configInstances) {
                 Instance instance;
                 //Create a new Instance object
                 try {
-                    instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                    instance = new Instance(configInstance, (HashMap<String, Object>) yamlConfig.getInitConfig(),
                             name, appConfig);
                 } catch (Exception e) {
                     String warning = "Unable to create instance. Please check your yaml file";
