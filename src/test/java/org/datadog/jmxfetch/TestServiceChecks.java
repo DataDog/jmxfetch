@@ -45,6 +45,8 @@ public class TestServiceChecks extends TestCommon {
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
     }
 
     @Test
@@ -85,6 +87,8 @@ public class TestServiceChecks extends TestCommon {
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
     }
 
     @Test
@@ -138,6 +142,8 @@ public class TestServiceChecks extends TestCommon {
         assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.*. Is a JMX Server running at this address?", scMessage);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
 
     }
 
