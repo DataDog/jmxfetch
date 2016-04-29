@@ -19,8 +19,6 @@ import javax.management.openmbean.CompositeData;
 @SuppressWarnings("unchecked")
 public class JMXComplexAttribute extends JMXAttribute {
 
-    public static final String ALIAS = "alias";
-    public static final String METRIC_TYPE = "metric_type";
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
     public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
@@ -111,20 +109,6 @@ public class JMXComplexAttribute extends JMXAttribute {
 
         return metricType;
     }
-
-    private String getAlias(String subAttribute) {
-        String subAttributeName = getAttribute().getName() + "." + subAttribute;
-
-        Filter include = getMatchingConf().getInclude();
-        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
-        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get(ALIAS);
-        } else if (conf.get("metric_prefix") != null) {
-            return conf.get("metric_prefix") + "." + getDomain() + "." + subAttributeName;
-        }
-        return "jmx." + getDomain() + "." + subAttributeName;
-    }
-
 
     @Override
     public boolean match(Configuration configuration) {

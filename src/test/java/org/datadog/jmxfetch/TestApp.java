@@ -46,10 +46,39 @@ public class TestApp extends TestCommon {
 
         assertMetric("this.is.100", tags, 6);
     }
+    /**
+     * Generate metric aliases from a `alias_match` regular expression.
+     */
+    @Test
+    public void testRegexpAliasing() throws Exception {
+        // Expose MBeans
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        initApplication("jmx_alias_match.yaml");
+
+        // Collect metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // Assertions
+
+        // 15 metrics = 13 from `java.lang` + 2 from the user configuration file
+        assertEquals(15, metrics.size());
+
+        // Metric aliases are generated from `alias_match`
+        List<String> tags = Arrays.asList(
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "instance:jmx_test_instance",
+            "foo:Bar",
+            "qux:Baz"
+        );
+
+        assertMetric("this.is.100.bar.baz", tags, 4);
+        assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
+    }
 
     /**
      * Check JMXFetch Cassandra metric aliasing logic, i.e. compliant with CASSANDRA-4009
-     * when `cassandra4009` flag is enabled, or default.
+     * when `cassandra_aliasing` flag is enabled, or default.
      *
      * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
      */
