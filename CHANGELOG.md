@@ -1,6 +1,15 @@
 Changes
 =======
 
+# 0.11.0 / Unreleased
+
+#### Changes
+* [BUGFIX] Report properly beans with ':' in the name. See [#90][], [#91][], [#95][] (Thanks [@bluestix][])
+* [BUGFIX] Sanitize metric names and tags, i.e. remove illegal characters. See [#89][]
+* [BUGFIX] Support `javax.management.Attribute` attribute types. See [#92][] (Thanks [@nwillems][])
+* [FEATURE] Add user tags to service checks. See [#96][]
+* [FEATURE] Allow group name substitutions in attribute/alias parameters. See [#94][], [#97][] (Thanks [@alz][])
+
 # 0.10.0 / 03-23-2016
 
 #### Changes
@@ -98,4 +107,15 @@ Changes
 [#81]: https://github.com/DataDog/jmxfetch/issues/81
 [#83]: https://github.com/DataDog/jmxfetch/issues/83
 [#85]: https://github.com/DataDog/jmxfetch/issues/85
+[#89]: https://github.com/DataDog/jmxfetch/issues/89
+[#90]: https://github.com/DataDog/jmxfetch/issues/90
+[#91]: https://github.com/DataDog/jmxfetch/issues/91
+[#92]: https://github.com/DataDog/jmxfetch/issues/92
+[#94]: https://github.com/DataDog/jmxfetch/issues/94
+[#95]: https://github.com/DataDog/jmxfetch/issues/95
+[#96]: https://github.com/DataDog/jmxfetch/issues/96
+[#97]: https://github.com/DataDog/jmxfetch/issues/97
+[@alz]: https://github.com/alz
+[@bluestix]: https://github.com/bluestix
 [@coupacooke]: https://github.com/coupacooke
+[@nwillems]: https://github.com/nwillems
