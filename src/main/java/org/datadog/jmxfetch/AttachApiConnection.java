@@ -2,8 +2,10 @@ package org.datadog.jmxfetch;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.management.remote.JMXServiceURL;
 
@@ -35,6 +37,7 @@ public class AttachApiConnection extends Connection {
      private String getJMXUrlForProcessRegex(String processRegex) throws com.sun.tools.attach.AttachNotSupportedException, IOException {
         for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
             if (vmd.displayName().matches(processRegex)) {
+                LOGGER.info("Matched JVM '" + vmd.displayName() + "' against regex '" + processRegex + "'");
                 com.sun.tools.attach.VirtualMachine vm = com.sun.tools.attach.VirtualMachine.attach(vmd);
                 String connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
                 //If jmx agent is not running in VM, load it and return the connector url
@@ -49,7 +52,12 @@ public class AttachApiConnection extends Connection {
                 return connectorAddress;
             }
         }
-        throw new IOException("Cannot find JVM matching regex: " + processRegex);
+
+         List<String> jvms = new ArrayList<String>();
+         for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
+             jvms.add( vmd.displayName() );
+         }
+        throw new IOException("Cannot find JVM matching regex: '" + processRegex + "'; available JVMs (for this user account): " + jvms );
     }
 
     private void loadJMXAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {
