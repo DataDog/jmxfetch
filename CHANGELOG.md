@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.11.0 / Unreleased
+# 0.11.0 / 05-23-2016
 
 #### Changes
 * [BUGFIX] Report properly beans with ':' in the name. See [#90][], [#91][], [#95][] (Thanks [@bluestix][])
