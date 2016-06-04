@@ -24,8 +24,7 @@ import org.datadog.jmxfetch.util.CustomLogger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
+
 
 @SuppressWarnings("unchecked")
 public class App {
@@ -84,9 +83,9 @@ public class App {
         }
 
         if( config.getAction().equals( AppConfig.ACTION_LIST_JVMS )) {
-            List<VirtualMachineDescriptor> descriptors = VirtualMachine.list();
+            List<com.sun.tools.attach.VirtualMachineDescriptor> descriptors = com.sun.tools.attach.VirtualMachine.list();
             System.out.println("List of JVMs for user " + System.getProperty("user.name") );
-            for( VirtualMachineDescriptor descriptor : descriptors ) {
+            for( com.sun.tools.attach.VirtualMachineDescriptor descriptor : descriptors ) {
                 System.out.println( "\tJVM id " + descriptor.id() + ": '" + descriptor.displayName() + "'" );
             }
             System.exit(0);
