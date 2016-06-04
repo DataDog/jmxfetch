@@ -24,6 +24,7 @@ import org.datadog.jmxfetch.util.CustomLogger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
 @SuppressWarnings("unchecked")
@@ -80,6 +81,15 @@ public class App {
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
             LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
             System.exit(1);
+        }
+
+        if( config.getAction().equals( AppConfig.ACTION_LIST_JVMS )) {
+            List<VirtualMachineDescriptor> descriptors = VirtualMachine.list();
+            System.out.println("List of JVMs for user " + System.getProperty("user.name") );
+            for( VirtualMachineDescriptor descriptor : descriptors ) {
+                System.out.println( "\tJVM id " + descriptor.id() + ": '" + descriptor.displayName() + "'" );
+            }
+            System.exit(0);
         }
 
         // Set up the shutdown hook to properly close resources
@@ -324,15 +334,6 @@ public class App {
 
         Reporter reporter = appConfig.getReporter();
 
-        String action = appConfig.getAction();
-
-        if( action.equals( AppConfig.ACTION_LIST_JVMS )) {
-            List<VirtualMachineDescriptor> descriptors = com.sun.tools.attach.VirtualMachine.list();
-            for( VirtualMachineDescriptor descriptor : descriptors ) {
-                System.out.println( "\tJVM id " + descriptor.id() + ": '" + descriptor.displayName() + "'" );
-            }
-            return;
-        }
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         while (it.hasNext()) {

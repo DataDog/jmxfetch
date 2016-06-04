@@ -31,10 +31,11 @@ public class AttachApiConnection extends Connection {
             throw new IOException("Unnable to attach to process regex:  "+ processRegex, e);
         }
         return address;
-        
+
     }
 
      private String getJMXUrlForProcessRegex(String processRegex) throws com.sun.tools.attach.AttachNotSupportedException, IOException {
+         List<String> jvms = new ArrayList<String>();
         for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
             if (vmd.displayName().matches(processRegex)) {
                 LOGGER.info("Matched JVM '" + vmd.displayName() + "' against regex '" + processRegex + "'");
@@ -51,12 +52,9 @@ public class AttachApiConnection extends Connection {
 
                 return connectorAddress;
             }
+            jvms.add( vmd.displayName() );
         }
 
-         List<String> jvms = new ArrayList<String>();
-         for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
-             jvms.add( vmd.displayName() );
-         }
         throw new IOException("Cannot find JVM matching regex: '" + processRegex + "'; available JVMs (for this user account): " + jvms );
     }
 
