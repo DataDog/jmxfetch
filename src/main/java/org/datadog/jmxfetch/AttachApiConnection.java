@@ -39,7 +39,7 @@ public class AttachApiConnection extends Connection {
         for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
             if (vmd.displayName().matches(processRegex)) {
                 com.sun.tools.attach.VirtualMachine vm = com.sun.tools.attach.VirtualMachine.attach(vmd);
-                LOGGER.info("Matched JVM '" + vmd.displayName() + "' against regex '" + processRegex + "'");
+//                LOGGER.info("Matched JVM '" + vmd.displayName() + "' against regex '" + processRegex + "'");
                 String connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
                 //If jmx agent is not running in VM, load it and return the connector url
                 if (connectorAddress == null) {
@@ -52,7 +52,7 @@ public class AttachApiConnection extends Connection {
 
                 return connectorAddress;
             }
-            jvms.add( vmd.displayName() );
+//            jvms.add( vmd.displayName() );
         }
 
         throw new IOException("Cannot find JVM matching regex: '" + processRegex + "'; available JVMs (for this user account): " + jvms );
