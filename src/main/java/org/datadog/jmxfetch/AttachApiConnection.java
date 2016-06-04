@@ -38,8 +38,8 @@ public class AttachApiConnection extends Connection {
          List<String> jvms = new ArrayList<String>();
         for (com.sun.tools.attach.VirtualMachineDescriptor vmd : com.sun.tools.attach.VirtualMachine.list()) {
             if (vmd.displayName().matches(processRegex)) {
-                LOGGER.info("Matched JVM '" + vmd.displayName() + "' against regex '" + processRegex + "'");
                 com.sun.tools.attach.VirtualMachine vm = com.sun.tools.attach.VirtualMachine.attach(vmd);
+                LOGGER.info("Matched JVM '" + vmd.displayName() + "' against regex '" + processRegex + "'");
                 String connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
                 //If jmx agent is not running in VM, load it and return the connector url
                 if (connectorAddress == null) {
