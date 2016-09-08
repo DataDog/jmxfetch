@@ -1,5 +1,9 @@
 Changes
 =======
+# 0.12.0 / Unreleased
+
+#### Changes
+* [BUGFIX] Fix `list_not_matching_attributes` action to return all "not matching" attributes. See [#102][] (Thanks [@nwillems][])
 
 # 0.11.0 / 05-23-2016
 
@@ -115,6 +119,7 @@ Changes
 [#95]: https://github.com/DataDog/jmxfetch/issues/95
 [#96]: https://github.com/DataDog/jmxfetch/issues/96
 [#97]: https://github.com/DataDog/jmxfetch/issues/97
+[#102]: https://github.com/DataDog/jmxfetch/issues/102
 [@alz]: https://github.com/alz
 [@bluestix]: https://github.com/bluestix
 [@coupacooke]: https://github.com/coupacooke
