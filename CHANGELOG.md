@@ -1,6 +1,6 @@
 Changes
 =======
-# 0.12.0 / Unreleased
+# 0.12.0 / 09-27-2016
 
 #### Changes
 * [BUGFIX] Fix `list_not_matching_attributes` action to return all "not matching" attributes. See [#102][] (Thanks [@nwillems][])
