@@ -4,9 +4,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -14,11 +19,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
+
 import javax.security.auth.login.FailedLoginException;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 
@@ -30,15 +41,18 @@ public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static int loopCounter;
-    private HashMap<String, YamlParser> configs;
+    private AtomicBoolean reinit = new AtomicBoolean(false);
+    private ConcurrentHashMap<String, YamlParser> configs;
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
+    private ServiceDiscoveryServer rpcserver;
 
 
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
         this.configs = getConfigs(appConfig);
+        //this.rpcserver = new ServiceDiscoveryServer(8980, this);
     }
 
     /**
@@ -121,6 +135,10 @@ public class App {
         new ShutdownHook().attachShutDownHook();
     }
 
+    public void setReinit() {
+        this.reinit.set(true);
+    }
+
     public static int getLoopCounter() {
         return loopCounter;
     }
@@ -144,6 +162,10 @@ public class App {
             }
 
             long start = System.currentTimeMillis();
+            if (this.reinit.get()) {
+                init(true);
+            }
+
             if (instances.size() > 0) {
                 doIteration();
             } else {
@@ -268,8 +290,27 @@ public class App {
         }
     }
 
-    private HashMap<String, YamlParser> getConfigs(AppConfig config) {
-        HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
+    public boolean addConfig(String name, YamlParser config) {
+        Pattern pattern = Pattern.compile("sd-(?<check>.+)");
+
+        Matcher matcher = pattern.matcher(name);
+        if (!matcher.find()) {
+            return false;
+        }
+
+        String check = matcher.group("check");
+        if (this.configs.containsKey(check)) {
+            return false;
+        }
+
+        this.configs.put(name, config);
+        this.setReinit();
+
+        return true;
+    }
+
+    private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
+        ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
         YamlParser fileConfig;
         for (String fileName : config.getYamlFileList()) {
             File f = new File(config.getConfdDirectory(), fileName);
@@ -295,6 +336,46 @@ public class App {
                 }
             }
         }
+        /*
+        File dir = new File(config.getTmpDirectory());
+        FileFilter fileFilter = new WildcardFileFilter(".yml.*.yaml");
+        File[] files = dir.listFiles(fileFilter);
+
+        Pattern pattern = Pattern.compile("\.jmx\.(?<check>.+)\.yaml");
+        for (int i = 0; i < files.length; i++) {
+            Matcher matcher = pattern.matcher(files[i].getName());
+            matcher.find(); //should always match
+            try {
+                check = matcher.group("check");
+                if (configs.containsKey(check)) {
+                    continue;
+                }
+
+                String yamlPath = files[i].getAbsolutePath();
+                try {
+                    LOGGER.info("Reading SD config from: " + yamlPath);
+                    yamlInputStream = new FileInputStream(yamlPath);
+                    fileConfig = new YamlParser(yamlInputStream);
+                    configs.put(check, fileConfig);
+                } catch (FileNotFoundException e) {
+                    LOGGER.warn("Cannot find " + yamlPath);
+                } catch (Exception e) {
+                    LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
+                } finally {
+                    if (yamlInputStream != null) {
+                        try {
+                            yamlInputStream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    }
+                }
+            } catch (IllegalStateException | IndexOutOfBoundsException e) {
+                LOGGER.warn("Cannot load valid SD configuration for check: " + e);
+            }
+        }
+        */
+
         LOGGER.info("Found " + configs.size() + " config files");
         return configs;
     }

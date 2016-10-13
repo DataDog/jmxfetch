@@ -48,6 +48,11 @@ class AppConfig {
             required = true)
     private String confdDirectory;
 
+    @Parameter(names = {"--tmp_directory", "-T"},
+            description = "Absolute path to a temporary directory",
+            required = false)
+    private String tmpDirectory = "/tmp";
+
     @Parameter(names = {"--reporter", "-r"},
             description = "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"",
             validateWith = ReporterValidator.class,
@@ -119,6 +124,10 @@ class AppConfig {
 
     public String getConfdDirectory() {
         return confdDirectory;
+    }
+
+    public String getTmpDirectory() {
+        return tmpDirectory;
     }
 
     public String getLogLevel() {
