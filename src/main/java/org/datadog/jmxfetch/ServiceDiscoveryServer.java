@@ -73,15 +73,16 @@ public class ServiceDiscoveryServer {
     public void start() throws IOException {
         server.start();
         logger.info("Server started, listening on " + port);
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                // Use stderr here since the logger may has been reset by its JVM shutdown hook.
-                System.err.println("*** shutting down gRPC server since JVM is shutting down");
-                ServiceDiscoveryServer.this.stop();
-                System.err.println("*** server shut down");
-            }
-        });
+        // Should control shutdown in the main shutdown hook.
+        // Runtime.getRuntime().addShutdownHook(new Thread() {
+        //     @Override
+        //     public void run() {
+        //         // Use stderr here since the logger may has been reset by its JVM shutdown hook.
+        //         System.err.println("*** shutting down gRPC server since JVM is shutting down");
+        //         ServiceDiscoveryServer.this.stop();
+        //         System.err.println("*** server shut down");
+        //     }
+        // });
     }
 
     /** Stop serving requests and shutdown resources. */
@@ -99,14 +100,6 @@ public class ServiceDiscoveryServer {
             server.awaitTermination();
         }
     }
-
-    /*
-    public static void main(String[] args) throws Exception {
-        ServiceDiscoveryServer server = new ServiceDiscoveryServer(8980);
-        server.start();
-        server.blockUntilShutdown();
-    }
-    */
 
     /**
      * Our implementation of ServiceDiscovery service.
@@ -131,7 +124,6 @@ public class ServiceDiscoveryServer {
             YamlParser yaml = new YamlParser(stream);
 
             boolean applied = app.addConfig(config.getName(), yaml);
-            // No feature was found, return an unnamed feature.
             return SDConfigApplied.newBuilder().setApplied(applied).build();
         }
     }

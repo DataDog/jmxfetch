@@ -72,6 +72,12 @@ class AppConfig {
             required = false)
     private int checkPeriod = 15000;
 
+    @Parameter(names = {"--rpc-port", "-x"},
+            description = "Port where the RPC server should be listening.",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int rpcPort = 50051;
+
     @Parameter(names = {"--status_location", "-s"},
             description = "Absolute path of the status file. (default to null = no status file written)",
             converter = StatusConverter.class,
@@ -112,6 +118,10 @@ class AppConfig {
 
     public int getCheckPeriod() {
         return checkPeriod;
+    }
+
+    public int getRpcPort() {
+        return rpcPort;
     }
 
     public Reporter getReporter() {

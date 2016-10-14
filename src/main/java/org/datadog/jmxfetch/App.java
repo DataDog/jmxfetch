@@ -52,7 +52,6 @@ public class App {
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
         this.configs = getConfigs(appConfig);
-        //this.rpcserver = new ServiceDiscoveryServer(8980, this);
     }
 
     /**
@@ -102,6 +101,16 @@ public class App {
 
         App app = new App(config);
 
+        ServiceDiscoveryServer rpcserver;
+        try {
+            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app);
+            rpcserver.start();
+            LOGGER.info("RPC server started. Yay!");
+        }catch(IOException e) {
+            LOGGER.info("Failed to start the RPC server... moving on.");
+            rpcserver = null;
+        }
+
         // Initiate JMX Connections, get attributes that match the yaml configuration
         app.init(false);
 
@@ -109,6 +118,10 @@ public class App {
         if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
             // Start the main loop
             app.start();
+        }
+
+        if (rpcserver != null) {
+            rpcserver.stop(); //Add to shutdown hook.
         }
     }
 
