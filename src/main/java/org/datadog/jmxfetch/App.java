@@ -167,9 +167,16 @@ public class App {
 
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
+        long start_ms = System.currentTimeMillis();
+        boolean rpc_wait = true;
+        long delta_s = 0;
         while (true) {
-            // Exit on exit file trigger
-            if (appConfig.getExitWatcher().shouldExit()){
+            if (rpc_wait){
+                rpc_wait = ((System.currentTimeMillis() -  start_ms) / 1000) > appConfig.getRpcWait();
+            }
+
+            // Exit on exit file trigger if RPC wait period is over.
+            if (!rpc_wait && appConfig.getExitWatcher().shouldExit()){
                 LOGGER.info("Exit file detected: stopping JMXFetch.");
                 System.exit(0);
             }

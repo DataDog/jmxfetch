@@ -78,6 +78,12 @@ class AppConfig {
             required = false)
     private int rpcPort = 50051;
 
+    @Parameter(names = {"--rpc-wait", "-w"},
+            description = "RPC config wait period in seconds.",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int rpcWait = 0;
+
     @Parameter(names = {"--status_location", "-s"},
             description = "Absolute path of the status file. (default to null = no status file written)",
             converter = StatusConverter.class,
@@ -122,6 +128,10 @@ class AppConfig {
 
     public int getRpcPort() {
         return rpcPort;
+    }
+
+    public int getRpcWait() {
+        return rpcWait;
     }
 
     public Reporter getReporter() {
