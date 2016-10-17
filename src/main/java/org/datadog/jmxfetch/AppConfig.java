@@ -72,13 +72,13 @@ class AppConfig {
             required = false)
     private int checkPeriod = 15000;
 
-    @Parameter(names = {"--rpc-port", "-x"},
+    @Parameter(names = {"--rpc_port", "-x"},
             description = "Port where the RPC server should be listening.",
             validateWith = PositiveIntegerValidator.class,
             required = false)
     private int rpcPort = 50051;
 
-    @Parameter(names = {"--rpc-wait", "-w"},
+    @Parameter(names = {"--rpc_wait", "-w"},
             description = "RPC config wait period in seconds.",
             validateWith = PositiveIntegerValidator.class,
             required = false)
