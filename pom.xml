@@ -14,7 +14,7 @@
 	<properties>
 		<commons-io.version>2.4</commons-io.version>
 		<commons-lang.version>2.6</commons-lang.version>
-		<guava.version>17.0</guava.version>
+		<guava.version>19.0</guava.version>
 		<java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
 		<jcommander.version>1.35</jcommander.version>
 		<junit.version>4.11</junit.version>

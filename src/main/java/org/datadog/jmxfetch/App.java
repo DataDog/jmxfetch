@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.FileFilter;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import com.beust.jcommander.ParameterException;
 @SuppressWarnings("unchecked")
 public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
+    private final static String SERVICE_DISCOVERY_PREFIX = "SD-";
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
@@ -103,11 +105,12 @@ public class App {
 
         ServiceDiscoveryServer rpcserver;
         try {
-            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app);
+            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app, LOGGER);
             rpcserver.start();
             LOGGER.info("RPC server started. Yay!");
         }catch(IOException e) {
-            LOGGER.info("Failed to start the RPC server... moving on.");
+            LOGGER.info("Failed to start the RPC server... moving on: " + e.toString());
+            LOGGER.debug("RPC failure stacktrace: " + Arrays.toString(e.getStackTrace()));
             rpcserver = null;
         }
 
@@ -311,15 +314,17 @@ public class App {
     }
 
     public boolean addConfig(String name, YamlParser config) {
-        Pattern pattern = Pattern.compile("sd-(?<check>.+)");
+        Pattern pattern = Pattern.compile(SERVICE_DISCOVERY_PREFIX+"(?<check>.*)(?<version>_\\d*)");
 
         Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
+            // bad name.
             return false;
         }
 
         String check = matcher.group("check");
         if (this.configs.containsKey(check)) {
+            // there was already a file config for the check.
             return false;
         }
 
