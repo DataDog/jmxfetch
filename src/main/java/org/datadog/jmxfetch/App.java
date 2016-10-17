@@ -45,6 +45,7 @@ public class App {
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
+    private ConcurrentHashMap<String, YamlParser> sd_configs = new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
@@ -175,7 +176,7 @@ public class App {
         long delta_s = 0;
         while (true) {
             if (rpc_wait){
-                rpc_wait = ((System.currentTimeMillis() -  start_ms) / 1000) > appConfig.getRpcWait();
+                rpc_wait = ((System.currentTimeMillis() -  start_ms) / 1000) < appConfig.getRpcWait();
             }
 
             // Exit on exit file trigger if RPC wait period is over.
@@ -328,7 +329,7 @@ public class App {
             return false;
         }
 
-        this.configs.put(name, config);
+        this.sd_configs.put(name, config);
         this.setReinit();
 
         return true;
@@ -434,6 +435,56 @@ public class App {
             String name = entry.getKey();
             YamlParser yamlConfig = entry.getValue();
             it.remove();
+
+            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
+            if (configInstances == null || configInstances.size() == 0) {
+                String warning = "No instance found in :" + name;
+                LOGGER.warn(warning);
+                appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
+                continue;
+            }
+
+            for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                Instance instance;
+                //Create a new Instance object
+                try {
+                    instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                            name, appConfig);
+                } catch (Exception e) {
+                    String warning = "Unable to create instance. Please check your yaml file";
+                    appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
+                    LOGGER.error(warning, e);
+                    continue;
+                }
+                try {
+                    //  initiate the JMX Connection
+                    instance.init(forceNewConnection);
+                    instances.add(instance);
+                } catch (IOException e) {
+                    instance.cleanUp();
+                    brokenInstances.add(instance);
+                    String warning = CANNOT_CONNECT_TO_INSTANCE + instance + " " + e.getMessage();
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+                    LOGGER.error(warning);
+                } catch (Exception e) {
+                    instance.cleanUp();
+                    brokenInstances.add(instance);
+                    String warning = "Unexpected exception while initiating instance " + instance + " : " + e.getMessage();
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+                    LOGGER.error(warning, e);
+                }
+            }
+        }
+
+        // SD config cache never removes configs.
+        // TODO Jaime: refactor this code.
+        it = sd_configs.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, YamlParser> entry = it.next();
+            String name = entry.getKey();
+            YamlParser yamlConfig = entry.getValue();
 
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
