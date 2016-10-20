@@ -143,7 +143,10 @@ public class JMXMultiAttribute extends JMXAttribute {
         }
 
         for (String key : subMetrics.keySet()) {
-            metrics.addAll(sortAndFilter(key, subMetrics.get(key)));
+            // only add explicitly included metrics
+            if (getAttributesFor(key) != null) {
+                metrics.addAll(sortAndFilter(key, subMetrics.get(key)));
+            }
         }
 
         return metrics;
