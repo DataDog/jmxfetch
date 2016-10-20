@@ -181,7 +181,7 @@ public class TestCommon {
      *
      * @return                  fail if the metric was not found
      */
-    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
+    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags, String metricType, String keyTag){
         List<String> tags = new ArrayList<String>(commonTags);
         tags.addAll(additionalTags);
 
@@ -189,8 +189,9 @@ public class TestCommon {
             String mName = (String) (m.get("name"));
             Double mValue = (Double) (m.get("value"));
             Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
+            boolean keyMatch = keyTag == null || mTags.contains(keyTag);
 
-            if (mName.equals(name)) {
+            if (mName.equals(name) && keyMatch) {
 
                 if (!value.equals(-1)){
                     assertEquals((Double)value.doubleValue(), mValue);
@@ -219,22 +220,26 @@ public class TestCommon {
     }
 
     public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags) {
-        assertMetric(name, value, lowerBound, upperBound, commonTags, additionalTags, countTags, null);
+        assertMetric(name, value, lowerBound, upperBound, commonTags, additionalTags, countTags, null, null);
     }
 
     public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags){
-        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags);
+        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, null, null);
+    }
+
+    public void assertMultiMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags, String keyTag){
+        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, null, keyTag);
     }
 
     public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
-        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, metricType);
+        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, metricType, null);
     }
 
     public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags){
-        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags);
+        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, null, null);
     }
     public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
-        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType);
+        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType, null);
     }
 
     public void assertMetric(String name, Number value, List<String> tags, int countTags){
