@@ -53,25 +53,19 @@ import org.apache.log4j.Logger;
  * A sample gRPC server that serve the ServiceDiscovery (see route_guide.proto) service.
  */
 public class ServiceDiscoveryServer {
-    //private static final Logger logger = Logger.getLogger(ServiceDiscoveryServer.class.getName());
-    private final Logger logger;
+    private static final Logger logger = Logger.getLogger(ServiceDiscoveryServer.class.getName());
 
     private final int port;
     private final Server server;
 
     public ServiceDiscoveryServer(int port, App app) throws IOException {
-        this(ServerBuilder.forPort(port), port, app, Logger.getLogger(ServiceDiscoveryServer.class.getName()));
-    }
-
-    public ServiceDiscoveryServer(int port, App app, Logger logger) throws IOException {
-        this(ServerBuilder.forPort(port), port, app, logger);
+        this(ServerBuilder.forPort(port), port, app);
     }
 
     /** Create a ServiceDiscovery server using serverBuilder as a base and features as data. */
-    public ServiceDiscoveryServer(ServerBuilder<?> serverBuilder, int port, App app, Logger logger) {
+    public ServiceDiscoveryServer(ServerBuilder<?> serverBuilder, int port, App app) {
         this.port = port;
-        this.logger = logger;
-        server = serverBuilder.addService(new ServiceDiscoveryService(app, logger))
+        server = serverBuilder.addService(new ServiceDiscoveryService(app))
             .build();
     }
 
@@ -114,11 +108,9 @@ public class ServiceDiscoveryServer {
      */
     private static class ServiceDiscoveryService extends ServiceDiscoveryGrpc.ServiceDiscoveryImplBase {
         private final App app;
-        private final Logger logger;
 
-        ServiceDiscoveryService(App app, Logger logger) {
+        ServiceDiscoveryService(App app) {
             this.app = app;
-            this.logger = logger;
         }
 
         @Override

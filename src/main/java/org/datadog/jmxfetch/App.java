@@ -106,7 +106,7 @@ public class App {
 
         ServiceDiscoveryServer rpcserver;
         try {
-            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app, LOGGER);
+            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app);
             rpcserver.start();
             LOGGER.info("RPC server started. Yay!");
         }catch(IOException e) {
@@ -338,7 +338,13 @@ public class App {
     private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
         ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
         YamlParser fileConfig;
-        for (String fileName : config.getYamlFileList()) {
+
+        List<String> fileList = config.getYamlFileList();
+        if (fileList == null) {
+            return configs;
+        }
+
+        for (String fileName : fileList) {
             File f = new File(config.getConfdDirectory(), fileName);
             String name = f.getName().replace(".yaml", "");
             FileInputStream yamlInputStream = null;
@@ -362,45 +368,6 @@ public class App {
                 }
             }
         }
-        /*
-        File dir = new File(config.getTmpDirectory());
-        FileFilter fileFilter = new WildcardFileFilter(".yml.*.yaml");
-        File[] files = dir.listFiles(fileFilter);
-
-        Pattern pattern = Pattern.compile("\.jmx\.(?<check>.+)\.yaml");
-        for (int i = 0; i < files.length; i++) {
-            Matcher matcher = pattern.matcher(files[i].getName());
-            matcher.find(); //should always match
-            try {
-                check = matcher.group("check");
-                if (configs.containsKey(check)) {
-                    continue;
-                }
-
-                String yamlPath = files[i].getAbsolutePath();
-                try {
-                    LOGGER.info("Reading SD config from: " + yamlPath);
-                    yamlInputStream = new FileInputStream(yamlPath);
-                    fileConfig = new YamlParser(yamlInputStream);
-                    configs.put(check, fileConfig);
-                } catch (FileNotFoundException e) {
-                    LOGGER.warn("Cannot find " + yamlPath);
-                } catch (Exception e) {
-                    LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
-                } finally {
-                    if (yamlInputStream != null) {
-                        try {
-                            yamlInputStream.close();
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    }
-                }
-            } catch (IllegalStateException | IndexOutOfBoundsException e) {
-                LOGGER.warn("Cannot load valid SD configuration for check: " + e);
-            }
-        }
-        */
 
         LOGGER.info("Found " + configs.size() + " config files");
         return configs;

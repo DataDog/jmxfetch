@@ -62,7 +62,7 @@ class AppConfig {
 
     @Parameter(names = {"--check", "-c"},
             description = "Yaml file name to read (must be in the confd directory)",
-            required = true,
+            required = false,
             variableArity = true)
     private List<String> yamlFileList;
 
