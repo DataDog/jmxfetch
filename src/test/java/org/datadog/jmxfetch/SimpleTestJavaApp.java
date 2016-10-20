@@ -1,5 +1,14 @@
 package org.datadog.jmxfetch;
 
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenType;
+import javax.management.openmbean.SimpleType;
+import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularDataSupport;
+import javax.management.openmbean.TabularType;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,12 +39,18 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final HashMap<String, Integer> hashmap = new HashMap<String, Integer>();
     private final Object object1337 = new Double(13.37);
     private final BigDecimal numberBig = new BigDecimal(123456788901234567890.0);
-
+    private final TabularData tabulardata;
+    private final CompositeType compositetype;
 
     SimpleTestJavaApp() {
         hashmap.put("thisis0", 0);
         hashmap.put("thisis10", 10);
         hashmap.put("thisiscounter", 0);
+        compositetype = buildCompositeType();
+        tabulardata = buildTabularType();
+        if (tabulardata != null) {
+            tabulardata.put(buildCompositeData(1));
+        }
     }
 
     public int getShouldBe100() {
@@ -111,4 +126,45 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     public Float getInstanceFloat(){
         return instanceFloat;
     }
+
+    private TabularData buildTabularType() {
+        try {
+            CompositeType rowType = buildCompositeType();
+            TabularType tabularType = new TabularType("myTabularType", "My tabular type", rowType,
+                    new String[]{"thisiskey"});
+            return new TabularDataSupport(tabularType);
+        } catch (OpenDataException e) {
+            return null;
+        }
+    }
+
+    private CompositeType buildCompositeType() {
+        try {
+            return new CompositeType("myCompositeType", "My composite type",
+                    new String[]{"thisiskey", "thisisx"},
+                    new String[]{"This is key", "This is x"},
+                    new OpenType[]{SimpleType.STRING, SimpleType.INTEGER});
+        } catch (OpenDataException e) {
+            return null;
+        }
+    }
+
+    private CompositeData buildCompositeData(Integer i) {
+        try {
+            return new CompositeDataSupport(compositetype,
+                    new String[]{"thisiskey", "thisisx"},
+                    new Object[]{i.toString(), i});
+        } catch (OpenDataException e) {
+            return null;
+        }
+    }
+
+    public void populateTabularData(int count) {
+        tabulardata.clear();
+        for (Integer i = 1; i <= count; i++) {
+            tabulardata.put(buildCompositeData(i));
+        }
+    }
+
+    public TabularData getTabulardata() { return tabulardata; }
 }
