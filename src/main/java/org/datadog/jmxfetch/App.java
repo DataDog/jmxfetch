@@ -174,7 +174,7 @@ public class App {
         long start_ms = System.currentTimeMillis();
         boolean rpc_wait = true;
         long delta_s = 0;
-        while (true) {
+        while (true) { // we currently wait forever if any value for RPC wait is set. Should we?
             if (rpc_wait){
                 rpc_wait = ((System.currentTimeMillis() -  start_ms) / 1000) < appConfig.getRpcWait();
             }
