@@ -82,10 +82,11 @@ public class App {
             System.exit(1);
         }
 
-        if( config.getAction().equals( AppConfig.ACTION_LIST_JVMS )) {
+        if(config.getAction().equals(AppConfig.ACTION_LIST_JVMS)) {
             List<com.sun.tools.attach.VirtualMachineDescriptor> descriptors = com.sun.tools.attach.VirtualMachine.list();
+
             System.out.println("List of JVMs for user " + System.getProperty("user.name") );
-            for( com.sun.tools.attach.VirtualMachineDescriptor descriptor : descriptors ) {
+            for(com.sun.tools.attach.VirtualMachineDescriptor descriptor : descriptors) {
                 System.out.println( "\tJVM id " + descriptor.id() + ": '" + descriptor.displayName() + "'" );
             }
             System.exit(0);
@@ -368,7 +369,7 @@ public class App {
                 } catch (IOException e) {
                     instance.cleanUp();
                     brokenInstances.add(instance);
-                    String warning = CANNOT_CONNECT_TO_INSTANCE + instance + " " + e.getMessage();
+                    String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
                     this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);

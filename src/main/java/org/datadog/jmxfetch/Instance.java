@@ -136,7 +136,7 @@ public class Instance {
     @Override
     public String toString() {
         if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
-            return "process_regex: " + this.yaml.get(PROCESS_NAME_REGEX);
+            return "process_regex: `" + this.yaml.get(PROCESS_NAME_REGEX) + "`";
         } else if (this.yaml.get("jmx_url") != null) {
             return (String) this.yaml.get("jmx_url");
         } else {
