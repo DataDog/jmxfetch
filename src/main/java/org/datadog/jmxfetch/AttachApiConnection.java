@@ -29,7 +29,7 @@ public class AttachApiConnection extends Connection {
             throw new IOException("Unnable to attach to process regex:  "+ processRegex, e);
         }
         return address;
-        
+
     }
 
      private String getJMXUrlForProcessRegex(String processRegex) throws com.sun.tools.attach.AttachNotSupportedException, IOException {
@@ -49,7 +49,8 @@ public class AttachApiConnection extends Connection {
                 return connectorAddress;
             }
         }
-        throw new IOException("Cannot find JVM matching regex: " + processRegex);
+
+        throw new IOException("No match found. Available JVMs can be listed with the `list_jvms` command.");
     }
 
     private void loadJMXAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {

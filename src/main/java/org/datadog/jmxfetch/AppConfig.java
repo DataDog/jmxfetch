@@ -18,6 +18,7 @@ import com.beust.jcommander.Parameters;
 @Parameters(separators = "=")
 class AppConfig {
     public static final String ACTION_COLLECT = "collect";
+    public static final String ACTION_LIST_JVMS = "list_jvms";
     public static final String ACTION_LIST_EVERYTHING = "list_everything";
     public static final String ACTION_LIST_COLLECTED = "list_collected_attributes";
     public static final String ACTION_LIST_MATCHING = "list_matching_attributes";
@@ -25,7 +26,7 @@ class AppConfig {
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
     public static final HashSet<String> ACTIONS = new HashSet<String>(Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING,
-            ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP));
+            ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP, ACTION_LIST_JVMS));
 
     @Parameter(names = {"--help", "-h"},
             description = "Display this help page",
@@ -81,7 +82,7 @@ class AppConfig {
 
     @Parameter(description = "Action to take, should be in [help, collect, " +
             "list_everything, list_collected_attributes, list_matching_attributes, " +
-            "list_not_matching_attributes, list_limited_attributes]",
+            "list_not_matching_attributes, list_limited_attributes, list_jvms]",
             required = true)
     private List<String> action = null;
 
