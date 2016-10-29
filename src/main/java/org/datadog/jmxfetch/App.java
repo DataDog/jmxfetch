@@ -1,10 +1,15 @@
 package org.datadog.jmxfetch;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -42,6 +47,10 @@ public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
     private final static String SERVICE_DISCOVERY_PREFIX = "SD-";
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
+    private static final String SD_PIPE_NAME = "dd-service_discovery";
+    private static final String SD_UNIX_PIPE_PATH = "/tmp";
+    private static final String SD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
+    private static final String SD_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
@@ -169,12 +178,60 @@ public class App {
         }
     }
 
+    private String get_sd_name(String config){
+      String name = config.substring(config.indexOf("\n")-1);
+      name = name.substring(2, name.length());
+
+      return name;
+    }
+
+    private boolean process_service_discovery(byte[] buffer) {
+      boolean reinit = false;
+      String[] discovered;
+
+      try {
+        String configs = new String(buffer, "UTF-8");
+        discovered = configs.split(this.SD_CONFIG_SEP);
+      } catch(UnsupportedEncodingException e) {
+        //BLAH
+        return false;
+      }
+
+      for (String config : discovered) {
+        String name = get_sd_name(config);
+
+        InputStream stream = new ByteArrayInputStream(config.getBytes(StandardCharsets.UTF_8));
+        YamlParser yaml = new YamlParser(stream);
+
+        if (this.addConfig(name, yaml)){
+          reinit = true;
+        }
+      }
+
+      return reinit;
+    }
+
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         long start_ms = System.currentTimeMillis();
         boolean rpc_wait = true;
         long delta_s = 0;
-        while (true) { // we currently wait forever if any value for RPC wait is set. Should we?
+        String pipe_path;
+        FileInputStream sd_pipe = null;
+
+        try {
+          if (System.getProperty("os.name").startsWith("Windows")) {
+            pipe_path = this.SD_WIN_PIPE_PATH + "/" + this.SD_PIPE_NAME;
+          } else {
+            pipe_path = this.SD_UNIX_PIPE_PATH + "/" + this.SD_PIPE_NAME;
+          }
+          sd_pipe = new FileInputStream(pipe_path); //Should we use RandomAccessFile?
+        } catch (Exception e) {
+          LOGGER.warn("Unable to open named pipe - Service Discovery disabled.");
+          sd_pipe = null;
+        }
+
+        while (true) {
             if (rpc_wait){
                 rpc_wait = ((System.currentTimeMillis() -  start_ms) / 1000) < appConfig.getRpcWait();
             }
@@ -183,6 +240,18 @@ public class App {
             if (!rpc_wait && appConfig.getExitWatcher().shouldExit()){
                 LOGGER.info("Exit file detected: stopping JMXFetch.");
                 System.exit(0);
+            }
+
+            // any SD configs waiting in pipe?
+            try {
+              if(sd_pipe != null && sd_pipe.available() > 0) {
+                int len = sd_pipe.available();
+                byte[] buffer = new byte[len];
+                sd_pipe.read(buffer);
+                reinit.set(process_service_discovery(buffer));
+              }
+            } catch(IOException e) {
+              LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
             }
 
             long start = System.currentTimeMillis();
