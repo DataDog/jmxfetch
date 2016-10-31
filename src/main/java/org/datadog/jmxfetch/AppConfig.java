@@ -49,6 +49,11 @@ class AppConfig {
             required = true)
     private String confdDirectory;
 
+    @Parameter(names = {"--tmp_directory", "-T"},
+            description = "Absolute path to a temporary directory",
+            required = false)
+    private String tmpDirectory = "/tmp";
+
     @Parameter(names = {"--reporter", "-r"},
             description = "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"",
             validateWith = ReporterValidator.class,
@@ -58,7 +63,7 @@ class AppConfig {
 
     @Parameter(names = {"--check", "-c"},
             description = "Yaml file name to read (must be in the confd directory)",
-            required = true,
+            required = false,
             variableArity = true)
     private List<String> yamlFileList;
 
@@ -67,6 +72,18 @@ class AppConfig {
             validateWith = PositiveIntegerValidator.class,
             required = false)
     private int checkPeriod = 15000;
+
+    @Parameter(names = {"--rpc_port", "-x"},
+            description = "Port where the RPC server should be listening.",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int rpcPort = 50051;
+
+    @Parameter(names = {"--rpc_wait", "-w"},
+            description = "RPC config wait period in seconds.",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int rpcWait = 0;
 
     @Parameter(names = {"--status_location", "-s"},
             description = "Absolute path of the status file. (default to null = no status file written)",
@@ -110,6 +127,14 @@ class AppConfig {
         return checkPeriod;
     }
 
+    public int getRpcPort() {
+        return rpcPort;
+    }
+
+    public int getRpcWait() {
+        return rpcWait;
+    }
+
     public Reporter getReporter() {
         return reporter;
     }
@@ -120,6 +145,10 @@ class AppConfig {
 
     public String getConfdDirectory() {
         return confdDirectory;
+    }
+
+    public String getTmpDirectory() {
+        return tmpDirectory;
     }
 
     public String getLogLevel() {

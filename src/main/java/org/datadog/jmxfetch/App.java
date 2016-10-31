@@ -4,9 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.FileFilter;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -14,11 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
+
 import javax.security.auth.login.FailedLoginException;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 
@@ -29,12 +41,16 @@ import com.beust.jcommander.ParameterException;
 @SuppressWarnings("unchecked")
 public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
+    private final static String SERVICE_DISCOVERY_PREFIX = "SD-";
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static int loopCounter;
-    private HashMap<String, YamlParser> configs;
+    private AtomicBoolean reinit = new AtomicBoolean(false);
+    private ConcurrentHashMap<String, YamlParser> configs;
+    private ConcurrentHashMap<String, YamlParser> sd_configs = new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
+    private ServiceDiscoveryServer rpcserver;
 
 
     public App(AppConfig appConfig) {
@@ -99,6 +115,17 @@ public class App {
 
         App app = new App(config);
 
+        ServiceDiscoveryServer rpcserver;
+        try {
+            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app);
+            rpcserver.start();
+            LOGGER.info("RPC server started. Yay!");
+        }catch(IOException e) {
+            LOGGER.info("Failed to start the RPC server... moving on: " + e.toString());
+            LOGGER.debug("RPC failure stacktrace: " + Arrays.toString(e.getStackTrace()));
+            rpcserver = null;
+        }
+
         // Initiate JMX Connections, get attributes that match the yaml configuration
         app.init(false);
 
@@ -106,6 +133,10 @@ public class App {
         if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
             // Start the main loop
             app.start();
+        }
+
+        if (rpcserver != null) {
+            rpcserver.stop(); //Add to shutdown hook.
         }
     }
 
@@ -132,6 +163,10 @@ public class App {
         new ShutdownHook().attachShutDownHook();
     }
 
+    public void setReinit() {
+        this.reinit.set(true);
+    }
+
     public static int getLoopCounter() {
         return loopCounter;
     }
@@ -147,14 +182,25 @@ public class App {
 
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
-        while (true) {
-            // Exit on exit file trigger
-            if (appConfig.getExitWatcher().shouldExit()){
+        long start_ms = System.currentTimeMillis();
+        boolean rpc_wait = true;
+        long delta_s = 0;
+        while (true) { // we currently wait forever if any value for RPC wait is set. Should we?
+            if (rpc_wait){
+                rpc_wait = ((System.currentTimeMillis() -  start_ms) / 1000) < appConfig.getRpcWait();
+            }
+
+            // Exit on exit file trigger if RPC wait period is over.
+            if (!rpc_wait && appConfig.getExitWatcher().shouldExit()){
                 LOGGER.info("Exit file detected: stopping JMXFetch.");
                 System.exit(0);
             }
 
             long start = System.currentTimeMillis();
+            if (this.reinit.get()) {
+                init(true);
+            }
+
             if (instances.size() > 0) {
                 doIteration();
             } else {
@@ -279,10 +325,37 @@ public class App {
         }
     }
 
-    private HashMap<String, YamlParser> getConfigs(AppConfig config) {
-        HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
+    public boolean addConfig(String name, YamlParser config) {
+        Pattern pattern = Pattern.compile(SERVICE_DISCOVERY_PREFIX+"(?<check>.*)(?<version>_\\d*)");
+
+        Matcher matcher = pattern.matcher(name);
+        if (!matcher.find()) {
+            // bad name.
+            return false;
+        }
+
+        String check = matcher.group("check");
+        if (this.configs.containsKey(check)) {
+            // there was already a file config for the check.
+            return false;
+        }
+
+        this.sd_configs.put(name, config);
+        this.setReinit();
+
+        return true;
+    }
+
+    private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
+        ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
         YamlParser fileConfig;
-        for (String fileName : config.getYamlFileList()) {
+
+        List<String> fileList = config.getYamlFileList();
+        if (fileList == null) {
+            return configs;
+        }
+
+        for (String fileName : fileList) {
             File f = new File(config.getConfdDirectory(), fileName);
             String name = f.getName().replace(".yaml", "");
             FileInputStream yamlInputStream = null;
@@ -306,6 +379,7 @@ public class App {
                 }
             }
         }
+
         LOGGER.info("Found " + configs.size() + " config files");
         return configs;
     }
@@ -370,6 +444,56 @@ public class App {
                     instance.cleanUp();
                     brokenInstances.add(instance);
                     String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+                    LOGGER.error(warning);
+                } catch (Exception e) {
+                    instance.cleanUp();
+                    brokenInstances.add(instance);
+                    String warning = "Unexpected exception while initiating instance " + instance + " : " + e.getMessage();
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+                    LOGGER.error(warning, e);
+                }
+            }
+        }
+
+        // SD config cache never removes configs.
+        // TODO Jaime: refactor this code.
+        it = sd_configs.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, YamlParser> entry = it.next();
+            String name = entry.getKey();
+            YamlParser yamlConfig = entry.getValue();
+
+            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
+            if (configInstances == null || configInstances.size() == 0) {
+                String warning = "No instance found in :" + name;
+                LOGGER.warn(warning);
+                appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
+                continue;
+            }
+
+            for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                Instance instance;
+                //Create a new Instance object
+                try {
+                    instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                            name, appConfig);
+                } catch (Exception e) {
+                    String warning = "Unable to create instance. Please check your yaml file";
+                    appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
+                    LOGGER.error(warning, e);
+                    continue;
+                }
+                try {
+                    //  initiate the JMX Connection
+                    instance.init(forceNewConnection);
+                    instances.add(instance);
+                } catch (IOException e) {
+                    instance.cleanUp();
+                    brokenInstances.add(instance);
+                    String warning = CANNOT_CONNECT_TO_INSTANCE + instance + " " + e.getMessage();
                     this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                     LOGGER.error(warning);
