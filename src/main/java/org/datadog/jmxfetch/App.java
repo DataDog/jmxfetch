@@ -179,10 +179,9 @@ public class App {
     }
 
     private String get_sd_name(String config){
-      String name = config.substring(config.indexOf("\n")-1);
-      name = name.substring(2, name.length());
+      String[] splitted = config.split(System.lineSeparator(), 2);
 
-      return name;
+      return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
 
     private boolean process_service_discovery(byte[] buffer) {
@@ -191,20 +190,26 @@ public class App {
 
       try {
         String configs = new String(buffer, "UTF-8");
-        discovered = configs.split(this.SD_CONFIG_SEP);
+        discovered = configs.split(this.SD_CONFIG_SEP+System.lineSeparator());
       } catch(UnsupportedEncodingException e) {
-        //BLAH
+        LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
         return false;
       }
 
       for (String config : discovered) {
-        String name = get_sd_name(config);
+        if (config == null || config.isEmpty()) {
+          continue;
+        }
 
+        String name = get_sd_name(config);
+        LOGGER.debug("Attempting to apply config. Name: " + name + "config: " + config);
         InputStream stream = new ByteArrayInputStream(config.getBytes(StandardCharsets.UTF_8));
         YamlParser yaml = new YamlParser(stream);
 
         if (this.addConfig(name, yaml)){
           reinit = true;
+          LOGGER.debug("Configuration added succesfully reinit in order");
+
         }
       }
 
