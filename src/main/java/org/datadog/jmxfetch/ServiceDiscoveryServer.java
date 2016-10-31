@@ -105,11 +105,11 @@ public class ServiceDiscoveryServer {
 
         @Override
         public void setConfig(SDConfig request, StreamObserver<Confirmation> responseObserver) {
-            responseObserver.onNext(setSDConfig(request));
+            responseObserver.onNext(setConfigHandler(request));
             responseObserver.onCompleted();
         }
 
-        private Confirmation setSDConfig(SDConfig config) {
+        private Confirmation setConfigHandler(SDConfig config) {
             InputStream stream = new ByteArrayInputStream(config.getConfig().getBytes(StandardCharsets.UTF_8));
             YamlParser yaml = new YamlParser(stream);
 
