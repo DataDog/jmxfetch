@@ -25,10 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.stub.StreamObserver;
-
 import javax.security.auth.login.FailedLoginException;
 
 import org.apache.log4j.Appender;
@@ -58,7 +54,6 @@ public class App {
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
-    private ServiceDiscoveryServer rpcserver;
 
 
     public App(AppConfig appConfig) {
@@ -113,17 +108,6 @@ public class App {
 
         App app = new App(config);
 
-        ServiceDiscoveryServer rpcserver;
-        try {
-            rpcserver = new ServiceDiscoveryServer(config.getRpcPort(), app);
-            rpcserver.start();
-            LOGGER.info("RPC server started. Yay!");
-        }catch(IOException e) {
-            LOGGER.info("Failed to start the RPC server... moving on: " + e.toString());
-            LOGGER.debug("RPC failure stacktrace: " + Arrays.toString(e.getStackTrace()));
-            rpcserver = null;
-        }
-
         // Initiate JMX Connections, get attributes that match the yaml configuration
         app.init(false);
 
@@ -131,10 +115,6 @@ public class App {
         if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
             // Start the main loop
             app.start();
-        }
-
-        if (rpcserver != null) {
-            rpcserver.stop(); //Add to shutdown hook.
         }
     }
 
