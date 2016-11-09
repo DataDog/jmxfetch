@@ -9,7 +9,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -30,6 +29,7 @@ import javax.security.auth.login.FailedLoginException;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -156,7 +156,7 @@ public class App {
     }
 
     private String get_sd_name(String config){
-      String[] splitted = config.split(System.lineSeparator(), 2);
+      String[] splitted = config.split(System.getProperty("line.separator"), 2);
 
       return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
@@ -166,8 +166,8 @@ public class App {
       String[] discovered;
 
       try {
-        String configs = new String(buffer, "UTF-8");
-        discovered = configs.split(App.SD_CONFIG_SEP+System.lineSeparator());
+        String configs = new String(buffer, CharEncoding.UTF_8);
+        discovered = configs.split(App.SD_CONFIG_SEP + System.getProperty("line.separator"));
       } catch(UnsupportedEncodingException e) {
         LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
         return false;
@@ -178,14 +178,18 @@ public class App {
           continue;
         }
 
-        String name = get_sd_name(config);
-        LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
-        InputStream stream = new ByteArrayInputStream(config.getBytes(StandardCharsets.UTF_8));
-        YamlParser yaml = new YamlParser(stream);
+        try{
+          String name = get_sd_name(config);
+          LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
+          InputStream stream = new ByteArrayInputStream(config.getBytes(CharEncoding.UTF_8));
+          YamlParser yaml = new YamlParser(stream);
 
-        if (this.addConfig(name, yaml)){
-          reinit = true;
-          LOGGER.debug("Configuration added succesfully reinit in order");
+          if (this.addConfig(name, yaml)){
+            reinit = true;
+            LOGGER.debug("Configuration added succesfully reinit in order");
+          }
+        } catch(UnsupportedEncodingException e) {
+          LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
         }
       }
 
@@ -362,7 +366,8 @@ public class App {
             return false;
         }
 
-        String check = matcher.group("check");
+        // Java 6 doesn't allow name matching - group 1 is "check"
+        String check = matcher.group(1);
         if (this.configs.containsKey(check)) {
             // there was already a file config for the check.
             return false;
