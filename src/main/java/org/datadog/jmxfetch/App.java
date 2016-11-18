@@ -30,8 +30,6 @@ import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.commons.lang3.CharEncoding;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 
@@ -138,8 +136,8 @@ public class App {
         new ShutdownHook().attachShutDownHook();
     }
 
-    public void setReinit() {
-        this.reinit.set(true);
+    public void setReinit(boolean reinit) {
+        this.reinit.set(reinit);
     }
 
     public static int getLoopCounter() {
@@ -222,7 +220,7 @@ public class App {
                 int len = sd_pipe.available();
                 byte[] buffer = new byte[len];
                 sd_pipe.read(buffer);
-                reinit.set(process_service_discovery(buffer));
+                setReinit(process_service_discovery(buffer));
               }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
@@ -374,7 +372,7 @@ public class App {
         }
 
         this.sd_configs.put(name, config);
-        this.setReinit();
+        this.setReinit(true);
 
         return true;
     }
