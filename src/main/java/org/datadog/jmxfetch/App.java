@@ -355,7 +355,8 @@ public class App {
     }
 
     public boolean addConfig(String name, YamlParser config) {
-        Pattern pattern = Pattern.compile(SERVICE_DISCOVERY_PREFIX+"(?<check>.*)(?<version>_\\d*)");
+        // named groups not supported with Java6: "(?<check>.{1,30})_(?<version>\\d{0,30})"
+        Pattern pattern = Pattern.compile(SERVICE_DISCOVERY_PREFIX+"(.{1,30})_(\\d{0,30})");
 
         Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
