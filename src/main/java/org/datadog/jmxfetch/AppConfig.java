@@ -156,13 +156,13 @@ class AppConfig {
     }
 
     public String getServiceDiscoveryPipe() {
-        String pipe_path;
+        String pipePath;
 
         if (System.getProperty("os.name").startsWith("Windows")) {
-            pipe_path = SD_WIN_PIPE_PATH + "/" + sdPipe;
+            pipePath = SD_WIN_PIPE_PATH + "/" + sdPipe;
         } else {
-            pipe_path = getTmpDirectory() + "/" + sdPipe;
+            pipePath = getTmpDirectory() + "/" + sdPipe;
         }
-        return pipe_path;
+        return pipePath;
     }
 }

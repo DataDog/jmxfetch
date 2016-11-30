@@ -45,7 +45,7 @@ public class App {
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
-    private ConcurrentHashMap<String, YamlParser> sd_configs = new ConcurrentHashMap<String, YamlParser>();
+    private ConcurrentHashMap<String, YamlParser> sdConfigs = new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
@@ -153,13 +153,13 @@ public class App {
         }
     }
 
-    private String get_sd_name(String config){
+    private String getSDName(String config){
       String[] splitted = config.split(System.getProperty("line.separator"), 2);
 
       return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
 
-    private boolean process_service_discovery(byte[] buffer) {
+    private boolean processServiceDiscovery(byte[] buffer) {
       boolean reinit = false;
       String[] discovered;
 
@@ -177,7 +177,7 @@ public class App {
         }
 
         try{
-          String name = get_sd_name(config);
+          String name = getSDName(config);
           LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
           InputStream stream = new ByteArrayInputStream(config.getBytes(CharEncoding.UTF_8));
           YamlParser yaml = new YamlParser(stream);
@@ -198,13 +198,13 @@ public class App {
         // Main Loop that will periodically collect metrics from the JMX Server
         long start_ms = System.currentTimeMillis();
         long delta_s = 0;
-        FileInputStream sd_pipe = null;
+        FileInputStream sdPipe = null;
 
         try {
-          sd_pipe = new FileInputStream(appConfig.getServiceDiscoveryPipe()); //Should we use RandomAccessFile?
+          sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe()); //Should we use RandomAccessFile?
         } catch (FileNotFoundException e) {
           LOGGER.warn("Unable to open named pipe - Service Discovery disabled.");
-          sd_pipe = null;
+          sdPipe = null;
         }
 
         while (true) {
@@ -216,11 +216,11 @@ public class App {
 
             // any SD configs waiting in pipe?
             try {
-              if(sd_pipe != null && sd_pipe.available() > 0) {
-                int len = sd_pipe.available();
+              if(sdPipe != null && sdPipe.available() > 0) {
+                int len = sdPipe.available();
                 byte[] buffer = new byte[len];
-                sd_pipe.read(buffer);
-                setReinit(process_service_discovery(buffer));
+                sdPipe.read(buffer);
+                setReinit(processServiceDiscovery(buffer));
               }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
@@ -371,7 +371,7 @@ public class App {
             return false;
         }
 
-        this.sd_configs.put(name, config);
+        this.sdConfigs.put(name, config);
         this.setReinit(true);
 
         return true;
@@ -440,20 +440,20 @@ public class App {
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         // SD config cache doesn't remove configs - it just overwrites.
-        Iterator<Entry<String, YamlParser>> it_sd = sd_configs.entrySet().iterator();
-        while (it.hasNext() || it_sd.hasNext()) {
+        Iterator<Entry<String, YamlParser>> itSD = sdConfigs.entrySet().iterator();
+        while (it.hasNext() || itSD.hasNext()) {
             Map.Entry<String, YamlParser> entry;
-            boolean sd_iterator = false;
+            boolean sdIterator = false;
             if (it.hasNext()) {
                 entry = it.next();
             } else {
-                entry = it_sd.next();
-                sd_iterator = true;
+                entry = itSD.next();
+                sdIterator = true;
             }
 
             String name = entry.getKey();
             YamlParser yamlConfig = entry.getValue();
-            if(!sd_iterator) {
+            if(!sdIterator) {
                 it.remove();
             }
 
