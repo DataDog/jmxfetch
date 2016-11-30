@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -159,7 +158,7 @@ public class App {
       return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
 
-    private boolean processServiceDiscovery(byte[] buffer) {
+    public boolean processServiceDiscovery(byte[] buffer) {
       boolean reinit = false;
       String[] discovered;
 

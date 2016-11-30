@@ -425,4 +425,69 @@ public class TestApp extends TestCommon {
         assertMetric("test.counter", 0.98, 1, commonTags, 5);
         assertCoverage();
     }
+    /**
+     * Test JMX Service Discovery.
+     *
+     */
+    @Test
+    public void testServiceDiscovery() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp test = new SimpleTestJavaApp();
+        registerMBean(test, "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        registerMBean(test, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=Co|olScope,host=localhost,component=");
+        registerMBean(test, "org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks");
+        initApplication("jmx_alias_match.yaml", "jmx_sd_pipe.txt");
+
+        // Collecting metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(59, metrics.size());
+
+
+        List<String> tags = Arrays.asList(
+            "type:SimpleTestJavaApp",
+            "scope:CoolScope",
+            "instance:jmx_test_instance",
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "bean_host:localhost",
+            "component"
+        );
+
+        assertMetric("this.is.100", tags, 6);
+
+        // Assert compliancy with CASSANDRA-4009
+        tags = Arrays.asList(
+            "type:ColumnFamily",
+            "keyspace:MyKeySpace",
+            "ColumnFamily:MyColumnFamily",
+            "jmx_domain:org.apache.cassandra.metrics",
+            "instance:jmx_first_instance"
+        );
+
+        assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
+
+        // Default behavior
+        tags = Arrays.asList(
+            "type:ColumnFamily",
+            "scope:MyColumnFamily",
+            "keyspace:MyKeySpace",
+            "jmx_domain:org.apache.cassandra.metrics",
+            "instance:jmx_second_instance",
+            "name:PendingTasks");
+
+        assertMetric("cassandra.metrics.should_be1000", tags, 6);
+
+        // Metric aliases are generated from `alias_match`
+        tags = Arrays.asList(
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "instance:jmx_test_instance",
+            "foo:Bar",
+            "qux:Baz"
+        );
+
+        assertMetric("this.is.100.bar.baz", tags, 4);
+        assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
+    }
 }

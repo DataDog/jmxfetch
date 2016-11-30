@@ -4,7 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import  org.mockito.Spy;
+import static org.mockito.Mockito.*;
+
 import java.lang.management.ManagementFactory;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +38,7 @@ import com.beust.jcommander.JCommander;
 
 
 public class TestCommon {
-    AppConfig appConfig = new AppConfig();
+    AppConfig appConfig = spy(new AppConfig());
     App app;
     MBeanServer mbs;
     ArrayList<ObjectName> objectNames = new ArrayList<ObjectName>();
@@ -79,16 +85,47 @@ public class TestCommon {
     /**
      * Init JMXFetch with the given YAML configuration file.
      */
-    protected void initApplication(String yamlFileName){
+    protected void initApplication(String yamlFileName, String serviceDiscoveryPipeFile) throws FileNotFoundException, IOException {
         // We do a first collection
         // We initialize the main app that will collect these metrics using JMX
         String confdDirectory = Thread.currentThread().getContextClassLoader().getResource(yamlFileName).getPath();
         confdDirectory = new String(confdDirectory.substring(0, confdDirectory.length() - yamlFileName.length()));
-        String[] params = {"--reporter", "console", "-c", yamlFileName, "--conf_directory", confdDirectory, "collect"};
-        new JCommander(appConfig, params);
+        List<String> params = new ArrayList<String>();
+        boolean sdEnabled = (serviceDiscoveryPipeFile.length() > 0);
+        params.add("--reporter");
+        params.add("console");
+        params.add("-c");
+        params.add(yamlFileName);
+        params.add("--conf_directory");
+        params.add(confdDirectory);
+        params.add("collect");
+
+        if (sdEnabled) {
+            params.add(4, "--tmp_directory");
+            params.add(5, "/foo"); //could be anything we're stubbing it out
+        }
+        new JCommander(appConfig, params.toArray(new String[params.size()]));
+
+       if (sdEnabled) {
+           String SDPipe = Thread.currentThread().getContextClassLoader().getResource(
+                   serviceDiscoveryPipeFile).getPath();
+           when(appConfig.getServiceDiscoveryPipe()).thenReturn(SDPipe); //mocking with fixture file.
+       }
 
         app = new App(appConfig);
+        if (sdEnabled) {
+            FileInputStream sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe());
+            int len = sdPipe.available();
+            byte[] buffer = new byte[len];
+            sdPipe.read(buffer);
+            app.setReinit(app.processServiceDiscovery(buffer));
+        }
+
         app.init(false);
+    }
+
+    protected void initApplication(String yamlFileName) throws FileNotFoundException, IOException {
+        initApplication(yamlFileName, "");
     }
 
     /**
