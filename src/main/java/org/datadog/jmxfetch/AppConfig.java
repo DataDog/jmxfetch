@@ -28,6 +28,9 @@ class AppConfig {
     public static final HashSet<String> ACTIONS = new HashSet<String>(Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING,
             ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP, ACTION_LIST_JVMS));
 
+    private static final String SD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
+    private static final String SD_PIPE_NAME = "dd-service_discovery";
+
     @Parameter(names = {"--help", "-h"},
             description = "Display this help page",
             help = true)
@@ -49,6 +52,11 @@ class AppConfig {
             required = true)
     private String confdDirectory;
 
+    @Parameter(names = {"--tmp_directory", "-T"},
+            description = "Absolute path to a temporary directory",
+            required = false)
+    private String tmpDirectory = "/tmp";
+
     @Parameter(names = {"--reporter", "-r"},
             description = "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"",
             validateWith = ReporterValidator.class,
@@ -58,7 +66,7 @@ class AppConfig {
 
     @Parameter(names = {"--check", "-c"},
             description = "Yaml file name to read (must be in the confd directory)",
-            required = true,
+            required = false,
             variableArity = true)
     private List<String> yamlFileList;
 
@@ -67,6 +75,16 @@ class AppConfig {
             validateWith = PositiveIntegerValidator.class,
             required = false)
     private int checkPeriod = 15000;
+
+    @Parameter(names = {"--sd_standby", "-w"},
+            description = "Service Discovery standby.",
+            required = false)
+    private boolean sdStandby = false;
+
+    @Parameter(names = {"--sd_pipe", "-S"},
+            description = "Service Discovery pipe name.",
+            required = false)
+    private String sdPipe = SD_PIPE_NAME;
 
     @Parameter(names = {"--status_location", "-s"},
             description = "Absolute path of the status file. (default to null = no status file written)",
@@ -110,6 +128,10 @@ class AppConfig {
         return checkPeriod;
     }
 
+    public boolean getSDStandby() {
+        return sdStandby;
+    }
+
     public Reporter getReporter() {
         return reporter;
     }
@@ -122,11 +144,26 @@ class AppConfig {
         return confdDirectory;
     }
 
+    public String getTmpDirectory() {
+        return tmpDirectory;
+    }
+
     public String getLogLevel() {
         return logLevel;
     }
 
     public String getLogLocation() {
         return logLocation;
+    }
+
+    public String getServiceDiscoveryPipe() {
+        String pipePath;
+
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            pipePath = SD_WIN_PIPE_PATH + "/" + sdPipe;
+        } else {
+            pipePath = getTmpDirectory() + "/" + sdPipe;
+        }
+        return pipePath;
     }
 }

@@ -1,12 +1,21 @@
 package org.datadog.jmxfetch;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -19,6 +28,7 @@ import javax.security.auth.login.FailedLoginException;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.commons.lang3.CharEncoding;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 
@@ -29,9 +39,13 @@ import com.beust.jcommander.ParameterException;
 @SuppressWarnings("unchecked")
 public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
+    private final static String SERVICE_DISCOVERY_PREFIX = "SD-";
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
+    private static final String SD_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static int loopCounter;
-    private HashMap<String, YamlParser> configs;
+    private AtomicBoolean reinit = new AtomicBoolean(false);
+    private ConcurrentHashMap<String, YamlParser> configs;
+    private ConcurrentHashMap<String, YamlParser> sdConfigs = new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
@@ -132,6 +146,10 @@ public class App {
         new ShutdownHook().attachShutDownHook();
     }
 
+    public void setReinit(boolean reinit) {
+        this.reinit.set(reinit);
+    }
+
     public static int getLoopCounter() {
         return loopCounter;
     }
@@ -145,16 +163,84 @@ public class App {
         }
     }
 
+    private String getSDName(String config){
+      String[] splitted = config.split(System.getProperty("line.separator"), 2);
+
+      return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
+    }
+
+    public boolean processServiceDiscovery(byte[] buffer) {
+      boolean reinit = false;
+      String[] discovered;
+
+      try {
+        String configs = new String(buffer, CharEncoding.UTF_8);
+        discovered = configs.split(App.SD_CONFIG_SEP + System.getProperty("line.separator"));
+      } catch(UnsupportedEncodingException e) {
+        LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
+        return false;
+      }
+
+      for (String config : discovered) {
+        if (config == null || config.isEmpty()) {
+          continue;
+        }
+
+        try{
+          String name = getSDName(config);
+          LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
+          InputStream stream = new ByteArrayInputStream(config.getBytes(CharEncoding.UTF_8));
+          YamlParser yaml = new YamlParser(stream);
+
+          if (this.addConfig(name, yaml)){
+            reinit = true;
+            LOGGER.debug("Configuration added succesfully reinit in order");
+          }
+        } catch(UnsupportedEncodingException e) {
+          LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
+        }
+      }
+
+      return reinit;
+    }
+
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
+        long start_ms = System.currentTimeMillis();
+        long delta_s = 0;
+        FileInputStream sdPipe = null;
+
+        try {
+          sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe()); //Should we use RandomAccessFile?
+        } catch (FileNotFoundException e) {
+          LOGGER.warn("Unable to open named pipe - Service Discovery disabled.");
+          sdPipe = null;
+        }
+
         while (true) {
-            // Exit on exit file trigger
+            // Exit on exit file trigger...
             if (appConfig.getExitWatcher().shouldExit()){
                 LOGGER.info("Exit file detected: stopping JMXFetch.");
                 System.exit(0);
             }
 
+            // any SD configs waiting in pipe?
+            try {
+              if(sdPipe != null && sdPipe.available() > 0) {
+                int len = sdPipe.available();
+                byte[] buffer = new byte[len];
+                sdPipe.read(buffer);
+                setReinit(processServiceDiscovery(buffer));
+              }
+            } catch(IOException e) {
+              LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
+            }
+
             long start = System.currentTimeMillis();
+            if (this.reinit.get()) {
+                init(true);
+            }
+
             if (instances.size() > 0) {
                 doIteration();
             } else {
@@ -279,10 +365,39 @@ public class App {
         }
     }
 
-    private HashMap<String, YamlParser> getConfigs(AppConfig config) {
-        HashMap<String, YamlParser> configs = new HashMap<String, YamlParser>();
+    public boolean addConfig(String name, YamlParser config) {
+        // named groups not supported with Java6: "(?<check>.{1,30})_(?<version>\\d{0,30})"
+        Pattern pattern = Pattern.compile(SERVICE_DISCOVERY_PREFIX+"(.{1,30})_(\\d{0,30})");
+
+        Matcher matcher = pattern.matcher(name);
+        if (!matcher.find()) {
+            // bad name.
+            return false;
+        }
+
+        // Java 6 doesn't allow name matching - group 1 is "check"
+        String check = matcher.group(1);
+        if (this.configs.containsKey(check)) {
+            // there was already a file config for the check.
+            return false;
+        }
+
+        this.sdConfigs.put(name, config);
+        this.setReinit(true);
+
+        return true;
+    }
+
+    private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
+        ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
         YamlParser fileConfig;
-        for (String fileName : config.getYamlFileList()) {
+
+        List<String> fileList = config.getYamlFileList();
+        if (fileList == null) {
+            return configs;
+        }
+
+        for (String fileName : fileList) {
             File f = new File(config.getConfdDirectory(), fileName);
             String name = f.getName().replace(".yaml", "");
             FileInputStream yamlInputStream = null;
@@ -306,6 +421,7 @@ public class App {
                 }
             }
         }
+
         LOGGER.info("Found " + configs.size() + " config files");
         return configs;
     }
@@ -336,11 +452,23 @@ public class App {
 
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, YamlParser> entry = it.next();
+        // SD config cache doesn't remove configs - it just overwrites.
+        Iterator<Entry<String, YamlParser>> itSD = sdConfigs.entrySet().iterator();
+        while (it.hasNext() || itSD.hasNext()) {
+            Map.Entry<String, YamlParser> entry;
+            boolean sdIterator = false;
+            if (it.hasNext()) {
+                entry = it.next();
+            } else {
+                entry = itSD.next();
+                sdIterator = true;
+            }
+
             String name = entry.getKey();
             YamlParser yamlConfig = entry.getValue();
-            it.remove();
+            if(!sdIterator) {
+                it.remove();
+            }
 
             ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
