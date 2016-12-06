@@ -26,12 +26,16 @@ public class StatsdReporter extends Reporter {
         statsDClient = new NonBlockingStatsDClient(null, this.statsdHost, this.statsdPort, new String[]{});
     }
 
-    protected void sendMetricPoint(String metricName, double value, String[] tags) {
+    protected void sendMetricPoint(String metricType, String metricName, double value, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();
             init();
         }
-        statsDClient.gauge(metricName, value, tags);
+        if (metricType.equals("histogram")) {
+            statsDClient.histogram(metricName, value, tags);
+        } else {
+            statsDClient.gauge(metricName, value, tags);
+        }
     }
 
     private int statusToInt(String status) {

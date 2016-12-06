@@ -329,6 +329,43 @@ public class TestApp extends TestCommon {
         assertFalse(exitWatcher.shouldExit());
     }
 
+    @Test
+    public void testMetricTypes() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        initApplication("jmx_histogram.yaml");
+
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // We test for the presence and the value of the metrics we want to collect
+        List<String> commonTags = Arrays.asList(
+            "instance:jmx_test_instance",
+            "env:stage",
+            "newTag:test");
+
+        // 15 = 13 metrics from java.lang + the 3 collected (gauge and histogram)
+        assertEquals(16, metrics.size());
+
+        assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
+        assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
+        assertMetric("test.histogram", 424242, commonTags, 5, "histogram");
+
+        // We run a second collection. The counter should now be present
+        run();
+        metrics = getMetrics();
+
+        // 16 = 13 metrics from java.lang + the 4 collected (gauge, histogram and counter)
+        assertEquals(17, metrics.size());
+        assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
+        assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
+        assertMetric("test.histogram", 424242, commonTags, 5, "histogram");
+        assertMetric("test.counter", 0.0, commonTags, 5, "counter");
+    }
+
     /**
      * FIXME: Split this test in multiple sub-tests.
      */
