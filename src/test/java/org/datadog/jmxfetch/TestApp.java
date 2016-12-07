@@ -366,6 +366,31 @@ public class TestApp extends TestCommon {
         assertMetric("test.counter", 0.0, commonTags, 5, "counter");
     }
 
+    @Test
+    public void testExcludeTags() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        initApplication("jmx_exclude_tags.yml");
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // We test for the presence and the value of the metrics we want to collect.
+        // Tags "type", "newTag" and "env" should be excluded
+        List<String> commonTags = Arrays.asList(
+            "instance:jmx_test_instance",
+            "jmx_domain:org.datadog.jmxfetch.test");
+
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        assertEquals(15, metrics.size());
+
+        // There should only left 2 tags per metric
+        assertMetric("test1.gauge", 1000.0, commonTags, 2, "gauge");
+        assertMetric("test1.histogram", 424242, commonTags, 2, "histogram");
+    }
+
     /**
      * FIXME: Split this test in multiple sub-tests.
      */

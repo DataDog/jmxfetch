@@ -10,6 +10,7 @@ class Filter {
     HashMap<String, Object> filter;
     Pattern domainRegex;
     ArrayList<Pattern> beanRegexes = null;
+    ArrayList<String> excludeTags = null;
 
     /**
      * A simple class to manipulate include/exclude filter elements more easily
@@ -103,6 +104,21 @@ class Filter {
         }
 
         return this.beanRegexes;
+    }
+
+    public ArrayList<String> getExcludeTags() {
+        // Return excluded tags  as an ArrayList whether it's defined as a list or not
+
+        if (this.excludeTags == null) {
+            if (filter.get("exclude_tags") == null){
+                this.excludeTags = new ArrayList<String>();
+            } else {
+                final Object exclude_tags = filter.get("exclude_tags");
+                this.excludeTags = toStringArrayList(exclude_tags);
+            }
+        }
+
+        return this.excludeTags;
     }
 
     public String getDomain() {
