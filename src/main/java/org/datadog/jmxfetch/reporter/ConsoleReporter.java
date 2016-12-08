@@ -14,7 +14,7 @@ public class ConsoleReporter extends Reporter {
     private LinkedList<HashMap<String, Object>> serviceChecks = new LinkedList<HashMap<String, Object>>();
 
     @Override
-    protected void sendMetricPoint(String metricName, double value, String[] tags) {
+    protected void sendMetricPoint(String metricType, String metricName, double value, String[] tags) {
         String tagString = "[" + Joiner.on(",").join(tags) + "]";
         System.out.println(metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
@@ -22,6 +22,7 @@ public class ConsoleReporter extends Reporter {
         m.put("name", metricName);
         m.put("value", value);
         m.put("tags", tags);
+        m.put("type", metricType);
         metrics.add(m);
     }
 
