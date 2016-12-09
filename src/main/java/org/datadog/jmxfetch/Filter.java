@@ -11,6 +11,7 @@ class Filter {
     Pattern domainRegex;
     ArrayList<Pattern> beanRegexes = null;
     ArrayList<String> excludeTags = null;
+    HashMap<String, String> additionalTags = null;
 
     /**
      * A simple class to manipulate include/exclude filter elements more easily
@@ -119,6 +120,20 @@ class Filter {
         }
 
         return this.excludeTags;
+    }
+
+    public HashMap<String, String> getAdditionalTags() {
+        // Return additional tags
+
+        if (this.additionalTags == null) {
+            if (filter.get("tags") == null){
+                this.additionalTags = new HashMap<String, String>();
+            } else {
+                this.additionalTags = (HashMap<String, String>)filter.get("tags");
+            }
+        }
+
+        return this.additionalTags;
     }
 
     public String getDomain() {

@@ -29,7 +29,8 @@ public abstract class JMXAttribute {
     protected static final String ALIAS = "alias";
     protected static final String METRIC_TYPE = "metric_type";
     private final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
-    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean", "bean_regex", "attribute", "exclude_tags");
+    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean",
+                                                                           "bean_regex", "attribute", "exclude_tags", "tags");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
@@ -87,6 +88,19 @@ public abstract class JMXAttribute {
                         it.remove();
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Add alias tag from the 'tag_alias' configuration list
+     */
+    private void addAdditionalTags() {
+        Filter include = this.matchingConf.getInclude();
+        if (include != null) {
+
+            for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
+                this.defaultTagsList.add(tag.getKey() + ":" + this.replaceByAlias(tag.getValue()));
             }
         }
     }
@@ -368,8 +382,11 @@ public abstract class JMXAttribute {
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
 
-        // Now that we have the matchingConf, we can filter out excluded tags
-        applyTagsBlackList();
+        // Now that we have the matchingConf we can:
+        // - add additional tags
+        this.addAdditionalTags();
+        // - filter out excluded tags
+        this.applyTagsBlackList();
     }
 
     MBeanAttributeInfo getAttribute() {
@@ -454,17 +471,20 @@ public abstract class JMXAttribute {
      *   returns a metric name `my.metric.bar.toto`
      */
     private String getUserAlias(LinkedHashMap<String, LinkedHashMap<String, String>> attribute, String fullAttributeName){
-        String alias = attribute.get(fullAttributeName).get(ALIAS);
-
-        // Bean parameters
-        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
-            alias = alias.replace("$" + param.getKey(), param.getValue());
-        }
+        String alias = this.replaceByAlias(attribute.get(fullAttributeName).get(ALIAS));
 
         // Attribute & domain
         alias = alias.replace("$attribute", fullAttributeName);
         alias = alias.replace("$domain", domain);
 
+        return alias;
+    }
+
+    private String replaceByAlias(String alias){
+        // Bean parameters
+        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+            alias = alias.replace("$" + param.getKey(), param.getValue());
+        }
         return alias;
     }
 

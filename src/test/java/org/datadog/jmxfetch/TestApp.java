@@ -391,6 +391,37 @@ public class TestApp extends TestCommon {
         assertMetric("test1.histogram", 424242, commonTags, 2, "histogram");
     }
 
+    @Test
+    public void testAdditionalTags() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,name=testName");
+
+        // We do a first collection
+        initApplication("jmx_additional_tags.yml");
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // We test for the presence and the value of the metrics we want to collect.
+        // Tags "type", "newTag" and "env" should be excluded
+        List<String> commonTags = Arrays.asList(
+            "instance:jmx_test_instance",
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "type:SimpleTestJavaApp",
+            "name:testName",
+            "simple:SimpleTestJavaApp",
+            "raw_value:value",
+            "unknown_tag:$does-not-exist",
+            "multiple:SimpleTestJavaApp-testName");
+
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        assertEquals(15, metrics.size());
+
+        // There should only left 2 tags per metric
+        assertMetric("test1.gauge", 1000.0, commonTags, 8, "gauge");
+        assertMetric("test1.histogram", 424242, commonTags, 8, "histogram");
+    }
+
     /**
      * FIXME: Split this test in multiple sub-tests.
      */
