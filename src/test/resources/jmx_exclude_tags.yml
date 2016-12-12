@@ -1,0 +1,22 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        tags:
+            env: stage
+            newTag: test
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+               exclude_tags:
+                    - env
+                    - type
+                    - newTag
+               attribute:
+                    ShouldBe1000:
+                        metric_type: gauge
+                        alias: test1.gauge
+                    Int424242:
+                        metric_type: histogram
+                        alias: test1.histogram
