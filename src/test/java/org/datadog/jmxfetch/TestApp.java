@@ -529,9 +529,9 @@ public class TestApp extends TestCommon {
         assertMultiMetric("multiattr.this.is.x", 1.0, commonTags, Arrays.asList("KeyName:1"), 6, "KeyName:1");
         assertMultiMetric("multiattr.this.is.x", 2.0, commonTags, Arrays.asList("KeyName:2"), 6, "KeyName:2");
 
-        // Counter
-        assertMetric("subattr.counter", 0.98, 1, commonTags, 5);
-        assertMetric("test.counter", 0.98, 1, commonTags, 5);
+        // Counter (verify rate metrics within range)
+        assertMetric("subattr.counter", 0.96, 1, commonTags, 5);
+        assertMetric("test.counter", 0.96, 1, commonTags, 5);
         assertCoverage();
     }
     /**
