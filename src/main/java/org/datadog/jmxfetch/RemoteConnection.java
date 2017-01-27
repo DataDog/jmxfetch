@@ -25,7 +25,11 @@ public class RemoteConnection extends Connection {
     public RemoteConnection(LinkedHashMap<String, Object> connectionParams)
             throws IOException {
         host = (String) connectionParams.get("host");
-        port = (Integer) connectionParams.get("port");
+        try{
+            port = (Integer) connectionParams.get("port");
+        } catch(ClassCastException e) {
+            port = Integer.parseInt((String) connectionParams.get("port"));
+        }
         user = (String) connectionParams.get("user");
         password = (String) connectionParams.get("password");
         jmx_url = (String) connectionParams.get("jmx_url");
