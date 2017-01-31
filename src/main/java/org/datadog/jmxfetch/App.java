@@ -500,7 +500,7 @@ public class App {
                     String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
                     this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning);
+                    LOGGER.error(warning, e);
                 } catch (Exception e) {
                     instance.cleanUp();
                     brokenInstances.add(instance);
