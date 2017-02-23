@@ -52,8 +52,8 @@ public class ConnectionManager {
 
     }
 
-    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
-        String key = generateKey(connectionParams);
+    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection, String instanceName) throws IOException {
+        String key = instanceName;
         Connection existingConnection = cache.get(key);
         if (existingConnection == null || !existingConnection.isAlive()) {
             LOGGER.info("Connection closed or does not exist. Creating a new connection!");
