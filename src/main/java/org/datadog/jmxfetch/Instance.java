@@ -127,7 +127,7 @@ public class Instance {
 
     public void init(boolean forceNewConnection) throws IOException, FailedLoginException, SecurityException {
         LOGGER.info("Trying to connect to JMX Server at " + this.toString());
-        connection = ConnectionManager.getInstance().getConnection(yaml, forceNewConnection, this.instanceName);
+        connection = ConnectionManager.getInstance().getConnection(yaml, forceNewConnection, connection);
         LOGGER.info("Connected to JMX Server at " + this.toString());
         this.refreshBeansList();
         this.getMatchingAttributes();

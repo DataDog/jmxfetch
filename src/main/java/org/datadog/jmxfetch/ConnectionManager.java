@@ -14,26 +14,14 @@ public class ConnectionManager {
     private final static Logger LOGGER = Logger.getLogger(ConnectionManager.class.getName());
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     private static ConnectionManager connectionManager = null;
-    private HashMap<String, Connection> cache;
 
-    private ConnectionManager() {
-        cache = new HashMap<String, Connection>();
-    }
+    private ConnectionManager() {}
 
     public static ConnectionManager getInstance() {
         if (connectionManager == null) {
             connectionManager = new ConnectionManager();
         }
         return connectionManager;
-    }
-
-    private static String generateKey(LinkedHashMap<String, Object> connectionParams) {
-        if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
-            return (String) connectionParams.get(PROCESS_NAME_REGEX);
-        } else if (connectionParams.get("jmx_url") != null) {
-            return (String) connectionParams.get("jmx_url");
-        }
-        return connectionParams.get("host") + ":" + connectionParams.get("port") + ":" + connectionParams.get("user");
     }
 
     private Connection createConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
@@ -52,22 +40,16 @@ public class ConnectionManager {
 
     }
 
-    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection, String instanceName) throws IOException {
-        String key = generateKey(connectionParams) + ":" + instanceName;
-        Connection existingConnection = cache.get(key);
+    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection, Connection existingConnection) throws IOException {
         if (existingConnection == null || !existingConnection.isAlive()) {
             LOGGER.info("Connection closed or does not exist. Creating a new connection!");
-            cache.put(key, createConnection(connectionParams));
-        } else {
-            if (forceNewConnection) {
+            return createConnection(connectionParams);
+        } else if (forceNewConnection) {
                 LOGGER.info("Forcing the creation of a new connection");
-                cache.get(key).closeConnector();
-                cache.put(key, createConnection(connectionParams));
-            } else {
-                LOGGER.info("Connection already exists for key: " + key + " . Using it...");
-            }
+                existingConnection.closeConnector();
+                return createConnection(connectionParams);
         }
-        return cache.get(key);
+        return existingConnection;
     }
 
 }
