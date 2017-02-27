@@ -26,14 +26,6 @@
 		<snakeyaml.version>1.13</snakeyaml.version>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>Sonatype-public</id>
-			<name>SnakeYAML repository</name>
-			<url>http://oss.sonatype.org/content/groups/public/</url>
-		</repository>
-	</repositories>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.beust</groupId>
