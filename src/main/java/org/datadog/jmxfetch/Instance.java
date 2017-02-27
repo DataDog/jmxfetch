@@ -125,9 +125,21 @@ public class Instance {
         configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-2.yaml")).getParsedYaml()));
     }
 
+    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
+        if (connection == null || !connection.isAlive()) {
+            LOGGER.info("Connection closed or does not exist. Creating a new connection!");
+            return ConnectionFactory.createConnection(connectionParams);
+        } else if (forceNewConnection) {
+                LOGGER.info("Forcing the creation of a new connection");
+                connection.closeConnector();
+                return ConnectionFactory.createConnection(connectionParams);
+        }
+        return connection;
+    }
+
     public void init(boolean forceNewConnection) throws IOException, FailedLoginException, SecurityException {
         LOGGER.info("Trying to connect to JMX Server at " + this.toString());
-        connection = ConnectionManager.getInstance().getConnection(yaml, forceNewConnection);
+        connection = getConnection(yaml, forceNewConnection);
         LOGGER.info("Connected to JMX Server at " + this.toString());
         this.refreshBeansList();
         this.getMatchingAttributes();
