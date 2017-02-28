@@ -21,11 +21,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class JMXMultiAttribute extends JMXAttribute {
+public class JMXTabularAttribute extends JMXAttribute {
     private String instanceName;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;
 
-    public JMXMultiAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
+    public JMXTabularAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
                              Connection connection, HashMap<String, String> instanceTags) {
         super(attribute, beanName, instanceName, connection, instanceTags, false);
         subAttributeList = new HashMap<String, HashMap<String, HashMap<String, Object>>>();

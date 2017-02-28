@@ -249,11 +249,11 @@ public class Instance {
                     LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo simple type");
                     jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo complex type");
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo composite type");
                     jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else if (MULTI_TYPES.contains(attributeType)) {
-                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo dynamic type");
-                    jmxAttribute = new JMXMultiAttribute(attributeInfo, beanName, instanceName, connection, tags);
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo tabular type");
+                    jmxAttribute = new JMXTabularAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else {
                     try {
                         LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
