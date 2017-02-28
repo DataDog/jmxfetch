@@ -26,6 +26,7 @@ public class Instance {
             "java.util.concurrent.atomic.AtomicInteger", "java.util.concurrent.atomic.AtomicLong",
             "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number");
     private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
+    private final static List<String> MULTI_TYPES = Arrays.asList("javax.management.openmbean.TabularData");
     private final static int MAX_RETURNED_METRICS = 350;
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
@@ -250,6 +251,9 @@ public class Instance {
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo complex type");
                     jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
+                } else if (MULTI_TYPES.contains(attributeType)) {
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo dynamic type");
+                    jmxAttribute = new JMXMultiAttribute(attributeInfo, beanName, instanceName, connection, tags);
                 } else {
                     try {
                         LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
