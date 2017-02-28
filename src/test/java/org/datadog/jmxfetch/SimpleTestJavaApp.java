@@ -131,7 +131,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         try {
             CompositeType rowType = buildCompositeType();
             TabularType tabularType = new TabularType("myTabularType", "My tabular type", rowType,
-                    new String[]{"thisiskey"});
+                    new String[]{"foo"});
             return new TabularDataSupport(tabularType);
         } catch (OpenDataException e) {
             return null;
@@ -141,9 +141,9 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private CompositeType buildCompositeType() {
         try {
             return new CompositeType("myCompositeType", "My composite type",
-                    new String[]{"thisiskey", "thisisx"},
-                    new String[]{"This is key", "This is x"},
-                    new OpenType[]{SimpleType.STRING, SimpleType.INTEGER});
+                    new String[]{"foo", "bar", "toto"},
+                    new String[]{"Description of `foo`", "Description of `bar`", "Description of `toto`"},
+                    new OpenType[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING});
         } catch (OpenDataException e) {
             return null;
         }
@@ -152,8 +152,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private CompositeData buildCompositeData(Integer i) {
         try {
             return new CompositeDataSupport(compositetype,
-                    new String[]{"thisiskey", "thisisx"},
-                    new Object[]{i.toString(), i});
+                    new String[]{"foo", "bar", "toto"},
+                    new Object[]{i.toString(), i, "tata"});
         } catch (OpenDataException e) {
             return null;
         }
