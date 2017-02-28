@@ -41,10 +41,13 @@ instances:
                         alias: test.defaulted
                         values:
                           default: 32
-                    Tabulardata.thisisx:
+                    Tabulardata.foo:
                         metric_type: gauge
-                        alias: multiattr.this.is.x
+                        alias: multiattr.foo
                         tags:
-                          KeyName: $key
+                          foo: $foo
+                          toto: $toto
+                        limit: 1
+                        sort: desc
             - include:
                domain: org.datadog.jmxfetch.test

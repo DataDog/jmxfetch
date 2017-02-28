@@ -65,7 +65,7 @@ public class JMXComplexAttribute extends JMXAttribute {
                 metric.put("tags", getTags());
             }
 
-            metric.put("value", getValue(subAttribute));
+            metric.put("value", castToDouble(getValue(subAttribute)));
             metrics.add(metric);
 
         }
@@ -73,7 +73,7 @@ public class JMXComplexAttribute extends JMXAttribute {
 
     }
 
-    private double getValue(String subAttribute) throws AttributeNotFoundException, InstanceNotFoundException,
+    private Object getValue(String subAttribute) throws AttributeNotFoundException, InstanceNotFoundException,
             MBeanException, ReflectionException, IOException {
 
         Object value = this.getJmxValue();
@@ -81,11 +81,10 @@ public class JMXComplexAttribute extends JMXAttribute {
 
         if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
             CompositeData data = (CompositeData) value;
-            return getValueAsDouble(data.get(subAttribute));
-
+            return data.get(subAttribute);
         } else if (("java.util.HashMap".equals(attributeType)) || ("java.util.Map".equals(attributeType))) {
             Map<String, Object> data = (Map<String, Object>) value;
-            return getValueAsDouble(data.get(subAttribute));
+            return data.get(subAttribute);
         }
         throw new NumberFormatException();
     }

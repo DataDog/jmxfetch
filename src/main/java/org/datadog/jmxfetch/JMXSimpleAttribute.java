@@ -29,7 +29,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
         HashMap<String, Object> metric = new HashMap<String, Object>();
 
         metric.put("alias", getAlias());
-        metric.put("value", getValue());
+        metric.put("value", castToDouble(getValue()));
         metric.put("tags", getTags());
         metric.put("metric_type", getMetricType());
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
@@ -98,8 +98,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         return metricType;
     }
 
-    private double getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+    private Object getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
             ReflectionException, IOException, NumberFormatException {
-        return getValueAsDouble(this.getJmxValue());
+        return this.getJmxValue();
     }
 }

@@ -28,7 +28,7 @@ public abstract class JMXAttribute {
 
     protected static final String ALIAS = "alias";
     protected static final String METRIC_TYPE = "metric_type";
-    private final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
+    protected final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
     private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean",
                                                                            "bean_regex", "attribute", "exclude_tags", "tags");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
@@ -98,7 +98,6 @@ public abstract class JMXAttribute {
     private void addAdditionalTags() {
         Filter include = this.matchingConf.getInclude();
         if (include != null) {
-
             for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
                 this.defaultTagsList.add(tag.getKey() + ":" + this.replaceByAlias(tag.getValue()));
             }
@@ -254,7 +253,7 @@ public abstract class JMXAttribute {
         return converted;
     }
 
-    double getValueAsDouble(Object metricValue) {
+    double castToDouble(Object metricValue) {
         Object value = convertMetricValue(metricValue);
 
         if (value instanceof String) {

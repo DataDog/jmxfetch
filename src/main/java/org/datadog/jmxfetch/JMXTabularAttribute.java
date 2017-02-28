@@ -1,13 +1,5 @@
 package org.datadog.jmxfetch;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.TabularData;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +12,15 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
+import javax.management.ObjectName;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.InvalidKeyException;
+import javax.management.openmbean.TabularData;
+import javax.management.ReflectionException;
 
 public class JMXTabularAttribute extends JMXAttribute {
     private String instanceName;
@@ -44,49 +45,46 @@ public class JMXTabularAttribute extends JMXAttribute {
     }
 
     private void populateSubAttributeList(Object value) {
-        String attributeType = getAttribute().getType();
-        if ("javax.management.openmbean.TabularData".equals(attributeType)) {
-            TabularData data = (TabularData) value;
-            for (Object rowKey : data.keySet()) {
-                Collection keys = (Collection) rowKey;
-                CompositeData compositeData = data.get(keys.toArray());
-                String pathKey = getMultiKey(keys);
-                HashMap<String, HashMap<String, Object>> subAttributes = new HashMap<String, HashMap<String, Object>>();
-                for (String key : compositeData.getCompositeType().keySet()) {
-                    if (compositeData.get(key) instanceof CompositeData) {
-                        for (String subKey : ((CompositeData) compositeData.get(key)).getCompositeType().keySet()) {
-                            subAttributes.put(key + "." + subKey, new HashMap<String, Object>());
-                        }
-                    } else {
-                        subAttributes.put(key, new HashMap<String, Object>());
+        TabularData data = (TabularData) value;
+        for (Object rowKey : data.keySet()) {
+            Collection keys = (Collection) rowKey;
+            CompositeData compositeData = data.get(keys.toArray());
+            String pathKey = getMultiKey(keys);
+            HashMap<String, HashMap<String, Object>> subAttributes = new HashMap<String, HashMap<String, Object>>();
+            for (String key : compositeData.getCompositeType().keySet()) {
+                if (compositeData.get(key) instanceof CompositeData) {
+                    for (String subKey : ((CompositeData) compositeData.get(key)).getCompositeType().keySet()) {
+                        subAttributes.put(key + "." + subKey, new HashMap<String, Object>());
                     }
+                } else {
+                    subAttributes.put(key, new HashMap<String, Object>());
                 }
-                subAttributeList.put(pathKey, subAttributes);
             }
+            subAttributeList.put(pathKey, subAttributes);
         }
     }
 
-    protected String convertMetricName(String key, String metricName) {
-        // replace known keys
-        metricName = metricName.replace("$key", key);
-        return convertMetricName(metricName);
-    }
-
-    protected String[] getTags(String key, String keyValue) {
+    protected String[] getTags(String key, String subAttribute) throws AttributeNotFoundException,
+            InstanceNotFoundException, MBeanException, ReflectionException, IOException {
         List<String> tagsList = new ArrayList<String>();
-        Map<String, ?> attributeParams = getAttributesFor(key);
+        String fullMetricKey = getAttributeName() + "." + subAttribute;
+        Map<String, ?> attributeParams = getAttributesFor(fullMetricKey);
         if (attributeParams != null) {
             Map<String, String> yamlTags = (Map) attributeParams.get("tags");
-            if (yamlTags != null) {
                 for (String tagName : yamlTags.keySet()) {
                     String tag = tagName;
                     String value = yamlTags.get(tagName);
-                    if (value.equals("$key")) {
-                        value = keyValue;
+                    Object resolvedValue;
+
+                    if (value.startsWith("$")){
+                        resolvedValue = getValue(key, value.substring(1));
+                        if (resolvedValue != null){
+                            value = (String) resolvedValue;
+                        }
                     }
+
                     tagsList.add(tag + ":" + value);
                 }
-            }
         }
         String[] defaultTags = super.getTags();
         tagsList.addAll(Arrays.asList(defaultTags));
@@ -122,7 +120,7 @@ public class JMXTabularAttribute extends JMXAttribute {
                 HashMap<String, Object> metric = subSub.get(metricKey);
 
                 if (metric.get(ALIAS) == null) {
-                    metric.put(ALIAS, convertMetricName(dataKey, getAlias(metricKey)));
+                    metric.put(ALIAS, convertMetricName(getAlias(metricKey)));
                 }
 
                 if (metric.get(METRIC_TYPE) == null) {
@@ -130,10 +128,10 @@ public class JMXTabularAttribute extends JMXAttribute {
                 }
 
                 if (metric.get("tags") == null) {
-                    metric.put("tags", getTags(fullMetricKey, dataKey));
+                    metric.put("tags", getTags(dataKey, metricKey));
                 }
 
-                metric.put("value", getValue(dataKey, metricKey));
+                metric.put("value", castToDouble(getValue(dataKey, metricKey)));
 
                 if(!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new LinkedList<HashMap<String, Object>>());
@@ -164,7 +162,7 @@ public class JMXTabularAttribute extends JMXAttribute {
         }
         MetricComparator comp = new MetricComparator();
         Collections.sort(metrics, comp);
-        String sort = (String) attributes.get("limit_sort");
+        String sort = (String) attributes.get("sort");
         if (sort == null || sort.equals("desc")) {
             metrics.subList(0, limit).clear();
         } else {
@@ -181,14 +179,14 @@ public class JMXTabularAttribute extends JMXAttribute {
         }
     }
 
-    private double getValue(String key, String subAttribute) throws AttributeNotFoundException,
+    private Object getValue(String key, String subAttribute) throws AttributeNotFoundException,
             InstanceNotFoundException,
             MBeanException, ReflectionException, IOException {
 
-        Object value = this.getJmxValue();
-        String attributeType = getAttribute().getType();
+        try{
+            Object value = this.getJmxValue();
+            String attributeType = getAttribute().getType();
 
-        if ("javax.management.openmbean.TabularData".equals(attributeType)) {
             TabularData data = (TabularData) value;
             for (Object rowKey : data.keySet()) {
                 Collection keys = (Collection) rowKey;
@@ -203,15 +201,20 @@ public class JMXTabularAttribute extends JMXAttribute {
                             if (o instanceof CompositeData) {
                                 compositeData = (CompositeData) o;
                             } else {
-                                return getValueAsDouble(compositeData.get(subPathKey));
+                                return compositeData.get(subPathKey);
                             }
                         }
                     } else {
-                        return getValueAsDouble(compositeData.get(subAttribute));
+                        return compositeData.get(subAttribute);
                     }
                 }
             }
         }
+        catch (InvalidKeyException e){
+            LOGGER.warn("`"+getAttribute().getName()+"` attribute does not have a `"+subAttribute+"` key.");
+            return null;
+        }
+
         throw new NumberFormatException();
     }
 
