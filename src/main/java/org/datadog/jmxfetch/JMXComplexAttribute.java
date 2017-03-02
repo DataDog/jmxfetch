@@ -34,8 +34,8 @@ public class JMXComplexAttribute extends JMXAttribute {
             for (String key : data.getCompositeType().keySet()) {
                 this.subAttributeList.put(key, new HashMap<String, Object>());
             }
-        } else if ("java.util.HashMap".equals(attributeType)) {
-            HashMap<String, Double> data = (HashMap<String, Double>) attributeValue;
+        } else if (("java.util.HashMap".equals(attributeType)) || ("java.util.Map".equals(attributeType))){
+            Map<String, Double> data = (Map<String, Double>) attributeValue;
             for (String key : data.keySet()) {
                 this.subAttributeList.put(key, new HashMap<String, Object>());
             }
@@ -83,8 +83,8 @@ public class JMXComplexAttribute extends JMXAttribute {
             CompositeData data = (CompositeData) value;
             return getValueAsDouble(data.get(subAttribute));
 
-        } else if ("java.util.HashMap".equals(attributeType)) {
-            HashMap<String, Object> data = (HashMap<String, Object>) value;
+        } else if (("java.util.HashMap".equals(attributeType)) || ("java.util.Map".equals(attributeType))) {
+            Map<String, Object> data = (Map<String, Object>) value;
             return getValueAsDouble(data.get(subAttribute));
         }
         throw new NumberFormatException();
