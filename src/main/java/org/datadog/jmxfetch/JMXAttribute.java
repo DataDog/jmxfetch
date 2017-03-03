@@ -419,13 +419,17 @@ public abstract class JMXAttribute {
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             alias = getUserAlias(attribute, fullAttributeName);
-        } else if (conf.get("metric_prefix") != null) {
-            alias = conf.get("metric_prefix") + "." + getDomain() + "." + fullAttributeName;
-        } else if (getDomain().startsWith("org.apache.cassandra")) {
-            alias = getCassandraAlias();
         }
 
-        //If still null - generate generic alias,
+        if (alias == null) {
+            if (conf.get("metric_prefix") != null) {
+                alias = conf.get("metric_prefix") + "." + getDomain() + "." + fullAttributeName;
+            } else if (getDomain().startsWith("org.apache.cassandra")) {
+                alias = getCassandraAlias();
+            }
+        }
+
+        //If still null - generate generic alias
         if (alias == null) {
             alias = "jmx." + getDomain() + "." + fullAttributeName;
         }
@@ -470,7 +474,12 @@ public abstract class JMXAttribute {
      *   returns a metric name `my.metric.bar.toto`
      */
     private String getUserAlias(LinkedHashMap<String, LinkedHashMap<String, String>> attribute, String fullAttributeName){
-        String alias = this.replaceByAlias(attribute.get(fullAttributeName).get(ALIAS));
+        String alias = attribute.get(fullAttributeName).get(ALIAS);
+        if (alias == null) {
+            return null;
+        }
+
+        alias = this.replaceByAlias(alias);
 
         // Attribute & domain
         alias = alias.replace("$attribute", fullAttributeName);
