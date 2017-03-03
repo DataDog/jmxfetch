@@ -1,0 +1,30 @@
+include:
+    attribute:
+        HeapMemoryUsage.used:
+            alias: jvm.heap_memory
+            metric_type: gauge
+        HeapMemoryUsage.committed:
+            alias: jvm.heap_memory_committed
+            metric_type: gauge
+        HeapMemoryUsage.init:
+            alias: jvm.heap_memory_init
+            metric_type: gauge
+        HeapMemoryUsage.max:
+            alias: jvm.heap_memory_max
+            metric_type: gauge
+        NonHeapMemoryUsage.used:
+            alias: jvm.non_heap_memory
+            metric_type: gauge
+        NonHeapMemoryUsage.committed:
+            alias: jvm.non_heap_memory_committed
+            metric_type: gauge
+        NonHeapMemoryUsage.init:
+            alias: jvm.non_heap_memory_init
+            metric_type: gauge
+        NonHeapMemoryUsage.max:
+            alias: jvm.non_heap_memory_max
+            metric_type: gauge
+        ThreadCount:
+            alias: jvm.thread_count
+            metric_type: gauge
+    domain: java.lang
