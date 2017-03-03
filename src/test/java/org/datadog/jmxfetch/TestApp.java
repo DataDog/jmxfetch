@@ -78,6 +78,35 @@ public class TestApp extends TestCommon {
     }
 
     /**
+     * Test that specifying no alias on an attribute defined with a detailed hashmap works and picks up a valid default alias
+     */
+    @Test
+    public void testNoAliasOnDetailedAttribute() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        initApplication("jmx_no_alias.yaml");
+
+        // Collecting metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // Assertions
+
+        // 14 metrics = 13 from `java.lang` + 1 from the user configuration file
+        assertEquals(14, metrics.size());
+
+        // Metric aliases are generated from `alias_match`
+        List<String> tags = Arrays.asList(
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "instance:jmx_test_instance",
+                "foo:Bar",
+                "qux:Baz"
+        );
+
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be100", tags, 4);
+    }
+
+    /**
      * Check JMXFetch Cassandra metric aliasing logic, i.e. compliant with CASSANDRA-4009
      * when `cassandra_aliasing` flag is enabled, or default.
      *
