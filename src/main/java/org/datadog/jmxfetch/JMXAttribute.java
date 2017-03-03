@@ -134,7 +134,12 @@ public abstract class JMXAttribute {
 
         if (instanceTags != null) {
             for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
-                beanTags.add(tag.getKey() + ":" + tag.getValue());
+                if (tag.getValue() != null) {
+                    beanTags.add(tag.getKey() + ":" + tag.getValue());
+                }
+                else {
+                    beanTags.add(tag.getKey());
+                }
             }
         }
 

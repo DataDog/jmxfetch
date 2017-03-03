@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import java.io.IOException;
+import java.lang.ClassCastException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class Instance {
         this.yaml = yamlInstance != null ? new LinkedHashMap<String, Object>(yamlInstance) : null;
         this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) yaml.get("name");
-        this.tags = (LinkedHashMap<String, String>) yaml.get("tags");
+        this.tags = getTagsMap(yaml.get("tags"));
         this.checkName = checkName;
         this.matchingAttributes = new LinkedList<JMXAttribute>();
         this.failingAttributes = new HashSet<JMXAttribute>();
@@ -124,6 +125,27 @@ public class Instance {
         // Add the configuration to get the default basic metrics from the JVM
         configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-1.yaml")).getParsedYaml()));
         configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-2.yaml")).getParsedYaml()));
+    }
+
+    /**
+     * Format the instance tags defined in the YAML configuration file to a `LinkedHashMap`.
+     * Supported inputs: `List`, `Map`.
+     */
+    private static LinkedHashMap<String, String> getTagsMap(Object yamlTags){
+        try {
+            // Input has `Map` format
+            return (LinkedHashMap<String, String>) yamlTags;
+        }
+        catch (ClassCastException e){
+            // Input has `List` format
+            LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
+
+            for (String tag: (List<String>)yamlTags) {
+                tags.put(tag, null);
+            }
+
+            return tags;
+        }
     }
 
     public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
@@ -335,9 +357,13 @@ public class Instance {
             tags.add("jmx_server:" + this.yaml.get("host"));
         }
         if (this.tags != null) {
-        	for (Entry<String, String> e : this.tags.entrySet()) {
-        		tags.add(e.getKey() + ":" + e.getValue());
-        	}
+            for (Entry<String, String> e : this.tags.entrySet()) {
+                if (e.getValue()!=null){
+                    tags.add(e.getKey() + ":" + e.getValue());
+                } else {
+                    tags.add(e.getKey());
+                }
+            }
         }
         tags.add("instance:" + this.instanceName);
         return tags.toArray(new String[tags.size()]);
