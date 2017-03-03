@@ -1,6 +1,23 @@
 Changes
 =======
-# 0.12.0 / 09-27-2016
+# 0.13.0 / Unreleased
+
+#### Changes
+* [BUGFIX] Allow specifying no alias on detailed attribute. See [#133][]
+* [BUGFIX] Fix connectivity loss when multiple instances are assigned to a same JVM. See [#124][]
+* [BUGFIX] Parse string-defined ports to integers in user configurations. See [#121][]
+* [BUGFIX] Support `java.util.Map` attribute types. See [#130][]
+* [BUGFIX] Support list-defined user tags at instance level. See [#132][]
+* [FEATURE] Add `histogram` metric type. See [#115][]
+* [FEATURE] Add `list_jvms` command to list available JVMs when using the Attach API. See [#100][], [#112][] (Thanks [@cslee00][])
+* [FEATURE] Add tag blacklisting. See [#116][]
+* [FEATURE] Add user tags definition for MBeans. See [#117][].
+* [FEATURE] Enable service discovery via a named pipe. See [#113][]
+* [FEATURE] Support `javax.management.openmbean.TabularData` attribute types. See [#111][], [#128][] (Thanks [@brothhaar][])
+* [FEATURE] Support user tag value substitution by attribute name. See [#117][].
+* [IMPROVEMENT] Print exception messages on Attach API connection failures. See [#122][] (Thanks [@aoking][])
+
+# 0.12.0 / 09-27-2016˙
 
 #### Changes
 * [BUGFIX] Fix `list_not_matching_attributes` action to return all "not matching" attributes. See [#102][] (Thanks [@nwillems][])
@@ -119,8 +136,25 @@ Changes
 [#95]: https://github.com/DataDog/jmxfetch/issues/95
 [#96]: https://github.com/DataDog/jmxfetch/issues/96
 [#97]: https://github.com/DataDog/jmxfetch/issues/97
+[#100]: https://github.com/DataDog/jmxfetch/issues/100
 [#102]: https://github.com/DataDog/jmxfetch/issues/102
+[#111]: https://github.com/DataDog/jmxfetch/issues/111
+[#112]: https://github.com/DataDog/jmxfetch/issues/112
+[#113]: https://github.com/DataDog/jmxfetch/issues/113
+[#115]: https://github.com/DataDog/jmxfetch/issues/115
+[#116]: https://github.com/DataDog/jmxfetch/issues/116
+[#117]: https://github.com/DataDog/jmxfetch/issues/117
+[#121]: https://github.com/DataDog/jmxfetch/issues/121
+[#122]: https://github.com/DataDog/jmxfetch/issues/122
+[#124]: https://github.com/DataDog/jmxfetch/issues/124
+[#128]: https://github.com/DataDog/jmxfetch/issues/128
+[#130]: https://github.com/DataDog/jmxfetch/issues/130
+[#132]: https://github.com/DataDog/jmxfetch/issues/132
+[#133]: https://github.com/DataDog/jmxfetch/issues/133
 [@alz]: https://github.com/alz
+[@aoking]: https://github.com/aoking
 [@bluestix]: https://github.com/bluestix
+[@brothhaar]: https://github.com/brothhaar
 [@coupacooke]: https://github.com/coupacooke
+[@cslee00]: https://github.com/cslee00
 [@nwillems]: https://github.com/nwillems
