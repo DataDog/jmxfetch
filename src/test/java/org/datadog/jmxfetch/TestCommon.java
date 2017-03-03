@@ -223,7 +223,7 @@ public class TestCommon {
     }
 
     public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags){
-        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags);
+        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, null);
     }
 
     public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
@@ -231,7 +231,7 @@ public class TestCommon {
     }
 
     public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags){
-        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags);
+        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, null);
     }
     public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
         assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType);
