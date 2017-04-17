@@ -103,6 +103,7 @@ public class TestCommon {
         if (sdEnabled) {
             params.add(4, "--tmp_directory");
             params.add(5, "/foo"); //could be anything we're stubbing it out
+            params.add(6, "--sd_enabled");
         }
         new JCommander(appConfig, params.toArray(new String[params.size()]));
 
