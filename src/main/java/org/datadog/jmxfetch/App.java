@@ -237,8 +237,8 @@ public class App {
                 sdPipe = newSdPipe();
             }
             try {
-                if(sdPipe != null && sdPipe.available() > 0) {
-                    int len = sdPipe.available();
+                int len;
+                if(sdPipe != null && (len = sdPipe.available()) > 0) {
                     byte[] buffer = new byte[len];
                     sdPipe.read(buffer);
                     setReinit(processServiceDiscovery(buffer));
