@@ -1,6 +1,6 @@
 Changes
 =======
-# 0.13.0 / Unreleased
+# 0.13.1 / Unreleased
 
 #### Changes
 * [BUGFIX] Service_discovery: fix race condition preventing SD initialization. See [#135][]
