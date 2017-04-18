@@ -3,12 +3,10 @@ package org.datadog.jmxfetch;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -169,6 +167,17 @@ public class App {
       return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
 
+    private FileInputStream newSdPipe() {
+        FileInputStream sdPipe = null;
+        try {
+            sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe()); //Should we use RandomAccessFile?
+            LOGGER.info("Named pipe for Service Discovery opened");
+        } catch (FileNotFoundException e) {
+            LOGGER.info("Unable to open named pipe for Service Discovery.");
+        }
+        return sdPipe;
+    }
+
     public boolean processServiceDiscovery(byte[] buffer) {
       boolean reinit = false;
       String[] discovered;
@@ -210,11 +219,9 @@ public class App {
         long delta_s = 0;
         FileInputStream sdPipe = null;
 
-        try {
-          sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe()); //Should we use RandomAccessFile?
-        } catch (FileNotFoundException e) {
-          LOGGER.warn("Unable to open named pipe - Service Discovery disabled.");
-          sdPipe = null;
+        if(appConfig.getSDEnabled()) {
+            LOGGER.info("Service Discovery enabled");
+            sdPipe = newSdPipe();
         }
 
         while (true) {
@@ -225,13 +232,17 @@ public class App {
             }
 
             // any SD configs waiting in pipe?
+            if(sdPipe == null && appConfig.getSDEnabled()) {
+                // If SD is enabled and the pipe is not open, retry opening pipe
+                sdPipe = newSdPipe();
+            }
             try {
-              if(sdPipe != null && sdPipe.available() > 0) {
-                int len = sdPipe.available();
-                byte[] buffer = new byte[len];
-                sdPipe.read(buffer);
-                setReinit(processServiceDiscovery(buffer));
-              }
+                int len;
+                if(sdPipe != null && (len = sdPipe.available()) > 0) {
+                    byte[] buffer = new byte[len];
+                    sdPipe.read(buffer);
+                    setReinit(processServiceDiscovery(buffer));
+                }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
             }

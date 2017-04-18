@@ -76,10 +76,10 @@ class AppConfig {
             required = false)
     private int checkPeriod = 15000;
 
-    @Parameter(names = {"--sd_standby", "-w"},
-            description = "Service Discovery standby.",
+    @Parameter(names = {"--sd_enabled", "-w"},
+            description = "Enable Service Discovery.",
             required = false)
-    private boolean sdStandby = false;
+    private boolean sdEnabled = false;
 
     @Parameter(names = {"--sd_pipe", "-S"},
             description = "Service Discovery pipe name.",
@@ -128,8 +128,8 @@ class AppConfig {
         return checkPeriod;
     }
 
-    public boolean getSDStandby() {
-        return sdStandby;
+    public boolean getSDEnabled() {
+        return sdEnabled;
     }
 
     public Reporter getReporter() {
