@@ -1,6 +1,11 @@
 Changes
 =======
-# 0.13.0 / Unreleased
+# 0.13.1 / Unreleased
+
+#### Changes
+* [BUGFIX] Service_discovery: fix race condition preventing SD initialization. See [#135][]
+
+# 0.13.0 / 03-22-2017
 
 #### Changes
 * [BUGFIX] Allow specifying no alias on detailed attribute. See [#133][]
@@ -151,6 +156,7 @@ Changes
 [#130]: https://github.com/DataDog/jmxfetch/issues/130
 [#132]: https://github.com/DataDog/jmxfetch/issues/132
 [#133]: https://github.com/DataDog/jmxfetch/issues/133
+[#135]: https://github.com/DataDog/jmxfetch/issues/135
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@bluestix]: https://github.com/bluestix
