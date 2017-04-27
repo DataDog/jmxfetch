@@ -18,13 +18,16 @@ public class TestInstance extends TestCommon {
 		
 		LinkedList<HashMap<String, Object>> metrics = getMetrics();
 		assertEquals(15, metrics.size());
+		metrics = new LinkedList<HashMap<String, Object>>();
+		
 		run();
 		metrics = getMetrics();
 		assertEquals(0, metrics.size());
+		metrics = new LinkedList<HashMap<String, Object>>();
+		
 		Thread.sleep(300000);
 		
 		run();
-		
 		metrics = getMetrics();
 		assertEquals(15, metrics.size());
 		
