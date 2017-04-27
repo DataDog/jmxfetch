@@ -5,9 +5,11 @@ import static org.junit.Assert.assertEquals;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 public class TestInstance extends TestCommon {
+	private final static Logger LOGGER = Logger.getLogger("Test Instance");
 	
 	@Test
 	public void testMinCollectionInterval() throws Exception {
@@ -25,7 +27,9 @@ public class TestInstance extends TestCommon {
 		assertEquals(0, metrics.size());
 		metrics = new LinkedList<HashMap<String, Object>>();
 		
-		Thread.sleep(300000);
+		LOGGER.info("sleeping before the next collection");
+		
+		Thread.sleep(5000);
 		
 		run();
 		metrics = getMetrics();
