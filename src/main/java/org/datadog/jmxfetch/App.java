@@ -287,6 +287,11 @@ public class App {
             int numberOfMetrics = 0;
 
             try {
+            	if (!instance.timeToCollect()) {
+            		LOGGER.debug("it is not time to collect, skipping run for " + instance.getName());
+            		continue;
+            	}
+            	
                 metrics = instance.getMetrics();
                 numberOfMetrics = metrics.size();
 

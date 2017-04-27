@@ -39,6 +39,8 @@ public class Instance {
     private LinkedList<JMXAttribute> matchingAttributes;
     private HashSet<JMXAttribute> failingAttributes;
     private Integer refreshBeansPeriod;
+    private long lastCollectionTime;
+    private Integer minCollectionPeriod;
     private long lastRefreshTime;
     private LinkedHashMap<String, Object> yaml;
     private LinkedHashMap<String, Object> initConfig;
@@ -80,6 +82,12 @@ public class Instance {
             // Useful because sometimes if the application restarts, jmxfetch might read
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
+        
+        this.minCollectionPeriod = (Integer) yaml.get("min_collection_period");
+        if (this.minCollectionPeriod == null) {
+        	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_period");
+        }
+        this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
         Object maxReturnedMetrics = this.yaml.get("max_returned_metrics");
@@ -191,6 +199,10 @@ public class Instance {
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         Iterator<JMXAttribute> it = matchingAttributes.iterator();
+        
+        
+        // increment the lastCollectionTime
+        this.lastCollectionTime = System.currentTimeMillis();
 
         while (it.hasNext()) {
             JMXAttribute jmxAttr = it.next();
@@ -217,6 +229,16 @@ public class Instance {
             }
         }
         return metrics;
+    }
+    
+    public boolean timeToCollect() {
+    	if (this.minCollectionPeriod == null) {
+    		return true;
+    	} else if ((System.currentTimeMillis() - this.lastCollectionTime) / 1000 < this.minCollectionPeriod) {
+    		return false;
+    	} else {
+    		return true;
+    	}
     }
 
     private void getMatchingAttributes() {
