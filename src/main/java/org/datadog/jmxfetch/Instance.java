@@ -197,13 +197,8 @@ public class Instance {
         Iterator<JMXAttribute> it = matchingAttributes.iterator();
         
         
-        // If we collected already, don't collect again
-        if (!this.timeToCollect()) {
-        	LOGGER.debug("it is not time to collect, skipping run for " + this.instanceName);
-        	return metrics;
-        } else {
-        	this.lastCollectionTime = System.currentTimeMillis();
-        }
+        // increment the lastCollectionTime
+        this.lastCollectionTime = System.currentTimeMillis();
 
         while (it.hasNext()) {
             JMXAttribute jmxAttr = it.next();
