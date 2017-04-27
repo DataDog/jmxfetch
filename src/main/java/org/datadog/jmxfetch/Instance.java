@@ -82,7 +82,10 @@ public class Instance {
             // Useful because sometimes if the application restarts, jmxfetch might read
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
-        this.minCollectionPeriod = (Integer) yaml.get("min_collection_period");
+        this.minCollectionPeriod = (Integer) initConfig.get("min_collection_period");
+        if (this.minCollectionPeriod == null) {
+        	this.minCollectionPeriod = (Integer) yaml.get("min_collection_period");
+        }
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
