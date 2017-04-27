@@ -17,24 +17,18 @@ public class TestInstance extends TestCommon {
 		initApplication("jmx_min_collection_period.yml");
 		
 		run();
-		
 		LinkedList<HashMap<String, Object>> metrics = getMetrics();
 		assertEquals(15, metrics.size());
-		metrics = new LinkedList<HashMap<String, Object>>();
 		
 		run();
 		metrics = getMetrics();
 		assertEquals(0, metrics.size());
-		metrics = new LinkedList<HashMap<String, Object>>();
 		
 		LOGGER.info("sleeping before the next collection");
-		
 		Thread.sleep(5000);
-		
 		run();
 		metrics = getMetrics();
 		assertEquals(15, metrics.size());
-		
 	}
 
 }
