@@ -83,9 +83,9 @@ public class Instance {
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
         
-        this.minCollectionPeriod = (Integer) yaml.get("min_collection_period");
+        this.minCollectionPeriod = (Integer) yaml.get("min_collection_interval");
         if (this.minCollectionPeriod == null) {
-        	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_period");
+        	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
