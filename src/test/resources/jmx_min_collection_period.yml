@@ -2,7 +2,7 @@ init_config:
 
 instances:
   -   process_name_regex: .*surefire.*
-      min_collection_period: 5
+      min_collection_interval: 5
       name: jmx_test_instance
       conf:
           - include:
