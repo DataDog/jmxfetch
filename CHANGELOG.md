@@ -1,5 +1,11 @@
 Changes
 =======
+
+# 0.14.0 / Unreleased
+
+#### Changes
+* [FEATURE] Add support for `min_collection_interval`. See [#135][] and [#140][]
+
 # 0.13.1 / 04-18-2017
 
 #### Changes
@@ -157,6 +163,7 @@ Changes
 [#132]: https://github.com/DataDog/jmxfetch/issues/132
 [#133]: https://github.com/DataDog/jmxfetch/issues/133
 [#135]: https://github.com/DataDog/jmxfetch/issues/135
+[#140]: https://github.com/DataDog/jmxfetch/issues/140
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@bluestix]: https://github.com/bluestix
