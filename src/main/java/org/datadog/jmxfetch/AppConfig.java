@@ -28,8 +28,9 @@ class AppConfig {
     public static final HashSet<String> ACTIONS = new HashSet<String>(Arrays.asList(ACTION_COLLECT, ACTION_LIST_EVERYTHING,
             ACTION_LIST_COLLECTED, ACTION_LIST_MATCHING, ACTION_LIST_NOT_MATCHING, ACTION_LIST_LIMITED, ACTION_HELP, ACTION_LIST_JVMS));
 
-    private static final String SD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
-    private static final String SD_PIPE_NAME = "dd-service_discovery";
+    private static final String AD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
+    private static final String AD_LEGACY_PIPE_NAME = "dd-service_discovery";
+    private static final String AD_PIPE_NAME = "dd-auto_discovery";
 
     @Parameter(names = {"--help", "-h"},
             description = "Display this help page",
@@ -76,15 +77,15 @@ class AppConfig {
             required = false)
     private int checkPeriod = 15000;
 
-    @Parameter(names = {"--sd_enabled", "-w"},
-            description = "Enable Service Discovery.",
+    @Parameter(names = {"--ad_enabled", "--sd_enabled", "-w"},
+            description = "Enable Auto Discovery.",
             required = false)
-    private boolean sdEnabled = false;
+    private boolean adEnabled = false;
 
-    @Parameter(names = {"--sd_pipe", "-S"},
-            description = "Service Discovery pipe name.",
+    @Parameter(names = {"--ad_pipe", "--sd_pipe", "-P"},
+            description = "Auto Discovery pipe name.",
             required = false)
-    private String sdPipe = SD_PIPE_NAME;
+    private String adPipe = AD_PIPE_NAME;
 
     @Parameter(names = {"--status_location", "-s"},
             description = "Absolute path of the status file. (default to null = no status file written)",
@@ -128,8 +129,8 @@ class AppConfig {
         return checkPeriod;
     }
 
-    public boolean getSDEnabled() {
-        return sdEnabled;
+    public boolean getAutoDiscoveryEnabled() {
+        return adEnabled;
     }
 
     public Reporter getReporter() {
@@ -156,13 +157,13 @@ class AppConfig {
         return logLocation;
     }
 
-    public String getServiceDiscoveryPipe() {
+    public String getAutoDiscoveryPipe() {
         String pipePath;
 
         if (System.getProperty("os.name").startsWith("Windows")) {
-            pipePath = SD_WIN_PIPE_PATH + "/" + sdPipe;
+            pipePath = AD_WIN_PIPE_PATH + "/" + adPipe;
         } else {
-            pipePath = getTmpDirectory() + "/" + sdPipe;
+            pipePath = getTmpDirectory() + "/" + adPipe;
         }
         return pipePath;
     }
