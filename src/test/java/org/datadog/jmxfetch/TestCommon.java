@@ -85,13 +85,13 @@ public class TestCommon {
     /**
      * Init JMXFetch with the given YAML configuration file.
      */
-    protected void initApplication(String yamlFileName, String serviceDiscoveryPipeFile) throws FileNotFoundException, IOException {
+    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile) throws FileNotFoundException, IOException {
         // We do a first collection
         // We initialize the main app that will collect these metrics using JMX
         String confdDirectory = Thread.currentThread().getContextClassLoader().getResource(yamlFileName).getPath();
         confdDirectory = new String(confdDirectory.substring(0, confdDirectory.length() - yamlFileName.length()));
         List<String> params = new ArrayList<String>();
-        boolean sdEnabled = (serviceDiscoveryPipeFile.length() > 0);
+        boolean sdEnabled = (autoDiscoveryPipeFile.length() > 0);
         params.add("--reporter");
         params.add("console");
         params.add("-c");
@@ -108,18 +108,18 @@ public class TestCommon {
         new JCommander(appConfig, params.toArray(new String[params.size()]));
 
        if (sdEnabled) {
-           String SDPipe = Thread.currentThread().getContextClassLoader().getResource(
-                   serviceDiscoveryPipeFile).getPath();
-           when(appConfig.getServiceDiscoveryPipe()).thenReturn(SDPipe); //mocking with fixture file.
+           String autoDiscoveryPipe = Thread.currentThread().getContextClassLoader().getResource(
+                   autoDiscoveryPipeFile).getPath();
+           when(appConfig.getAutoDiscoveryPipe()).thenReturn(autoDiscoveryPipe); //mocking with fixture file.
        }
 
         app = new App(appConfig);
         if (sdEnabled) {
-            FileInputStream sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe());
+            FileInputStream sdPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe());
             int len = sdPipe.available();
             byte[] buffer = new byte[len];
             sdPipe.read(buffer);
-            app.setReinit(app.processServiceDiscovery(buffer));
+            app.setReinit(app.processAutoDiscovery(buffer));
         }
 
         app.init(false);
