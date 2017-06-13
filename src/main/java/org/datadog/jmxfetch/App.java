@@ -172,9 +172,9 @@ public class App {
         FileInputStream adPipe = null;
         try {
             adPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe()); //Should we use RandomAccessFile?
-            LOGGER.info("Named pipe for Legacy Discovery opened");
+            LOGGER.info("Named pipe for Auto-Discovery opened");
         } catch (FileNotFoundException e) {
-            LOGGER.info("Unable to open named pipe for Service Discovery.");
+            LOGGER.info("Unable to open named pipe for Auto-Discovery.");
         }
 
         return adPipe;
