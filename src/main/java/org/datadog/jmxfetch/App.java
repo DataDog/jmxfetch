@@ -37,13 +37,14 @@ import com.beust.jcommander.ParameterException;
 @SuppressWarnings("unchecked")
 public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
-    private final static String SERVICE_DISCOVERY_PREFIX = "SD-";
+    private final static String AUTO_DISCOVERY_PREFIX = "AD-";
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
-    private static final String SD_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
+    private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
+    private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
-    private ConcurrentHashMap<String, YamlParser> sdConfigs = new ConcurrentHashMap<String, YamlParser>();
+    private ConcurrentHashMap<String, YamlParser> adConfigs = new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AppConfig appConfig;
@@ -161,30 +162,36 @@ public class App {
         }
     }
 
-    private String getSDName(String config){
+    private String getAutoDiscoveryName(String config){
       String[] splitted = config.split(System.getProperty("line.separator"), 2);
 
-      return SERVICE_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
+      return AUTO_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
 
-    private FileInputStream newSdPipe() {
-        FileInputStream sdPipe = null;
+    private FileInputStream newAutoDiscoveryPipe() {
+        FileInputStream adPipe = null;
         try {
-            sdPipe = new FileInputStream(appConfig.getServiceDiscoveryPipe()); //Should we use RandomAccessFile?
-            LOGGER.info("Named pipe for Service Discovery opened");
+            adPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe()); //Should we use RandomAccessFile?
+            LOGGER.info("Named pipe for Auto-Discovery opened");
         } catch (FileNotFoundException e) {
-            LOGGER.info("Unable to open named pipe for Service Discovery.");
+            LOGGER.info("Unable to open named pipe for Auto-Discovery.");
         }
-        return sdPipe;
+
+        return adPipe;
     }
 
-    public boolean processServiceDiscovery(byte[] buffer) {
+    public boolean processAutoDiscovery(byte[] buffer) {
       boolean reinit = false;
       String[] discovered;
 
       try {
         String configs = new String(buffer, CharEncoding.UTF_8);
-        discovered = configs.split(App.SD_CONFIG_SEP + System.getProperty("line.separator"));
+        String separator = App.AD_CONFIG_SEP;
+
+        if (configs.indexOf(App.AD_LEGACY_CONFIG_SEP) != -1) {
+            separator = App.AD_LEGACY_CONFIG_SEP;
+        }
+        discovered = configs.split(separator + System.getProperty("line.separator"));
       } catch(UnsupportedEncodingException e) {
         LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
         return false;
@@ -196,7 +203,7 @@ public class App {
         }
 
         try{
-          String name = getSDName(config);
+          String name = getAutoDiscoveryName(config);
           LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
           InputStream stream = new ByteArrayInputStream(config.getBytes(CharEncoding.UTF_8));
           YamlParser yaml = new YamlParser(stream);
@@ -217,11 +224,11 @@ public class App {
         // Main Loop that will periodically collect metrics from the JMX Server
         long start_ms = System.currentTimeMillis();
         long delta_s = 0;
-        FileInputStream sdPipe = null;
+        FileInputStream adPipe = null;
 
-        if(appConfig.getSDEnabled()) {
-            LOGGER.info("Service Discovery enabled");
-            sdPipe = newSdPipe();
+        if(appConfig.getAutoDiscoveryEnabled()) {
+            LOGGER.info("Auto Discovery enabled");
+            adPipe = newAutoDiscoveryPipe();
         }
 
         while (true) {
@@ -232,16 +239,16 @@ public class App {
             }
 
             // any SD configs waiting in pipe?
-            if(sdPipe == null && appConfig.getSDEnabled()) {
+            if(adPipe == null && appConfig.getAutoDiscoveryEnabled()) {
                 // If SD is enabled and the pipe is not open, retry opening pipe
-                sdPipe = newSdPipe();
+                adPipe = newAutoDiscoveryPipe();
             }
             try {
                 int len;
-                if(sdPipe != null && (len = sdPipe.available()) > 0) {
+                if(adPipe != null && (len = adPipe.available()) > 0) {
                     byte[] buffer = new byte[len];
-                    sdPipe.read(buffer);
-                    setReinit(processServiceDiscovery(buffer));
+                    adPipe.read(buffer);
+                    setReinit(processAutoDiscovery(buffer));
                 }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
@@ -383,7 +390,7 @@ public class App {
 
     public boolean addConfig(String name, YamlParser config) {
         // named groups not supported with Java6: "(?<check>.{1,30})_(?<version>\\d{0,30})"
-        Pattern pattern = Pattern.compile(SERVICE_DISCOVERY_PREFIX+"(.{1,30})_(\\d{0,30})");
+        Pattern pattern = Pattern.compile(AUTO_DISCOVERY_PREFIX+"(.{1,30})_(\\d{0,30})");
 
         Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
@@ -398,7 +405,7 @@ public class App {
             return false;
         }
 
-        this.sdConfigs.put(name, config);
+        this.adConfigs.put(name, config);
         this.setReinit(true);
 
         return true;
@@ -469,7 +476,7 @@ public class App {
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         // SD config cache doesn't remove configs - it just overwrites.
-        Iterator<Entry<String, YamlParser>> itSD = sdConfigs.entrySet().iterator();
+        Iterator<Entry<String, YamlParser>> itSD = adConfigs.entrySet().iterator();
         while (it.hasNext() || itSD.hasNext()) {
             Map.Entry<String, YamlParser> entry;
             boolean sdIterator = false;
