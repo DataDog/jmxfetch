@@ -30,6 +30,8 @@ import org.apache.log4j.Logger;
 import org.apache.commons.lang3.CharEncoding;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
+import org.datadog.jmxfetch.util.FileHelper;
+
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -234,6 +236,12 @@ public class App {
         if(appConfig.getAutoDiscoveryEnabled()) {
             LOGGER.info("Auto Discovery enabled");
             adPipe = newAutoDiscoveryPipe();
+            try {
+                FileHelper.touch(new File(appConfig.getJMXLaunchFile()));
+            } catch (IOException e) {
+                  LOGGER.warn("Unable to create launch file"
+                          + " - Auto-Discovery configs will not be automatically resubmitted.");
+            }
         }
 
         while (true) {
