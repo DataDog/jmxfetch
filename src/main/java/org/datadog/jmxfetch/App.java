@@ -171,12 +171,12 @@ public class App {
 
     private FileInputStream newAutoDiscoveryPipe() {
         FileInputStream adPipe = null;
+        String pipeName = appConfig.getAutoDiscoveryPipe();
         try {
-            String pipeName = appConfig.getAutoDiscoveryPipe();
             adPipe = new FileInputStream(pipeName);
             LOGGER.info("Named pipe for Auto-Discovery opened: " + pipeName);
         } catch (FileNotFoundException e) {
-            LOGGER.info("Unable to open named pipe for Auto-Discovery.");
+            LOGGER.info("Unable to open named pipe for Auto-Discovery: " + pipeName);
         }
 
         return adPipe;
@@ -247,7 +247,6 @@ public class App {
             }
             try {
                 if(adPipe != null) {
-                    int offset = 0;
                     byte[] buffer = new byte[0];
                     while (adPipe.available() > 0) {
                         int len = adPipe.available();
