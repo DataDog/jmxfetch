@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -244,14 +245,25 @@ public class App {
                 adPipe = newAutoDiscoveryPipe();
             }
             try {
-                int len;
-                if(adPipe != null && (len = adPipe.available()) > 0) {
-                    byte[] buffer = new byte[len];
-                    adPipe.read(buffer);
+                if(adPipe != null) {
+                    int offset = 0;
+                    byte[] buffer = new byte[0];
+                    while (adPipe.available() > 0) {
+                        int len = adPipe.available();
+                        byte[] minibuff = new byte[len];
+                        adPipe.read(minibuff);
+
+                        // make room for read chunk
+                        int oldLen = buffer.length;
+                        buffer = Arrays.copyOf(buffer, buffer.length + len);
+                        System.arraycopy(minibuff, 0, buffer, oldLen, len);
+                    }
                     setReinit(processAutoDiscovery(buffer));
                 }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
+            } catch(Exception e) {
+              LOGGER.warn("Unknown problem parsing auto-discovery configuration: " + e);
             }
 
             long start = System.currentTimeMillis();
@@ -298,7 +310,7 @@ public class App {
             		LOGGER.debug("it is not time to collect, skipping run for " + instance.getName());
             		continue;
             	}
-            	
+
                 metrics = instance.getMetrics();
                 numberOfMetrics = metrics.size();
 
