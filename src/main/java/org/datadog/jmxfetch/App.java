@@ -33,6 +33,7 @@ import org.datadog.jmxfetch.util.CustomLogger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.google.common.primitives.Bytes;
 
 
 @SuppressWarnings("unchecked")
@@ -42,6 +43,8 @@ public class App {
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
+    private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
+    private static final String AD_LEGACY_CONFIG_TERM = "#### SERVICE-DISCOVERY TERM ####";
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
@@ -248,15 +251,25 @@ public class App {
             try {
                 if(adPipe != null) {
                     byte[] buffer = new byte[0];
-                    while (adPipe.available() > 0) {
+                    boolean terminated = false;
+                    while (!terminated) {
                         int len = adPipe.available();
-                        byte[] minibuff = new byte[len];
-                        adPipe.read(minibuff);
+                        if (len > 0) {
+                            byte[] minibuff = new byte[len];
+                            adPipe.read(minibuff);
 
-                        // make room for read chunk
-                        int oldLen = buffer.length;
-                        buffer = Arrays.copyOf(buffer, buffer.length + len);
-                        System.arraycopy(minibuff, 0, buffer, oldLen, len);
+                            // The separator always comes in its own atomic write() from the agent side -
+                            // so it will never be chopped.
+                            if (Bytes.indexOf(minibuff, App.AD_LEGACY_CONFIG_TERM.getBytes()) > -1 ||
+                                Bytes.indexOf(minibuff, App.AD_CONFIG_TERM.getBytes()) > -1 ) {
+                                terminated = true;
+                            }
+
+                            // make room for read chunk
+                            int oldLen = buffer.length;
+                            buffer = Arrays.copyOf(buffer, buffer.length + len);
+                            System.arraycopy(minibuff, 0, buffer, oldLen, len);
+                        }
                     }
                     setReinit(processAutoDiscovery(buffer));
                 }
