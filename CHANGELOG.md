@@ -6,6 +6,7 @@ Changes
 #### Changes
 
 * [FEATURE] Transition to auto-discovery nomenclature, support legacy SD. See [#142][]
+* [IMPROVEMENT] Auto_discovery: process templates larger than the page buffer size. See [#145][]
 
 # 0.14.0 / 31-05-2017
 
@@ -170,6 +171,8 @@ Changes
 [#133]: https://github.com/DataDog/jmxfetch/issues/133
 [#135]: https://github.com/DataDog/jmxfetch/issues/135
 [#140]: https://github.com/DataDog/jmxfetch/issues/140
+[#142]: https://github.com/DataDog/jmxfetch/issues/142
+[#145]: https://github.com/DataDog/jmxfetch/issues/145
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@bluestix]: https://github.com/bluestix
