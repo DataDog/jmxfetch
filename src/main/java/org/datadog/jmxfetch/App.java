@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import org.datadog.jmxfetch.util.CustomLogger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.google.common.primitives.Bytes;
 
 
 @SuppressWarnings("unchecked")
@@ -41,6 +43,8 @@ public class App {
     public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
+    private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
+    private static final String AD_LEGACY_CONFIG_TERM = "#### SERVICE-DISCOVERY TERM ####";
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
@@ -170,11 +174,12 @@ public class App {
 
     private FileInputStream newAutoDiscoveryPipe() {
         FileInputStream adPipe = null;
+        String pipeName = appConfig.getAutoDiscoveryPipe();
         try {
-            adPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe()); //Should we use RandomAccessFile?
-            LOGGER.info("Named pipe for Auto-Discovery opened");
+            adPipe = new FileInputStream(pipeName);
+            LOGGER.info("Named pipe for Auto-Discovery opened: " + pipeName);
         } catch (FileNotFoundException e) {
-            LOGGER.info("Unable to open named pipe for Auto-Discovery.");
+            LOGGER.info("Unable to open named pipe for Auto-Discovery: " + pipeName);
         }
 
         return adPipe;
@@ -244,14 +249,34 @@ public class App {
                 adPipe = newAutoDiscoveryPipe();
             }
             try {
-                int len;
-                if(adPipe != null && (len = adPipe.available()) > 0) {
-                    byte[] buffer = new byte[len];
-                    adPipe.read(buffer);
+                if(adPipe != null && adPipe.available() > 0) {
+                    byte[] buffer = new byte[0];
+                    boolean terminated = false;
+                    while (!terminated) {
+                        int len = adPipe.available();
+                        if (len > 0) {
+                            byte[] minibuff = new byte[len];
+                            adPipe.read(minibuff);
+
+                            // The separator always comes in its own atomic write() from the agent side -
+                            // so it will never be chopped.
+                            if (Bytes.indexOf(minibuff, App.AD_LEGACY_CONFIG_TERM.getBytes()) > -1 ||
+                                    Bytes.indexOf(minibuff, App.AD_CONFIG_TERM.getBytes()) > -1 ) {
+                                terminated = true;
+                            }
+
+                            // make room for read chunk
+                            int oldLen = buffer.length;
+                            buffer = Arrays.copyOf(buffer, buffer.length + len);
+                            System.arraycopy(minibuff, 0, buffer, oldLen, len);
+                        }
+                    }
                     setReinit(processAutoDiscovery(buffer));
                 }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
+            } catch(Exception e) {
+              LOGGER.warn("Unknown problem parsing auto-discovery configuration: " + e);
             }
 
             long start = System.currentTimeMillis();
@@ -298,7 +323,7 @@ public class App {
             		LOGGER.debug("it is not time to collect, skipping run for " + instance.getName());
             		continue;
             	}
-            	
+
                 metrics = instance.getMetrics();
                 numberOfMetrics = metrics.size();
 
