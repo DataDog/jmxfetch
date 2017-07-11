@@ -249,7 +249,7 @@ public class App {
                 adPipe = newAutoDiscoveryPipe();
             }
             try {
-                if(adPipe != null) {
+                if(adPipe != null && adPipe.available() > 0) {
                     byte[] buffer = new byte[0];
                     boolean terminated = false;
                     while (!terminated) {
@@ -261,7 +261,7 @@ public class App {
                             // The separator always comes in its own atomic write() from the agent side -
                             // so it will never be chopped.
                             if (Bytes.indexOf(minibuff, App.AD_LEGACY_CONFIG_TERM.getBytes()) > -1 ||
-                                Bytes.indexOf(minibuff, App.AD_CONFIG_TERM.getBytes()) > -1 ) {
+                                    Bytes.indexOf(minibuff, App.AD_CONFIG_TERM.getBytes()) > -1 ) {
                                 terminated = true;
                             }
 
