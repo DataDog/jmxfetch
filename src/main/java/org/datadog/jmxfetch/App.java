@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.Math;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -45,6 +46,9 @@ public class App {
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
     private static final String AD_LEGACY_CONFIG_TERM = "#### SERVICE-DISCOVERY TERM ####";
+    private static final int AD_MAX_NAME_LEN = 80;
+    private static final int AD_MAX_MAG_INSTANCES = (int)Math.log10(10000) + 1;
+
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ConcurrentHashMap<String, YamlParser> configs;
@@ -216,6 +220,8 @@ public class App {
           if (this.addConfig(name, yaml)){
             reinit = true;
             LOGGER.debug("Configuration added succesfully reinit in order");
+          } else {
+            LOGGER.debug("Unable to apply configuration.");
           }
         } catch(UnsupportedEncodingException e) {
           LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
@@ -415,7 +421,14 @@ public class App {
 
     public boolean addConfig(String name, YamlParser config) {
         // named groups not supported with Java6: "(?<check>.{1,30})_(?<version>\\d{0,30})"
-        Pattern pattern = Pattern.compile(AUTO_DISCOVERY_PREFIX+"(.{1,30})_(\\d{0,30})");
+        if (name.length() > AUTO_DISCOVERY_PREFIX.length() + AD_MAX_NAME_LEN + 1) {
+            LOGGER.debug("Name too long - skipping: " + name);
+            return false;
+        }
+        String patternText = AUTO_DISCOVERY_PREFIX+"(.{1," + AD_MAX_NAME_LEN +
+            "})_(\\d{0,"+ AD_MAX_MAG_INSTANCES +"})";
+
+        Pattern pattern = Pattern.compile(patternText);
 
         Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
