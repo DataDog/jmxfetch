@@ -560,6 +560,49 @@ public class TestApp extends TestCommon {
         // Counter (verify rate metrics within range)
         assertMetric("subattr.counter", 0.95, 1, commonTags, 5);
         assertMetric("test.counter", 0.95, 1, commonTags, 5);
+
+        // Drop counter values when they are lower than previous values
+        testApp.decrementCounter(5);
+
+        run();
+        metrics = getMetrics();
+        assertEquals(29, metrics.size());
+
+        // The metric should be back in the next cycle.
+        run();
+        metrics = getMetrics();
+        assertEquals(30, metrics.size());
+        assertMetric("test.counter", 0.0, commonTags, 5);
+
+        // Check that they are working again
+        Thread.sleep(5000);
+        testApp.incrementCounter(5);
+        testApp.incrementHashMapCounter(5);
+
+        run();
+        metrics = getMetrics();
+        assertEquals(30, metrics.size());
+
+        // Previous metrics
+        assertMetric("this.is.100", 100.0, commonTags, 8);
+        assertMetric("jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242",4.2424242E7, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
+        assertMetric("test.converted", 5.0, commonTags, 5);
+        assertMetric("test.boolean", 1.0, commonTags, 5);
+        assertMetric("test.defaulted", 32.0, commonTags, 5);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
+        assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
+
+        // Counter (verify rate metrics within range)
+        assertMetric("subattr.counter", 0.95, 1, commonTags, 5);
+        assertMetric("test.counter", 0.95, 1, commonTags, 5);
         assertCoverage();
     }
     /**
