@@ -231,6 +231,10 @@ public class App {
       return reinit;
     }
 
+    protected ArrayList<Instance> getInstances() {
+        return this.instances;
+    }
+
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         long start_ms = System.currentTimeMillis();

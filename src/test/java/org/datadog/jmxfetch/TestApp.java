@@ -627,4 +627,29 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100.bar.baz", tags, 4);
         assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
     }
+
+    /**
+     * Test JMX Service Discovery.
+     *
+     */
+    @Test
+    public void testServiceDiscoveryLong() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp test = new SimpleTestJavaApp();
+        registerMBean(test, "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        registerMBean(test, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=Co|olScope,host=localhost,component=");
+        registerMBean(test, "org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks");
+        initApplication("jmx_alias_match.yaml", "jmx_sd_pipe_longname.txt");
+
+        // Collecting metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        ArrayList<Instance> instances = getInstances();
+
+        assertEquals(31, metrics.size());
+
+        // 2(jmx_alias_match)  + 1 (jmx_sd_pipe_longname discards one)
+        assertEquals(2, instances.size());
+
+    }
 }
