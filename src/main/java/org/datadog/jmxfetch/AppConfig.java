@@ -31,6 +31,7 @@ class AppConfig {
     private static final String AD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
     private static final String AD_LEGACY_PIPE_NAME = "dd-service_discovery";
     private static final String AD_PIPE_NAME = "dd-auto_discovery";
+    private static final String AD_LAUNCH_FILE = "jmx.launch";
 
     @Parameter(names = {"--help", "-h"},
             description = "Display this help page",
@@ -166,5 +167,9 @@ class AppConfig {
             pipePath = getTmpDirectory() + "/" + adPipe;
         }
         return pipePath;
+    }
+
+    public String getJMXLaunchFile() {
+        return getTmpDirectory() + "/" + AD_LAUNCH_FILE;
     }
 }
