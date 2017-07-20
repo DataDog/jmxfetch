@@ -182,8 +182,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 28 = 13 metrics from java.lang + 15 metrics implicitly defined
-        assertEquals(28, metrics.size());
+        // First filter 29 = 13 metrics from java.lang + 16 metrics implicitly defined
+        assertEquals(29, metrics.size());
     }
 
     @Test
@@ -467,9 +467,9 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 29 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value, see jmx.yaml in the test/resources folder
-        assertEquals(28, metrics.size());
+        assertEquals(29, metrics.size());
 
 
         // We test for the presence and the value of the metrics we want to collect
@@ -487,6 +487,7 @@ public class TestApp extends TestCommon {
         assertMetric("test.boolean", 1.0, commonTags, 5);
         assertMetric("test.defaulted", 32.0, commonTags, 5);
         assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
+        assertMetric("subattr.defaulted", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
@@ -499,9 +500,9 @@ public class TestApp extends TestCommon {
         // We run a second collection. The counter should now be present
         run();
         metrics = getMetrics();
-        // 30 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(30, metrics.size());
+        assertEquals(31, metrics.size());
 
 
         // We test for the same metrics but this time, the counter should be here
@@ -515,6 +516,7 @@ public class TestApp extends TestCommon {
         assertMetric("test.boolean", 1.0, commonTags, 5);
         assertMetric("test.defaulted", 32.0, commonTags, 5);
         assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
+        assertMetric("subattr.defaulted", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
@@ -535,9 +537,9 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        // 31 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
-        // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(30, metrics.size());
+        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(31, metrics.size());
 
 
         // Previous metrics
@@ -550,6 +552,7 @@ public class TestApp extends TestCommon {
         assertMetric("test.boolean", 1.0, commonTags, 5);
         assertMetric("test.defaulted", 32.0, commonTags, 5);
         assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
+        assertMetric("subattr.defaulted", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);

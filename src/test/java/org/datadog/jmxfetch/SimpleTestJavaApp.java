@@ -46,6 +46,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         hashmap.put("thisis0", 0);
         hashmap.put("thisis10", 10);
         hashmap.put("thisiscounter", 0);
+        hashmap.put("shouldBeDefaulted", 0);
         compositetype = buildCompositeType();
         tabulardata = buildTabularType();
         if (tabulardata != null) {
