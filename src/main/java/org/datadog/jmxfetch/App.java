@@ -48,8 +48,8 @@ public class App {
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
     private static final String AD_LEGACY_CONFIG_TERM = "#### SERVICE-DISCOVERY TERM ####";
-    private static int backoffLow = 1;
-    private static int backoffHigh = 1000;
+    private static int backoffJitterLow = 100;
+    private static int backoffJitterHigh = 1000;
     private static int maxRetry = 4;
     private static int loopCounter;
     Random rand = new Random();
@@ -334,8 +334,8 @@ public class App {
         			retryInstances = new ArrayList<Instance>();
         			it = runInstances.iterator();
                 if (tryN < maxRetry) {
-                		int backoff = (int) Math.round(Math.pow(2, tryN) * 1000);
-                		backoff += rand.nextInt(backoffHigh) + backoffLow;
+                		int backoff = (int) Math.round(Math.pow(2, tryN) * 500);
+                		backoff += rand.nextInt(backoffJitterHigh) + backoffJitterLow;
                 		try {
 							Thread.sleep(backoff);
 						} catch (InterruptedException e1) {
