@@ -365,10 +365,18 @@ public class App {
 
                     if (numberOfMetrics == 0) {
                         instanceMessage = "Instance " + instance + " didn't return any metrics";
-                        LOGGER.warn(instanceMessage);
                         instanceStatus = Status.STATUS_ERROR;
                         scStatus = Status.STATUS_ERROR;
-                        brokenInstances.add(instance);
+                        if (tryN < maxRetry) {
+                    		instanceMessage += " queuing for a retry";
+                    			// add the failed instance if there are more to add
+                    			retryInstances.add(instance);
+                    			continue;
+	                    } else {
+	                    		// Only declare it broken once it's run (and failed) four times
+	                    		brokenInstances.add(instance);
+	                    }
+                        LOGGER.warn(instanceMessage);
                     } else if (instance.isLimitReached()) {
                         instanceMessage = "Number of returned metrics is too high for instance: "
                                 + instance.getName()
