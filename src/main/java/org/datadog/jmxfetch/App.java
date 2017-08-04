@@ -47,7 +47,7 @@ public class App {
     private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
     private static final String AD_LEGACY_CONFIG_TERM = "#### SERVICE-DISCOVERY TERM ####";
     private static final int AD_MAX_NAME_LEN = 80;
-    private static final int AD_MAX_MAG_INSTANCES = (int)Math.log10(1000) + 1;
+    private static final int AD_MAX_MAG_INSTANCES = 4; // 1000 instances ought to be enough for anyone
 
     private static int loopCounter;
     private AtomicBoolean reinit = new AtomicBoolean(false);
@@ -173,7 +173,7 @@ public class App {
     private String getAutoDiscoveryName(String config){
       String[] splitted = config.split(System.getProperty("line.separator"), 2);
 
-      return AUTO_DISCOVERY_PREFIX + "_" + splitted[0].substring(2, splitted[0].length());
+      return AUTO_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
     }
 
     private FileInputStream newAutoDiscoveryPipe() {
@@ -424,14 +424,15 @@ public class App {
     }
 
     public boolean addConfig(String name, YamlParser config) {
-        // named groups not supported with Java6: "(?<check>.{1,30})_(?<version>\\d{0,30})"
+        // named groups not supported with Java6:
+        //              "AUTO_DISCOVERY_PREFIX(?<check>.{1,80})_(?<version>\\d{0,AD_MAX_MAG_INSTANCES})"
         // + 2 cause of underscores.
         if (name.length() > AUTO_DISCOVERY_PREFIX.length() +
                 AD_MAX_NAME_LEN + AD_MAX_MAG_INSTANCES + 2) {
             LOGGER.debug("Name too long - skipping: " + name);
             return false;
         }
-        String patternText = AUTO_DISCOVERY_PREFIX+"_(.{1," + AD_MAX_NAME_LEN +
+        String patternText = AUTO_DISCOVERY_PREFIX+"(.{1," + AD_MAX_NAME_LEN +
             "})_(\\d{0,"+ AD_MAX_MAG_INSTANCES +"})";
 
         Pattern pattern = Pattern.compile(patternText);
@@ -439,6 +440,7 @@ public class App {
         Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
             // bad name.
+            LOGGER.debug("Cannot match instance name: " + name);
             return false;
         }
 
@@ -446,6 +448,7 @@ public class App {
         String check = matcher.group(1);
         if (this.configs.containsKey(check)) {
             // there was already a file config for the check.
+            LOGGER.debug("Key already present - skipping: " + name);
             return false;
         }
 
