@@ -140,6 +140,13 @@ public class TestCommon {
     }
 
     /**
+     * Return configured instances
+     */
+    protected ArrayList<Instance> getInstances() {
+        return app.getInstances();
+    }
+
+    /**
      * Return JMXFetch reporter.
      */
     protected Reporter getReporter(){
