@@ -52,7 +52,7 @@ public class Instance {
     private Connection connection;
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
-    private Integer minimumNumberOfMetrics = 0;
+    private Integer minReturnedMetrics = 0;
     private Boolean refreshNextRun = false;
 
 
@@ -100,9 +100,9 @@ public class Instance {
             this.maxReturnedMetrics = (Integer) maxReturnedMetrics;
         }
 
-        Object minimumNumberOfMetrics = this.yaml.get("min_number_of_metrics");
-        if (minimumNumberOfMetrics != null) {
-            this.minimumNumberOfMetrics = (Integer) minimumNumberOfMetrics;
+        Object minReturnedMetrics = this.yaml.get("min_returned_metrics");
+        if (minReturnedMetrics != null) {
+            this.minReturnedMetrics = (Integer) minReturnedMetrics;
         }
         
         // Generate an instance name that will be send as a tag with the metrics
@@ -236,7 +236,7 @@ public class Instance {
                 }
             }
         }
-        if (this.minimumNumberOfMetrics < metrics.size()) {
+        if (this.minReturnedMetrics < metrics.size()) {
         		this.refreshNextRun = true;
         }
         return metrics;
