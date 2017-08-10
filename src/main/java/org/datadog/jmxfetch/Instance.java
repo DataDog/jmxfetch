@@ -237,7 +237,7 @@ public class Instance {
             }
         }
         if (this.minReturnedMetrics < metrics.size()) {
-        	  this.refreshNextRun = true;
+        	this.refreshNextRun = true;
         }
         return metrics;
     }
