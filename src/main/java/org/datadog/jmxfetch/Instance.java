@@ -52,6 +52,8 @@ public class Instance {
     private Connection connection;
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
+    private Integer minimumNumberOfMetrics = 0;
+    private Boolean refreshNextRun = false;
 
 
     public Instance(Instance instance, AppConfig appConfig) {
@@ -85,8 +87,11 @@ public class Instance {
 
         this.minCollectionPeriod = (Integer) yaml.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
-        	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
+        		this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
+        
+        	this.minimumNumberOfMetrics = (Integer) initConfig.get("min_number_of_metrics");
+
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
@@ -191,7 +196,7 @@ public class Instance {
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
         // To enable this, a "refresh_beans" parameter must be specified in the yaml config file
-        if (this.refreshBeansPeriod != null && (System.currentTimeMillis() - this.lastRefreshTime) / 1000 > this.refreshBeansPeriod) {
+        if ((this.refreshBeansPeriod != null && (System.currentTimeMillis() - this.lastRefreshTime) / 1000 > this.refreshBeansPeriod) || this.refreshNextRun) {
             LOGGER.info("Refreshing bean list");
             this.refreshBeansList();
             this.getMatchingAttributes();
@@ -227,6 +232,9 @@ public class Instance {
                     this.failingAttributes.add(jmxAttr);
                 }
             }
+        }
+        if (this.minimumNumberOfMetrics < metrics.size()) {
+        		this.refreshNextRun = true;
         }
         return metrics;
     }
@@ -371,6 +379,7 @@ public class Instance {
 
         this.beans = (this.beans.isEmpty()) ? connection.queryNames(null): this.beans;
         this.lastRefreshTime = System.currentTimeMillis();
+        this.refreshNextRun = false;
     }
 
     public String[] getServiceCheckTags() {
