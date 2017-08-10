@@ -87,10 +87,8 @@ public class Instance {
 
         this.minCollectionPeriod = (Integer) yaml.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
-        		this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
+        	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
-        
-        	this.minimumNumberOfMetrics = (Integer) initConfig.get("min_number_of_metrics");
 
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
@@ -102,6 +100,11 @@ public class Instance {
             this.maxReturnedMetrics = (Integer) maxReturnedMetrics;
         }
 
+        Object minimumNumberOfMetrics = this.yaml.get("min_number_of_metrics");
+        if (minimumNumberOfMetrics != null) {
+            this.minimumNumberOfMetrics = (Integer) minimumNumberOfMetrics;
+        }
+        
         // Generate an instance name that will be send as a tag with the metrics
         if (this.instanceName == null) {
             if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
