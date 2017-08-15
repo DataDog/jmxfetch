@@ -1,14 +1,14 @@
 Changes
 =======
 
-# 0.15.0 / 10-07-2017
+# 0.15.0 / 07-10-2017
 
 #### Changes
 
 * [FEATURE] Transition to auto-discovery nomenclature, support legacy SD. See [#142][]
 * [IMPROVEMENT] Auto_discovery: process templates larger than the page buffer size. See [#145][]
 
-# 0.14.0 / 31-05-2017
+# 0.14.0 / 05-31-2017
 
 #### Changes
 * [FEATURE] Add support for `min_collection_interval`. See [#135][] and [#140][]
