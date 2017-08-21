@@ -81,6 +81,10 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         shouldBeCounter += inc;
     }
 
+    public void decrementCounter(int dec) {
+        shouldBeCounter -= dec;
+    }
+
     public void incrementHashMapCounter(int inc) {
         hashmap.put("thisiscounter", hashmap.get("thisiscounter") + inc);
     }

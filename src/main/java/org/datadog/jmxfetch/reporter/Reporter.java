@@ -88,7 +88,7 @@ public abstract class Reporter {
                 long now = System.currentTimeMillis();
                 double rate = 1000 * (currentValue - oldValue) / (now - oldTs);
 
-                if (!Double.isNaN(rate) && !Double.isInfinite(rate)) {
+                if (!Double.isNaN(rate) && !Double.isInfinite(rate) && rate >= 0) {
                     sendMetricPoint(metricType, metricName, rate, tags);
                 }
 
