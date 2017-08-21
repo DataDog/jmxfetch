@@ -1,6 +1,13 @@
 Changes
 =======
 
+# 0.16.0 / 08-21-2017
+
+#### Changes
+
+* [BUGFIX] Increase maximum length of instance configs pulled from Auto-Discovery pipe. See [#147][]
+* [IMPROVEMENT] Touch JMXFetch launch file on boot-up. See [#143][]
+
 # 0.15.0 / 07-10-2017
 
 #### Changes
@@ -172,7 +179,9 @@ Changes
 [#135]: https://github.com/DataDog/jmxfetch/issues/135
 [#140]: https://github.com/DataDog/jmxfetch/issues/140
 [#142]: https://github.com/DataDog/jmxfetch/issues/142
+[#143]: https://github.com/DataDog/jmxfetch/issues/143
 [#145]: https://github.com/DataDog/jmxfetch/issues/145
+[#147]: https://github.com/DataDog/jmxfetch/issues/147
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@bluestix]: https://github.com/bluestix
