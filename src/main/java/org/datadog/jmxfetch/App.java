@@ -345,7 +345,7 @@ public class App {
                 }
 
                 if(numberOfMetrics > 0)
-                    reporter.sendMetrics(metrics, instance.getName());
+                    reporter.sendMetrics(metrics, instance.getName(), instance.getCanonicalRateConfig());
 
             } catch (IOException e) {
                 instanceMessage = "Unable to refresh bean list for instance " + instance;

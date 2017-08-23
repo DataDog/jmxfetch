@@ -35,7 +35,7 @@ public abstract class Reporter {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
 
-    public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName) {
+    public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName, boolean canonicalRate) {
         HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
@@ -88,7 +88,10 @@ public abstract class Reporter {
                 long now = System.currentTimeMillis();
                 double rate = 1000 * (currentValue - oldValue) / (now - oldTs);
 
-                if (!Double.isNaN(rate) && !Double.isInfinite(rate) && rate >= 0) {
+                boolean submit = (!Double.isNaN(rate) && !Double.isInfinite(rate));
+                submit &= (rate >= 0 | !canonicalRate);
+
+                if  (submit) {
                     sendMetricPoint(metricType, metricName, rate, tags);
                 }
 
