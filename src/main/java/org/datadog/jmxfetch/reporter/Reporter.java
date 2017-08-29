@@ -35,7 +35,7 @@ public abstract class Reporter {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
 
-    public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName) {
+    public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName, boolean canonicalRate) {
         HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
@@ -88,8 +88,13 @@ public abstract class Reporter {
                 long now = System.currentTimeMillis();
                 double rate = 1000 * (currentValue - oldValue) / (now - oldTs);
 
-                if (!Double.isNaN(rate) && !Double.isInfinite(rate)) {
+                boolean sane = (!Double.isNaN(rate) && !Double.isInfinite(rate));
+                boolean submit = (rate >= 0 || !canonicalRate);
+
+                if  (sane && submit) {
                     sendMetricPoint(metricType, metricName, rate, tags);
+                } else if (sane) {
+                    LOGGER.info("Canonical rate option set, and negative rate (counter reset) - not submitting.");
                 }
 
                 instanceRatesAggregator.get(key).put("ts", now);

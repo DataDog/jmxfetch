@@ -156,6 +156,23 @@ public class Instance {
         }
     }
 
+    public boolean getCanonicalRateConfig() {
+        Object canonical = null;
+        if (this.initConfig != null) {
+            canonical = this.initConfig.get("canonical_rate");
+        }
+
+        if (canonical == null) {
+            return false;
+        }
+
+        if (canonical instanceof Boolean) {
+            return ((Boolean)canonical).booleanValue();
+        }
+
+        return false;
+    }
+
     public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
         if (connection == null || !connection.isAlive()) {
             LOGGER.info("Connection closed or does not exist. Creating a new connection!");
