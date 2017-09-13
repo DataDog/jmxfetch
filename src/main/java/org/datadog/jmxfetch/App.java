@@ -306,7 +306,7 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
-                appConfig.getStatus().flush();
+                appConfig.getStatus().flush(appConfig.getIPCPort());
                 configs = getConfigs(appConfig);
                 init(true);
             }
@@ -425,7 +425,7 @@ public class App {
         }
 
         try {
-            appConfig.getStatus().flush();
+            appConfig.getStatus().flush(appConfig.getIPCPort());
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
         }
