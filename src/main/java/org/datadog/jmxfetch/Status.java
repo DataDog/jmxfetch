@@ -140,9 +140,8 @@ public class Status {
 
             //add reuqest header
             con.setRequestMethod("POST");
-            //con.setRequestProperty("User-Agent", USER_AGENT);
             con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("Session-Token", this.token);
+            con.setRequestProperty("Authorization", "Bearer "+ this.token);
 
             con.setDoOutput(true);
             DataOutputStream wr = new DataOutputStream(con.getOutputStream());
