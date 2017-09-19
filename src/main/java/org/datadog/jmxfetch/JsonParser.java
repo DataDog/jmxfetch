@@ -5,17 +5,15 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 @SuppressWarnings("unchecked")
 class JsonParser {
 
     private HashMap<Object, Object> parsedJson;
-    private final TypeToken parsedType =  new TypeToken<HashMap<Object, Object>>() {};
 
     public JsonParser(InputStream jsonInputStream) {
         InputStreamReader jsonInputStreamReader = new InputStreamReader(jsonInputStream);
-        parsedJson = new Gson().fromJson(jsonInputStreamReader, parsedType.getType());
+        parsedJson = (HashMap<Object, Object>) new Gson().fromJson(jsonInputStreamReader, Object.class);
     }
 
     public JsonParser(JsonParser other) {
