@@ -17,7 +17,8 @@ import javax.net.ssl.HttpsURLConnection;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class Status {
 
@@ -28,6 +29,7 @@ public class Status {
     private final static String INITIALIZED_CHECKS = "initialized_checks";
     private final static String FAILED_CHECKS = "failed_checks";
     private HashMap<String, Object> instanceStats;
+    private ObjectMapper mapper;
     private TrustManager[] dummyTrustManager;
     private SSLContext sc;
     private String statusFileLocation;
@@ -39,6 +41,7 @@ public class Status {
     }
 
     public Status(String statusFileLocation) {
+        mapper = new ObjectMapper();
         configure(statusFileLocation);
     }
 
@@ -122,12 +125,11 @@ public class Status {
         return yaml.dump(status);
     }
 
-    private String generateJson() {
-        Gson gson = new Gson();
+    private String generateJson() throws JsonProcessingException {
         HashMap<String, Object> status = new HashMap<String, Object>();
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
-        return gson.toJson(status);
+        return mapper.writeValueAsString(status);
     }
 
     private boolean postRequest(String body, int port) {
@@ -160,8 +162,8 @@ public class Status {
     public void flush(int port) {
         if (isEnabled()) {
             if (port > 0) {
-                String json = generateJson();
                 try {
+                    String json = generateJson();
                     if (!this.postRequest(json, port)) {
                         LOGGER.debug("Problem submitting JSON status: " + json);
                     }
