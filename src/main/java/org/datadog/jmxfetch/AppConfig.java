@@ -106,6 +106,12 @@ class AppConfig {
             required = true)
     private List<String> action = null;
 
+    @Parameter(names = {"--ipc_port", "-I"},
+            description = "IPC port",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int ipcPort = 0;
+
     public String getAction() {
         return this.action.get(0);
     }
@@ -128,6 +134,10 @@ class AppConfig {
 
     public int getCheckPeriod() {
         return checkPeriod;
+    }
+
+    public int getIPCPort() {
+        return ipcPort;
     }
 
     public boolean getAutoDiscoveryEnabled() {
