@@ -19,6 +19,7 @@ import org.junit.Test;
 
 public class TestConfiguration {
 	static LinkedList<Configuration> configurations = new LinkedList<Configuration>();
+    static JsonParser adConfigs;
 
 	/**
 	 * Setup Configuration tests
@@ -39,6 +40,12 @@ public class TestConfiguration {
 			    configurations.add(new Configuration(conf));
 			}
 		}
+
+        // lets also collect auto-discovery configs
+		f = new File("src/test/resources/", "auto_discovery_configs.json");
+		String jsonPath = f.getAbsolutePath();
+		FileInputStream jsonInputStream = new FileInputStream(jsonPath);
+        adConfigs = new JsonParser(jsonInputStream);
     }
 
 	/**
@@ -172,5 +179,28 @@ public class TestConfiguration {
 
 		// Domain name with parameters
 		assertEquals((String) beanScopeToString.invoke(null, "org.datadog.com", beanScope), "org.datadog.com:type=someType,param=someParam,*");
+	}
+
+	/**
+	 * Stringify a bean pattern to comply with the representation of a MBean
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 * @throws InvocationTargetException
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 */
+	@Test
+	public void testAutoDiscoveryConfigs() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+        //
+		HashMap<String, Object> configs = (HashMap<String, Object>) adConfigs.getJsonConfigs();
+        for (String check :  configs.keySet()) {
+            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) adConfigs.getJsonInstances(check));
+            for (LinkedHashMap<String, Object> config : configInstances) {
+                Object yamlConf = config.get("conf");
+                for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (yamlConf)) {
+                    configurations.add(new Configuration(conf));
+                }
+            }
+        }
 	}
 }

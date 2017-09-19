@@ -466,6 +466,10 @@ public class App {
         return true;
     }
 
+    public boolean addJsonConfig(String name, String json) {
+        return false;
+    }
+
     private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
         ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
         YamlParser fileConfig;
