@@ -1,6 +1,13 @@
 Changes
 =======
 
+# 0.17.0 / 09-20-2017
+
+#### Changes
+
+* [FEATURE] Add support for submission of JMX statuses to REST API. See [#155][]
+* [IMPROVEMENT] Rates: add canonical_rate + feature flag for the feature. See [#154][] (Thanks [@arrawatia][])
+
 # 0.16.0 / 08-21-2017
 
 #### Changes
@@ -182,8 +189,11 @@ Changes
 [#143]: https://github.com/DataDog/jmxfetch/issues/143
 [#145]: https://github.com/DataDog/jmxfetch/issues/145
 [#147]: https://github.com/DataDog/jmxfetch/issues/147
+[#154]: https://github.com/DataDog/jmxfetch/issues/154
+[#155]: https://github.com/DataDog/jmxfetch/issues/155
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
+[@arrawatia]: https://github.com/arrawatia
 [@bluestix]: https://github.com/bluestix
 [@brothhaar]: https://github.com/brothhaar
 [@coupacooke]: https://github.com/coupacooke
