@@ -27,6 +27,10 @@ class JsonParser {
         return parsedJson.get("configs");
     }
 
+    public Object getJsonTimestamp() {
+        return parsedJson.get("timestamp");
+    }
+
     public Object getJsonInstances(String key) {
         HashMap<String, Object> config = (HashMap<String, Object>) ((HashMap<String, Object>) parsedJson
                 .get("configs")).get(key);

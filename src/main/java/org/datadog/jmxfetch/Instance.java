@@ -42,7 +42,7 @@ public class Instance {
     private long lastCollectionTime;
     private Integer minCollectionPeriod;
     private long lastRefreshTime;
-    private LinkedHashMap<String, Object> yaml;
+    private LinkedHashMap<String, Object> instanceMap;
     private LinkedHashMap<String, Object> initConfig;
     private String instanceName;
     private LinkedHashMap<String, String> tags;
@@ -55,8 +55,8 @@ public class Instance {
 
 
     public Instance(Instance instance, AppConfig appConfig) {
-        this(instance.getYaml() != null
-                ? new LinkedHashMap<String, Object>(instance.getYaml())
+        this(instance.getInstanceMap() != null
+                ? new LinkedHashMap<String, Object>(instance.getInstanceMap())
                         : null,
                         instance.getInitConfig() != null
                         ? new LinkedHashMap<String, Object>(instance.getInitConfig())
@@ -66,31 +66,31 @@ public class Instance {
     }
 
     @SuppressWarnings("unchecked")
-    public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> initConfig,
+    public Instance(LinkedHashMap<String, Object> instanceMap, LinkedHashMap<String, Object> initConfig,
             String checkName, AppConfig appConfig) {
         this.appConfig = appConfig;
-        this.yaml = yamlInstance != null ? new LinkedHashMap<String, Object>(yamlInstance) : null;
+        this.instanceMap = instanceMap != null ? new LinkedHashMap<String, Object>(instanceMap) : null;
         this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
-        this.instanceName = (String) yaml.get("name");
-        this.tags = getTagsMap(yaml.get("tags"));
+        this.instanceName = (String) instanceMap.get("name");
+        this.tags = getTagsMap(instanceMap.get("tags"));
         this.checkName = checkName;
         this.matchingAttributes = new LinkedList<JMXAttribute>();
         this.failingAttributes = new HashSet<JMXAttribute>();
-        this.refreshBeansPeriod = (Integer) yaml.get("refresh_beans");
+        this.refreshBeansPeriod = (Integer) instanceMap.get("refresh_beans");
         if (this.refreshBeansPeriod == null) {
             this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
             // Useful because sometimes if the application restarts, jmxfetch might read
             // a jmxtree that is not completely initialized and would be missing some attributes
         }
 
-        this.minCollectionPeriod = (Integer) yaml.get("min_collection_interval");
+        this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
         	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
-        Object maxReturnedMetrics = this.yaml.get("max_returned_metrics");
+        Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
         if (maxReturnedMetrics == null) {
             this.maxReturnedMetrics = MAX_RETURNED_METRICS;
         } else {
@@ -99,10 +99,10 @@ public class Instance {
 
         // Generate an instance name that will be send as a tag with the metrics
         if (this.instanceName == null) {
-            if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
-                this.instanceName = this.checkName + "-" + this.yaml.get(PROCESS_NAME_REGEX);
-            } else if (this.yaml.get("host") != null) {
-                this.instanceName = this.checkName + "-" + this.yaml.get("host") + "-" + this.yaml.get("port");
+            if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+                this.instanceName = this.checkName + "-" + this.instanceMap.get(PROCESS_NAME_REGEX);
+            } else if (this.instanceMap.get("host") != null) {
+                this.instanceName = this.checkName + "-" + this.instanceMap.get("host") + "-" + this.instanceMap.get("port");
             } else {
                 LOGGER.warn("Cannot determine a unique instance name. Please define a name in your instance configuration");
                 this.instanceName = this.checkName;
@@ -111,21 +111,21 @@ public class Instance {
 
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
-        this.cassandraAliasing = (Boolean) yaml.get("cassandra_aliasing");
+        this.cassandraAliasing = (Boolean) instanceMap.get("cassandra_aliasing");
         if (this.cassandraAliasing == null){
             this.cassandraAliasing = false;
         }
 
         // In case the configuration to match beans is not specified in the "instance" parameter but in the initConfig one
-        Object yamlConf = this.yaml.get("conf");
-        if (yamlConf == null && this.initConfig != null) {
-            yamlConf = this.initConfig.get("conf");
+        Object instanceConf = this.instanceMap.get("conf");
+        if (instanceConf == null && this.initConfig != null) {
+            instanceConf = this.initConfig.get("conf");
         }
 
-        if (yamlConf == null) {
+        if (instanceConf == null) {
             LOGGER.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
-            for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (yamlConf)) {
+            for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (instanceConf)) {
                 configurationList.add(new Configuration(conf));
             }
         }
@@ -139,16 +139,16 @@ public class Instance {
      * Format the instance tags defined in the YAML configuration file to a `LinkedHashMap`.
      * Supported inputs: `List`, `Map`.
      */
-    private static LinkedHashMap<String, String> getTagsMap(Object yamlTags){
+    private static LinkedHashMap<String, String> getTagsMap(Object tagsMap){
         try {
             // Input has `Map` format
-            return (LinkedHashMap<String, String>) yamlTags;
+            return (LinkedHashMap<String, String>) tagsMap;
         }
         catch (ClassCastException e){
             // Input has `List` format
             LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
 
-            for (String tag: (List<String>)yamlTags) {
+            for (String tag: (List<String>)tagsMap) {
                 tags.put(tag, null);
             }
 
@@ -187,7 +187,7 @@ public class Instance {
 
     public void init(boolean forceNewConnection) throws IOException, FailedLoginException, SecurityException {
         LOGGER.info("Trying to connect to JMX Server at " + this.toString());
-        connection = getConnection(yaml, forceNewConnection);
+        connection = getConnection(instanceMap, forceNewConnection);
         LOGGER.info("Connected to JMX Server at " + this.toString());
         this.refreshBeansList();
         this.getMatchingAttributes();
@@ -195,19 +195,19 @@ public class Instance {
 
     @Override
     public String toString() {
-        if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
-            return "process_regex: `" + this.yaml.get(PROCESS_NAME_REGEX) + "`";
-        } else if (this.yaml.get("jmx_url") != null) {
-            return (String) this.yaml.get("jmx_url");
+        if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+            return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
+        } else if (this.instanceMap.get("jmx_url") != null) {
+            return (String) this.instanceMap.get("jmx_url");
         } else {
-            return this.yaml.get("host") + ":" + this.yaml.get("port");
+            return this.instanceMap.get("host") + ":" + this.instanceMap.get("port");
         }
     }
 
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
-        // To enable this, a "refresh_beans" parameter must be specified in the yaml config file
+        // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
         if (this.refreshBeansPeriod != null && (System.currentTimeMillis() - this.lastRefreshTime) / 1000 > this.refreshBeansPeriod) {
             LOGGER.info("Refreshing bean list");
             this.refreshBeansList();
@@ -216,8 +216,7 @@ public class Instance {
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         Iterator<JMXAttribute> it = matchingAttributes.iterator();
-        
-        
+
         // increment the lastCollectionTime
         this.lastCollectionTime = System.currentTimeMillis();
 
@@ -392,8 +391,8 @@ public class Instance {
 
     public String[] getServiceCheckTags() {
         List<String> tags = new ArrayList<String>();
-        if (this.yaml.get("host") != null) {
-            tags.add("jmx_server:" + this.yaml.get("host"));
+        if (this.instanceMap.get("host") != null) {
+            tags.add("jmx_server:" + this.instanceMap.get("host"));
         }
         if (this.tags != null) {
             for (Entry<String, String> e : this.tags.entrySet()) {
@@ -412,8 +411,8 @@ public class Instance {
         return this.instanceName;
     }
 
-    LinkedHashMap<String, Object> getYaml() {
-        return this.yaml;
+    LinkedHashMap<String, Object> getInstanceMap() {
+        return this.instanceMap;
     }
 
     LinkedHashMap<String, Object> getInitConfig() {

@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
-import org.datadog.jmxfetch.converter.StatusConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
@@ -90,9 +89,8 @@ class AppConfig {
 
     @Parameter(names = {"--status_location", "-s"},
             description = "Absolute path of the status file. (default to null = no status file written)",
-            converter = StatusConverter.class,
             required = false)
-    private Status status = new Status();
+    private String statusLocation;
 
     @Parameter(names = {"--exit_file_location", "-e"},
             description = "Absolute path of the trigger file to watch to exit. (default to null = no exit on file)",
@@ -106,11 +104,38 @@ class AppConfig {
             required = true)
     private List<String> action = null;
 
+    @Parameter(names = {"--ipc_host", "-H"},
+            description = "IPC host",
+            required = false)
+    private String ipcHost;
+
     @Parameter(names = {"--ipc_port", "-I"},
             description = "IPC port",
             validateWith = PositiveIntegerValidator.class,
             required = false)
     private int ipcPort = 0;
+
+    private Status status = new Status();
+
+    public boolean updateStatus() {
+        if (statusLocation != null) {
+            status = new Status(statusLocation);
+            return true;
+        } else if (ipcHost != null && ipcPort > 0) {
+            status = new Status(ipcHost, ipcPort);
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean remoteEnabled() {
+        return (ipcHost != null && ipcPort > 0);
+    }
+
+    public String getStatusLocation() {
+        return this.statusLocation;
+    }
 
     public String getAction() {
         return this.action.get(0);
@@ -136,11 +161,15 @@ class AppConfig {
         return checkPeriod;
     }
 
+    public String getIPCHost() {
+        return ipcHost;
+    }
+
     public int getIPCPort() {
         return ipcPort;
     }
 
-    public boolean getAutoDiscoveryEnabled() {
+    public boolean getAutoDiscoveryPipeEnabled() {
         return adEnabled;
     }
 
