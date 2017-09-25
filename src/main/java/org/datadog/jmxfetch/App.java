@@ -535,7 +535,7 @@ public class App {
         }
 
         try {
-            String uripath = "agent/jmxconfigs?timestamp="+lastJSONConfigTS;
+            String uripath = "agent/jmx/configs?timestamp="+lastJSONConfigTS;
             response = client.request("GET", "", uripath);
             if (!response.isResponse2xx()) {
                 LOGGER.warn("Failed collecting JSON configs: [" +

@@ -21,7 +21,7 @@ public class Status {
     private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
     private final static String INITIALIZED_CHECKS = "initialized_checks";
     private final static String FAILED_CHECKS = "failed_checks";
-    private final static String API_STATUS_PATH = "agent/jmxstatus";
+    private final static String API_STATUS_PATH = "agent/jmx/status";
     private HashMap<String, Object> instanceStats;
     private ObjectMapper mapper;
     private String statusFileLocation;
