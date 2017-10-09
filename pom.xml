@@ -12,6 +12,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
+		<maven.compiler.target>1.6</maven.compiler.target>
 		<commons-io.version>2.4</commons-io.version>
 		<commons-lang.version>2.6</commons-lang.version>
 		<apache-commons-lang3.version>3.5</apache-commons-lang3.version>
@@ -20,8 +21,8 @@
 		<jcommander.version>1.35</jcommander.version>
 		<junit.version>4.11</junit.version>
 		<log4j.version>1.2.17</log4j.version>
-        <gson.version>1.4</gson.version>
-        <mockito.version>2.2.27</mockito.version>
+		<jackson.version>2.9.0</jackson.version>
+		<mockito.version>2.2.27</mockito.version>
 		<maven-surefire-plugin.version>2.9</maven-surefire-plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<snakeyaml.version>1.13</snakeyaml.version>
@@ -65,11 +66,23 @@
 			<groupId>com.datadoghq</groupId>
 			<artifactId>java-dogstatsd-client</artifactId>
 			<version>${java-dogstatsd-client.version}</version>
-		</dependency>
+        </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Note: core-annotations version x.y.0 is generally compatible with
+                 (identical to) version x.y.1, x.y.2, etc. -->
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 		<dependency>
 			<groupId>log4j</groupId>

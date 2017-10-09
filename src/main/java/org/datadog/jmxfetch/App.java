@@ -29,6 +29,7 @@ import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.commons.lang3.CharEncoding;
+import org.apache.commons.io.IOUtils;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
@@ -37,6 +38,8 @@ import org.datadog.jmxfetch.util.FileHelper;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.primitives.Bytes;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 
 @SuppressWarnings("unchecked")
@@ -52,16 +55,24 @@ public class App {
     private static final int AD_MAX_MAG_INSTANCES = 4; // 1000 instances ought to be enough for anyone
 
     private static int loopCounter;
-    private AtomicBoolean reinit = new AtomicBoolean(false);
+    private int lastJSONConfigTS;
+    private HashMap<String, Object> adJSONConfigs;
     private ConcurrentHashMap<String, YamlParser> configs;
-    private ConcurrentHashMap<String, YamlParser> adConfigs = new ConcurrentHashMap<String, YamlParser>();
+    private ConcurrentHashMap<String, YamlParser> adPipeConfigs = new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
+    private AtomicBoolean reinit = new AtomicBoolean(false);
+
     private AppConfig appConfig;
+    private HttpClient client;
 
 
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
+        // setup client
+        if (appConfig.remoteEnabled()) {
+            client = new HttpClient(appConfig.getIPCHost(), appConfig.getIPCPort(), false);
+        }
         this.configs = getConfigs(appConfig);
     }
 
@@ -119,6 +130,9 @@ public class App {
         attachShutdownHook();
 
         LOGGER.info("JMX Fetch has started");
+
+        //set up the config status
+        config.updateStatus();
 
         App app = new App(config);
 
@@ -243,7 +257,7 @@ public class App {
         long delta_s = 0;
         FileInputStream adPipe = null;
 
-        if(appConfig.getAutoDiscoveryEnabled()) {
+        if(appConfig.getAutoDiscoveryPipeEnabled()) {
             LOGGER.info("Auto Discovery enabled");
             adPipe = newAutoDiscoveryPipe();
             try {
@@ -261,11 +275,11 @@ public class App {
                 System.exit(0);
             }
 
-            // any SD configs waiting in pipe?
-            if(adPipe == null && appConfig.getAutoDiscoveryEnabled()) {
+            if(adPipe == null && appConfig.getAutoDiscoveryPipeEnabled()) {
                 // If SD is enabled and the pipe is not open, retry opening pipe
                 adPipe = newAutoDiscoveryPipe();
             }
+            // any AutoDiscovery configs waiting?
             try {
                 if(adPipe != null && adPipe.available() > 0) {
                     byte[] buffer = new byte[0];
@@ -291,10 +305,14 @@ public class App {
                     }
                     setReinit(processAutoDiscovery(buffer));
                 }
+
+                if(appConfig.remoteEnabled()) {
+                    setReinit(getJSONConfigs());
+                }
             } catch(IOException e) {
               LOGGER.warn("Unable to read from pipe - Service Discovery configuration may have been skipped.");
             } catch(Exception e) {
-              LOGGER.warn("Unknown problem parsing auto-discovery configuration: " + e);
+              LOGGER.warn("Problem parsing auto-discovery configuration: " + e);
             }
 
             long start = System.currentTimeMillis();
@@ -306,7 +324,7 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
-                appConfig.getStatus().flush(appConfig.getIPCPort());
+                appConfig.getStatus().flush();
                 configs = getConfigs(appConfig);
                 init(true);
             }
@@ -425,7 +443,7 @@ public class App {
         }
 
         try {
-            appConfig.getStatus().flush(appConfig.getIPCPort());
+            appConfig.getStatus().flush();
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
         }
@@ -460,10 +478,14 @@ public class App {
             return false;
         }
 
-        this.adConfigs.put(name, config);
+        this.adPipeConfigs.put(name, config);
         this.setReinit(true);
 
         return true;
+    }
+
+    public boolean addJsonConfig(String name, String json) {
+        return false;
     }
 
     private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
@@ -504,6 +526,47 @@ public class App {
         return configs;
     }
 
+    private boolean getJSONConfigs() {
+        HttpClient.HttpResponse response;
+        boolean update = false;
+
+        if (this.client == null) {
+            return update;
+        }
+
+        try {
+            String uripath = "agent/jmx/configs?timestamp="+lastJSONConfigTS;
+            response = client.request("GET", "", uripath);
+            if (!response.isResponse2xx()) {
+                LOGGER.warn("Failed collecting JSON configs: [" +
+                        response.getResponseCode() +"] " +
+                        response.getResponseBody());
+                return update;
+            } else if (response.getResponseCode() == 204) {
+                LOGGER.debug("No configuration changes...");
+                return update;
+            }
+
+            LOGGER.debug("Received the following JSON configs: " + response.getResponseBody());
+
+            InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), "UTF-8");
+            JsonParser parser = new JsonParser(jsonInputStream);
+            int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
+            if (timestamp > lastJSONConfigTS) {
+                adJSONConfigs = (HashMap<String, Object>)parser.getJsonConfigs();
+                lastJSONConfigTS = timestamp;
+                update = true;
+                LOGGER.debug("update is in order - updating timestamp: " + lastJSONConfigTS);
+            }
+        } catch (JsonProcessingException e) {
+            LOGGER.error("error processing JSON response: " + e);
+        } catch (IOException e) {
+            LOGGER.error("unable to collect remote JMX configs: " + e);
+        }
+
+        return update;
+    }
+
     private void reportStatus(AppConfig appConfig, Reporter reporter, Instance instance,
                               int metricCount, String message, String status) {
         String checkName = instance.getCheckName();
@@ -521,17 +584,50 @@ public class App {
         reporter.resetServiceCheckCount(checkName);
     }
 
+    private void instantiate(LinkedHashMap<String, Object> instanceMap, LinkedHashMap<String, Object> initConfig,
+            String checkName, AppConfig appConfig, boolean forceNewConnection) {
+
+        Instance instance;
+        Reporter reporter = appConfig.getReporter();
+
+        try {
+            instance = new Instance(instanceMap, initConfig, checkName, appConfig);
+        } catch (Exception e) {
+            String warning = "Unable to create instance. Please check your yaml file";
+            appConfig.getStatus().addInitFailedCheck(checkName, warning, Status.STATUS_ERROR);
+            LOGGER.error(warning, e);
+            return;
+        }
+
+        try {
+            //  initiate the JMX Connection
+            instance.init(forceNewConnection);
+            instances.add(instance);
+        } catch (IOException e) {
+            instance.cleanUp();
+            brokenInstances.add(instance);
+            String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
+            this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+            this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+            LOGGER.error(warning, e);
+        } catch (Exception e) {
+            instance.cleanUp();
+            brokenInstances.add(instance);
+            String warning = "Unexpected exception while initiating instance " + instance + " : " + e.getMessage();
+            this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+            this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+            LOGGER.error(warning, e);
+        }
+    }
+
     public void init(boolean forceNewConnection) {
         clearInstances(instances);
         clearInstances(brokenInstances);
 
-
         Reporter reporter = appConfig.getReporter();
 
-
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
-        // SD config cache doesn't remove configs - it just overwrites.
-        Iterator<Entry<String, YamlParser>> itSD = adConfigs.entrySet().iterator();
+        Iterator<Entry<String, YamlParser>> itSD = adPipeConfigs.entrySet().iterator();
         while (it.hasNext() || itSD.hasNext()) {
             Map.Entry<String, YamlParser> entry;
             boolean sdIterator = false;
@@ -544,6 +640,7 @@ public class App {
 
             String name = entry.getKey();
             YamlParser yamlConfig = entry.getValue();
+            // AD config cache doesn't remove configs - it just overwrites.
             if(!sdIterator) {
                 it.remove();
             }
@@ -557,35 +654,20 @@ public class App {
             }
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
-                Instance instance;
                 //Create a new Instance object
-                try {
-                    instance = new Instance(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
-                            name, appConfig);
-                } catch (Exception e) {
-                    String warning = "Unable to create instance. Please check your yaml file";
-                    appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning, e);
-                    continue;
-                }
-                try {
-                    //  initiate the JMX Connection
-                    instance.init(forceNewConnection);
-                    instances.add(instance);
-                } catch (IOException e) {
-                    instance.cleanUp();
-                    brokenInstances.add(instance);
-                    String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
-                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning, e);
-                } catch (Exception e) {
-                    instance.cleanUp();
-                    brokenInstances.add(instance);
-                    String warning = "Unexpected exception while initiating instance " + instance + " : " + e.getMessage();
-                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-                    LOGGER.error(warning, e);
+                instantiate(configInstance, (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                        name, appConfig, forceNewConnection);
+            }
+        }
+
+        //Process JSON configurations
+        if (adJSONConfigs != null) {
+            for (String check :  adJSONConfigs.keySet()) {
+                HashMap<String, Object> checkConfig = (HashMap<String, Object>) adJSONConfigs.get(check);
+                LinkedHashMap<String, Object> initConfig = (LinkedHashMap<String, Object>) checkConfig.get("init_config");
+                ArrayList<LinkedHashMap<String, Object>> configInstances = (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
+                for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                    instantiate(configInstance, initConfig, check, appConfig, forceNewConnection);
                 }
             }
         }

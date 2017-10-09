@@ -4,20 +4,14 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.lang.System;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class Status {
 
@@ -27,46 +21,31 @@ public class Status {
     private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
     private final static String INITIALIZED_CHECKS = "initialized_checks";
     private final static String FAILED_CHECKS = "failed_checks";
+    private final static String API_STATUS_PATH = "agent/jmx/status";
     private HashMap<String, Object> instanceStats;
-    private TrustManager[] dummyTrustManager;
-    private SSLContext sc;
+    private ObjectMapper mapper;
     private String statusFileLocation;
+    private HttpClient client;
     private boolean isEnabled;
-    private String token;
 
     public Status() {
         this(null);
     }
 
-    public Status(String statusFileLocation) {
-        configure(statusFileLocation);
+    public Status(String host, int port) {
+        mapper = new ObjectMapper();
+        client = new HttpClient(host, port, false);
+        configure(null, host, port);
     }
 
-    void configure(String statusFileLocation) {
+    public Status(String statusFileLocation) {
+        configure(statusFileLocation, null, 0);
+    }
+
+    void configure(String statusFileLocation, String host, int port) {
         this.statusFileLocation = statusFileLocation;
         this.instanceStats = new HashMap<String, Object>();
-        try {
-            this.token = System.getenv("SESSION_TOKEN");
-            dummyTrustManager = new TrustManager[] {
-                new X509TrustManager() {
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    }
-
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    }
-                }
-            };
-            sc = SSLContext.getInstance("SSL");
-            sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception e) {
-            LOGGER.debug("session token unavailable - not setting");
-            this.token = "";
-        }
-        this.isEnabled = (this.statusFileLocation != null || this.token != "");
+        this.isEnabled = (this.statusFileLocation != null || this.client != null);
         this.clearStats();
     }
 
@@ -122,47 +101,20 @@ public class Status {
         return yaml.dump(status);
     }
 
-    private String generateJson() {
-        Gson gson = new Gson();
+    private String generateJson() throws JsonProcessingException {
         HashMap<String, Object> status = new HashMap<String, Object>();
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
-        return gson.toJson(status);
+        return mapper.writeValueAsString(status);
     }
 
-    private boolean postRequest(String body, int port) {
-        int responseCode = 0;
-        try {
-            String url = "https://localhost:" + port + "/agent/jmxstatus";
-
-            URL uri = new URL(url);
-            HttpsURLConnection con = (HttpsURLConnection) uri.openConnection();
-
-            //add reuqest header
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("Authorization", "Bearer "+ this.token);
-
-            con.setDoOutput(true);
-            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-            wr.writeBytes(body);
-            wr.flush();
-            wr.close();
-
-            responseCode = con.getResponseCode();
-
-        } catch (Exception e) {
-            LOGGER.info("problem creating http request: " + e.toString());
-        }
-        return (responseCode >= 200 && responseCode < 300);
-    }
-
-    public void flush(int port) {
+    public void flush() {
         if (isEnabled()) {
-            if (port > 0) {
-                String json = generateJson();
+            if (this.client != null) {
                 try {
-                    if (!this.postRequest(json, port)) {
+                    String json = generateJson();
+                    HttpClient.HttpResponse response = this.client.request("POST", json, API_STATUS_PATH);
+                    if (!response.isResponse2xx()) {
                         LOGGER.debug("Problem submitting JSON status: " + json);
                     }
                 } catch (Exception e) {
