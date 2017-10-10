@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.18.0 / Unreleased
+
+#### Changes
+
+* [FEATURE] Collect instance configurations via API. See [#156][]
+
 # 0.17.0 / 09-20-2017
 
 #### Changes
@@ -191,6 +197,7 @@ Changes
 [#147]: https://github.com/DataDog/jmxfetch/issues/147
 [#154]: https://github.com/DataDog/jmxfetch/issues/154
 [#155]: https://github.com/DataDog/jmxfetch/issues/155
+[#156]: https://github.com/DataDog/jmxfetch/issues/156
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
