@@ -65,7 +65,7 @@ public class JMXComplexAttribute extends JMXAttribute {
                 metric.put("tags", getTags());
             }
 
-            metric.put("value", castToDouble(getValue(subAttribute)));
+            metric.put("value", castToDouble(getValue(subAttribute), subAttribute));
             metrics.add(metric);
 
         }

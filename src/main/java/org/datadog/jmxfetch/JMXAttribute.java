@@ -44,7 +44,7 @@ public abstract class JMXAttribute {
     private String beanStringName;
     private HashMap<String, String> beanParameters;
     private String attributeName;
-    private LinkedHashMap<Object, Object> valueConversions;
+    private LinkedHashMap<String, LinkedHashMap<Object, Object>> valueConversions = new LinkedHashMap<String, LinkedHashMap<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
@@ -245,21 +245,21 @@ public abstract class JMXAttribute {
             || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
     }
 
-    Object convertMetricValue(Object metricValue) {
+    Object convertMetricValue(Object metricValue, String field) {
         Object converted = metricValue;
 
-        if (!getValueConversions().isEmpty()) {
-            converted = getValueConversions().get(metricValue);
-            if (converted == null && getValueConversions().get("default") != null) {
-                converted = getValueConversions().get("default");
+        if (!getValueConversions(field).isEmpty()) {
+            converted = getValueConversions(field).get(metricValue);
+            if (converted == null && getValueConversions(field).get("default") != null) {
+                converted = getValueConversions(field).get("default");
             }
         }
 
         return converted;
     }
 
-    double castToDouble(Object metricValue) {
-        Object value = convertMetricValue(metricValue);
+    double castToDouble(Object metricValue, String field) {
+        Object value = convertMetricValue(metricValue, field);
 
         if (value instanceof String) {
             return Double.parseDouble((String) value);
@@ -359,24 +359,24 @@ public abstract class JMXAttribute {
     }
 
     @SuppressWarnings("unchecked")
-    HashMap<Object, Object> getValueConversions() {
-        if (valueConversions == null) {
+    HashMap<Object, Object> getValueConversions(String field) {
+        String fullAttributeName =(field!=null)?(getAttribute().getName() + "." + field):(getAttribute().getName());
+        if (valueConversions.get(fullAttributeName) == null) {
             Object includedAttribute = matchingConf.getInclude().getAttribute();
             if (includedAttribute instanceof LinkedHashMap<?, ?>) {
-                String attributeName = this.attribute.getName();
                 LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute =
-                        ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>) includedAttribute).get(attributeName);
+                        ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>) includedAttribute).get(fullAttributeName);
 
                 if (attribute != null) {
-                    valueConversions = attribute.get("values");
+                    valueConversions.put(fullAttributeName, attribute.get("values"));
                 }
             }
-            if (valueConversions == null) {
-                valueConversions = new LinkedHashMap<Object, Object>();
+            if (valueConversions.get(fullAttributeName) == null) {
+                valueConversions.put(fullAttributeName, new LinkedHashMap<Object, Object>());
             }
         }
 
-        return valueConversions;
+        return valueConversions.get(fullAttributeName);
     }
 
     public Configuration getMatchingConf() {

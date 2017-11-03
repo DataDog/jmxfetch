@@ -131,7 +131,7 @@ public class JMXTabularAttribute extends JMXAttribute {
                     metric.put("tags", getTags(dataKey, metricKey));
                 }
 
-                metric.put("value", castToDouble(getValue(dataKey, metricKey)));
+                metric.put("value", castToDouble(getValue(dataKey, metricKey), null));
 
                 if(!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new LinkedList<HashMap<String, Object>>());

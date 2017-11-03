@@ -30,6 +30,11 @@ instances:
                     Hashmap.thisiscounter:
                         metric_type: counter
                         alias: subattr.counter
+                    Hashmap.shouldBeDefaulted:
+                        metric_type: gauge
+                        alias: subattr.defaulted
+                        values:
+                          default: 42
                     ShouldBeConverted:
                         metric_type: gauge
                         alias: test.converted
