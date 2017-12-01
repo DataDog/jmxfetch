@@ -50,7 +50,7 @@ class AppConfig {
 
     @Parameter(names = {"--conf_directory", "-D"},
             description = "Absolute path to the conf.d directory",
-            required = true)
+            required = false)
     private String confdDirectory;
 
     @Parameter(names = {"--tmp_directory", "-T"},
