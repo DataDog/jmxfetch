@@ -1,6 +1,18 @@
 Changes
 =======
 
+# 0.18.1 / Unreleased
+
+#### Changes
+
+* [BUGFIX] confd is now an optional parameter. See [#161][]
+
+# 0.18.0 / 10-11-2017
+
+#### Changes
+
+* [FEATURE] Collect instance configurations via API. See [#156][]
+
 # 0.18.0 / Unreleased
 
 #### Changes
@@ -198,6 +210,7 @@ Changes
 [#154]: https://github.com/DataDog/jmxfetch/issues/154
 [#155]: https://github.com/DataDog/jmxfetch/issues/155
 [#156]: https://github.com/DataDog/jmxfetch/issues/156
+[#161]: https://github.com/DataDog/jmxfetch/issues/161
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
