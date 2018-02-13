@@ -5,7 +5,7 @@ Changes
 
 #### Changes
 
-* [IMPROVEMENT] logs are now outputted to console if no log file is configured. See [#164][].
+* [IMPROVEMENT] Logs are now outputted to stdout if no log file is configured. See [#164][].
 
 # 0.18.1 / 12-05-2017
 
