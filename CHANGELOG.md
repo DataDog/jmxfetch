@@ -1,11 +1,11 @@
 Changes
 =======
 
-# 0.18.2 / Unreleased
+# 0.18.2 / 02-13-2018
 
 #### Changes
 
-* [IMPROVEMENT] Logs are now outputted to stdout if no log file is configured. See [#164][].
+* [IMPROVEMENT] Logs are now output to stdout if no log file is configured. See [#164][].
 
 # 0.18.1 / 12-05-2017
 
