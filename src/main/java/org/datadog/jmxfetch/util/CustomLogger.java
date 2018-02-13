@@ -24,7 +24,9 @@ public class CustomLogger {
             LOGGER.info("File Handler set");
         } else {
             System.out.println("Log location is not set, will output log to stdout.");
-            Logger.getRootLogger().addAppender(new ConsoleAppender(new PatternLayout("%d | %-5p| %c{1} | %m%n")));
+            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("%d | %-5p| %c{1} | %m%n"));
+            consoleAppender.setThreshold(level);
+            Logger.getRootLogger().addAppender(consoleAppender);
         }
     }
 
