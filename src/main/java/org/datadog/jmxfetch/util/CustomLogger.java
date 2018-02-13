@@ -8,6 +8,7 @@ import com.google.common.collect.Multiset;
 public class CustomLogger {
     private static final Logger LOGGER = Logger.getLogger(CustomLogger.class.getName());
     private static final Multiset<String> messageCount = HashMultiset.create();
+    private static final String LOGGER_LAYOUT = "%d | %-5p| %c{1} | %m%n";
 
     public static void setup(Level level, String logLocation) {
         if (logLocation != null) {
@@ -16,7 +17,7 @@ public class CustomLogger {
             fa.setFile(logLocation);
             fa.setMaxFileSize("5MB");
             fa.setMaxBackupIndex(1);
-            fa.setLayout(new PatternLayout("%d | %-5p| %c{1} | %m%n"));
+            fa.setLayout(new PatternLayout(LOGGER_LAYOUT));
             fa.setThreshold(level);
             fa.setAppend(true);
             fa.activateOptions();
@@ -24,7 +25,7 @@ public class CustomLogger {
             LOGGER.info("File Handler set");
         } else {
             System.out.println("Log location is not set, will output log to stdout.");
-            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("%d | %-5p| %c{1} | %m%n"));
+            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout(LOGGER_LAYOUT));
             consoleAppender.setThreshold(level);
             Logger.getRootLogger().addAppender(consoleAppender);
         }
