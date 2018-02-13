@@ -1,9 +1,6 @@
 package org.datadog.jmxfetch.util;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.RollingFileAppender;
+import org.apache.log4j.*;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
@@ -13,6 +10,7 @@ public class CustomLogger {
     private static final Multiset<String> messageCount = HashMultiset.create();
 
     public static void setup(Level level, String logLocation) {
+
         if (logLocation != null) {
             RollingFileAppender fa = new RollingFileAppender();
             fa.setName("FileLogger");
@@ -26,7 +24,8 @@ public class CustomLogger {
             Logger.getRootLogger().addAppender(fa);
             LOGGER.info("File Handler set");
         } else {
-            System.out.println("Log location is not set, not logging to file");
+            System.out.println("Log location is not set, will output log to stdout.");
+            Logger.getRootLogger().addAppender(new ConsoleAppender(new PatternLayout("%d | %-5p| %c{1} | %m%n")));
         }
     }
 
