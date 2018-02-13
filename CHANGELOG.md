@@ -1,7 +1,13 @@
 Changes
 =======
 
-# 0.18.1 / Unreleased
+# 0.18.2 / Unreleased
+
+#### Changes
+
+* [IMPROVEMENT] logs are now outputted to console if no log file is configured. See [#164][].
+
+# 0.18.1 / 12-05-2017
 
 #### Changes
 
@@ -211,6 +217,7 @@ Changes
 [#155]: https://github.com/DataDog/jmxfetch/issues/155
 [#156]: https://github.com/DataDog/jmxfetch/issues/156
 [#161]: https://github.com/DataDog/jmxfetch/issues/161
+[#164]: https://github.com/DataDog/jmxfetch/issues/164
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
