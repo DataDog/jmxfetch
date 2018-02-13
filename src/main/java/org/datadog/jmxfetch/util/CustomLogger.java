@@ -10,7 +10,6 @@ public class CustomLogger {
     private static final Multiset<String> messageCount = HashMultiset.create();
 
     public static void setup(Level level, String logLocation) {
-
         if (logLocation != null) {
             RollingFileAppender fa = new RollingFileAppender();
             fa.setName("FileLogger");
