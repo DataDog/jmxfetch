@@ -299,8 +299,8 @@ public abstract class JMXAttribute {
             Matcher m = beanRegex.matcher(beanStringName);
 
             if(m.matches()) {
-            		for (int i = 0; i<= m.groupCount(); i++) { 
-            			this.beanParameters.put(""+i, m.group(i));
+            	for (int i = 0; i<= m.groupCount(); i++) { 
+            		this.beanParameters.put(""+i, m.group(i));
                 }
                 return true;
             }
