@@ -124,7 +124,6 @@ class Filter {
 
     public HashMap<String, String> getAdditionalTags() {
         // Return additional tags
-
         if (this.additionalTags == null) {
             if (filter.get("tags") == null){
                 this.additionalTags = new HashMap<String, String>();
