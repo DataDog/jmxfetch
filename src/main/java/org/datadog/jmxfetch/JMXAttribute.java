@@ -99,7 +99,12 @@ public abstract class JMXAttribute {
         Filter include = this.matchingConf.getInclude();
         if (include != null) {
             for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
-                this.defaultTagsList.add(tag.getKey() + ":" + this.replaceByAlias(tag.getValue()));
+            		String alias = this.replaceByAlias(tag.getValue());
+            		if (alias != "" || alias != null) {
+            			this.defaultTagsList.add(tag.getKey() + ":" + this.replaceByAlias(tag.getValue()));
+            		} else {
+                    LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
+            		}
             }
         }
     }
