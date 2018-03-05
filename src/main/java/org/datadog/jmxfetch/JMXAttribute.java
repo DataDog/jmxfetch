@@ -103,12 +103,11 @@ public abstract class JMXAttribute {
             		if ((alias.trim().length() > 0) && alias != null) {
             			this.defaultTagsList.add(tag.getKey() + ":" + alias);
             		} else {
-                    LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
+            			LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
             		}
             }
         }
     }
-   
 
     public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
         String[] beanParameters = beanParametersString.split(",");
