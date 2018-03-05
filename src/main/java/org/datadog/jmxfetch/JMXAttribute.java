@@ -100,8 +100,8 @@ public abstract class JMXAttribute {
         if (include != null) {
             for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
             		String alias = this.replaceByAlias(tag.getValue());
-            		if (alias != "" || alias != null) {
-            			this.defaultTagsList.add(tag.getKey() + ":" + this.replaceByAlias(tag.getValue()));
+            		if ((alias.trim().length() > 0) && alias != null) {
+            			this.defaultTagsList.add(tag.getKey() + ":" + alias);
             		} else {
                     LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
             		}
@@ -305,7 +305,7 @@ public abstract class JMXAttribute {
 
             if(m.matches()) {
             	for (int i = 0; i<= m.groupCount(); i++) { 
-            		this.beanParameters.put(""+i, m.group(i));
+            		this.beanParameters.put(Integer.toString(i), m.group(i));
                 }
                 return true;
             }
