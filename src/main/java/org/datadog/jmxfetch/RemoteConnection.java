@@ -21,7 +21,7 @@ public class RemoteConnection extends Connection {
     private String rmi_timeout;
     private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
-    private static final String DEFAULT_RMI_RESPONSE_TIMEOUT = "15000";
+    private static final String DEFAULT_RMI_RESPONSE_TIMEOUT = "600000"; //Match the refresh_beans default
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
 
     public RemoteConnection(LinkedHashMap<String, Object> connectionParams)
