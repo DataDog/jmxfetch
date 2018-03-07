@@ -18,9 +18,10 @@ public class RemoteConnection extends Connection {
     private String password;
     private String path = "jmxrmi";
     private String jmx_url;
+    private String rmi_timeout;
     private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
-    private static final String DEFAULT_RMI_RESPONSE_TIMEOUT = "5000";
+    private static final String DEFAULT_RMI_RESPONSE_TIMEOUT = "15000";
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
 
     public RemoteConnection(LinkedHashMap<String, Object> connectionParams)
@@ -34,6 +35,10 @@ public class RemoteConnection extends Connection {
         user = (String) connectionParams.get("user");
         password = (String) connectionParams.get("password");
         jmx_url = (String) connectionParams.get("jmx_url");
+        	rmi_timeout = (String) connectionParams.get("refresh_beans");
+        	if (rmi_timeout == null) {
+        		rmi_timeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
+        	}
         if (connectionParams.containsKey("path")){
             path = (String) connectionParams.get("path");
         }
