@@ -61,7 +61,7 @@ public class RemoteConnection extends Connection {
         }
         
         //Set an RMI timeout so we don't get stuck waiting for a bean to report a value
-        System.setProperty("sun.rmi.transport.tcp.responseTimeout", DEFAULT_RMI_RESPONSE_TIMEOUT);
+        System.setProperty("sun.rmi.transport.tcp.responseTimeout", rmi_timeout);
         
         createConnection();
 
