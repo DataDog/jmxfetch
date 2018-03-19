@@ -1,6 +1,13 @@
 Changes
 =======
 
+# 0.19.0 / 03/19/2018
+
+### Changes
+
+* [FEATURE] Ability to specify tags on metrics based on regex groupings of bean names. See [#167][].
+* [IMPROVEMENT] Set TCP response timeout to ensure JMXFetch doesn't hang on broken beans. See [#168][].
+
 # 0.18.2 / 02-13-2018
 
 #### Changes
@@ -14,12 +21,6 @@ Changes
 * [BUGFIX] confd is now an optional parameter. See [#161][]
 
 # 0.18.0 / 10-11-2017
-
-#### Changes
-
-* [FEATURE] Collect instance configurations via API. See [#156][]
-
-# 0.18.0 / Unreleased
 
 #### Changes
 
@@ -218,6 +219,8 @@ Changes
 [#156]: https://github.com/DataDog/jmxfetch/issues/156
 [#161]: https://github.com/DataDog/jmxfetch/issues/161
 [#164]: https://github.com/DataDog/jmxfetch/issues/164
+[#167]: https://github.com/DataDog/jmxfetch/issues/167
+[#168]: https://github.com/DataDog/jmxfetch/issues/168
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
