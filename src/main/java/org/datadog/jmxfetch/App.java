@@ -136,6 +136,11 @@ public class App {
 
         App app = new App(config);
 
+        // Get config from the ipc endpoint for "list_*" actions
+        if (!config.getAction().equals(AppConfig.ACTION_COLLECT)) {
+            app.getJSONConfigs();
+        }
+
         // Initiate JMX Connections, get attributes that match the yaml configuration
         app.init(false);
 
@@ -623,8 +628,6 @@ public class App {
     public void init(boolean forceNewConnection) {
         clearInstances(instances);
         clearInstances(brokenInstances);
-
-        Reporter reporter = appConfig.getReporter();
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         Iterator<Entry<String, YamlParser>> itSD = adPipeConfigs.entrySet().iterator();

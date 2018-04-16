@@ -107,7 +107,7 @@ public class HttpClient {
             con.setRequestMethod(method.toUpperCase());
             con.setRequestProperty("Authorization", "Bearer "+ this.token);
             con.setRequestProperty("User-Agent", USER_AGENT);
-            if (method.toUpperCase() == "GET") {
+            if (method.toUpperCase().equals("GET")) {
                 con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             } else {
                 con.setRequestProperty("Content-Type", "application/json");
