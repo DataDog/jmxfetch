@@ -36,9 +36,11 @@ public class RemoteConnection extends Connection {
         try{
             rmi_timeout = (String) connectionParams.get("rmi_client_timeout");
         } catch(ClassCastException e) {
-            rmi_timeout = Integer.toString((Integer) connectionParams.get("rmi_client_timeout"));
-        } catch(NullPointerException e) {
-        		rmi_timeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
+            rmi_timeout = Integer.toString((Integer) connectionParams.get("rmi_client_timeout"));    
+        } 
+        
+        if (rmi_timeout == null) {
+            rmi_timeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
         }
 
         user = (String) connectionParams.get("user");
