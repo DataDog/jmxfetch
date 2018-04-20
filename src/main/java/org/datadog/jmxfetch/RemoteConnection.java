@@ -37,15 +37,14 @@ public class RemoteConnection extends Connection {
             rmi_timeout = (String) connectionParams.get("rmi_client_timeout");
         } catch(ClassCastException e) {
             rmi_timeout = Integer.toString((Integer) connectionParams.get("rmi_client_timeout"));
+        } catch(NullPointerException e) {
+        		rmi_timeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
         }
 
         user = (String) connectionParams.get("user");
         password = (String) connectionParams.get("password");
         jmx_url = (String) connectionParams.get("jmx_url");
-        rmi_timeout = (String) connectionParams.get("rmi_client_timeout");
-        if (rmi_timeout == null) {
-            rmi_timeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
-        }
+
         if (connectionParams.containsKey("path")){
             path = (String) connectionParams.get("path");
         }
