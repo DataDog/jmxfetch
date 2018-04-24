@@ -6,7 +6,7 @@ Changes
 ### Changes
 
 * [FEATURE] Configs can now be given to jmxfetch using the https endpoint when running list_* troubleshooting commands. See [#171][].
-
+* [IMPROVEMENT] Parameter `rmi_client_timeout` can now be given as an integer. See [#170][].
 # 0.19.0 / 03/19/2018
 
 ### Changes
@@ -227,6 +227,8 @@ Changes
 [#164]: https://github.com/DataDog/jmxfetch/issues/164
 [#167]: https://github.com/DataDog/jmxfetch/issues/167
 [#168]: https://github.com/DataDog/jmxfetch/issues/168
+[#170]: https://github.com/DataDog/jmxfetch/issues/170
+[#171]: https://github.com/DataDog/jmxfetch/issues/171
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
