@@ -8,15 +8,40 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.Test;
 
 public class TestApp extends TestCommon {
 
+    /**
+     * Tag metrics with MBean parameters based on user supplied regex
+     */
+    @Test
+    public void testBeanRegexTags() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=Co|olScope,host=localhost,component=");
+        initApplication("jmx_bean_regex_tags.yaml");
+
+        // Run the collection
+        run();
+
+        List<String> tags = Arrays.asList(
+            "type:SimpleTestJavaApp",
+            "scope:CoolScope",
+            "instance:jmx_test_instance",
+            "jmx_domain:org.datadog.jmxfetch.test",
+            "bean_host:localhost",
+            "component",
+            "hosttag:localhost",
+            "nonExistantTag:$2",
+            "nonRegexTag:value"
+        );
+
+        assertMetric("this.is.100", tags, 9);
+
+    }
 
     /**
      * Tag metrics with MBeans parameters.
@@ -35,7 +60,6 @@ public class TestApp extends TestCommon {
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
         assertEquals(14, metrics.size());
 
-
         List<String> tags = Arrays.asList(
             "type:SimpleTestJavaApp",
             "scope:CoolScope",
@@ -47,6 +71,7 @@ public class TestApp extends TestCommon {
 
         assertMetric("this.is.100", tags, 6);
     }
+
     /**
      * Generate metric aliases from a `alias_match` regular expression.
      */
