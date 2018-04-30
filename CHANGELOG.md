@@ -1,13 +1,14 @@
 Changes
 =======
 
-# 0.20.0 / Unreleased
+# 0.20.0 / 04-30-2018
 
 ### Changes
 
 * [FEATURE] Configs can now be given to jmxfetch using the https endpoint when running list_* troubleshooting commands. See [#171][].
 * [IMPROVEMENT] Parameter `rmi_client_timeout` can now be given as an integer. See [#170][].
-# 0.19.0 / 03/19/2018
+
+# 0.19.0 / 03-19-2018
 
 ### Changes
 
