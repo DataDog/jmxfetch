@@ -669,8 +669,9 @@ public class App {
                 HashMap<String, Object> checkConfig = (HashMap<String, Object>) adJSONConfigs.get(check);
                 LinkedHashMap<String, Object> initConfig = (LinkedHashMap<String, Object>) checkConfig.get("init_config");
                 ArrayList<LinkedHashMap<String, Object>> configInstances = (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
+                String checkName =  (String) checkConfig.get("check_name");
                 for (LinkedHashMap<String, Object> configInstance : configInstances) {
-                    instantiate(configInstance, initConfig, check, appConfig, forceNewConnection);
+                    instantiate(configInstance, initConfig, checkName, appConfig, forceNewConnection);
                 }
             }
         }
