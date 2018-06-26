@@ -6,5 +6,8 @@ jdk:
 - oraclejdk7
 - openjdk7
 
+install: mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script: mvn test -B -Dhttps.protocols=TLSv1.2
+
 addons:
   hostname: dd-jmxfetch-testhost
