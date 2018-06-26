@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.20.1 / Unreleased 
+
+### Changes
+
+* [BUGFIX] Use provided check name in the JSON as the instance check name. See [#174][].
+
 # 0.20.0 / 04-30-2018
 
 ### Changes
@@ -230,6 +236,7 @@ Changes
 [#168]: https://github.com/DataDog/jmxfetch/issues/168
 [#170]: https://github.com/DataDog/jmxfetch/issues/170
 [#171]: https://github.com/DataDog/jmxfetch/issues/171
+[#174]: https://github.com/DataDog/jmxfetch/issues/174
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
