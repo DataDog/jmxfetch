@@ -12,6 +12,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
+		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<commons-io.version>2.4</commons-io.version>
 		<commons-lang.version>2.6</commons-lang.version>
@@ -21,7 +22,8 @@
 		<jcommander.version>1.35</jcommander.version>
 		<junit.version>4.11</junit.version>
 		<log4j.version>1.2.17</log4j.version>
-		<jackson.version>2.9.0</jackson.version>
+		<jackson-databind.version>2.7.9.4</jackson-databind.version>
+		<jackson-core.version>2.9.6</jackson-core.version>
 		<mockito.version>2.2.27</mockito.version>
 		<maven-surefire-plugin.version>2.9</maven-surefire-plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -70,19 +72,19 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson-databind.version}</version>
         </dependency>
         <dependency>
             <!-- Note: core-annotations version x.y.0 is generally compatible with
                  (identical to) version x.y.1, x.y.2, etc. -->
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson-core.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson-core.version}</version>
         </dependency>
 		<dependency>
 			<groupId>log4j</groupId>
