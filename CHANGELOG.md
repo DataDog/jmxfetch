@@ -1,7 +1,7 @@
 Changes
 =======
 
-# 0.20.1 / Unreleased 
+# 0.20.1 / 06-26-2018
 
 ### Changes
 
