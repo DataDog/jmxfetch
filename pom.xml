@@ -1,71 +1,86 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>datadog</groupId>
-	<artifactId>jmxfetch</artifactId>
-	<version>0.20.2</version>
-	<packaging>jar</packaging>
+    <groupId>datadog</groupId>
+    <artifactId>jmxfetch</artifactId>
+    <version>0.20.3</version>
+    <packaging>jar</packaging>
 
-	<name>jmxfetch</name>
-	<url>http://maven.apache.org</url>
+    <name>jmxfetch</name>
+    <url>http://maven.apache.org</url>
 
-	<properties>
-		<maven.compiler.target>1.6</maven.compiler.target>
-		<commons-io.version>2.4</commons-io.version>
-		<commons-lang.version>2.6</commons-lang.version>
-		<apache-commons-lang3.version>3.5</apache-commons-lang3.version>
-		<guava.version>17.0</guava.version>
-		<java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
-		<jcommander.version>1.35</jcommander.version>
-		<junit.version>4.11</junit.version>
-		<log4j.version>1.2.17</log4j.version>
-		<jackson.version>2.9.6</jackson.version>
-		<mockito.version>2.2.27</mockito.version>
-		<maven-surefire-plugin.version>2.9</maven-surefire-plugin.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<snakeyaml.version>1.13</snakeyaml.version>
-	</properties>
+    <properties>
+        <maven.compiler.target>1.6</maven.compiler.target>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.beust</groupId>
-			<artifactId>jcommander</artifactId>
-			<version>${jcommander.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun</groupId>
-			<artifactId>tools</artifactId>
-			<version>1.4.2</version>
-			<scope>system</scope>
-			<systemPath>${java.home}/../lib/tools.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>${guava.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>${commons-io.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>${commons-lang.version}</version>
+        <commons-io.version>2.4</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <apache-commons-lang3.version>3.5</apache-commons-lang3.version>
+        <guava.version>17.0</guava.version>
+        <java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
+        <jcommander.version>1.35</jcommander.version>
+        <log4j.version>1.2.17</log4j.version>
+        <jackson.version>2.9.6</jackson.version>
+        <snakeyaml.version>1.13</snakeyaml.version>
+
+        <junit.version>4.11</junit.version>
+        <mockito.version>2.2.27</mockito.version>
+
+        <maven-surefire-plugin.version>2.9</maven-surefire-plugin.version>
+        <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <bintray.repo>nikolaymartynov/jmxfetch</bintray.repo>
+        <bintray.package>jmxfetch</bintray.package>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>bintray-nikolaymartynov-jmxfetch</id>
+            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
+        </repository>
+    </distributionManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>${jcommander.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>1.4.2</version>
+            <scope>system</scope>
+            <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang.version}</version>
         </dependency>
         <dependency>
             <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-			<version>${apache-commons-lang3.version}</version>
+            <version>${apache-commons-lang3.version}</version>
         </dependency>
-		<dependency>
-			<groupId>com.datadoghq</groupId>
-			<artifactId>java-dogstatsd-client</artifactId>
-			<version>${java-dogstatsd-client.version}</version>
+        <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>java-dogstatsd-client</artifactId>
+            <version>${java-dogstatsd-client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -84,55 +99,55 @@
             <artifactId>jackson-core</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>${log4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.sun.jmx</groupId>
-					<artifactId>jmxri</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.sun.jdmk</groupId>
-					<artifactId>jmxtools</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>javax.jms</groupId>
-					<artifactId>jms</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>${junit.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.yaml</groupId>
-			<artifactId>snakeyaml</artifactId>
-			<version>${snakeyaml.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.jmx</groupId>
+                    <artifactId>jmxri</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jdmk</groupId>
+                    <artifactId>jmxtools</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.jms</groupId>
+                    <artifactId>jms</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snakeyaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${mockito.version}</version>
-			<scope>test</scope>
+            <scope>test</scope>
         </dependency>
-	</dependencies>
-	<scm>
-		<connection>scm:git:git@github.com:Datadog/jmxfetch.git</connection>
-		<developerConnection>scm:git:git@github.com:Datadog/jmxfetch.git
-		</developerConnection>
-		<url>git@github.com:Datadog/jmxfetch.git</url>
-	</scm>
-	<build>
-		<plugins>
+    </dependencies>
+    <scm>
+        <connection>scm:git:git@github.com:Datadog/jmxfetch.git</connection>
+        <developerConnection>scm:git:git@github.com:Datadog/jmxfetch.git
+        </developerConnection>
+        <url>git@github.com:Datadog/jmxfetch.git</url>
+    </scm>
+    <build>
+        <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.4</version>
+                <version>${buildnumber-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>validate</phase>
@@ -155,8 +170,8 @@
                     <addOutputDirectoryToResources>true</addOutputDirectoryToResources>
                 </configuration>
             </plugin>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <archive>
                         <manifest>
@@ -168,10 +183,10 @@
                             <Implementation-Build>${buildNumber}</Implementation-Build>
                         </manifestEntries>
                     </archive>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
             </plugin>
         </plugins>
     </build>

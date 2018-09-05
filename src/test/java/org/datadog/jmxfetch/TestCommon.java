@@ -94,11 +94,14 @@ public class TestCommon {
         boolean sdEnabled = (autoDiscoveryPipeFile.length() > 0);
         params.add("--reporter");
         params.add("console");
-        params.add("-c");
-        params.add(yamlFileName);
-        params.add("--conf_directory");
-        params.add(confdDirectory);
-        params.add("collect");
+
+        if (confdDirectory != null) {
+            params.add("-c");
+            params.add(yamlFileName);
+            params.add("--conf_directory");
+            params.add(confdDirectory);
+            params.add("collect");
+        }
 
         if (sdEnabled) {
             params.add(4, "--tmp_directory");

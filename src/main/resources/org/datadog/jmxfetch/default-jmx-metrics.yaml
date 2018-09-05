@@ -1,0 +1,145 @@
+# Memory
+- include:
+    domain: java.lang
+    type: Memory
+    attribute:
+      HeapMemoryUsage.used:
+        alias: jvm.heap_memory
+        metric_type: gauge
+      HeapMemoryUsage.committed:
+        alias: jvm.heap_memory_committed
+        metric_type: gauge
+      HeapMemoryUsage.init:
+        alias: jvm.heap_memory_init
+        metric_type: gauge
+      HeapMemoryUsage.max:
+        alias: jvm.heap_memory_max
+        metric_type: gauge
+      NonHeapMemoryUsage.used:
+        alias: jvm.non_heap_memory
+        metric_type: gauge
+      NonHeapMemoryUsage.committed:
+        alias: jvm.non_heap_memory_committed
+        metric_type: gauge
+      NonHeapMemoryUsage.init:
+        alias: jvm.non_heap_memory_init
+        metric_type: gauge
+      NonHeapMemoryUsage.max:
+        alias: jvm.non_heap_memory_max
+        metric_type: gauge
+
+# Threads
+- include:
+    domain: java.lang
+    type: Threading
+    attribute:
+      ThreadCount:
+        alias: jvm.thread.count
+        metric_type: gauge
+      DaemonThreadCount:
+        alias: jvm.thread.daemon_count
+        metric_type: gauge
+
+# CPU load
+- include:
+    domain: java.lang
+    type: OperatingSystem
+    attribute:
+      ProcessCpuLoad:
+        alias: jvm.cpu_load.process
+        metric_type: gauge
+      SystemCpuLoad:
+        alias: jvm.cpu_load.system
+        metric_type: gauge
+
+# Young Gen Collectors (Minor Collections)
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: Copy
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.minor_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.minor_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: PS Scavenge
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.minor_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.minor_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: ParNew
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.minor_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.minor_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: G1 Young Generation
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.minor_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.minor_collection_time
+        metric_type: counter
+
+# Old Gen Collectors (Major collections)
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: MarkSweepCompact
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.major_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.major_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: PS MarkSweep
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.major_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.major_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: ConcurrentMarkSweep
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.major_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.major_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: G1 Mixed Generation
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.major_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.major_collection_time
+        metric_type: counter

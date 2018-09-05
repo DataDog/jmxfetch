@@ -11,7 +11,7 @@ public class CustomLogger {
     private static final String LOGGER_LAYOUT = "%d | %-5p| %c{1} | %m%n";
 
     public static void setup(Level level, String logLocation) {
-        if (logLocation != null) {
+        if (logLocation != null && !ConsoleAppender.SYSTEM_ERR.equals(logLocation) && !ConsoleAppender.SYSTEM_OUT.equals(logLocation)) {
             RollingFileAppender fa = new RollingFileAppender();
             fa.setName("FileLogger");
             fa.setFile(logLocation);
@@ -24,8 +24,10 @@ public class CustomLogger {
             Logger.getRootLogger().addAppender(fa);
             LOGGER.info("File Handler set");
         } else {
-            System.out.println("Log location is not set, will output log to stdout.");
-            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout(LOGGER_LAYOUT));
+            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout(LOGGER_LAYOUT), logLocation);
+            if (logLocation != null) {
+                consoleAppender.setTarget(logLocation);
+            }
             consoleAppender.setThreshold(level);
             Logger.getRootLogger().addAppender(consoleAppender);
         }
