@@ -24,7 +24,7 @@ public class ExitWatcher {
         return isEnabled;
     }
 
-    public boolean shouldExit(){
+    public boolean shouldExit() {
         if (isEnabled()) {
             File f = new File(exitFileLocation);
             if(f.exists() && !f.isDirectory()) {
@@ -34,4 +34,8 @@ public class ExitWatcher {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return exitFileLocation;
+    }
 }
