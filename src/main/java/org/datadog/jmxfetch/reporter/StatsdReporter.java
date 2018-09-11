@@ -39,11 +39,11 @@ public class StatsdReporter extends Reporter {
     }
 
     private int statusToInt(String status) {
-        if (status == Status.STATUS_OK) {
+        if (status.equals(Status.STATUS_OK)) {
             return 0;
-        } else if (status == Status.STATUS_WARNING) {
+        } else if (status.equals(Status.STATUS_WARNING)) {
             return 1;
-        } else if (status == Status.STATUS_ERROR) {
+        } else if (status.equals(Status.STATUS_ERROR)) {
             // critical
             return 2;
         }
