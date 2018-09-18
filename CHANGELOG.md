@@ -243,6 +243,7 @@ Changes
 [#170]: https://github.com/DataDog/jmxfetch/issues/170
 [#171]: https://github.com/DataDog/jmxfetch/issues/171
 [#174]: https://github.com/DataDog/jmxfetch/issues/174
+[#178]: https://github.com/DataDog/jmxfetch/issues/178
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
