@@ -1,6 +1,13 @@
 Changes
 =======
 
+
+# 0.20.1 / 06-26-2018
+
+### Changes
+
+* [SECURITY] Bump FasterXML to 2.9.6. See [#178][], [CVE-2018-7489](https://nvd.nist.gov/vuln/detail/CVE-2018-7489) and [CVE-2018-5968](https://nvd.nist.gov/vuln/detail/CVE-2018-5968).
+
 # 0.20.1 / 06-26-2018
 
 ### Changes
