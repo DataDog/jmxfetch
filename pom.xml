@@ -16,7 +16,7 @@
 		<commons-io.version>2.4</commons-io.version>
 		<commons-lang.version>2.6</commons-lang.version>
 		<apache-commons-lang3.version>3.5</apache-commons-lang3.version>
-		<guava.version>17.0</guava.version>
+		<guava.version>24.1.1-jre</guava.version>
 		<java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
 		<jcommander.version>1.35</jcommander.version>
 		<junit.version>4.11</junit.version>
