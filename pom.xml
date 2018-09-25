@@ -31,8 +31,17 @@
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+	<bintray.repo>datadog/datadog-maven</bintray.repo>
+	<bintray.package>jmxfetch</bintray.package>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-jmxfetch</id>
+            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
+        </repository>
+    </distributionManagement>
     <dependencies>
         <dependency>
             <groupId>com.beust</groupId>
