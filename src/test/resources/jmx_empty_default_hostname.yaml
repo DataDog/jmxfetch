@@ -1,0 +1,27 @@
+init_config:
+
+instances:
+  -   process_name_regex: .*surefire.*
+      name: jmx_test_default_hostname
+      tags:
+        - jmx:fetch
+      conf:
+          - include:
+             domain: org.datadog.jmxfetch.test
+             attribute:
+                  ShouldBe100:
+                      metric_type: gauge
+                      alias: this.is.100.$foo.$qux
+
+  -   process_name_regex: .*surefire.*
+      empty_default_hostname: true
+      name: jmx_test_no_hostname
+      tags:
+        - jmx:fetch
+      conf:
+          - include:
+             domain: org.datadog.jmxfetch.test
+             attribute:
+                  ShouldBe100:
+                      metric_type: gauge
+                      alias: this.is.100.$foo.$qux

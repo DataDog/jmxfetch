@@ -57,6 +57,7 @@ public class Instance {
     private Connection connection;
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
+    private Boolean emptyDefaultHostname;
 
 
     public Instance(Instance instance, AppConfig appConfig) {
@@ -93,10 +94,16 @@ public class Instance {
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
         }
 
-        this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
+        this.minCollectionPeriod = (Integer) this.instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
         	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
+
+        this.emptyDefaultHostname = (Boolean) this.instanceMap.get("empty_default_hostname");
+        if (this.emptyDefaultHostname == null) {
+            this.emptyDefaultHostname = false;
+        }
+
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
@@ -288,7 +295,7 @@ public class Instance {
         }
         return metrics;
     }
-    
+
     public boolean timeToCollect() {
     	if (this.minCollectionPeriod == null) {
     		return true;
@@ -349,13 +356,13 @@ public class Instance {
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
                     LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo simple type");
-                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing);
+                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing, emptyDefaultHostname);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo composite type");
-                    jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
+                    jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags, emptyDefaultHostname);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo tabular type");
-                    jmxAttribute = new JMXTabularAttribute(attributeInfo, beanName, instanceName, connection, tags);
+                    jmxAttribute = new JMXTabularAttribute(attributeInfo, beanName, instanceName, connection, tags, emptyDefaultHostname);
                 } else {
                     try {
                         LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
@@ -446,6 +453,10 @@ public class Instance {
             }
         }
         tags.add("instance:" + this.instanceName);
+
+        if (this.emptyDefaultHostname) {
+            tags.add("host:");
+        }
         return tags.toArray(new String[tags.size()]);
     }
 
