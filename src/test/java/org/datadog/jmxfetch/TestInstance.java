@@ -62,12 +62,12 @@ public class TestInstance extends TestCommon {
 		for (HashMap<String, Object> metric : metrics) {
 			String[] tags = (String[]) metric.get("tags");
 			this.assertHostnameTags(Arrays.asList(tags));
-    	}
+		}
 
         LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(2, serviceChecks.size());
         for (HashMap<String, Object> sc : serviceChecks) {
-        	String[] tags = (String[]) sc.get("tags");
+			String[] tags = (String[]) sc.get("tags");
 			this.assertHostnameTags(Arrays.asList(tags));
         }
 	}
