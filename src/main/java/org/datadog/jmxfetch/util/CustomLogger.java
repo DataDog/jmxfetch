@@ -24,7 +24,7 @@ public class CustomLogger {
             Logger.getRootLogger().addAppender(fa);
             LOGGER.info("File Handler set");
         } else {
-            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout(LOGGER_LAYOUT), logLocation);
+            ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout(LOGGER_LAYOUT));
             if (logLocation != null) {
                 consoleAppender.setTarget(logLocation);
             }
