@@ -19,7 +19,7 @@ public class ConsoleReporter extends Reporter {
     @Override
     protected void sendMetricPoint(String metricType, String metricName, double value, String[] tags) {
         String tagString = "[" + Joiner.on(",").join(tags) + "]";
-        LOGGER.debug(metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
+        LOGGER.info(metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
         HashMap<String, Object> m = new HashMap<String, Object>();
         m.put("name", metricName);
@@ -43,7 +43,7 @@ public class ConsoleReporter extends Reporter {
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";
         }
-        LOGGER.debug(checkName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
+        LOGGER.info(checkName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
 
         HashMap<String, Object> sc = new HashMap<String, Object>();
         sc.put("name", checkName);
@@ -64,24 +64,24 @@ public class ConsoleReporter extends Reporter {
 
     @Override
     public void displayMetricReached() {
-        LOGGER.debug("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");
+        LOGGER.info("       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");
     }
 
     @Override
     public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
-        LOGGER.debug("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
+        LOGGER.info("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
     }
 
     @Override
     public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
-        LOGGER.debug("       Not Matching: " + jmxAttribute);
+        LOGGER.info("       Not Matching: " + jmxAttribute);
     }
 
     @Override
     public void displayInstanceName(Instance instance) {
-        LOGGER.debug("#####################################");
-        LOGGER.debug("Instance: " + instance);
-        LOGGER.debug("#####################################");
+        LOGGER.info("#####################################");
+        LOGGER.info("Instance: " + instance);
+        LOGGER.info("#####################################");
     }
 
 }
