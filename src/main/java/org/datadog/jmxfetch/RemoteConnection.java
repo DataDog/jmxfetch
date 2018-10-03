@@ -100,7 +100,7 @@ public class RemoteConnection extends Connection {
 
         HashMap<String, Object> environment = new HashMap<String, Object>();
 
-        if(connectionParams.containsKey("rmi_ssl") && (Boolean) connectionParams.get("rmi_ssl")) {
+        if(connectionParams.containsKey("rmi_registry_ssl") && (Boolean) connectionParams.get("rmi_registry_ssl")) {
             SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
             environment.put("com.sun.jndi.rmi.factory.socket", csf);
             environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
