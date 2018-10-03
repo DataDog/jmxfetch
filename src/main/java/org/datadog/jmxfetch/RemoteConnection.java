@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
+import javax.management.remote.rmi.RMIConnectorServer;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 import org.apache.log4j.Logger;
 
@@ -21,6 +24,8 @@ public class RemoteConnection extends Connection {
     private String rmi_timeout;
     private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
+    private static final String KEY_STORE_PATH_KEY = "key_store_path";
+    private static final String KEY_STORE_PASSWORD_KEY = "key_store_password";
     private static final String DEFAULT_RMI_RESPONSE_TIMEOUT = "15000"; //Match the collection period default
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
 
@@ -67,6 +72,21 @@ public class RemoteConnection extends Connection {
             }
 
         }
+
+        String keyStorePath;
+        String keyStorePassword;
+        if (connectionParams.containsKey(KEY_STORE_PATH_KEY)
+                && connectionParams.containsKey(KEY_STORE_PASSWORD_KEY)) {
+            keyStorePath = (String) connectionParams.get(KEY_STORE_PATH_KEY);
+            keyStorePassword = (String) connectionParams.get(KEY_STORE_PASSWORD_KEY);
+            if (keyStorePath != null && keyStorePassword != null) {
+                System.setProperty("javax.net.ssl.keyStore", keyStorePath);
+                System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+
+                LOGGER.info("Setting keyStore path: " + keyStorePath + " and keyStorePassword");
+            }
+
+        }
         
         //Set an RMI timeout so we don't get stuck waiting for a bean to report a value
         System.setProperty("sun.rmi.transport.tcp.responseTimeout", rmi_timeout);
@@ -79,6 +99,13 @@ public class RemoteConnection extends Connection {
             LinkedHashMap<String, Object> connectionParams) {
 
         HashMap<String, Object> environment = new HashMap<String, Object>();
+
+        if(connectionParams.containsKey("rmi_ssl") && (Boolean) connectionParams.get("rmi_ssl")) {
+            SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
+            environment.put("com.sun.jndi.rmi.factory.socket", csf);
+            environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
+        }
+
         environment.put(JMXConnector.CREDENTIALS, new String[]{user, password});
         return environment;
     }
