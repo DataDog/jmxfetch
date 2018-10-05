@@ -34,10 +34,7 @@
     type: Threading
     attribute:
       ThreadCount:
-        alias: jvm.thread.count
-        metric_type: gauge
-      DaemonThreadCount:
-        alias: jvm.thread.daemon_count
+        alias: jvm.thread_count
         metric_type: gauge
 
 # CPU load
@@ -143,3 +140,15 @@
       CollectionTime:
         alias: jvm.gc.major_collection_time
         metric_type: counter
+
+# Old GC metrics for compatibility
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.cms.count
+        metric_type: gauge
+      CollectionTime:
+        alias: jvm.gc.parnew.time
+        metric_type: gauge
