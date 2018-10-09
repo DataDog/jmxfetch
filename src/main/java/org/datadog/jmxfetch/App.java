@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.Math;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -33,7 +32,6 @@ import org.apache.commons.io.IOUtils;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
-
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -65,7 +63,6 @@ public class App {
 
     private AppConfig appConfig;
     private HttpClient client;
-
 
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
@@ -100,6 +97,13 @@ public class App {
             System.exit(0);
         }
 
+        System.exit(run(config));
+    }
+
+    /**
+     * Main entry point of JMXFetch that returns integer on exit instead of calling {@code System#exit}
+     */
+    public static int run(AppConfig config) {
         // Set up the logger to add file handler
         CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
 
@@ -107,13 +111,13 @@ public class App {
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(config.getAction())) {
             LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
-            System.exit(1);
+            return 1;
         }
 
         // The "list_*" actions can only be used with the reporter
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
             LOGGER.fatal(config.getAction() + " argument can only be used with the console reporter. Exiting.");
-            System.exit(1);
+            return 1;
         }
 
         if(config.getAction().equals(AppConfig.ACTION_LIST_JVMS)) {
@@ -123,7 +127,7 @@ public class App {
             for(com.sun.tools.attach.VirtualMachineDescriptor descriptor : descriptors) {
                 System.out.println( "\tJVM id " + descriptor.id() + ": '" + descriptor.displayName() + "'" );
             }
-            System.exit(0);
+            return 0;
         }
 
         // Set up the shutdown hook to properly close resources
@@ -149,6 +153,7 @@ public class App {
             // Start the main loop
             app.start();
         }
+        return 0;
     }
 
     /**
@@ -277,7 +282,7 @@ public class App {
             // Exit on exit file trigger...
             if (appConfig.getExitWatcher().shouldExit()){
                 LOGGER.info("Exit file detected: stopping JMXFetch.");
-                System.exit(0);
+                return;
             }
 
             if(adPipe == null && appConfig.getAutoDiscoveryPipeEnabled()) {
@@ -495,40 +500,68 @@ public class App {
 
     private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
         ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
-        YamlParser fileConfig;
 
+        loadFileConfigs(config, configs);
+        loadResourceConfigs(config, configs);
+
+        LOGGER.info("Found " + configs.size() + " config files");
+        return configs;
+    }
+
+    private void loadFileConfigs(AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
         List<String> fileList = config.getYamlFileList();
-        if (fileList == null) {
-            return configs;
-        }
-
-        for (String fileName : fileList) {
-            File f = new File(config.getConfdDirectory(), fileName);
-            String name = f.getName().replace(".yaml", "");
-            FileInputStream yamlInputStream = null;
-            String yamlPath = f.getAbsolutePath();
-            try {
+        if (fileList != null) {
+            for (String fileName : fileList) {
+                File f = new File(config.getConfdDirectory(), fileName);
+                String name = f.getName().replace(".yaml", "");
+                String yamlPath = f.getAbsolutePath();
+                FileInputStream yamlInputStream = null;
                 LOGGER.info("Reading " + yamlPath);
-                yamlInputStream = new FileInputStream(yamlPath);
-                fileConfig = new YamlParser(yamlInputStream);
-                configs.put(name, fileConfig);
-            } catch (FileNotFoundException e) {
-                LOGGER.warn("Cannot find " + yamlPath);
-            } catch (Exception e) {
-                LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
-            } finally {
-                if (yamlInputStream != null) {
-                    try {
-                        yamlInputStream.close();
-                    } catch (IOException e) {
-                        // ignore
+                try {
+                    yamlInputStream = new FileInputStream(yamlPath);
+                    configs.put(name, new YamlParser(yamlInputStream));
+                } catch (FileNotFoundException e) {
+                    LOGGER.warn("Cannot find " + yamlPath);
+                } catch (Exception e) {
+                    LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
+                } finally {
+                    if (yamlInputStream != null) {
+                        try {
+                            yamlInputStream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
                     }
                 }
             }
         }
+    }
 
-        LOGGER.info("Found " + configs.size() + " config files");
-        return configs;
+    private void loadResourceConfigs(AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
+        List<String> resourceConfigList = config.getInstanceConfigResources();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (resourceConfigList != null) {
+            for (String resourceName : resourceConfigList) {
+                String name = resourceName.replace(".yaml", "");
+                LOGGER.info("Reading " + resourceName);
+                InputStream inputStream = classLoader.getResourceAsStream(resourceName);
+                if (inputStream == null) {
+                    LOGGER.warn("Cannot find " + resourceName);
+                } else {
+                    try {
+                        configs.put(name, new YamlParser(inputStream));
+                    } catch (Exception e) {
+                        LOGGER.warn("Cannot parse yaml file " + resourceName, e);
+                    } finally {
+                        try {
+                            inputStream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean getJSONConfigs() {

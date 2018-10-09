@@ -1,4 +1,5 @@
 package org.datadog.jmxfetch;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -7,6 +8,7 @@ import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.reporter.ReporterFactory;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
@@ -15,7 +17,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 @Parameters(separators = "=")
-class AppConfig {
+public class AppConfig {
     public static final String ACTION_COLLECT = "collect";
     public static final String ACTION_LIST_JVMS = "list_jvms";
     public static final String ACTION_LIST_EVERYTHING = "list_everything";
@@ -115,6 +117,13 @@ class AppConfig {
             required = false)
     private int ipcPort = 0;
 
+    // This is used by things like APM agent to provide configuration from resources
+    private List<String> instanceConfigResources;
+    // This is used by things like APM agent to provide metric configuration from files
+    private List<String> metricConfigFiles;
+    // This is used by things like APM agent to provide global override for bean refresh period
+    private Integer refreshBeansPeriod;
+
     private Status status = new Status();
 
     public boolean updateStatus() {
@@ -210,5 +219,42 @@ class AppConfig {
 
     public String getJMXLaunchFile() {
         return getTmpDirectory() + "/" + AD_LAUNCH_FILE;
+    }
+
+    public List<String> getInstanceConfigResources() {
+        return instanceConfigResources;
+    }
+
+    public List<String> getMetricConfigFiles() {
+        return metricConfigFiles;
+    }
+
+    public Integer getRefreshBeansPeriod() {
+        return refreshBeansPeriod;
+    }
+
+    /**
+     * Factory method used by dd-tracer-agent to run jmxfetch in the same process
+     */
+    public static AppConfig create(
+            List<String> instanceConfigResources,
+            List<String> metricConfigFiles,
+            Integer checkPeriod,
+            Integer refreshBeansPeriod,
+            String reporter,
+            String logLocation,
+            String logLevel) {
+        AppConfig config = new AppConfig();
+        config.action = ImmutableList.of(ACTION_COLLECT);
+        config.instanceConfigResources = ImmutableList.copyOf(instanceConfigResources);
+        config.metricConfigFiles = ImmutableList.copyOf(metricConfigFiles);
+        if (checkPeriod != null) {
+            config.checkPeriod = checkPeriod;
+        }
+        config.refreshBeansPeriod = refreshBeansPeriod;
+        config.reporter = ReporterFactory.getReporter(reporter);
+        config.logLocation = logLocation;
+        config.logLevel = logLevel;
+        return config;
     }
 }
