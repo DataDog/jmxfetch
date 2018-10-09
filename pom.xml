@@ -5,7 +5,7 @@
 
     <groupId>datadog</groupId>
     <artifactId>jmxfetch</artifactId>
-    <version>0.20.3</version>
+    <version>0.20.2</version>
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
