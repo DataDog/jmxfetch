@@ -31,17 +31,7 @@
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <bintray.repo>nikolaymartynov/jmxfetch</bintray.repo>
-        <bintray.package>jmxfetch</bintray.package>
     </properties>
-
-    <distributionManagement>
-        <repository>
-            <id>bintray-nikolaymartynov-jmxfetch</id>
-            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
-        </repository>
-    </distributionManagement>
 
     <dependencies>
         <dependency>
