@@ -27,7 +27,7 @@ public class JMXTabularAttribute extends JMXAttribute {
     private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;
 
     public JMXTabularAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                             Connection connection, HashMap<String, String> instanceTags, Boolean emptyDefaultHostname) {
+                             Connection connection, HashMap<String, String> instanceTags, boolean emptyDefaultHostname) {
         super(attribute, beanName, instanceName, connection, instanceTags, false, emptyDefaultHostname);
         subAttributeList = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
     }

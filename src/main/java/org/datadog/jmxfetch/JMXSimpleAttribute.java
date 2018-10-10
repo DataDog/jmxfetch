@@ -19,7 +19,7 @@ public class JMXSimpleAttribute extends JMXAttribute {
     private String metricType;
 
     public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                              Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing,
+                              Connection connection, HashMap<String, String> instanceTags, boolean cassandraAliasing,
                               Boolean emptyDefaultHostname) {
         super(attribute, beanName, instanceName, connection, instanceTags, cassandraAliasing, emptyDefaultHostname);
     }

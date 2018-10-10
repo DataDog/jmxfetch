@@ -57,7 +57,7 @@ public class Instance {
     private Connection connection;
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
-    private Boolean emptyDefaultHostname;
+    private boolean emptyDefaultHostname;
 
 
     public Instance(Instance instance, AppConfig appConfig) {
@@ -94,13 +94,14 @@ public class Instance {
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
         }
 
-        this.minCollectionPeriod = (Integer) this.instanceMap.get("min_collection_interval");
+        this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
         	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
 
-        this.emptyDefaultHostname = (Boolean) this.instanceMap.get("empty_default_hostname");
-        if (this.emptyDefaultHostname == null) {
+        try {
+            this.emptyDefaultHostname = (Boolean) this.instanceMap.get("empty_default_hostname");
+        } catch (NullPointerException e) {
             this.emptyDefaultHostname = false;
         }
 

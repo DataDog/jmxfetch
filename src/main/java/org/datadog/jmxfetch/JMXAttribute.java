@@ -52,7 +52,7 @@ public abstract class JMXAttribute {
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
             Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing,
-            Boolean emptyDefaultHostname) {
+            boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.matchingConf = null;
