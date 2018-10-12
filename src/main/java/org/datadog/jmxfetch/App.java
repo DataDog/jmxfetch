@@ -437,6 +437,7 @@ public class App {
 
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
+            reporter.clearCountersAggregator(instance.getName());
 
             LOGGER.warn(
                     "Instance "
