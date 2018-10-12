@@ -413,6 +413,7 @@ public class App {
 
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
+            reporter.clearCountersAggregator(instance.getName());
 
             LOGGER.warn("Instance " + instance + " didn't return any metrics." +
                     "Maybe the server got disconnected ? Trying to reconnect.");

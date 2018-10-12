@@ -31,7 +31,9 @@ public class StatsdReporter extends Reporter {
             this.statsDClient.stop();
             init();
         }
-        if (metricType.equals("histogram")) {
+        if (metricType.equals("gauge_delta")) {
+            statsDClient.count(metricName, (long) value, tags);
+        } else if (metricType.equals("histogram")) {
             statsDClient.histogram(metricName, value, tags);
         } else {
             statsDClient.gauge(metricName, value, tags);

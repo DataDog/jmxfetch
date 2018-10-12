@@ -18,6 +18,7 @@ public abstract class Reporter {
 
     private HashMap<String, Integer> serviceCheckCount;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
+    private HashMap<String, HashMap<String, Long>> countersAggregator = new HashMap<String, HashMap<String, Long>>();
 
     public Reporter() {
         this.serviceCheckCount = new HashMap<String, Integer>();
@@ -34,13 +35,24 @@ public abstract class Reporter {
     public void clearRatesAggregator(String instanceName) {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
+    public void clearCountersAggregator(String instanceName) {
+        countersAggregator.put(instanceName, new HashMap<String, Long>());
+    }
 
     public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName, boolean canonicalRate) {
         HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
+        HashMap<String, Long> instanceCountersAggregator;
+
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
         } else {
             instanceRatesAggregator = new HashMap<String, HashMap<String, Object>>();
+        }
+
+        if (countersAggregator.containsKey(instanceName)) {
+            instanceCountersAggregator = countersAggregator.get(instanceName);
+        } else {
+            instanceCountersAggregator = new HashMap<String, Long>();
         }
 
         int loopCounter = App.getLoopCounter();
@@ -72,6 +84,26 @@ public abstract class Reporter {
             // StatsD doesn't support rate metrics so we need to have our own aggregator to compute rates
             if ("gauge".equals(metricType) || "histogram".equals(metricType)) {
                 sendMetricPoint(metricType, metricName, currentValue, tags);
+            } else if ("gauge_delta".equals(metricType)) {
+                String key = generateId(metric);
+                if (!instanceCountersAggregator.containsKey(key)) {
+                    instanceCountersAggregator.put(key,  currentValue.longValue());
+                    continue;
+                }
+
+                long oldValue =   instanceCountersAggregator.get(key);
+                long delta =  currentValue.longValue() - oldValue ;
+
+                boolean sane = (!Double.isNaN(delta) && !Double.isInfinite(delta));
+                boolean submit = (delta >= 0 || !canonicalRate);
+
+                if  (sane && submit) {
+                    sendMetricPoint(metricType, metricName, delta, tags);
+                } else if (sane) {
+                    LOGGER.info("Canonical rate option set, and negative delta (counter reset) - not submitting.");
+                }
+
+                instanceCountersAggregator.put(key, currentValue.longValue());
             } else { // The metric should be 'counter'
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
@@ -81,6 +113,7 @@ public abstract class Reporter {
                     instanceRatesAggregator.put(key, rateInfo);
                     continue;
                 }
+                LOGGER.info("I SHOULD NOT BE HERE");
 
                 long oldTs = (Long) instanceRatesAggregator.get(key).get("ts");
                 double oldValue = (Double) instanceRatesAggregator.get(key).get(VALUE);
@@ -103,6 +136,7 @@ public abstract class Reporter {
         }
 
         ratesAggregator.put(instanceName, instanceRatesAggregator);
+        countersAggregator.put(instanceName, instanceCountersAggregator);
     }
 
     public void sendServiceCheck(String checkName, String status, String message, String[] tags){
