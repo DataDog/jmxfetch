@@ -1,0 +1,124 @@
+diff --git a/.circleci/config.yml b/.circleci/config.yml
+new file mode 100644
+index 0000000..a1e602a
+--- /dev/null
++++ b/.circleci/config.yml
+@@ -0,0 +1,79 @@
++# Java Maven CircleCI 2.0 configuration file
++#
++# Check https://circleci.com/docs/2.0/language-java/ for more details
++#
++version: 2
++
++defaults: &defaults
++  docker:
++    - image: circleci/openjdk:8-jdk
++
++  working_directory: ~/jmxfetch
++
++  environment:
++    MAVEN_OPTS: -Xmx3200m
++
++cache_keys: &cache_keys
++  # Reset the cache approx every release
++  keys:
++    - jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}-{{ .Revision }}
++    - jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}
++    - jmxfetch-{{ checksum "pom.xml" }}
++
++jobs:
++  build:
++    <<: *defaults
++
++    steps:
++      - checkout
++
++      # Download and cache dependencies
++      - restore_cache:
++          <<: *cache_keys
++
++      - run: mvn install
++
++      - save_cache:
++          paths:
++            - ~/.m2
++          key: jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}-{{ .Revision }}
++
++      - store_test_results:
++          path: ./target/surefire-reports/
++
++      - persist_to_workspace:
++          root: .
++          paths:
++            - target
++
++  deploy:
++    <<: *defaults
++
++    steps:
++      - checkout
++
++      # Download and cache dependencies
++      - restore_cache:
++          <<: *cache_keys
++
++      - attach_workspace:
++          at: .
++
++      - run: mvn validate jar:jar deploy:deploy --settings ./settings.xml
++
++workflows:
++  version: 2
++  build_test_deploy:
++    jobs:
++    - build:
++        filters:
++          tags:
++            only: /.*/
++    - deploy:
++        requires:
++          - build
++        filters:
++          branches:
++            ignore: /.*/
++          tags:
++            only: /^\d+\.\d+\.\d+/
+diff --git a/pom.xml b/pom.xml
+index ad5f8e5..9d2ff0b 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -31,8 +31,17 @@
+         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
+
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
++
++	<bintray.repo>datadog/datadog-maven</bintray.repo>
++	<bintray.package>jmxfetch</bintray.package>
+     </properties>
+
++    <distributionManagement>
++        <repository>
++            <id>bintray-jmxfetch</id>
++            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
++        </repository>
++    </distributionManagement>
+     <dependencies>
+         <dependency>
+             <groupId>com.beust</groupId>
+diff --git a/settings.xml b/settings.xml
+new file mode 100644
+index 0000000..45cb27f
+--- /dev/null
++++ b/settings.xml
+@@ -0,0 +1,11 @@
++<?xml version='1.0' encoding='UTF-8'?>
++<settings xsi:schemaLocation='http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd'
++          xmlns='http://maven.apache.org/SETTINGS/1.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
++    <servers>
++        <server>
++	    <id>bintray-jmxfetch</id>
++            <username>${env.BINTRAY_USER}</username>
++            <password>${env.BINTRAY_API_KEY}</password>
++        </server>
++    </servers>
++</settings>
