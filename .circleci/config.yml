@@ -46,7 +46,32 @@ jobs:
           paths:
             - target
 
-  deploy:
+  build_single_assembly:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          <<: *cache_keys
+
+      - run: mvn clean compile assembly:single
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}-{{ .Revision }}
+
+      - store_test_results:
+          path: ./target/surefire-reports/
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target
+
+  deploy_maven:
     <<: *defaults
 
     steps:
@@ -61,15 +86,45 @@ jobs:
 
       - run: mvn validate jar:jar deploy:deploy -e -X --settings ./settings.xml
 
+
+  deploy_bintray:
+    <<: *defaults
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          <<: *cache_keys
+
+      - attach_workspace:
+          at: .
+
+      - run: find ./
+
 workflows:
   version: 2
-  build_test_deploy:
+  build_test_deploy_single_assembly:
+    jobs:
+    - build_single_assembly:
+        filters:
+          tags:
+            only: /.*/
+    - deploy_bintray:
+        requires:
+          - build
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /^\d+\.\d+\.\d+/
+  build_test_deploy_maven:
     jobs:
     - build:
         filters:
           tags:
             only: /.*/
-    - deploy:
+    - deploy_maven:
         requires:
           - build
         filters:
