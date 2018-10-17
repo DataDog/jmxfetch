@@ -112,7 +112,7 @@ workflows:
             only: /.*/
     - deploy_bintray:
         requires:
-          - build
+          - build_single_assembly
         filters:
           branches:
             ignore: /.*/
