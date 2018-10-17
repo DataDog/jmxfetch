@@ -59,7 +59,7 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run: mvn validate jar:jar deploy:deploy --settings ./settings.xml
+      - run: mvn validate jar:jar deploy:deploy -e -X --settings ./settings.xml
 
 workflows:
   version: 2
