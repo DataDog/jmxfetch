@@ -1,9 +1,11 @@
 package org.datadog.jmxfetch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import java.util.Map;
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
@@ -123,6 +125,8 @@ public class AppConfig {
     private List<String> metricConfigFiles;
     // This is used by things like APM agent to provide global override for bean refresh period
     private Integer refreshBeansPeriod;
+    // This is used by things like APM agent to provide tags that should be set with all metrics
+    private Map<String, String> globalTags;
 
     private Status status = new Status();
 
@@ -233,6 +237,10 @@ public class AppConfig {
         return refreshBeansPeriod;
     }
 
+    public Map<String, String> getGlobalTags() {
+        return globalTags;
+    }
+
     /**
      * Factory method used by dd-tracer-agent to run jmxfetch in the same process
      */
@@ -241,6 +249,7 @@ public class AppConfig {
             List<String> metricConfigFiles,
             Integer checkPeriod,
             Integer refreshBeansPeriod,
+            Map<String, String> globalTags,
             String reporter,
             String logLocation,
             String logLevel) {
@@ -252,6 +261,7 @@ public class AppConfig {
             config.checkPeriod = checkPeriod;
         }
         config.refreshBeansPeriod = refreshBeansPeriod;
+        config.globalTags = ImmutableMap.copyOf(globalTags);
         config.reporter = ReporterFactory.getReporter(reporter);
         config.logLocation = logLocation;
         config.logLevel = logLevel;
