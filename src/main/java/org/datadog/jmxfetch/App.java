@@ -75,7 +75,7 @@ public class App {
 
     /**
      * Main entry of JMXFetch
-     * <p/>
+     * <p>
      * See AppConfig class for more details on the args
      */
     public static void main(String[] args) {
