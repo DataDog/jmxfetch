@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.22.0 / 19-10-2018
+
+### Changes
+
+* [FEATURE] Provide a way to pass extra tags when jmxfetch is used as a library. See [#191][].
+
 # 0.21.0 / 10-10-2018
 
 ### Changes
@@ -253,6 +259,7 @@ Changes
 [#178]: https://github.com/DataDog/jmxfetch/issues/178
 [#180]: https://github.com/DataDog/jmxfetch/issues/180
 [#185]: https://github.com/DataDog/jmxfetch/issues/185
+[#191]: https://github.com/DataDog/jmxfetch/issues/191
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
