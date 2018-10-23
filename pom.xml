@@ -9,7 +9,27 @@
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
-    <url>http://maven.apache.org</url>
+    <description>JMXFetch is the new tool to collect metrics from JMX Servers in order to be sent to Datadog
+        (http://www.datadoghq.com) It is called by the Datadog Agent (https://github.com/Datadog/dd-agent) and sends
+        metrics back to the Agent using the Java dogstatsd library.
+    </description>
+    <url>https://github.com/DataDog/jmxfetch</url>
+
+    <licenses>
+        <license>
+            <name>BSD License</name>
+            <url>https://github.com/DataDog/jmxfetch/blob/master/LICENSE</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Datadog</name>
+            <email>info@datadoghq.com</email>
+            <organization>Datadog</organization>
+            <organizationUrl>https://www.datadoghq.com/</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -34,8 +54,8 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-	<bintray.repo>datadog/datadog-maven</bintray.repo>
-	<bintray.package>jmxfetch</bintray.package>
+        <bintray.repo>datadog/datadog-maven</bintray.repo>
+        <bintray.package>jmxfetch</bintray.package>
     </properties>
 
     <distributionManagement>
