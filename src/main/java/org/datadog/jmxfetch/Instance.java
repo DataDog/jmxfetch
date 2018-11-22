@@ -146,7 +146,7 @@ public class Instance {
 
         if (this.initConfig != null) {
             Boolean newGcMetrics = (Boolean) this.initConfig.get("new_gc_metrics");
-            if (newGcMetrics) {
+            if (newGcMetrics != null && newGcMetrics) {
                 gcMetricConfig = "new-gc-default-jmx-metrics.yaml";
             }
         }

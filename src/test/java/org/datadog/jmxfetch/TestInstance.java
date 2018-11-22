@@ -18,7 +18,7 @@ public class TestInstance extends TestCommon {
 		
 		run();
 		LinkedList<HashMap<String, Object>> metrics = getMetrics();
-		assertEquals(11, metrics.size());
+		assertEquals(15, metrics.size());
 		
 		run();
 		metrics = getMetrics();
@@ -28,7 +28,7 @@ public class TestInstance extends TestCommon {
 		Thread.sleep(5000);
 		run();
 		metrics = getMetrics();
-		assertEquals(11, metrics.size());
+		assertEquals(15, metrics.size());
 	}
 
 }
