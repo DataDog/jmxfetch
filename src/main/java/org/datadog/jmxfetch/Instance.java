@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.Callable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,7 +29,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
-public class Instance {
+public class Instance implements Callable<LinkedList<HashMap<String, Object>>> {
     private static final Logger LOGGER = Logger.getLogger(Instance.class.getName());
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
@@ -432,6 +434,19 @@ public class Instance {
         return metrics;
     }
 
+    @Override
+    public LinkedList<HashMap<String, Object>> call() throws Exception {
+
+        if (!this.timeToCollect()) {
+            LOGGER.debug("it is not time to collect, skipping run");
+
+            // Maybe raise an exception here instead... 
+            return new LinkedList<HashMap<String, Object>>();
+        }
+
+        return this.getMetrics();
+    }
+    
     /**
      * Returns whather or not its time to collect metrics for the instance.
      * */
