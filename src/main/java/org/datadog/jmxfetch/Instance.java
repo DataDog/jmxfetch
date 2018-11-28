@@ -719,4 +719,25 @@ public class Instance implements Callable<LinkedList<HashMap<String, Object>>> {
             connection.closeConnector();
         }
     }
+
+    public void cleanUpAsync() {
+        class AsyncCleaner implements Runnable {
+            Instance instance;
+
+            AsyncCleaner(Instance instance) {
+                this.instance = instance;
+            }
+
+            @Override
+            public void run() {
+                // code goes here.
+                instance.appConfig = null;
+                if (instance.connection != null) {
+                    instance.connection.closeConnector();
+                }
+            }
+        }
+
+        new Thread(new AsyncCleaner(this)).start();
+    }
 }

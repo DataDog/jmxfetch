@@ -27,6 +27,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +42,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.lang.InterruptedException;
@@ -60,7 +62,6 @@ public class App {
     private static final int AD_MAX_NAME_LEN = 80;
     private static final int AD_MAX_MAG_INSTANCES =
             4; // 1000 instances ought to be enough for anyone
-    private static final int THREAD_POOL_SIZE = 3;
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private static int loopCounter;
@@ -72,7 +73,7 @@ public class App {
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
-    private ExecutorService es = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    private ExecutorService es;
 
     private AppConfig appConfig;
     private HttpClient client;
@@ -82,6 +83,9 @@ public class App {
      * */
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
+
+        es = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+
         // setup client
         if (appConfig.remoteEnabled()) {
             client = new HttpClient(appConfig.getIpcHost(), appConfig.getIpcPort(), false);
@@ -385,12 +389,12 @@ public class App {
         loopCounter++;
         Reporter reporter = appConfig.getReporter();
 
-        List<Future<LinkedList<HashMap<String, Object>>>> results;
 
         int timeout = appConfig.getCheckPeriod();  // In milliseconds
 
         try {
-            results = es.invokeAll(instances, timeout, TimeUnit.MILLISECONDS);
+            List<Future<LinkedList<HashMap<String, Object>>>> results =
+                results = es.invokeAll(instances, timeout, TimeUnit.MILLISECONDS);
 
             for (int i=0; i<results.size(); i++) {
                 LinkedList<HashMap<String, Object>> metrics;
@@ -430,7 +434,7 @@ public class App {
                     }
                 } catch (ExecutionException ee){
                     instanceMessage = "Unable to refresh bean list for instance " + instance;
-                    LOGGER.warn(instanceMessage, ee);
+                    LOGGER.warn(instanceMessage, ee.getCause());
                     instanceStatus = Status.STATUS_ERROR;
                 } catch (CancellationException ee){
                     instanceMessage = "Instance bean list refresh was canceled for instance " + instance;
@@ -443,6 +447,7 @@ public class App {
                 } finally {
                     if (instanceStatus == Status.STATUS_ERROR) {
                         scStatus = Status.STATUS_ERROR;
+                        LOGGER.warn("Adding broken instance to list: " + instance.getName());
                         brokenInstances.add(instance);
                     }
 
@@ -463,68 +468,102 @@ public class App {
             }
         }
 
-        // Iterate over broken" instances to fix them by resetting them
-        Iterator<Instance> it = brokenInstances.iterator();
-        while (it.hasNext()) {
-            Instance instance = it.next();
-
+        // Attempt to fix broken instances
+        List<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+        List<Instance> newInstances = new ArrayList<Instance>();
+        for(Instance instance : brokenInstances) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
 
-            LOGGER.warn(
-                    "Instance "
-                            + instance
-                            + " didn't return any metrics."
-                            + "Maybe the server got disconnected ? Trying to reconnect.");
+            LOGGER.warn("Instance " + instance + " didn't return any metrics. " +
+                    "Maybe the server got disconnected ? Trying to reconnect.");
 
             // Remove the broken instance from the good instance list so jmxfetch won't try to
-            // collect metrics from this broken instance during next collection
-            instance.cleanUp();
+            // collect metrics from this broken instance during next collectionm and close
+            // ongoing connections (do so asynchronously to avoid locking on network timeout).
             instances.remove(instance);
+            instance.cleanUpAsync();
 
             // Resetting the instance
-            Instance newInstance = new Instance(instance, appConfig);
-            try {
-                // Try to reinit the connection and force to renew it
-                LOGGER.info("Trying to reconnect to: " + newInstance);
-                newInstance.init(true);
-                // If we are here, the connection succeeded, the instance is fixed. It can be
-                // readded to the good instances list
-                instances.add(newInstance);
-                it.remove();
-            } catch (Exception e) {
-                String warning = null;
+            final Instance newInstance = new Instance(instance, appConfig);
 
-                if (e instanceof IOException) {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + ". Is a JMX Server running at this address?";
-                    LOGGER.warn(warning);
-                } else if (e instanceof SecurityException) {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + " because of bad credentials. Please check your credentials";
-                    LOGGER.warn(warning);
-                } else if (e instanceof FailedLoginException) {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + " because of bad credentials. Please check your credentials";
-                    LOGGER.warn(warning);
-                } else {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + " for an unknown reason."
-                                    + e.getMessage();
-                    LOGGER.fatal(warning, e);
+            // create the initializing task
+            Callable<Void> task = new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    // Try to reinit the connection and force to renew it
+                    LOGGER.info("Trying to reconnect to: " + newInstance);
+
+                    newInstance.init(true);
+                    return null;
                 }
+            };
 
-                this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-                this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+            newInstances.add(newInstance);
+            tasks.add(task);
+        }
+
+        // Run Callables
+        String warning = null;
+        List<Integer> fixed = new ArrayList<Integer>();
+        try {
+            List<Future<Void>> results = es.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
+
+            for (int i=0; i<results.size(); i++) {
+                Future<Void> future = results.get(i);
+
+                try{
+                    if (future.isDone()) {
+                        future.get();
+
+                        // If we get here all went well
+                        instances.add(newInstances.get(i));
+                        fixed.add(i);  // i is the index in the brokenInstance list
+                    }
+                } catch (ExecutionException ee) {
+                    LOGGER.info("There was en execution exception");
+                    Throwable e = ee.getCause();
+
+                    if(e instanceof IOException ) {
+                        warning =" Is a JMX Server running at this address?";
+                    } else if (e instanceof SecurityException) {
+                        warning =" because of bad credentials. Please check your credentials";
+                    } else if (e instanceof FailedLoginException) {
+                        warning =" because of bad credentials. Please check your credentials";
+                    } else {
+                        warning = " for an unknown reason." + e.getMessage();
+                    }
+
+                } catch (CancellationException ee){
+                    warning = " because connection timed out and was canceled. Please check your network";
+
+                    LOGGER.warn(warning);
+                } catch (InterruptedException ie) {
+                    warning = " attempt interrupted waiting on IO";
+
+                    LOGGER.warn(instanceMessage, ie);
+                } catch (Exception e) {
+                    LOGGER.info("There was an unknown exception");
+                } finally  {
+                    Instance instance = brokenInstances.get(i);
+                    String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
+
+                    LOGGER.warn(msg);
+
+                    this.reportStatus(appConfig, reporter, instance, 0, msg, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, msg, Status.STATUS_ERROR);
+                }
             }
+        } catch(Exception e) {
+            // Should we do anything else here?
+            LOGGER.warn("JMXFetch internal error invoking concurrent tasks for broken instances: ", e);
+        }
+
+        // cleanup fixed brokenInstances - matching indices in fixed List
+        ListIterator<Integer> it = fixed.listIterator(fixed.size());
+        while (it.hasPrevious()) {
+            Integer idx = it.previous();
+            brokenInstances.remove(idx.intValue());
         }
 
         try {

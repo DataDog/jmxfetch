@@ -46,6 +46,7 @@ public class AppConfig {
     private static final String AD_LEGACY_PIPE_NAME = "dd-service_discovery";
     private static final String AD_PIPE_NAME = "dd-auto_discovery";
     private static final String AD_LAUNCH_FILE = "jmx.launch";
+    private static final int THREAD_POOL_SIZE = 3;
 
     @Parameter(
             names = {"--help", "-h"},
@@ -100,6 +101,13 @@ public class AppConfig {
             validateWith = PositiveIntegerValidator.class,
             required = false)
     private int checkPeriod = 15000;
+
+    @Parameter(
+            names = {"--thread_pool_size", "-t"},
+            description = "The size of the thread pool",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int threadPoolSize = THREAD_POOL_SIZE;
 
     @Parameter(
             names = {"--ad_enabled", "--sd_enabled", "-w"},
@@ -209,6 +217,10 @@ public class AppConfig {
 
     public int getCheckPeriod() {
         return checkPeriod;
+    }
+
+    public int getThreadPoolSize() {
+        return threadPoolSize;
     }
 
     public String getIpcHost() {
