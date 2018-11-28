@@ -525,7 +525,7 @@ public class App {
                     Throwable e = ee.getCause();
 
                     if(e instanceof IOException ) {
-                        warning =" Is a JMX Server running at this address?";
+                        warning =". Is a JMX Server running at this address?";
                     } else if (e instanceof SecurityException) {
                         warning =" because of bad credentials. Please check your credentials";
                     } else if (e instanceof FailedLoginException) {
