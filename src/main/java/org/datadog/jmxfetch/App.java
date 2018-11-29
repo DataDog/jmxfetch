@@ -542,15 +542,11 @@ public class App {
                     }
 
                 } catch (CancellationException ee){
-                    warning = " because connection timed out and was canceled. Please check your network";
-
-                    LOGGER.warn(warning);
+                    warning = " because connection timed out and was canceled. Please check your network.";
                 } catch (InterruptedException ie) {
                     warning = " attempt interrupted waiting on IO";
-
-                    LOGGER.warn(instanceMessage, ie);
                 } catch (Exception e) {
-                    LOGGER.info("There was an unknown exception");
+                    warning = " There was an unexpected exception: " + e.getMessage();
                 } finally  {
                     Instance instance = brokenInstances.get(i);
                     String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
