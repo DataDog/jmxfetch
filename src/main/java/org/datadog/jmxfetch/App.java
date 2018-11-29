@@ -79,6 +79,44 @@ public class App {
     private AppConfig appConfig;
     private HttpClient client;
 
+    class MetricCollectionTask implements Callable {
+        Instance instance;
+
+         MetricCollectionTask(Instance instance) {
+            this.instance = instance;
+        }
+
+        @Override
+        public LinkedList<HashMap<String, Object>> call() throws Exception {
+
+            if (!instance.timeToCollect()) {
+                LOGGER.debug("it is not time to collect, skipping run");
+
+                // Maybe raise an exception here instead...
+                return new LinkedList<HashMap<String, Object>>();
+            }
+
+            return instance.getMetrics();
+        }
+    }
+
+    class InstanceInitializingTask implements Callable {
+            Instance instance;
+
+            InstanceInitializingTask(Instance instance) {
+                this.instance = instance;
+            }
+
+            @Override
+            public Void call() throws Exception {
+                // Try to reinit the connection and force to renew it
+                LOGGER.info("Trying to reconnect to: " + instance);
+
+                instance.init(true);
+                return null;
+            }
+    };
+
     /**
      * Application constructor.
      * */
@@ -390,7 +428,6 @@ public class App {
      * */
     public void doIteration() {
         int numberOfMetrics = 0;
-        int timeout = appConfig.getCheckPeriod();  // In milliseconds
         Reporter reporter = appConfig.getReporter();
         loopCounter++;
 
@@ -399,8 +436,16 @@ public class App {
         String scStatus = null;
         String instanceMessage = null;
         try {
+            List<Callable<LinkedList<HashMap<String, Object>>>> getMetricsTasks =
+                new ArrayList<Callable<LinkedList<HashMap<String, Object>>>>();
+
+            for(Instance instance : instances) {
+                MetricCollectionTask task = new MetricCollectionTask(instance);
+                getMetricsTasks.add(task);
+            }
+
             List<Future<LinkedList<HashMap<String, Object>>>> results =
-                results = threadPoolExecutor.invokeAll(instances, timeout, TimeUnit.MILLISECONDS);
+                threadPoolExecutor.invokeAll(getMetricsTasks, appConfig.getCollectionTimeout(), TimeUnit.SECONDS);
 
             for (int i=0; i<results.size(); i++) {
                 LinkedList<HashMap<String, Object>> metrics;
@@ -491,19 +536,10 @@ public class App {
             instance.cleanUpAsync();
 
             // Resetting the instance
-            final Instance newInstance = new Instance(instance, appConfig);
+            Instance newInstance = new Instance(instance, appConfig);
 
             // create the initializing task
-            Callable<Void> task = new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    // Try to reinit the connection and force to renew it
-                    LOGGER.info("Trying to reconnect to: " + newInstance);
-
-                    newInstance.init(true);
-                    return null;
-                }
-            };
+            InstanceInitializingTask task = new InstanceInitializingTask(newInstance);
 
             newInstances.add(newInstance);
             fixInstanceTasks.add(task);
@@ -512,7 +548,8 @@ public class App {
         // Run scheduled tasks to attempt to fix broken instances (reconnect)
         List<Integer> fixedInstanceIndices = new ArrayList<Integer>();
         try {
-            List<Future<Void>> results = threadPoolExecutor.invokeAll(fixInstanceTasks, timeout, TimeUnit.MILLISECONDS);
+            List<Future<Void>> results = threadPoolExecutor.invokeAll(fixInstanceTasks,
+                    appConfig.getReconnectionTimeout(), TimeUnit.SECONDS);
 
             for (int i=0; i<results.size(); i++) {
                 String warning = null;
