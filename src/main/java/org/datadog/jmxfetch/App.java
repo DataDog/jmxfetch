@@ -74,7 +74,7 @@ public class App {
     private ArrayList<Instance> instances = new ArrayList<Instance>();
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
-    private ExecutorService es;
+    private ExecutorService threadPoolExecutor;
 
     private AppConfig appConfig;
     private HttpClient client;
@@ -85,7 +85,7 @@ public class App {
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
 
-        es = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+        threadPoolExecutor = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
 
         // setup client
         if (appConfig.remoteEnabled()) {
@@ -381,7 +381,7 @@ public class App {
     }
 
     void stop() {
-        es.shutdownNow();
+        threadPoolExecutor.shutdownNow();
     }
 
     /** 
@@ -390,19 +390,17 @@ public class App {
      * */
     public void doIteration() {
         int numberOfMetrics = 0;
+        int timeout = appConfig.getCheckPeriod();  // In milliseconds
+        Reporter reporter = appConfig.getReporter();
+        loopCounter++;
+
+
         String instanceStatus = null;
         String scStatus = null;
         String instanceMessage = null;
-
-        loopCounter++;
-        Reporter reporter = appConfig.getReporter();
-
-
-        int timeout = appConfig.getCheckPeriod();  // In milliseconds
-
         try {
             List<Future<LinkedList<HashMap<String, Object>>>> results =
-                results = es.invokeAll(instances, timeout, TimeUnit.MILLISECONDS);
+                results = threadPoolExecutor.invokeAll(instances, timeout, TimeUnit.MILLISECONDS);
 
             for (int i=0; i<results.size(); i++) {
                 LinkedList<HashMap<String, Object>> metrics;
@@ -445,7 +443,7 @@ public class App {
                     LOGGER.warn(instanceMessage, ee.getCause());
                     instanceStatus = Status.STATUS_ERROR;
                 } catch (CancellationException ee){
-                    instanceMessage = "Instance bean list refresh was canceled for instance " + instance;
+                    instanceMessage = "metric collection did not complete in time for: " + instance;
                     LOGGER.warn(instanceMessage, ee);
                     instanceStatus = Status.STATUS_ERROR;
                 } catch (InterruptedException ie) {
@@ -455,7 +453,7 @@ public class App {
                 } finally {
                     if (instanceStatus == Status.STATUS_ERROR) {
                         scStatus = Status.STATUS_ERROR;
-                        LOGGER.warn("Adding broken instance to list: " + instance.getName());
+                        LOGGER.debug("Adding broken instance to list: " + instance.getName());
                         brokenInstances.add(instance);
                     }
 
@@ -477,7 +475,7 @@ public class App {
         }
 
         // Attempt to fix broken instances
-        List<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+        List<Callable<Void>> fixInstanceTasks = new ArrayList<Callable<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
         for(Instance instance : brokenInstances) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
@@ -487,7 +485,7 @@ public class App {
                     "Maybe the server got disconnected ? Trying to reconnect.");
 
             // Remove the broken instance from the good instance list so jmxfetch won't try to
-            // collect metrics from this broken instance during next collectionm and close
+            // collect metrics from this broken instance during next collection and close
             // ongoing connections (do so asynchronously to avoid locking on network timeout).
             instances.remove(instance);
             instance.cleanUpAsync();
@@ -508,16 +506,16 @@ public class App {
             };
 
             newInstances.add(newInstance);
-            tasks.add(task);
+            fixInstanceTasks.add(task);
         }
 
-        // Run Callables
-        String warning = null;
-        List<Integer> fixed = new ArrayList<Integer>();
+        // Run scheduled tasks to attempt to fix broken instances (reconnect)
+        List<Integer> fixedInstanceIndices = new ArrayList<Integer>();
         try {
-            List<Future<Void>> results = es.invokeAll(tasks, timeout, TimeUnit.MILLISECONDS);
+            List<Future<Void>> results = threadPoolExecutor.invokeAll(fixInstanceTasks, timeout, TimeUnit.MILLISECONDS);
 
             for (int i=0; i<results.size(); i++) {
+                String warning = null;
                 Future<Void> future = results.get(i);
 
                 try{
@@ -526,10 +524,9 @@ public class App {
 
                         // If we get here all went well
                         instances.add(newInstances.get(i));
-                        fixed.add(i);  // i is the index in the brokenInstance list
+                        fixedInstanceIndices.add(i);  // i is the index in the brokenInstance list
                     }
                 } catch (ExecutionException ee) {
-                    LOGGER.info("There was en execution exception");
                     Throwable e = ee.getCause();
 
                     if(e instanceof IOException ) {
@@ -549,13 +546,15 @@ public class App {
                 } catch (Exception e) {
                     warning = " There was an unexpected exception: " + e.getMessage();
                 } finally  {
-                    Instance instance = brokenInstances.get(i);
-                    String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
+                    if (warning != null) {
+                        Instance instance = brokenInstances.get(i);
+                        String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
 
-                    LOGGER.warn(msg);
+                        LOGGER.warn(msg);
 
-                    this.reportStatus(appConfig, reporter, instance, 0, msg, Status.STATUS_ERROR);
-                    this.sendServiceCheck(reporter, instance, msg, Status.STATUS_ERROR);
+                        this.reportStatus(appConfig, reporter, instance, 0, msg, Status.STATUS_ERROR);
+                        this.sendServiceCheck(reporter, instance, msg, Status.STATUS_ERROR);
+                    }
                 }
             }
         } catch(Exception e) {
@@ -563,20 +562,20 @@ public class App {
             LOGGER.warn("JMXFetch internal error invoking concurrent tasks for broken instances: ", e);
         }
 
-        // cleanup fixed brokenInstances - matching indices in fixed List
-        ListIterator<Integer> it = fixed.listIterator(fixed.size());
+        // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
+        ListIterator<Integer> it = fixedInstanceIndices.listIterator(fixedInstanceIndices.size());
         while (it.hasPrevious()) {
             Integer idx = it.previous();
             brokenInstances.remove(idx.intValue());
         }
 
         try {
-            ThreadPoolExecutor tpe = (ThreadPoolExecutor)es;
+            ThreadPoolExecutor tpe = (ThreadPoolExecutor)threadPoolExecutor;
             if (tpe.getPoolSize() == tpe.getActiveCount()) {
                 // we have to replace the executor
                 LOGGER.warn("Executor had to be replaced, previous one hogging threads");
-                es.shutdownNow();
-                es = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+                threadPoolExecutor.shutdownNow();
+                threadPoolExecutor = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
             }
 
             appConfig.getStatus().flush();
