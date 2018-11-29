@@ -78,7 +78,7 @@ public class Instance {
         this.instanceMap = instanceMap != null ? new LinkedHashMap<String, Object>(instanceMap) : null;
         this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
-        this.tags = getTagsMap(instanceMap.get("tags"));
+        this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
         this.matchingAttributes = new LinkedList<JMXAttribute>();
         this.failingAttributes = new HashSet<JMXAttribute>();
@@ -150,7 +150,21 @@ public class Instance {
 
         loadMetricConfigFiles(appConfig, configurationList);
 
-        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) new Yaml().load(this.getClass().getResourceAsStream("default-jmx-metrics.yaml"));
+        String gcMetricConfig = "old-gc-default-jmx-metrics.yaml";
+
+        if (this.initConfig != null) {
+            Boolean newGcMetrics = (Boolean) this.initConfig.get("new_gc_metrics");
+            if (newGcMetrics != null && newGcMetrics) {
+                gcMetricConfig = "new-gc-default-jmx-metrics.yaml";
+            }
+        }
+
+        loadDefaultConfig("default-jmx-metrics.yaml");
+        loadDefaultConfig(gcMetricConfig);
+    }
+
+    private void loadDefaultConfig(String configResourcePath) {
+        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) new Yaml().load(this.getClass().getResourceAsStream(configResourcePath));
         for (LinkedHashMap<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
         }
@@ -189,21 +203,23 @@ public class Instance {
      * Format the instance tags defined in the YAML configuration file to a `LinkedHashMap`.
      * Supported inputs: `List`, `Map`.
      */
-    private static LinkedHashMap<String, String> getTagsMap(Object tagsMap){
-        try {
-            // Input has `Map` format
-            return (LinkedHashMap<String, String>) tagsMap;
+    private static LinkedHashMap<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
+        LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
+        if (appConfig.getGlobalTags() != null) {
+            tags.putAll(appConfig.getGlobalTags());
         }
-        catch (ClassCastException e){
-            // Input has `List` format
-            LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
-
-            for (String tag: (List<String>)tagsMap) {
-                tags.put(tag, null);
+        if (tagsMap != null) {
+            try {
+                // Input has `Map` format
+                tags.putAll((Map<String, String>) tagsMap);
+            } catch (ClassCastException e) {
+                // Input has `List` format
+                for (String tag : (List<String>) tagsMap) {
+                    tags.put(tag, null);
+                }
             }
-
-            return tags;
         }
+        return tags;
     }
 
     public boolean getCanonicalRateConfig() {

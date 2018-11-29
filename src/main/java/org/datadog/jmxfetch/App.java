@@ -75,7 +75,7 @@ public class App {
 
     /**
      * Main entry of JMXFetch
-     * <p/>
+     * <p>
      * See AppConfig class for more details on the args
      */
     public static void main(String[] args) {
@@ -539,8 +539,8 @@ public class App {
 
     private void loadResourceConfigs(AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
         List<String> resourceConfigList = config.getInstanceConfigResources();
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (resourceConfigList != null) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (String resourceName : resourceConfigList) {
                 String name = resourceName.replace(".yaml", "");
                 LOGGER.info("Reading " + resourceName);

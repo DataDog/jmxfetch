@@ -3,13 +3,33 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>datadog</groupId>
+    <groupId>com.datadoghq</groupId>
     <artifactId>jmxfetch</artifactId>
-    <version>0.20.2</version>
+    <version>0.22.1</version>
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
-    <url>http://maven.apache.org</url>
+    <description>JMXFetch is the new tool to collect metrics from JMX Servers in order to be sent to Datadog
+        (http://www.datadoghq.com) It is called by the Datadog Agent (https://github.com/Datadog/dd-agent) and sends
+        metrics back to the Agent using the Java dogstatsd library.
+    </description>
+    <url>https://github.com/DataDog/jmxfetch</url>
+
+    <licenses>
+        <license>
+            <name>BSD License</name>
+            <url>https://github.com/DataDog/jmxfetch/blob/master/LICENSE</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Datadog</name>
+            <email>info@datadoghq.com</email>
+            <organization>Datadog</organization>
+            <organizationUrl>https://www.datadoghq.com/</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -29,10 +49,21 @@
 
         <maven-surefire-plugin.version>2.9</maven-surefire-plugin.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
+        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-assembly-plugin.version>3.1.0</maven-assembly-plugin.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <bintray.repo>datadog/datadog-maven</bintray.repo>
+        <bintray.package>jmxfetch</bintray.package>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-jmxfetch</id>
+            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
+        </repository>
+    </distributionManagement>
     <dependencies>
         <dependency>
             <groupId>com.beust</groupId>
@@ -161,7 +192,21 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly-plugin.version}</version>
                 <configuration>
                     <archive>
                         <manifest>

@@ -1,6 +1,19 @@
 Changes
 =======
 
+# 0.22.0 / 19-10-2018
+
+### Changes
+
+* [FEATURE] Provide a way to pass extra tags when jmxfetch is used as a library. See [#191][].
+
+# 0.21.0 / 10-10-2018
+
+### Changes
+
+* [FEATURE] Adds support for rmi registry connection over SSL and client authentication. See [#185][].
+* [IMPROVEMENT] jmxfetch can now be used as a library. See [#180][].
+
 # 0.20.2 / 09-03-2018
 
 ### Changes
@@ -244,6 +257,9 @@ Changes
 [#171]: https://github.com/DataDog/jmxfetch/issues/171
 [#174]: https://github.com/DataDog/jmxfetch/issues/174
 [#178]: https://github.com/DataDog/jmxfetch/issues/178
+[#180]: https://github.com/DataDog/jmxfetch/issues/180
+[#185]: https://github.com/DataDog/jmxfetch/issues/185
+[#191]: https://github.com/DataDog/jmxfetch/issues/191
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia

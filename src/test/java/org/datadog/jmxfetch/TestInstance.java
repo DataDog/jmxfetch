@@ -23,7 +23,8 @@ public class TestInstance extends TestCommon {
 
 		run();
 		LinkedList<HashMap<String, Object>> metrics = getMetrics();
-		assertEquals(11, metrics.size());
+		assertEquals(15, metrics.size());
+		
 		run();
 		metrics = getMetrics();
 		assertEquals(0, metrics.size());
@@ -32,7 +33,7 @@ public class TestInstance extends TestCommon {
 		Thread.sleep(5000);
 		run();
 		metrics = getMetrics();
-		assertEquals(11, metrics.size());
+		assertEquals(15, metrics.size());
 	}
 
 	// assertHostnameTags is used by testEmptyDefaultHostname
