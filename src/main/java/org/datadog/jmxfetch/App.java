@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.CancellationException;
@@ -570,6 +571,14 @@ public class App {
         }
 
         try {
+            ThreadPoolExecutor tpe = (ThreadPoolExecutor)es;
+            if (tpe.getPoolSize() == tpe.getActiveCount()) {
+                // we have to replace the executor
+                LOGGER.warn("Executor had to be replaced, previous one hogging threads");
+                es.shutdownNow();
+                es = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+            }
+
             appConfig.getStatus().flush();
         } catch (Exception e) {
             LOGGER.error("Unable to flush stats.", e);
