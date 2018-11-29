@@ -59,7 +59,7 @@ public class TestInstance extends TestCommon {
 		run();
 
 		LinkedList<HashMap<String, Object>> metrics = getMetrics();
-		assertEquals(20, metrics.size());
+		assertEquals(28, metrics.size());
 		for (HashMap<String, Object> metric : metrics) {
 			String[] tags = (String[]) metric.get("tags");
 			this.assertHostnameTags(Arrays.asList(tags));
