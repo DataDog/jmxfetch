@@ -164,6 +164,9 @@ public class App {
 
         App app = new App(config);
 
+        // Adding another shutdown hook for App related tasks
+        Runtime.getRuntime().addShutdownHook(new AppHook(app));
+
         // Get config from the ipc endpoint for "list_*" actions
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT)) {
             app.getJsonConfigs();
@@ -374,6 +377,10 @@ public class App {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
+    }
+
+    void stop() {
+        es.shutdownNow();
     }
 
     /** 
