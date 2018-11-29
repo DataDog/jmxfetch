@@ -142,7 +142,21 @@ public class Instance {
 
         loadMetricConfigFiles(appConfig, configurationList);
 
-        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) new Yaml().load(this.getClass().getResourceAsStream("default-jmx-metrics.yaml"));
+        String gcMetricConfig = "old-gc-default-jmx-metrics.yaml";
+
+        if (this.initConfig != null) {
+            Boolean newGcMetrics = (Boolean) this.initConfig.get("new_gc_metrics");
+            if (newGcMetrics != null && newGcMetrics) {
+                gcMetricConfig = "new-gc-default-jmx-metrics.yaml";
+            }
+        }
+
+        loadDefaultConfig("default-jmx-metrics.yaml");
+        loadDefaultConfig(gcMetricConfig);
+    }
+
+    private void loadDefaultConfig(String configResourcePath) {
+        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) new Yaml().load(this.getClass().getResourceAsStream(configResourcePath));
         for (LinkedHashMap<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
         }

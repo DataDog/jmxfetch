@@ -57,8 +57,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 10 = 9 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(10, metrics.size());
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
 
         List<String> tags = Arrays.asList(
             "type:SimpleTestJavaApp",
@@ -87,8 +87,8 @@ public class TestApp extends TestCommon {
 
         // Assertions
 
-        // 11 metrics = 9 from `java.lang` + 2 from the user configuration file
-        assertEquals(11, metrics.size());
+        // 15 metrics = 13 from `java.lang` + 2 from the user configuration file
+        assertEquals(15, metrics.size());
 
         // Metric aliases are generated from `alias_match`
         List<String> tags = Arrays.asList(
@@ -117,8 +117,8 @@ public class TestApp extends TestCommon {
 
         // Assertions
 
-        // 10 metrics = 9 from `java.lang` + 1 from the user configuration file
-        assertEquals(10, metrics.size());
+        // 14 metrics = 13 from `java.lang` + 1 from the user configuration file
+        assertEquals(14, metrics.size());
 
         // Metric aliases are generated from `alias_match`
         List<String> tags = Arrays.asList(
@@ -148,8 +148,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 20 = 2*9 metrics from java.lang + 2*1 metric explicitly defined in the yaml config file
-        assertEquals(20, metrics.size());
+        // 14 = 2*13 metrics from java.lang + 2*1 metric explicitly defined in the yaml config file
+        assertEquals(28, metrics.size());
 
         // Assert compliancy with CASSANDRA-4009
         List<String> tags = Arrays.asList(
@@ -184,8 +184,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 10 = 9 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(10, metrics.size());
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
 
         List<String> tags = Arrays.asList(
             "type:ColumnFamilies",
@@ -207,8 +207,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 25 = 9 metrics from java.lang + 16 metrics implicitly defined
-        assertEquals(25, metrics.size());
+        // First filter 29 = 13 metrics from java.lang + 16 metrics implicitly defined
+        assertEquals(29, metrics.size());
     }
 
     @Test
@@ -225,8 +225,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 10 = 9 metrics from java.lang + 2 metrics explicitly define- 1 implicitly defined in the exclude section
-        assertEquals(10, metrics.size());
+        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly defined in the exclude section
+        assertEquals(14, metrics.size());
     }
 
     @Test
@@ -244,8 +244,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 11 = 9 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly defined in exclude section
-        assertEquals(11, metrics.size());
+        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly defined in exclude section
+        assertEquals(15, metrics.size());
     }
 
     @Test
@@ -260,8 +260,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 9 default metrics from java.lang
-        assertEquals(9, metrics.size());
+        // 13 default metrics from java.lang
+        assertEquals(13, metrics.size());
     }
 
     @Test
@@ -276,8 +276,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 10 = 9 metrics from java.lang + 1 metrics explicitly defined
-        assertEquals(10, metrics.size());
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
     }
 
     @Test
@@ -292,8 +292,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 9 = 9 metrics from java.lang + 2 metrics explicitly defined - 2 explicitly defined
-        assertEquals(9, metrics.size());
+        // First filter 13 = 13 metrics from java.lang + 2 metrics explicitly defined - 2 explicitly defined
+        assertEquals(13, metrics.size());
     }
 
     @Test
@@ -308,8 +308,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 10 = 9 metrics from java.lang + 1 metrics explicitly defined
-        assertEquals(10, metrics.size());
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
     }
 
     @Test
@@ -327,8 +327,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 11 = 9 metrics from java.lang + 2 metrics explicitly defined
-        assertEquals(11, metrics.size());
+        // First filter 15 = 13 metrics from java.lang + 2 metrics explicitly defined
+        assertEquals(15, metrics.size());
     }
 
     @Test
@@ -346,8 +346,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 10 = 9 metrics from java.lang + 1 metrics explicitly defined
-        assertEquals(10, metrics.size());
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
     }
 
     @Test
@@ -365,8 +365,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // First filter 10 = 9 metrics from java.lang + 1 metrics explicitly defined
-        assertEquals(10, metrics.size());
+        // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
+        assertEquals(14, metrics.size());
     }
 
     @Test
@@ -402,8 +402,8 @@ public class TestApp extends TestCommon {
             "env:stage",
             "newTag:test");
 
-        // 12 = 9 metrics from java.lang + the 3 collected (gauge and histogram)
-        assertEquals(12, metrics.size());
+        // 15 = 13 metrics from java.lang + the 3 collected (gauge and histogram)
+        assertEquals(16, metrics.size());
 
         assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
         assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
@@ -413,8 +413,8 @@ public class TestApp extends TestCommon {
         run();
         metrics = getMetrics();
 
-        // 13 = 9 metrics from java.lang + the 4 collected (gauge, histogram and counter)
-        assertEquals(13, metrics.size());
+        // 16 = 13 metrics from java.lang + the 4 collected (gauge, histogram and counter)
+        assertEquals(17, metrics.size());
         assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
         assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
         assertMetric("test.histogram", 424242, commonTags, 5, "histogram");
@@ -438,8 +438,8 @@ public class TestApp extends TestCommon {
             "instance:jmx_test_instance",
             "jmx_domain:org.datadog.jmxfetch.test");
 
-        // 11 = 9 metrics from java.lang + the 2 collected (gauge and histogram)
-        assertEquals(11, metrics.size());
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        assertEquals(15, metrics.size());
 
         // There should only left 2 tags per metric
         assertMetric("test1.gauge", 1000.0, commonTags, 2, "gauge");
@@ -469,8 +469,8 @@ public class TestApp extends TestCommon {
             "unknown_tag:$does-not-exist",
             "multiple:SimpleTestJavaApp-testName");
 
-        // 11 = 9 metrics from java.lang + the 2 collected (gauge and histogram)
-        assertEquals(11, metrics.size());
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        assertEquals(15, metrics.size());
 
         // There should only left 2 tags per metric
         assertMetric("test1.gauge", 1000.0, commonTags, 8, "gauge");
@@ -492,9 +492,9 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 25 = 9 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 29 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value, see jmx.yaml in the test/resources folder
-        assertEquals(25, metrics.size());
+        assertEquals(29, metrics.size());
 
 
         // We test for the presence and the value of the metrics we want to collect
@@ -525,9 +525,9 @@ public class TestApp extends TestCommon {
         // We run a second collection. The counter should now be present
         run();
         metrics = getMetrics();
-        // 27 = 9 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(27, metrics.size());
+        assertEquals(31, metrics.size());
 
 
         // We test for the same metrics but this time, the counter should be here
@@ -562,9 +562,9 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        // 27 = 9 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(27, metrics.size());
+        assertEquals(31, metrics.size());
 
 
         // Previous metrics
@@ -608,9 +608,9 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 24 = 9 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value, see jmx.yaml in the test/resources folder
-        assertEquals(24, metrics.size());
+        assertEquals(28, metrics.size());
 
 
         // We test for the presence and the value of the metrics we want to collect
@@ -640,9 +640,9 @@ public class TestApp extends TestCommon {
         // We run a second collection. The counter should now be present
         run();
         metrics = getMetrics();
-        // 26 = 9 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
+        // 30 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges implicitly collected
         // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(26, metrics.size());
+        assertEquals(30, metrics.size());
 
 
         // We test for the same metrics but this time, the counter should be here
@@ -674,12 +674,12 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        assertEquals(25, metrics.size());
+        assertEquals(29, metrics.size());
 
         // The metric should be back in the next cycle.
         run();
         metrics = getMetrics();
-        assertEquals(26, metrics.size());
+        assertEquals(30, metrics.size());
         assertMetric("test.counter", 0.0, commonTags, 5);
 
         // Check that they are working again
@@ -690,7 +690,7 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        assertEquals(26, metrics.size());
+        assertEquals(30, metrics.size());
 
         // Previous metrics
         assertMetric("this.is.100", 100.0, commonTags, 8);
@@ -732,8 +732,8 @@ public class TestApp extends TestCommon {
         run();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
-        // 13 = 12 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(43, metrics.size());
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(59, metrics.size());
 
 
         List<String> tags = Arrays.asList(
@@ -799,7 +799,7 @@ public class TestApp extends TestCommon {
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
         ArrayList<Instance> instances = getInstances();
 
-        assertEquals(23, metrics.size());
+        assertEquals(31, metrics.size());
 
         // 2(jmx_alias_match)  + 1 (jmx_sd_pipe_longname discards one)
         assertEquals(2, instances.size());
