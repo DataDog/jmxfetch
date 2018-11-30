@@ -103,9 +103,11 @@ public class App {
 
     class InstanceInitializingTask implements Callable {
             Instance instance;
+            boolean reconnect;
 
-            InstanceInitializingTask(Instance instance) {
+            InstanceInitializingTask(Instance instance, boolean reconnect) {
                 this.instance = instance;
+                this.reconnect = reconnect;
             }
 
             @Override
@@ -113,7 +115,7 @@ public class App {
                 // Try to reinit the connection and force to renew it
                 LOGGER.info("Trying to reconnect to: " + instance);
 
-                instance.init(true);
+                instance.init(reconnect);
                 return null;
             }
     };
@@ -401,6 +403,7 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
+                lastJSONConfigTS = 0;  // reset TS to get AC instances 
                 appConfig.getStatus().flush();
                 configs = getConfigs(appConfig);
                 init(true);
@@ -574,71 +577,22 @@ public class App {
             Instance newInstance = new Instance(instance, appConfig);
 
             // create the initializing task
-            InstanceInitializingTask task = new InstanceInitializingTask(newInstance);
+            InstanceInitializingTask task = new InstanceInitializingTask(newInstance, true);
 
             newInstances.add(newInstance);
             fixInstanceTasks.add(task);
         }
 
         // Run scheduled tasks to attempt to fix broken instances (reconnect)
-        List<Integer> fixedInstanceIndices = new ArrayList<Integer>();
-        try {
-            List<Future<Void>> results = threadPoolExecutor.invokeAll(fixInstanceTasks,
-                    appConfig.getReconnectionTimeout(), TimeUnit.SECONDS);
-
-            for (int i=0; i<results.size(); i++) {
-                String warning = null;
-                Future<Void> future = results.get(i);
-
-                try{
-                    if (future.isDone()) {
-                        future.get();
-
-                        // If we get here all went well
-                        instances.add(newInstances.get(i));
-                        fixedInstanceIndices.add(i);  // i is the index in the brokenInstance list
-                    }
-                } catch (ExecutionException ee) {
-                    Throwable e = ee.getCause();
-
-                    if(e instanceof IOException ) {
-                        warning =". Is a JMX Server running at this address?";
-                    } else if (e instanceof SecurityException) {
-                        warning =" because of bad credentials. Please check your credentials";
-                    } else if (e instanceof FailedLoginException) {
-                        warning =" because of bad credentials. Please check your credentials";
-                    } else {
-                        warning = " for an unknown reason." + e.getMessage();
-                    }
-
-                } catch (CancellationException ee){
-                    warning = " because connection timed out and was canceled. Please check your network.";
-                } catch (InterruptedException ie) {
-                    warning = " attempt interrupted waiting on IO";
-                } catch (Exception e) {
-                    warning = " There was an unexpected exception: " + e.getMessage();
-                } finally  {
-                    if (warning != null) {
-                        Instance instance = brokenInstances.get(i);
-                        String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
-
-                        LOGGER.warn(msg);
-
-                        this.reportStatus(appConfig, reporter, instance, 0, msg, Status.STATUS_ERROR);
-                        this.sendServiceCheck(reporter, instance, msg, Status.STATUS_ERROR);
-                    }
-                }
-            }
-        } catch(Exception e) {
-            // Should we do anything else here?
-            LOGGER.warn("JMXFetch internal error invoking concurrent tasks for broken instances: ", e);
-        }
+        List<Integer> fixedInstanceIndices = processTasks(newInstances, fixInstanceTasks,
+                appConfig.getReconnectionTimeout(), TimeUnit.SECONDS); 
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         ListIterator<Integer> it = fixedInstanceIndices.listIterator(fixedInstanceIndices.size());
         while (it.hasPrevious()) {
             Integer idx = it.previous();
-            brokenInstances.remove(idx.intValue());
+            Instance instance = brokenInstances.remove(idx.intValue());
+            instances.add(instance);
         }
 
     }
@@ -835,8 +789,7 @@ public class App {
             LinkedHashMap<String, Object> instanceMap,
             LinkedHashMap<String, Object> initConfig,
             String checkName,
-            AppConfig appConfig,
-            boolean forceNewConnection) {
+            AppConfig appConfig) {
 
         Instance instance;
         Reporter reporter = appConfig.getReporter();
@@ -847,32 +800,10 @@ public class App {
             String warning = "Unable to create instance. Please check your yaml file";
             appConfig.getStatus().addInitFailedCheck(checkName, warning, Status.STATUS_ERROR);
             LOGGER.error(warning, e);
-            return;
+            return null;
         }
 
-        try {
-            //  initiate the JMX Connection
-            instance.init(forceNewConnection);
-            instances.add(instance);
-        } catch (IOException e) {
-            instance.cleanUp();
-            brokenInstances.add(instance);
-            String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
-            this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-            LOGGER.error(warning, e);
-        } catch (Exception e) {
-            instance.cleanUp();
-            brokenInstances.add(instance);
-            String warning =
-                    "Unexpected exception while initiating instance "
-                            + instance
-                            + " : "
-                            + e.getMessage();
-            this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-            LOGGER.error(warning, e);
-        }
+        return instance;
     }
 
     /** 
@@ -881,6 +812,9 @@ public class App {
     public void init(boolean forceNewConnection) {
         clearInstances(instances);
         clearInstances(brokenInstances);
+
+        List<Callable<Void>> instanceInitTasks = new ArrayList<Callable<Void>>();
+        List<Instance> newInstances = new ArrayList<Instance>();
 
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         Iterator<Entry<String, YamlParser>> itPipeConfigs = adPipeConfigs.entrySet().iterator();
@@ -911,13 +845,13 @@ public class App {
             }
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
-                // Create a new Instance object
-                instantiate(
+                //Create a new Instance object
+                Instance instance = instantiate(
                         configInstance,
                         (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
                         name,
-                        appConfig,
-                        forceNewConnection);
+                        appConfig);
+                newInstances.add(instance);
             }
         }
 
@@ -932,10 +866,101 @@ public class App {
                         (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
                 String checkName = (String) checkConfig.get("check_name");
                 for (LinkedHashMap<String, Object> configInstance : configInstances) {
-                    instantiate(
-                            configInstance, initConfig, checkName, appConfig, forceNewConnection);
+                    Instance instance = instantiate(configInstance, initConfig, checkName, appConfig);
+                    newInstances.add(instance);
                 }
             }
         }
+
+        // shuffle the instances to avoid starvation
+        Collections.shuffle(newInstances);
+        for (Instance instance : newInstances) {
+            // create the initializing tasks
+            InstanceInitializingTask task = new InstanceInitializingTask(instance, forceNewConnection);
+            instanceInitTasks.add(task);
+        }
+
+        // Initialize the instances
+        List<Integer> successIndices = processTasks(newInstances, instanceInitTasks,
+                appConfig.getCollectionTimeout(), TimeUnit.SECONDS); 
+
+        // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
+        ListIterator<Integer> sit = successIndices.listIterator(successIndices.size());
+        while (sit.hasPrevious()) {
+            Integer idx = sit.previous();
+            instances.add(newInstances.remove(idx.intValue()));
+        }
+
+        // remaining instances are all broken
+        ListIterator<Instance> nit = newInstances.listIterator();
+        while (nit.hasNext()) {
+            Instance instance = nit.next();
+            instance.cleanUp();
+            brokenInstances.add(instance);
+        }
+
+        LOGGER.warn("AFTER INIT HEALTHY: " + instances.size());
+        LOGGER.warn("AFTER INIT UNHEALTHY: " + brokenInstances.size());
+    }
+
+    private List<Integer> processTasks(List<Instance> instances, List<Callable<Void>> tasks,
+            int timeout, TimeUnit timeUnit) {
+
+        Reporter reporter = appConfig.getReporter();
+        List<Integer> successIndices = new ArrayList<Integer>();
+
+        try {
+            List<Future<Void>> results = threadPoolExecutor.invokeAll(tasks, timeout, timeUnit);
+
+            for (int i=0; i<results.size(); i++) {
+                String warning = null;
+                Future<Void> future = results.get(i);
+
+                try{
+                    if (future.isDone()) {
+                        future.get();
+
+                        // If we get here all went well
+                        successIndices.add(i);
+                    } else if (future.isCancelled()) {
+                        warning = "could not schedule reconnect for instance.";
+                    }
+                } catch (ExecutionException ee) {
+                    Throwable e = ee.getCause();
+
+                    if(e instanceof IOException ) {
+                        warning =". Is a JMX Server running at this address?";
+                    } else if (e instanceof SecurityException) {
+                        warning =" because of bad credentials. Please check your credentials";
+                    } else if (e instanceof FailedLoginException) {
+                        warning =" because of bad credentials. Please check your credentials";
+                    } else {
+                        warning = " for an unknown reason." + e.getMessage();
+                    }
+
+                } catch (CancellationException ee){
+                    warning = " because connection timed out and was canceled. Please check your network.";
+                } catch (InterruptedException ie) {
+                    warning = " attempt interrupted waiting on IO";
+                } catch (Exception e) {
+                    warning = " There was an unexpected exception: " + e.getMessage();
+                } finally  {
+                    if (warning != null) {
+                        Instance instance = instances.get(i);
+                        String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
+
+                        LOGGER.warn(msg);
+
+                        this.reportStatus(appConfig, reporter, instance, 0, msg, Status.STATUS_ERROR);
+                        this.sendServiceCheck(reporter, instance, msg, Status.STATUS_ERROR);
+                    }
+                }
+            }
+        } catch(Exception e) {
+            // Should we do anything else here?
+            LOGGER.warn("JMXFetch internal error invoking concurrent tasks for broken instances: ", e);
+        }
+
+        return successIndices;
     }
 }
