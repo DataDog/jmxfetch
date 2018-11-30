@@ -90,7 +90,7 @@ public class App {
         public LinkedList<HashMap<String, Object>> call() throws Exception {
 
             if (!instance.timeToCollect()) {
-                LOGGER.debug("it is not time to collect, skipping run");
+                LOGGER.debug("it is not time to collect, skipping run for instance: " + instance.getName());
 
                 // Maybe raise an exception here instead...
                 return new LinkedList<HashMap<String, Object>>();
@@ -520,6 +520,24 @@ public class App {
         }
 
         // Attempt to fix broken instances
+        fixBrokenInstances(reporter);
+
+        try {
+            ThreadPoolExecutor tpe = (ThreadPoolExecutor)threadPoolExecutor;
+            if (tpe.getPoolSize() == tpe.getActiveCount()) {
+                // we have to replace the executor
+                LOGGER.warn("Executor had to be replaced, previous one hogging threads");
+                threadPoolExecutor.shutdownNow();
+                threadPoolExecutor = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+            }
+
+            appConfig.getStatus().flush();
+        } catch (Exception e) {
+            LOGGER.error("Unable to flush stats.", e);
+        }
+    }
+
+    private void fixBrokenInstances(Reporter reporter) {
         List<Callable<Void>> fixInstanceTasks = new ArrayList<Callable<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
         for(Instance instance : brokenInstances) {
@@ -606,19 +624,6 @@ public class App {
             brokenInstances.remove(idx.intValue());
         }
 
-        try {
-            ThreadPoolExecutor tpe = (ThreadPoolExecutor)threadPoolExecutor;
-            if (tpe.getPoolSize() == tpe.getActiveCount()) {
-                // we have to replace the executor
-                LOGGER.warn("Executor had to be replaced, previous one hogging threads");
-                threadPoolExecutor.shutdownNow();
-                threadPoolExecutor = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
-            }
-
-            appConfig.getStatus().flush();
-        } catch (Exception e) {
-            LOGGER.error("Unable to flush stats.", e);
-        }
     }
 
     /** 
