@@ -7,7 +7,7 @@ jdk:
 - openjdk7
 
 install: mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-script: mvn test -B -Dhttps.protocols=TLSv1.2
+script: mvn test -B -Dhttps.protocols=TLSv1.2 -Dlog4j.configuration=log4j.travis.properties
 
 addons:
   hostname: dd-jmxfetch-testhost

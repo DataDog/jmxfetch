@@ -51,7 +51,8 @@ public abstract class JMXAttribute {
     private Boolean cassandraAliasing;
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing) {
+            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing,
+            boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.matchingConf = null;
@@ -73,6 +74,9 @@ public abstract class JMXAttribute {
 
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = sanitizeParameters(beanParametersList);
+        if (emptyDefaultHostname) {
+            this.defaultTagsList.add("host:");
+        }
     }
 
     /**
@@ -303,7 +307,7 @@ public abstract class JMXAttribute {
             Matcher m = beanRegex.matcher(beanStringName);
 
             if(m.matches()) {
-            	for (int i = 0; i<= m.groupCount(); i++) { 
+                for (int i = 0; i<= m.groupCount(); i++) {
             		this.beanParameters.put(Integer.toString(i), m.group(i));
                 }
                 return true;

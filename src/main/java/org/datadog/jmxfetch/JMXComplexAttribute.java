@@ -22,8 +22,8 @@ public class JMXComplexAttribute extends JMXAttribute {
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
     public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                               Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, beanName, instanceName, connection, instanceTags, false);
+                               Connection connection, HashMap<String, String> instanceTags, boolean emptyDefaultHostname) {
+        super(attribute, beanName, instanceName, connection, instanceTags, false, emptyDefaultHostname);
         this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
     }
 
