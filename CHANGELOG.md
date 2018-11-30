@@ -1,6 +1,14 @@
 Changes
 =======
 
+# 0.23.0 / Unreleased 
+
+### Changes
+
+* [FEATURE] Support the empty_default_hostname instance field. See [#184][]
+* [FEATURE] Default JVM metrics for GC pools, class load count, and descriptors. See [#198][]
+* [BUGFIX] Hide new GC metrics behind a flag. See [#197][]
+
 # 0.22.0 / 19-10-2018
 
 ### Changes
@@ -258,8 +266,11 @@ Changes
 [#174]: https://github.com/DataDog/jmxfetch/issues/174
 [#178]: https://github.com/DataDog/jmxfetch/issues/178
 [#180]: https://github.com/DataDog/jmxfetch/issues/180
+[#184]: https://github.com/DataDog/jmxfetch/issues/184
 [#185]: https://github.com/DataDog/jmxfetch/issues/185
 [#191]: https://github.com/DataDog/jmxfetch/issues/191
+[#197]: https://github.com/DataDog/jmxfetch/issues/197
+[#198]: https://github.com/DataDog/jmxfetch/issues/198
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
