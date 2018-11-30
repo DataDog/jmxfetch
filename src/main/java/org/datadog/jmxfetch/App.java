@@ -432,9 +432,6 @@ public class App {
         loopCounter++;
 
 
-        String instanceStatus = null;
-        String scStatus = null;
-        String instanceMessage = null;
         try {
             List<Callable<LinkedList<HashMap<String, Object>>>> getMetricsTasks =
                 new ArrayList<Callable<LinkedList<HashMap<String, Object>>>>();
@@ -449,8 +446,10 @@ public class App {
 
             for (int i=0; i<results.size(); i++) {
                 LinkedList<HashMap<String, Object>> metrics;
-                instanceStatus = Status.STATUS_OK;
-                scStatus = Status.STATUS_OK;
+                String instanceStatus = Status.STATUS_OK;
+                String scStatus = Status.STATUS_OK;
+                String instanceMessage = null;
+                boolean evict = false;
 
                 Future<LinkedList<HashMap<String, Object>>> future = results.get(i);
                 Instance instance = instances.get(i); 
@@ -479,27 +478,34 @@ public class App {
                             reporter.sendMetrics(metrics, instance.getName(), instance.getCanonicalRateConfig());
 
                     } else if (future.isCancelled()) {
-                        instanceMessage = "metric collection did not complete in time for: " + instance;
+                        instanceMessage = "metric collection could not be scheduled in time for: " + instance;
                         LOGGER.warn(instanceMessage);
-                        instanceStatus = Status.STATUS_ERROR;
+                        instanceStatus = Status.STATUS_WARNING;
+                        scStatus = Status.STATUS_WARNING;
                     }
                 } catch (ExecutionException ee){
                     instanceMessage = "Unable to refresh bean list for instance " + instance;
                     LOGGER.warn(instanceMessage, ee.getCause());
                     instanceStatus = Status.STATUS_ERROR;
+                    evict = true;
                 } catch (CancellationException ee){
                     instanceMessage = "metric collection did not complete in time for: " + instance;
                     LOGGER.warn(instanceMessage, ee);
                     instanceStatus = Status.STATUS_ERROR;
+                    evict = true;
                 } catch (InterruptedException ie) {
                     instanceMessage = "Instance was interrupted completing bean list refresh for instance " + instance;
                     LOGGER.warn(instanceMessage, ie);
                     instanceStatus = Status.STATUS_ERROR;
+                    evict = true;
                 } finally {
-                    if (instanceStatus == Status.STATUS_ERROR) {
-                        scStatus = Status.STATUS_ERROR;
+                    if (evict) {
                         LOGGER.debug("Adding broken instance to list: " + instance.getName());
                         brokenInstances.add(instance);
+                    }
+
+                    if (instanceStatus == Status.STATUS_ERROR) {
+                        scStatus = Status.STATUS_ERROR;
                     }
 
                     this.reportStatus(appConfig, reporter, instance, numberOfMetrics, instanceMessage, instanceStatus);
@@ -507,10 +513,12 @@ public class App {
                 }
             }
         } catch (Exception e){
+            String instanceMessage;
+            String instanceStatus = Status.STATUS_ERROR;
+            String scStatus = Status.STATUS_ERROR;
+
             LOGGER.warn("JMXFetch internal error invoking concurrent tasks: ", e);
 
-            instanceStatus = Status.STATUS_ERROR;
-            scStatus = Status.STATUS_ERROR;
             for (Instance instance : instances) {
                 // don't add instances to broken instances, issue was internal
                 instanceMessage = "Internal JMXFetch error refreshing bean list for instance " + instance;
