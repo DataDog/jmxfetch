@@ -29,7 +29,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
-public class Instance implements Callable<LinkedList<HashMap<String, Object>>> {
+public class Instance {
     private static final Logger LOGGER = Logger.getLogger(Instance.class.getName());
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
@@ -434,19 +434,6 @@ public class Instance implements Callable<LinkedList<HashMap<String, Object>>> {
         return metrics;
     }
 
-    @Override
-    public LinkedList<HashMap<String, Object>> call() throws Exception {
-
-        if (!this.timeToCollect()) {
-            LOGGER.debug("it is not time to collect, skipping run");
-
-            // Maybe raise an exception here instead... 
-            return new LinkedList<HashMap<String, Object>>();
-        }
-
-        return this.getMetrics();
-    }
-    
     /**
      * Returns whather or not its time to collect metrics for the instance.
      * */
@@ -730,7 +717,6 @@ public class Instance implements Callable<LinkedList<HashMap<String, Object>>> {
 
             @Override
             public void run() {
-                // code goes here.
                 instance.appConfig = null;
                 if (instance.connection != null) {
                     instance.connection.closeConnector();
