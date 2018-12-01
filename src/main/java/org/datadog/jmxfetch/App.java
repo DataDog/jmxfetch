@@ -570,8 +570,8 @@ public class App {
             // Remove the broken instance from the good instance list so jmxfetch won't try to
             // collect metrics from this broken instance during next collection and close
             // ongoing connections (do so asynchronously to avoid locking on network timeout).
-            instances.remove(instance);
             instance.cleanUpAsync();
+            instances.remove(instance);
 
             // Resetting the instance
             Instance newInstance = new Instance(instance, appConfig);
@@ -591,8 +591,8 @@ public class App {
         ListIterator<Integer> it = fixedInstanceIndices.listIterator(fixedInstanceIndices.size());
         while (it.hasPrevious()) {
             Integer idx = it.previous();
-            Instance instance = brokenInstances.remove(idx.intValue());
-            instances.add(instance);
+            instances.add(newInstances.get(idx.intValue()));
+            brokenInstances.remove(idx.intValue());
         }
 
     }
@@ -891,11 +891,11 @@ public class App {
             instances.add(newInstances.remove(idx.intValue()));
         }
 
-        // remaining instances are all broken
+        // remaining instances are broken
         ListIterator<Instance> nit = newInstances.listIterator();
         while (nit.hasNext()) {
             Instance instance = nit.next();
-            instance.cleanUp();
+            instance.cleanUpAsync();
             brokenInstances.add(instance);
         }
 
