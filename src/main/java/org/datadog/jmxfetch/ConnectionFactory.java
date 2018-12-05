@@ -25,6 +25,14 @@ public class ConnectionFactory {
             return new AttachApiConnection(connectionParams);
 
         }
+
+        // This is used by dd-java-agent to enable directly connecting to the mbean server.
+        // This works because jmxfetch is being run as a library inside the process.
+        if("service:jmx:local:///".equals(connectionParams.get("jmx_url"))) {
+            LOGGER.info("Connecting using JMX Local");
+            return new LocalConnection();
+        }
+
         LOGGER.info("Connecting using JMX Remote");
         return new RemoteConnection(connectionParams);
 
