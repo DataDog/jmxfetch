@@ -898,9 +898,6 @@ public class App {
             instance.cleanUpAsync();
             brokenInstances.add(instance);
         }
-
-        LOGGER.warn("AFTER INIT HEALTHY: " + instances.size());
-        LOGGER.warn("AFTER INIT UNHEALTHY: " + brokenInstances.size());
     }
 
     private List<Integer> processTasks(List<Instance> instances, List<Callable<Void>> tasks,
