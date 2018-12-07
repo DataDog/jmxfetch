@@ -9,4 +9,4 @@ instances:
       domain: org.datadog.jmxfetch.log_init_test
       attribute:
         Triggered:
-          metric_type: value
+          metric_type: gauge
