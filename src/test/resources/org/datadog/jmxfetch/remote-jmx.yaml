@@ -1,0 +1,13 @@
+init_config:
+  is_jmx: true
+  new_gc_metrics: true
+
+instances:
+#  this is expected to fail with a socket connection error
+- jmx_url: service:jmx:rmi:///jndi/rmi://localhost:9999/jmxrmi
+  conf:
+  - include:
+      domain: org.datadog.jmxfetch.log_init_test
+      attribute:
+        Triggered:
+          metric_type: gauge

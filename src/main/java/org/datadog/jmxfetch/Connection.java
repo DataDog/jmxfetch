@@ -34,7 +34,7 @@ public class Connection {
     private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
-    private MBeanServerConnection mbs;
+    protected MBeanServerConnection mbs;
     protected HashMap<String, Object> env;
     protected JMXServiceURL address;
 
