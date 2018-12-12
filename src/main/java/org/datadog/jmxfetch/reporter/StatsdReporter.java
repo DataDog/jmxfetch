@@ -39,7 +39,7 @@ public class StatsdReporter extends Reporter {
             this.statsDClient.stop();
             init();
         }
-        if (metricType.equals("count")) {
+        if (metricType.equals("monotonic_count")) {
             statsDClient.count(metricName, (long) value, tags);
         } else if (metricType.equals("histogram")) {
             statsDClient.histogram(metricName, value, tags);

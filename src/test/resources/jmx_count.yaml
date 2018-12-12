@@ -9,5 +9,5 @@ instances:
                domain: org.datadog.jmxfetch.test
                attribute:
                     ShouldBeCounter:
-                        metric_type: count
+                        metric_type: monotonic_count
                         alias: test.counter

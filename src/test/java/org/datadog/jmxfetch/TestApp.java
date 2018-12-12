@@ -745,20 +745,6 @@ public class TestApp extends TestCommon {
         assertEquals(14, metrics.size());
         assertMetric("test.counter", 5, Collections.<String>emptyList(), 3);
 
-        // For the 4th collection we decrement the count by 8 so we should get a -8 delta
-        testApp.decrementCounter(8);
-        run();
-        metrics = getMetrics();
-        assertEquals(14, metrics.size());
-        assertMetric("test.counter", -8, Collections.<String>emptyList(), 3);
-
-        // For the 5th collection we increment the count by 3 so we should get a +3 delta
-        testApp.incrementCounter(3);
-        run();
-        metrics = getMetrics();
-        assertEquals(14, metrics.size());
-        assertMetric("test.counter", 3, Collections.<String>emptyList(), 3);
-
         assertCoverage();
     }
 
