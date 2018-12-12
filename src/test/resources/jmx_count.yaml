@@ -1,0 +1,13 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        refresh_beans: 4
+        name: jmx_test_instance
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+               attribute:
+                    ShouldBeCounter:
+                        metric_type: count
+                        alias: test.counter

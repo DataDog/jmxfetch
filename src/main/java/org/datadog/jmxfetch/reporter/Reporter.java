@@ -103,25 +103,26 @@ public abstract class Reporter {
             // rates
             if ("gauge".equals(metricType) || "histogram".equals(metricType)) {
                 sendMetricPoint(metricType, metricName, currentValue, tags);
-            } else if ("gauge_delta".equals(metricType)) {
+            } else if ("count".equals(metricType)) {
                 String key = generateId(metric);
                 if (!instanceCountersAggregator.containsKey(key)) {
                     instanceCountersAggregator.put(key,  currentValue.longValue());
                     continue;
                 }
 
-                long oldValue =   instanceCountersAggregator.get(key);
-                long delta =  currentValue.longValue() - oldValue ;
+                long oldValue = instanceCountersAggregator.get(key);
+                long delta = currentValue.longValue() - oldValue;
 
-                boolean sane = (!Double.isNaN(delta) && !Double.isInfinite(delta));
-                boolean submit = (delta >= 0 || !canonicalRate);
-
-                if  (sane && submit) {
-                    sendMetricPoint(metricType, metricName, delta, tags);
-                } else if (sane) {
-                    LOGGER.info("Canonical rate option set, and negative delta (counter reset) - not submitting.");
+                if(Double.isNaN(delta) || Double.isInfinite(delta)) {
+                    continue;
                 }
 
+                if (delta < 0 && canonicalRate) {
+                    LOGGER.debug("Counter " + metricName + " has been reset and canonical rate is enabled - not submitting.");
+                    continue;
+                }
+
+                sendMetricPoint(metricType, metricName, delta, tags);
                 instanceCountersAggregator.put(key, currentValue.longValue());
             } else { // The metric should be 'counter'
                 String key = generateId(metric);
@@ -132,7 +133,6 @@ public abstract class Reporter {
                     instanceRatesAggregator.put(key, rateInfo);
                     continue;
                 }
-                LOGGER.info("I SHOULD NOT BE HERE");
 
                 long oldTs = (Long) instanceRatesAggregator.get(key).get("ts");
                 double oldValue = (Double) instanceRatesAggregator.get(key).get(VALUE);

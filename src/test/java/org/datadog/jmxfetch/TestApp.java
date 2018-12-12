@@ -716,7 +716,55 @@ public class TestApp extends TestCommon {
         assertCoverage();
     }
 
-    /** Test JMX Service Discovery. */
+    /**
+     * Test counts.
+     */
+    @Test
+    public void testAppCount() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean( testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        initApplication("jmx_count.yaml");
+
+        // First collection should not contain our count
+        run();
+        metrics = getMetrics();
+        assertEquals(13, metrics.size());
+
+        // Since our count is still equal to 0, we should report a delta equal to 0
+        run();
+        metrics = getMetrics();
+        assertEquals(14, metrics.size());
+        assertMetric("test.counter", 0, Collections.<String>emptyList(), 3);
+
+        // For the 3rd collection we increment the count to 5 so we should get a +5 delta
+        testApp.incrementCounter(5);
+        run();
+        metrics = getMetrics();
+        assertEquals(14, metrics.size());
+        assertMetric("test.counter", 5, Collections.<String>emptyList(), 3);
+
+        // For the 4th collection we decrement the count by 8 so we should get a -8 delta
+        testApp.decrementCounter(8);
+        run();
+        metrics = getMetrics();
+        assertEquals(14, metrics.size());
+        assertMetric("test.counter", -8, Collections.<String>emptyList(), 3);
+
+        // For the 5th collection we increment the count by 3 so we should get a +3 delta
+        testApp.incrementCounter(3);
+        run();
+        metrics = getMetrics();
+        assertEquals(14, metrics.size());
+        assertMetric("test.counter", 3, Collections.<String>emptyList(), 3);
+
+        assertCoverage();
+    }
+
+    /** 
+     * Test JMX Service Discovery.
+     * */
     @Test
     public void testServiceDiscovery() throws Exception {
         // We expose a few metrics through JMX
