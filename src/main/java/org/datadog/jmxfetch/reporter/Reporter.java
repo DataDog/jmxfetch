@@ -117,13 +117,14 @@ public abstract class Reporter {
                     continue;
                 }
 
+                instanceCountersAggregator.put(key, currentValue.longValue());
+
                 if (delta < 0 && canonicalRate) {
-                    LOGGER.debug("Counter " + metricName + " has been reset and canonical rate is enabled - not submitting.");
+                    LOGGER.info("Counter " + metricName + " has been reset and canonical rate is enabled - not submitting.");
                     continue;
                 }
-
                 sendMetricPoint(metricType, metricName, delta, tags);
-                instanceCountersAggregator.put(key, currentValue.longValue());
+
             } else { // The metric should be 'counter'
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
