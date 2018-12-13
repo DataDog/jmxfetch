@@ -76,6 +76,7 @@ public class App {
     private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
     private ExecutorService threadPoolExecutor;
+    private ExecutorService recoveryThreadPoolExecutor;
 
     private AppConfig appConfig;
     private HttpClient client;
@@ -120,6 +121,22 @@ public class App {
             }
     };
 
+    class InstanceCleanupTask implements Callable {
+            Instance instance;
+
+            InstanceCleanupTask(Instance instance) {
+                this.instance = instance;
+            }
+
+            @Override
+            public Void call() throws Exception {
+                LOGGER.info("Trying to cleanup: " + instance);
+
+                instance.cleanUp();
+                return null;
+            }
+    };
+
     /**
      * Application constructor.
      * */
@@ -127,6 +144,7 @@ public class App {
         this.appConfig = appConfig;
 
         threadPoolExecutor = Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+        recoveryThreadPoolExecutor = Executors.newCachedThreadPool();
 
         // setup client
         if (appConfig.remoteEnabled()) {
@@ -261,13 +279,23 @@ public class App {
         return loopCounter;
     }
 
-    private static void clearInstances(List<Instance> instances) {
+    private void clearInstances(List<Instance> instances) {
+        List<Callable<Void>> cleanupInstanceTasks = new ArrayList<Callable<Void>>();
+
         Iterator<Instance> iterator = instances.iterator();
         while (iterator.hasNext()) {
             Instance instance = iterator.next();
-            instance.cleanUp();
-            iterator.remove();
+            
+            // create the cleanup task
+            InstanceCleanupTask task = new InstanceCleanupTask(instance);
+            cleanupInstanceTasks.add(task);
         }
+
+        processTasks(instances, cleanupInstanceTasks, appConfig.getReconnectionTimeout(), TimeUnit.SECONDS, true); 
+
+        // This is a best effort thing, we always clear the list - eventually 'orphaned' 
+        // instances should get GC'd anyhow.
+        instances.clear();
     }
 
     private String getAutoDiscoveryName(String config) {
@@ -396,6 +424,7 @@ public class App {
 
             long start = System.currentTimeMillis();
             if (this.reinit.get()) {
+                LOGGER.info("Reinitializing...");
                 init(true);
             }
 
@@ -553,13 +582,6 @@ public class App {
         List<Callable<Void>> fixInstanceTasks = new ArrayList<Callable<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
 
-        // We shuffle the broken instances to address starvation if first M
-        // instances are always broken and our thread pool is M threads deep, 
-        // then (N-M) instances could potentially never be fixed. This will
-        // help address that problem. 
-        //
-        // N should be relatively small so the overhead should be acceptable.
-        Collections.shuffle(brokenInstances);
         for(Instance instance : brokenInstances) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
@@ -585,7 +607,7 @@ public class App {
 
         // Run scheduled tasks to attempt to fix broken instances (reconnect)
         List<Integer> fixedInstanceIndices = processTasks(newInstances, fixInstanceTasks,
-                appConfig.getReconnectionTimeout(), TimeUnit.SECONDS); 
+                appConfig.getReconnectionTimeout(), TimeUnit.SECONDS, true); 
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         ListIterator<Integer> it = fixedInstanceIndices.listIterator(fixedInstanceIndices.size());
@@ -810,15 +832,18 @@ public class App {
      * Initializes instances and metric collection. 
      * */
     public void init(boolean forceNewConnection) {
+        LOGGER.info("Cleaning up instances...");
         clearInstances(instances);
         clearInstances(brokenInstances);
 
         List<Callable<Void>> instanceInitTasks = new ArrayList<Callable<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
 
+        LOGGER.info("Dealing with YAML config instances...");
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         Iterator<Entry<String, YamlParser>> itPipeConfigs = adPipeConfigs.entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
+            LOGGER.info("iterating statics...");
             Map.Entry<String, YamlParser> entry;
             boolean fromPipeIterator = false;
             if (it.hasNext()) {
@@ -846,6 +871,7 @@ public class App {
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
                 //Create a new Instance object
+                LOGGER.info("Instantiating instance for: " + name);
                 Instance instance = instantiate(
                         configInstance,
                         (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
@@ -856,6 +882,7 @@ public class App {
         }
 
         // Process JSON configurations
+        LOGGER.info("Dealing with Auto-Config instances collected...");
         if (adJsonConfigs != null) {
             for (String check : adJsonConfigs.keySet()) {
                 HashMap<String, Object> checkConfig =
@@ -866,14 +893,13 @@ public class App {
                         (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
                 String checkName = (String) checkConfig.get("check_name");
                 for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                    LOGGER.info("Instantiating instance for: " + checkName);
                     Instance instance = instantiate(configInstance, initConfig, checkName, appConfig);
                     newInstances.add(instance);
                 }
             }
         }
 
-        // shuffle the instances to avoid starvation
-        Collections.shuffle(newInstances);
         for (Instance instance : newInstances) {
             // create the initializing tasks
             InstanceInitializingTask task = new InstanceInitializingTask(instance, forceNewConnection);
@@ -881,14 +907,17 @@ public class App {
         }
 
         // Initialize the instances
+        LOGGER.info("Started instance recovery attempt...");
         List<Integer> successIndices = processTasks(newInstances, instanceInitTasks,
-                appConfig.getCollectionTimeout(), TimeUnit.SECONDS); 
+                appConfig.getCollectionTimeout(), TimeUnit.SECONDS, true); 
+        LOGGER.info("Completed instance recovery attempt...");
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         ListIterator<Integer> sit = successIndices.listIterator(successIndices.size());
         while (sit.hasPrevious()) {
             Integer idx = sit.previous();
             instances.add(newInstances.remove(idx.intValue()));
+            LOGGER.info("Recovered broken instance: " + idx);
         }
 
         // remaining instances are broken
@@ -897,17 +926,19 @@ public class App {
             Instance instance = nit.next();
             instance.cleanUpAsync();
             brokenInstances.add(instance);
+            LOGGER.info("Instance remains broken: " + instance.getName());
         }
     }
 
     private List<Integer> processTasks(List<Instance> instances, List<Callable<Void>> tasks,
-            int timeout, TimeUnit timeUnit) {
+            int timeout, TimeUnit timeUnit, boolean bounded) {
 
         Reporter reporter = appConfig.getReporter();
         List<Integer> successIndices = new ArrayList<Integer>();
+        ExecutorService threadedExecutor = bounded ? threadPoolExecutor : recoveryThreadPoolExecutor; 
 
         try {
-            List<Future<Void>> results = threadPoolExecutor.invokeAll(tasks, timeout, timeUnit);
+            List<Future<Void>> results = threadedExecutor.invokeAll(tasks, timeout, timeUnit);
 
             for (int i=0; i<results.size(); i++) {
                 String warning = null;
