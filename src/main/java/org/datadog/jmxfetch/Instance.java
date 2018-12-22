@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ClassCastException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +38,13 @@ public class Instance {
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String ATTRIBUTE = "Attribute: ";
+
+    private static final ThreadLocal<Yaml> YAML = new ThreadLocal<Yaml>() {
+        @Override
+        public Yaml initialValue() {
+            return new Yaml();
+        }
+    };
 
     private Set<ObjectName> beans;
     private LinkedList<String> beanScopes;
@@ -149,6 +157,7 @@ public class Instance {
         }
 
         loadMetricConfigFiles(appConfig, configurationList);
+        loadMetricConfigResources(appConfig, configurationList);
 
         String gcMetricConfig = "old-gc-default-jmx-metrics.yaml";
 
@@ -164,7 +173,7 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) new Yaml().load(this.getClass().getResourceAsStream(configResourcePath));
+        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
         for (LinkedHashMap<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
         }
@@ -178,7 +187,7 @@ public class Instance {
                 LOGGER.info("Reading metric config file " + yamlPath);
                 try {
                     yamlInputStream = new FileInputStream(yamlPath);
-                    ArrayList<LinkedHashMap<String, Object>> confs = (ArrayList<LinkedHashMap<String, Object>>) new Yaml().load(yamlInputStream);
+                    ArrayList<LinkedHashMap<String, Object>> confs = (ArrayList<LinkedHashMap<String, Object>>) YAML.get().load(yamlInputStream);
                     for (LinkedHashMap<String, Object> conf : confs) {
                         configurationList.add(new Configuration(conf));
                     }
@@ -190,6 +199,40 @@ public class Instance {
                     if (yamlInputStream != null) {
                         try {
                             yamlInputStream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void loadMetricConfigResources(AppConfig config, LinkedList<Configuration> configurationList) {
+        List<String> resourceConfigList = config.getMetricConfigResources();
+        if (resourceConfigList != null) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            for (String resourceName : resourceConfigList) {
+                LOGGER.info("Reading metric config resource " + resourceName);
+                InputStream inputStream = classLoader.getResourceAsStream(resourceName);
+                if (inputStream == null) {
+                    LOGGER.warn("Cannot find metric config resource" + resourceName);
+                } else {
+                    try {
+                        LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>> topYaml = (LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>>) YAML.get().load(inputStream);
+                        ArrayList<LinkedHashMap<String, Object>> jmxConf = topYaml.get("jmx_metrics");
+                        if(jmxConf != null) {
+                            for (LinkedHashMap<String, Object> conf : jmxConf) {
+                                configurationList.add(new Configuration(conf));
+                            }
+                        } else {
+                            LOGGER.warn("jmx_metrics block not found in resource " + resourceName);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("Cannot parse yaml resource " + resourceName, e);
+                    } finally {
+                        try {
+                            inputStream.close();
                         } catch (IOException e) {
                             // ignore
                         }
