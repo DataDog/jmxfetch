@@ -112,6 +112,12 @@ public class AppConfig {
             required = false)
     private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
+    @Parameter(names = {"--reconnection_thread_pool_size", "-u"},
+            description = "The size of the reconnection thread pool",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int reconnectionThreadPoolSize = DEFAULT_THREAD_POOL_SIZE;
+
     @Parameter(names = {"--collection_timeout", "-x"},
             description = "The concurrent collection timeout in seconds",
             validateWith = PositiveIntegerValidator.class,
@@ -236,6 +242,10 @@ public class AppConfig {
 
     public int getThreadPoolSize() {
         return threadPoolSize;
+    }
+
+    public int getReconnectionThreadPoolSize() {
+        return reconnectionThreadPoolSize;
     }
 
     public int getCollectionTimeout() {

@@ -6,6 +6,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -23,6 +24,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -73,7 +75,7 @@ public class App {
     private ConcurrentHashMap<String, YamlParser> adPipeConfigs =
             new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
-    private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
+    private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<String, Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
 
     private TaskProcessor collectionProcessor;
@@ -144,10 +146,15 @@ public class App {
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
 
-        collectionProcessor = new TaskProcessor(
-                Executors.newFixedThreadPool(appConfig.getThreadPoolSize()), appConfig.getReporter(), LOGGER);
-        recoveryProcessor = new TaskProcessor(
-                Executors.newCachedThreadPool(), appConfig.getReporter(), LOGGER);
+        ExecutorService collectionThreadPool = appConfig.getThreadPoolSize() >= 1 ?
+            Executors.newFixedThreadPool(appConfig.getThreadPoolSize()) :
+            Executors.newCachedThreadPool();
+        collectionProcessor = new TaskProcessor(collectionThreadPool, appConfig.getReporter(), LOGGER);
+
+        ExecutorService recoveryThreadPool = appConfig.getReconnectionThreadPoolSize() >= 1 ? 
+            Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()) :
+            Executors.newCachedThreadPool();
+        recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter(), LOGGER);
 
         // setup client
         if (appConfig.remoteEnabled()) {
@@ -282,22 +289,29 @@ public class App {
         return loopCounter;
     }
 
-    private void clearInstances(List<Instance> instances) {
-        List<Callable<Void>> cleanupInstanceTasks = new ArrayList<Callable<Void>>();
+    private void clearInstances(Collection<Instance> instances) {
+        List<Pair<Instance, Callable<Void>>> cleanupInstanceTasks = new ArrayList<Pair<Instance, Callable<Void>>>();
 
         Iterator<Instance> iterator = instances.iterator();
         while (iterator.hasNext()) {
             Instance instance = iterator.next();
             
             // create the cleanup task
-            InstanceCleanupTask task = new InstanceCleanupTask(instance);
+            Callable<Void> callable =  new InstanceCleanupTask(instance);
+            Pair<Instance, Callable<Void>> task = Pair.of(instance, callable);
             cleanupInstanceTasks.add(task);
         }
 
 
         try {
+            if (!recoveryProcessor.ready()) {
+                LOGGER.warn("Executor has to be replaced for recovery processor, previous one hogging threads");
+                recoveryProcessor.stop();
+                recoveryProcessor.setThreadPoolExecutor(Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+            }
+
             List<TaskStatusHandler> statuses = recoveryProcessor.processTasks(
-                    instances, cleanupInstanceTasks, appConfig.getReconnectionTimeout(), TimeUnit.SECONDS,
+                    cleanupInstanceTasks, appConfig.getReconnectionTimeout(), TimeUnit.SECONDS,
                     new TaskMethod<Void>() {
                         @Override
                         public TaskStatusHandler invoke(Instance instance, Future<Void> future, Reporter reporter) {
@@ -482,11 +496,12 @@ public class App {
 
 
         try {
-            List<Callable<LinkedList<HashMap<String, Object>>>> getMetricsTasks =
-                new ArrayList<Callable<LinkedList<HashMap<String, Object>>>>();
+            List<Pair<Instance, Callable<LinkedList<HashMap<String, Object>>>>> getMetricsTasks =
+                new ArrayList<Pair<Instance, Callable<LinkedList<HashMap<String, Object>>>>>();
 
             for(Instance instance : instances) {
-                MetricCollectionTask task = new MetricCollectionTask(instance);
+                Callable<LinkedList<HashMap<String, Object>>> callable = new MetricCollectionTask(instance);
+                Pair<Instance, Callable<LinkedList<HashMap<String, Object>>>> task = Pair.of(instance, callable);
                 getMetricsTasks.add(task);
             }
 
@@ -497,7 +512,7 @@ public class App {
             }
 
             List<TaskStatusHandler> statuses = collectionProcessor.processTasks(
-                    instances, getMetricsTasks, appConfig.getCollectionTimeout(), TimeUnit.SECONDS,
+                    getMetricsTasks, appConfig.getCollectionTimeout(), TimeUnit.SECONDS,
                     new TaskMethod<LinkedList<HashMap<String, Object>>>() {
                         @Override
                         public TaskStatusHandler invoke( Instance instance, Future<LinkedList<HashMap<String, Object>>> future, Reporter reporter) {
@@ -505,7 +520,7 @@ public class App {
                         };
                     });
 
-            processCollectionStatus(instances, statuses);
+            processCollectionStatus(getMetricsTasks, statuses);
 
         } catch (Exception e){
             // INTERNAL ERROR
@@ -526,7 +541,9 @@ public class App {
         }
 
         // Attempt to fix broken instances
+        LOGGER.debug("Trying to recover broken instances...");
         fixBrokenInstances(reporter);
+        LOGGER.debug("Done trying to recover broken instances.");
 
         try {
             appConfig.getStatus().flush();
@@ -536,10 +553,9 @@ public class App {
     }
 
     private void fixBrokenInstances(Reporter reporter) {
-        List<Callable<Void>> fixInstanceTasks = new ArrayList<Callable<Void>>();
-        List<Instance> newInstances = new ArrayList<Instance>();
+        List<Pair<Instance, Callable<Void>>> fixInstanceTasks = new ArrayList<Pair<Instance, Callable<Void>>>();
 
-        for(Instance instance : brokenInstances) {
+        for(Instance instance : brokenInstanceMap.values()) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
 
@@ -556,15 +572,21 @@ public class App {
             Instance newInstance = new Instance(instance, appConfig);
 
             // create the initializing task
-            InstanceInitializingTask task = new InstanceInitializingTask(newInstance, true);
-
-            newInstances.add(newInstance);
+            Callable<Void> callable = new InstanceInitializingTask(newInstance, true);
+            Pair<Instance, Callable<Void>> task = Pair.of(newInstance, callable);
             fixInstanceTasks.add(task);
         }
 
         try {
+            if (!recoveryProcessor.ready()) {
+                LOGGER.warn("Executor has to be replaced for recovery processor, previous one hogging threads");
+                recoveryProcessor.stop();
+                recoveryProcessor.setThreadPoolExecutor(Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+            }
+
+            Collections.shuffle(fixInstanceTasks);
             List<TaskStatusHandler> statuses = recoveryProcessor.processTasks(
-                    newInstances, fixInstanceTasks, appConfig.getReconnectionTimeout(), TimeUnit.SECONDS,
+                    fixInstanceTasks, appConfig.getReconnectionTimeout(), TimeUnit.SECONDS,
                     new TaskMethod<Void>() {
                         @Override
                         public TaskStatusHandler invoke(Instance instance, Future<Void> future, Reporter reporter) {
@@ -572,10 +594,10 @@ public class App {
                         };
                     });
 
-            processFixedStatus(newInstances, statuses);
+            processFixedStatus(fixInstanceTasks, statuses);
 
             // update with statuses
-            processStatus(newInstances, statuses);
+            processStatus(fixInstanceTasks, statuses);
 
         } catch(Exception e) {
             // NADA
@@ -725,7 +747,7 @@ public class App {
                 return update;
             }
 
-            LOGGER.debug("Received the following JSON configs: " + response.getResponseBody());
+            LOGGER.info("Received the following JSON configs: " + response.getResponseBody());
 
             InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
@@ -734,7 +756,7 @@ public class App {
                 adJsonConfigs = (HashMap<String, Object>) parser.getJsonConfigs();
                 lastJsonConfigTs = timestamp;
                 update = true;
-                LOGGER.debug("update is in order - updating timestamp: " + lastJsonConfigTs);
+                LOGGER.info("update is in order - updating timestamp: " + lastJsonConfigTs);
             }
         } catch (JsonProcessingException e) {
             LOGGER.error("error processing JSON response: " + e);
@@ -797,9 +819,10 @@ public class App {
     public void init(boolean forceNewConnection) {
         LOGGER.info("Cleaning up instances...");
         clearInstances(instances);
-        clearInstances(brokenInstances);
+        clearInstances(brokenInstanceMap.values());
+        brokenInstanceMap.clear();
 
-        List<Callable<Void>> instanceInitTasks = new ArrayList<Callable<Void>>();
+        List<Pair<Instance, Callable<Void>>> instanceInitTasks = new ArrayList<Pair<Instance, Callable<Void>>>();
         List<Instance> newInstances = new ArrayList<Instance>();
 
         LOGGER.info("Dealing with YAML config instances...");
@@ -865,16 +888,23 @@ public class App {
 
         for (Instance instance : newInstances) {
             // create the initializing tasks
-            InstanceInitializingTask task = new InstanceInitializingTask(instance, forceNewConnection);
+            Callable<Void> callable = new InstanceInitializingTask(instance, forceNewConnection);
+            Pair<Instance, Callable<Void>> task = Pair.of(instance, callable);
             instanceInitTasks.add(task);
         }
 
         // Initialize the instances
-        LOGGER.info("Started instance recovery attempt...");
+        LOGGER.info("Started instance initialization...");
 
         try{
+            if (!recoveryProcessor.ready()) {
+                LOGGER.warn("Executor has to be replaced for recovery processor, previous one hogging threads");
+                recoveryProcessor.stop();
+                recoveryProcessor.setThreadPoolExecutor(Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+            }
+
             List<TaskStatusHandler> statuses = recoveryProcessor.processTasks(
-                    newInstances, instanceInitTasks, appConfig.getCollectionTimeout(), TimeUnit.SECONDS,
+                    instanceInitTasks, appConfig.getCollectionTimeout(), TimeUnit.SECONDS,
                     new TaskMethod<Void>() {
                         @Override
                         public TaskStatusHandler invoke(Instance instance, Future<Void> future, Reporter reporter) {
@@ -882,11 +912,12 @@ public class App {
                         };
                     });
 
-            LOGGER.info("Completed instance recovery attempt...");
+            LOGGER.info("Completed instance initialization...");
 
-            processInstantiationStatus(newInstances, statuses);
+            processInstantiationStatus(instanceInitTasks, statuses);
         } catch(Exception e) {
             // NADA
+            LOGGER.warn("critical issue initializing instances: " + e);
         }
     }
 
@@ -954,7 +985,7 @@ public class App {
         
     }
 
-    void processInstantiationStatus(List<Instance> instances, List<TaskStatusHandler> statuses) {
+    private <T> void processInstantiationStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
@@ -962,53 +993,51 @@ public class App {
         while (sit.hasPrevious()) {
             idx--;
 
+            Instance instance = tasks.get(idx).getLeft();
+
             try {
                 TaskStatusHandler status = sit.previous();
                 status.raiseForStatus();
 
-                this.instances.add(instances.remove(idx));
+                // All was good, add instance
+                instances.add(instance);
                 LOGGER.info("Recovered broken instance: " + idx);
             } catch (Throwable e) {
-                // NADA
+                LOGGER.info("Instance remains broken: " + instance.getName());
+                instance.cleanUpAsync();
+                brokenInstanceMap.put(instance.toString(), instance);
             }
-        }
-
-        // remaining instances are broken
-        ListIterator<Instance> nit = instances.listIterator();
-        while (nit.hasNext()) {
-            Instance instance = nit.next();
-            instance.cleanUpAsync();
-            brokenInstances.add(instance);
-            LOGGER.info("Instance remains broken: " + instance.getName());
         }
     }
 
-    void processFixedStatus(List<Instance> instances, List<TaskStatusHandler> statuses) {
-        // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
-        ListIterator<TaskStatusHandler> it = statuses.listIterator(statuses.size());
-        int idx = statuses.size();
-        while (it.hasPrevious()) {
-            TaskStatusHandler status = it.previous();
-            idx--;
+    private <T> void processFixedStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
+        // cleanup fixed broken instances - matching indices between statuses and tasks
+        ListIterator<TaskStatusHandler> it = statuses.listIterator();
+        int idx = 0;
+        while (it.hasNext()) {
+            TaskStatusHandler status = it.next();
 
             try {
                 status.raiseForStatus();
 
-                brokenInstances.remove(idx);
-                this.instances.add(instances.get(idx));
+                Instance instance = tasks.get(idx).getLeft();
+                brokenInstanceMap.remove(instance.toString());
+                this.instances.add(instance);
 
             } catch (Throwable e) {
                 // Not much to do here, instance didn't recover
+            } finally {
+                idx++;
             }
         }
     }
 
-    void processStatus(List<Instance> instances, List<TaskStatusHandler> statuses) {
+    private <T> void processStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
         for (int i=0 ; i<statuses.size(); i++) {
 
             String warning = null;
             TaskStatusHandler status = statuses.get(i);
-            Instance instance = instances.get(i);
+            Instance instance = tasks.get(i).getLeft();
             Reporter reporter = appConfig.getReporter();
 
             try {
@@ -1047,7 +1076,7 @@ public class App {
         }
     }
 
-    void processCollectionStatus(List<Instance> instances, List<TaskStatusHandler> statuses) {
+    private <T> void processCollectionStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
         for (int i=0 ; i<statuses.size(); i++) {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
@@ -1057,7 +1086,7 @@ public class App {
             Integer numberOfMetrics = new Integer(0);
 
             TaskStatusHandler status = statuses.get(i);
-            Instance instance = instances.get(i);
+            Instance instance = tasks.get(i).getLeft();
             Reporter reporter = appConfig.getReporter();
 
             try {
@@ -1092,14 +1121,14 @@ public class App {
                 instanceMessage = "Unable to refresh bean list for instance " + instance;
                 instanceStatus = Status.STATUS_ERROR;
 
-                brokenInstances.add(instance);
+                brokenInstanceMap.put(instance.toString(), instance);
                 LOGGER.debug("Adding broken instance to list: " + instance.getName());
 
                 LOGGER.warn(instanceMessage, ee.getCause());
             } catch (Throwable e) {
                 // Legit exception during task - eviction necessary
                 LOGGER.debug("Adding broken instance to list: " + instance.getName());
-                brokenInstances.add(instance);
+                brokenInstanceMap.put(instance.toString(), instance);
 
                 instanceStatus = Status.STATUS_ERROR;
                 instanceMessage = e.toString();

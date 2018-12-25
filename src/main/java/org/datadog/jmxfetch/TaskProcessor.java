@@ -1,7 +1,9 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.reporter.Reporter;
+
+import org.apache.log4j.Logger;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -35,17 +37,21 @@ public class TaskProcessor {
         return !(tpe.getPoolSize() == tpe.getActiveCount());
     }
 
-    public <T> List<TaskStatusHandler> processTasks(List<Instance> instances, List<Callable<T>> tasks,
+    public <T> List<TaskStatusHandler> processTasks(List<Pair<Instance, Callable<T>>> tasks,
             int timeout, TimeUnit timeUnit, TaskMethod<T> processor) throws Exception {
 
         List<TaskStatusHandler> statuses = new ArrayList<TaskStatusHandler>();
 
         try {
-            List<Future<T>> results = threadPoolExecutor.invokeAll(tasks, timeout, timeUnit);
+            List<Callable<T>> callables = new ArrayList<Callable<T>>();
+            for (Pair<Instance, Callable<T>> pair : tasks) {
+                callables.add(pair.getRight());
+            }
+            List<Future<T>> results = threadPoolExecutor.invokeAll(callables, timeout, timeUnit);
 
             for (int i=0; i<results.size(); i++) {
 
-                Instance instance = instances.get(i); 
+                Instance instance = tasks.get(i).getLeft();
                 try {
                     Future<T> future = results.get(i);
 
