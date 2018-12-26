@@ -84,11 +84,23 @@ public class App {
     private AppConfig appConfig;
     private HttpClient client;
 
-    class MetricCollectionTask implements Callable {
+    abstract class InstanceTask<T> implements Callable<T> {
         Instance instance;
 
-         MetricCollectionTask(Instance instance) {
+        InstanceTask(Instance instance) {
             this.instance = instance;
+        }
+
+        Instance getInstance() {
+            return instance;
+        }
+
+        abstract public T call() throws Exception;
+    }
+
+    class MetricCollectionTask extends InstanceTask<LinkedList<HashMap<String, Object>>> {
+        MetricCollectionTask(Instance instance) {
+            super(instance);
         }
 
         @Override
@@ -105,12 +117,11 @@ public class App {
         }
     }
 
-    class InstanceInitializingTask implements Callable {
-            Instance instance;
+    class InstanceInitializingTask extends InstanceTask<Void> {
             boolean reconnect;
 
             InstanceInitializingTask(Instance instance, boolean reconnect) {
-                this.instance = instance;
+                super(instance);
                 this.reconnect = reconnect;
             }
 
@@ -124,11 +135,10 @@ public class App {
             }
     };
 
-    class InstanceCleanupTask implements Callable {
-            Instance instance;
+    class InstanceCleanupTask extends InstanceTask<Void> {
 
             InstanceCleanupTask(Instance instance) {
-                this.instance = instance;
+                super(instance);
             }
 
             @Override
