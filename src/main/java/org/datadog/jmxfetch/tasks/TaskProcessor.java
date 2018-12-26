@@ -1,6 +1,7 @@
-package org.datadog.jmxfetch;
+package org.datadog.jmxfetch.tasks;
 
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.Instance;
 
 import org.apache.log4j.Logger;
 import org.apache.commons.lang3.tuple.Pair;
@@ -12,10 +13,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.List;
-
-interface TaskMethod<T> {
-  TaskStatusHandler invoke(Instance instance, Future<T> future, Reporter reporter);
-}
 
 public class TaskProcessor {
     private Reporter reporter;

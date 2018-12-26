@@ -1,6 +1,6 @@
-package org.datadog.jmxfetch;
+package org.datadog.jmxfetch.tasks;
 
-class TaskStatusHandler {
+public class TaskStatusHandler {
     Object data;
     Throwable throwableStatus;
 
