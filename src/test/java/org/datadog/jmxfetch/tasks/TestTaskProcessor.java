@@ -4,6 +4,7 @@ import  org.mockito.Spy;
 import static org.mockito.Mockito.*;
 
 import org.datadog.jmxfetch.Instance;
+import org.datadog.jmxfetch.InstanceTask;
 import org.datadog.jmxfetch.reporter.Reporter;
 
 import static org.junit.Assert.assertEquals;
@@ -20,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 
 import org.junit.Test;
@@ -31,11 +31,9 @@ public class TestTaskProcessor {
 
 	private final static Logger LOGGER = Logger.getLogger("Test Task Processor");
 
-    class TestSimpleTask implements Callable {
-        Instance instance;
-
+    class TestSimpleTask extends InstanceTask<Boolean> {
          TestSimpleTask(Instance instance) {
-            this.instance = instance;
+             super(instance);
         }
 
         @Override
@@ -92,12 +90,10 @@ public class TestTaskProcessor {
         ExecutorService testThreadPool = Executors.newFixedThreadPool(2);
         TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null, LOGGER);
 
-        List<Pair<Instance, Callable<Boolean>>> instanceTestTasks = new ArrayList<Pair<Instance, Callable<Boolean>>>();
+        List<InstanceTask<Boolean>> instanceTestTasks = new ArrayList<InstanceTask<Boolean>>();
 
         for (Instance instance: instances) {
-            Callable<Boolean> callable = new TestSimpleTask(instance);
-            Pair<Instance, Callable<Boolean>> task = Pair.of(instance, callable);
-            instanceTestTasks.add(task);
+            instanceTestTasks.add(new TestSimpleTask(instance));
         }
 
         // 10 second timeout, 2 runners in thread, plenty of time.
@@ -131,12 +127,10 @@ public class TestTaskProcessor {
         ExecutorService testThreadPool = Executors.newFixedThreadPool(2);
         TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null, LOGGER);
 
-        List<Pair<Instance, Callable<Boolean>>> instanceTestTasks = new ArrayList<Pair<Instance, Callable<Boolean>>>();
+        List<InstanceTask<Boolean>> instanceTestTasks = new ArrayList<InstanceTask<Boolean>>();
 
         for (Instance instance: instances) {
-            Callable<Boolean> callable = new TestSimpleTask(instance);
-            Pair<Instance, Callable<Boolean>> task = Pair.of(instance, callable);
-            instanceTestTasks.add(task);
+            instanceTestTasks.add(new TestSimpleTask(instance));
         }
 
         // 10 second timeout, 2 runners in thread, not enough time for all tasks - last one should fail.

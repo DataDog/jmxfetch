@@ -6,7 +6,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -31,7 +30,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutionException;
@@ -84,71 +82,6 @@ public class App {
     private AppConfig appConfig;
     private HttpClient client;
 
-    abstract class InstanceTask<T> implements Callable<T> {
-        Instance instance;
-
-        InstanceTask(Instance instance) {
-            this.instance = instance;
-        }
-
-        Instance getInstance() {
-            return instance;
-        }
-
-        abstract public T call() throws Exception;
-    }
-
-    class MetricCollectionTask extends InstanceTask<LinkedList<HashMap<String, Object>>> {
-        MetricCollectionTask(Instance instance) {
-            super(instance);
-        }
-
-        @Override
-        public LinkedList<HashMap<String, Object>> call() throws Exception {
-
-            if (!instance.timeToCollect()) {
-                LOGGER.debug("it is not time to collect, skipping run for instance: " + instance.getName());
-
-                // Maybe raise an exception here instead...
-                return new LinkedList<HashMap<String, Object>>();
-            }
-
-            return instance.getMetrics();
-        }
-    }
-
-    class InstanceInitializingTask extends InstanceTask<Void> {
-            boolean reconnect;
-
-            InstanceInitializingTask(Instance instance, boolean reconnect) {
-                super(instance);
-                this.reconnect = reconnect;
-            }
-
-            @Override
-            public Void call() throws Exception {
-                // Try to reinit the connection and force to renew it
-                LOGGER.info("Trying to reconnect to: " + instance);
-
-                instance.init(reconnect);
-                return null;
-            }
-    };
-
-    class InstanceCleanupTask extends InstanceTask<Void> {
-
-            InstanceCleanupTask(Instance instance) {
-                super(instance);
-            }
-
-            @Override
-            public Void call() throws Exception {
-                LOGGER.info("Trying to cleanup: " + instance);
-
-                instance.cleanUp();
-                return null;
-            }
-    };
 
     /**
      * Application constructor.
@@ -300,16 +233,14 @@ public class App {
     }
 
     private void clearInstances(Collection<Instance> instances) {
-        List<Pair<Instance, Callable<Void>>> cleanupInstanceTasks = new ArrayList<Pair<Instance, Callable<Void>>>();
+        List<InstanceTask<Void>> cleanupInstanceTasks = new ArrayList<InstanceTask<Void>>();
 
         Iterator<Instance> iterator = instances.iterator();
         while (iterator.hasNext()) {
             Instance instance = iterator.next();
             
             // create the cleanup task
-            Callable<Void> callable =  new InstanceCleanupTask(instance);
-            Pair<Instance, Callable<Void>> task = Pair.of(instance, callable);
-            cleanupInstanceTasks.add(task);
+            cleanupInstanceTasks.add(new InstanceCleanupTask(instance));
         }
 
 
@@ -506,13 +437,11 @@ public class App {
 
 
         try {
-            List<Pair<Instance, Callable<LinkedList<HashMap<String, Object>>>>> getMetricsTasks =
-                new ArrayList<Pair<Instance, Callable<LinkedList<HashMap<String, Object>>>>>();
+            List<InstanceTask<LinkedList<HashMap<String, Object>>>> getMetricsTasks =
+                new ArrayList<InstanceTask<LinkedList<HashMap<String, Object>>>>();
 
             for(Instance instance : instances) {
-                Callable<LinkedList<HashMap<String, Object>>> callable = new MetricCollectionTask(instance);
-                Pair<Instance, Callable<LinkedList<HashMap<String, Object>>>> task = Pair.of(instance, callable);
-                getMetricsTasks.add(task);
+                getMetricsTasks.add(new MetricCollectionTask(instance));
             }
 
             if (!collectionProcessor.ready()) {
@@ -563,7 +492,7 @@ public class App {
     }
 
     private void fixBrokenInstances(Reporter reporter) {
-        List<Pair<Instance, Callable<Void>>> fixInstanceTasks = new ArrayList<Pair<Instance, Callable<Void>>>();
+        List<InstanceTask<Void>> fixInstanceTasks = new ArrayList<InstanceTask<Void>>();
 
         for(Instance instance : brokenInstanceMap.values()) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
@@ -582,9 +511,7 @@ public class App {
             Instance newInstance = new Instance(instance, appConfig);
 
             // create the initializing task
-            Callable<Void> callable = new InstanceInitializingTask(newInstance, true);
-            Pair<Instance, Callable<Void>> task = Pair.of(newInstance, callable);
-            fixInstanceTasks.add(task);
+            fixInstanceTasks.add(new InstanceInitializingTask(newInstance, true));
         }
 
         try {
@@ -832,7 +759,7 @@ public class App {
         clearInstances(brokenInstanceMap.values());
         brokenInstanceMap.clear();
 
-        List<Pair<Instance, Callable<Void>>> instanceInitTasks = new ArrayList<Pair<Instance, Callable<Void>>>();
+        List<InstanceTask<Void>> instanceInitTasks = new ArrayList<InstanceTask<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
 
         LOGGER.info("Dealing with YAML config instances...");
@@ -898,9 +825,7 @@ public class App {
 
         for (Instance instance : newInstances) {
             // create the initializing tasks
-            Callable<Void> callable = new InstanceInitializingTask(instance, forceNewConnection);
-            Pair<Instance, Callable<Void>> task = Pair.of(instance, callable);
-            instanceInitTasks.add(task);
+            instanceInitTasks.add(new InstanceInitializingTask(instance, forceNewConnection));
         }
 
         // Initialize the instances
@@ -995,7 +920,7 @@ public class App {
         
     }
 
-    private <T> void processInstantiationStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
+    private <T> void processInstantiationStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
@@ -1003,7 +928,7 @@ public class App {
         while (sit.hasPrevious()) {
             idx--;
 
-            Instance instance = tasks.get(idx).getLeft();
+            Instance instance = tasks.get(idx).getInstance();
 
             try {
                 TaskStatusHandler status = sit.previous();
@@ -1020,7 +945,7 @@ public class App {
         }
     }
 
-    private <T> void processFixedStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
+    private <T> void processFixedStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
         // cleanup fixed broken instances - matching indices between statuses and tasks
         ListIterator<TaskStatusHandler> it = statuses.listIterator();
         int idx = 0;
@@ -1030,7 +955,7 @@ public class App {
             try {
                 status.raiseForStatus();
 
-                Instance instance = tasks.get(idx).getLeft();
+                Instance instance = tasks.get(idx).getInstance();
                 brokenInstanceMap.remove(instance.toString());
                 this.instances.add(instance);
 
@@ -1042,12 +967,12 @@ public class App {
         }
     }
 
-    private <T> void processStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
+    private <T> void processStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
         for (int i=0 ; i<statuses.size(); i++) {
 
             String warning = null;
             TaskStatusHandler status = statuses.get(i);
-            Instance instance = tasks.get(i).getLeft();
+            Instance instance = tasks.get(i).getInstance();
             Reporter reporter = appConfig.getReporter();
 
             try {
@@ -1086,7 +1011,7 @@ public class App {
         }
     }
 
-    private <T> void processCollectionStatus(List<Pair<Instance, Callable<T>>> tasks, List<TaskStatusHandler> statuses) {
+    private <T> void processCollectionStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
         for (int i=0 ; i<statuses.size(); i++) {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
@@ -1096,7 +1021,7 @@ public class App {
             Integer numberOfMetrics = new Integer(0);
 
             TaskStatusHandler status = statuses.get(i);
-            Instance instance = tasks.get(i).getLeft();
+            Instance instance = tasks.get(i).getInstance();
             Reporter reporter = appConfig.getReporter();
 
             try {
