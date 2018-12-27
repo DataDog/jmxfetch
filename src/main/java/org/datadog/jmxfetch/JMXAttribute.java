@@ -506,7 +506,6 @@ public abstract class JMXAttribute {
             // Same as above
         }
 
-
         return alias;
     }
 
