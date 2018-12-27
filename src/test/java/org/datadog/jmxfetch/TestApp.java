@@ -87,8 +87,8 @@ public class TestApp extends TestCommon {
 
         // Assertions
 
-        // 15 metrics = 13 from `java.lang` + 2 from the user configuration file
-        assertEquals(15, metrics.size());
+        // 16 metrics = 13 from `java.lang` + 3 from the user configuration file
+        assertEquals(16, metrics.size());
 
         // Metric aliases are generated from `alias_match`
         List<String> tags = Arrays.asList(
@@ -100,6 +100,7 @@ public class TestApp extends TestCommon {
 
         assertMetric("this.is.100.bar.baz", tags, 4);
         assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
+        assertMetric("this.is.thousand.1000.0", 1000, tags, 4);
     }
 
     /**
@@ -736,17 +737,6 @@ public class TestApp extends TestCommon {
         assertEquals(61, metrics.size());
 
         List<String> tags = Arrays.asList(
-                "type:SimpleTestJavaApp",
-                "scope:CoolScope",
-                "instance:jmx_test_instance",
-                "jmx_domain:org.datadog.jmxfetch.test",
-                "bean_host:localhost",
-                "component"
-        );
-
-        assertMetric("this.is.thousand.1000.0", 1000, tags, 6);
-
-        tags = Arrays.asList(
             "type:SimpleTestJavaApp",
             "scope:CoolScope",
             "instance:jmx_test_instance",
@@ -809,7 +799,7 @@ public class TestApp extends TestCommon {
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
         ArrayList<Instance> instances = getInstances();
 
-        assertEquals(31, metrics.size());
+        assertEquals(33, metrics.size());
 
         // 2(jmx_alias_match)  + 1 (jmx_sd_pipe_longname discards one)
         assertEquals(2, instances.size());
