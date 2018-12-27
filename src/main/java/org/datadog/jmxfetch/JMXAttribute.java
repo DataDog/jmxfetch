@@ -15,12 +15,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
+import javax.management.*;
 
 import org.apache.log4j.Logger;
 
@@ -505,8 +500,10 @@ public abstract class JMXAttribute {
         alias = alias.replace("$domain", domain);
         try {
             alias = alias.replace("$value", getJmxValue().toString());
-        } catch (Exception e) {
+        } catch (JMException e) {
             // If we haven't been able to get the value, it wasn't replaced.
+        } catch (IOException e) {
+            // Same as above
         }
 
 
