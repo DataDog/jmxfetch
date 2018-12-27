@@ -503,6 +503,12 @@ public abstract class JMXAttribute {
         // Attribute & domain
         alias = alias.replace("$attribute", fullAttributeName);
         alias = alias.replace("$domain", domain);
+        try {
+            alias = alias.replace("$value", getJmxValue().toString());
+        } catch (Exception e) {
+            // If we haven't been able to get the value, it wasn't replaced.
+        }
+
 
         return alias;
     }

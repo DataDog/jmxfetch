@@ -733,10 +733,20 @@ public class TestApp extends TestCommon {
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(59, metrics.size());
-
+        assertEquals(61, metrics.size());
 
         List<String> tags = Arrays.asList(
+                "type:SimpleTestJavaApp",
+                "scope:CoolScope",
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "bean_host:localhost",
+                "component"
+        );
+
+        assertMetric("this.is.thousand.1000.0", 1000, tags, 6);
+
+        tags = Arrays.asList(
             "type:SimpleTestJavaApp",
             "scope:CoolScope",
             "instance:jmx_test_instance",

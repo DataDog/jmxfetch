@@ -10,6 +10,9 @@ instances:
                     ShouldBe100:
                         metric_type: gauge
                         alias: this.is.100.$foo.$qux
+                    ShouldBe1000:
+                      metric_type: gauge
+                      alias: this.is.thousand.$value
                     Hashmap.thisis0:
                         metric_type: gauge
                         alias: $domain.$qux.$attribute
