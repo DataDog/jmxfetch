@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -27,7 +27,6 @@ import javax.security.auth.login.FailedLoginException;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.io.IOUtils;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
@@ -51,6 +50,7 @@ public class App {
     private static final String AD_LEGACY_CONFIG_TERM = "#### SERVICE-DISCOVERY TERM ####";
     private static final int AD_MAX_NAME_LEN = 80;
     private static final int AD_MAX_MAG_INSTANCES = 4; // 1000 instances ought to be enough for anyone
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private static int loopCounter;
     private int lastJSONConfigTS;
@@ -219,38 +219,29 @@ public class App {
       boolean reinit = false;
       String[] discovered;
 
-      try {
-        String configs = new String(buffer, CharEncoding.UTF_8);
-        String separator = App.AD_CONFIG_SEP;
+      String configs = new String(buffer, UTF_8);
+      String separator = App.AD_CONFIG_SEP;
 
-        if (configs.indexOf(App.AD_LEGACY_CONFIG_SEP) != -1) {
-            separator = App.AD_LEGACY_CONFIG_SEP;
-        }
-        discovered = configs.split(separator + System.getProperty("line.separator"));
-      } catch(UnsupportedEncodingException e) {
-        LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
-        return false;
+      if (configs.indexOf(App.AD_LEGACY_CONFIG_SEP) != -1) {
+          separator = App.AD_LEGACY_CONFIG_SEP;
       }
+      discovered = configs.split(separator + System.getProperty("line.separator"));
 
       for (String config : discovered) {
         if (config == null || config.isEmpty()) {
           continue;
         }
 
-        try{
-          String name = getAutoDiscoveryName(config);
-          LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
-          InputStream stream = new ByteArrayInputStream(config.getBytes(CharEncoding.UTF_8));
-          YamlParser yaml = new YamlParser(stream);
+        String name = getAutoDiscoveryName(config);
+        LOGGER.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
+        InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
+        YamlParser yaml = new YamlParser(stream);
 
-          if (this.addConfig(name, yaml)){
-            reinit = true;
-            LOGGER.debug("Configuration added succesfully reinit in order");
-          } else {
-            LOGGER.debug("Unable to apply configuration.");
-          }
-        } catch(UnsupportedEncodingException e) {
-          LOGGER.debug("Unable to parse byte buffer to UTF-8 String.");
+        if (this.addConfig(name, yaml)){
+          reinit = true;
+          LOGGER.debug("Configuration added succesfully reinit in order");
+        } else {
+          LOGGER.debug("Unable to apply configuration.");
         }
       }
 
@@ -587,7 +578,7 @@ public class App {
 
             LOGGER.debug("Received the following JSON configs: " + response.getResponseBody());
 
-            InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), "UTF-8");
+            InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
             int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
             if (timestamp > lastJSONConfigTS) {
