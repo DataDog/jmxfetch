@@ -56,7 +56,6 @@ import javax.security.auth.login.FailedLoginException;
 public class App {
     private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private static final String AUTO_DISCOVERY_PREFIX = "AD-";
-    public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
@@ -831,7 +830,7 @@ public class App {
         // Initialize the instances
         LOGGER.info("Started instance initialization...");
 
-        try{
+        try {
             if (!recoveryProcessor.ready()) {
                 LOGGER.warn("Executor has to be replaced for recovery processor, previous one hogging threads");
                 recoveryProcessor.stop();
@@ -850,6 +849,9 @@ public class App {
             LOGGER.info("Completed instance initialization...");
 
             processInstantiationStatus(instanceInitTasks, statuses);
+
+            // update with statuses
+            processStatus(instanceInitTasks, statuses);
         } catch(Exception e) {
             // NADA
             LOGGER.warn("critical issue initializing instances: " + e);
@@ -906,9 +908,7 @@ public class App {
                 exc = new TaskProcessException("metric collection could not be scheduled in time for: " + instance);
             }
         } catch (Exception e){
-            // SIGNAL ERROR
-            // What do we do with this instance message?
-            // instanceMessage = "Unable to refresh bean list for instance " + instance;
+            // Exception running task 
             exc = e;
         } 
 
@@ -970,42 +970,43 @@ public class App {
     private <T> void processStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
         for (int i=0 ; i<statuses.size(); i++) {
 
-            String warning = null;
+            InstanceTask task = tasks.get(i);
             TaskStatusHandler status = statuses.get(i);
-            Instance instance = tasks.get(i).getInstance();
+            Instance instance = task.getInstance();
             Reporter reporter = appConfig.getReporter();
+            String warning = task.getWarning();
 
             try {
                 status.raiseForStatus();
+                warning = null;
             } catch (TaskProcessException e) {
                 // NOTHING serious
             } catch (ExecutionException ee) {
                 Throwable e = ee.getCause();
 
                 if(e instanceof IOException ) {
-                    warning =". Is a JMX Server running at this address?";
+                    warning += ". Is the target JMX Server or JVM running? ";
+                    warning += e.getMessage();
                 } else if (e instanceof SecurityException) {
-                    warning =" because of bad credentials. Please check your credentials";
+                    warning += " because of bad credentials. Please check your credentials";
                 } else if (e instanceof FailedLoginException) {
-                    warning =" because of bad credentials. Please check your credentials";
+                    warning += " because of bad credentials. Please check your credentials";
                 } else {
-                    warning = " for an unknown reason." + e.getMessage();
+                    warning += " for an unknown reason." + e.getMessage();
                 }
 
             } catch (CancellationException ce){
-                warning = " because connection timed out and was canceled. Please check your network.";
+                warning += " because connection timed out and was canceled. Please check your network.";
             } catch (InterruptedException ie) {
-                warning = " attempt interrupted waiting on IO";
+                warning += " attempt interrupted waiting on IO";
             } catch (Throwable e) {
-                warning = " There was an unexpected exception: " + e.getMessage();
+                warning += " There was an unexpected exception: " + e.getMessage();
             } finally  {
                 if (warning != null) {
-                    String msg = CANNOT_CONNECT_TO_INSTANCE + instance + warning;
+                    LOGGER.warn(warning);
 
-                    LOGGER.warn(msg);
-
-                    this.reportStatus(appConfig, reporter, instance, 0, msg, Status.STATUS_ERROR);
-                    this.sendServiceCheck(reporter, instance, msg, Status.STATUS_ERROR);
+                    this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                 }
             }
         }
@@ -1020,8 +1021,9 @@ public class App {
 
             Integer numberOfMetrics = new Integer(0);
 
+            InstanceTask task = tasks.get(i);
             TaskStatusHandler status = statuses.get(i);
-            Instance instance = tasks.get(i).getInstance();
+            Instance instance = task.getInstance();
             Reporter reporter = appConfig.getReporter();
 
             try {
@@ -1044,29 +1046,29 @@ public class App {
                 if (numberOfMetrics > 0 )
                     reporter.sendMetrics(metrics, instance.getName(), instance.getCanonicalRateConfig());
 
-            } catch (TaskProcessException e) {
+            } catch (TaskProcessException te) {
                 // This would be "fine" - no need to evict
                 instanceStatus = Status.STATUS_WARNING;
                 scStatus = Status.STATUS_WARNING;
 
-                instanceMessage = e.toString();
+                instanceMessage = te.toString();
 
                 LOGGER.warn(instanceMessage);
             } catch (ExecutionException ee){
-                instanceMessage = "Unable to refresh bean list for instance " + instance;
+                instanceMessage = task.getWarning();
                 instanceStatus = Status.STATUS_ERROR;
 
                 brokenInstanceMap.put(instance.toString(), instance);
                 LOGGER.debug("Adding broken instance to list: " + instance.getName());
 
                 LOGGER.warn(instanceMessage, ee.getCause());
-            } catch (Throwable e) {
+            } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
                 LOGGER.debug("Adding broken instance to list: " + instance.getName());
                 brokenInstanceMap.put(instance.toString(), instance);
 
                 instanceStatus = Status.STATUS_ERROR;
-                instanceMessage = e.toString();
+                instanceMessage = task.getWarning() + ": " + t.toString();
 
                 LOGGER.warn(instanceMessage);
 

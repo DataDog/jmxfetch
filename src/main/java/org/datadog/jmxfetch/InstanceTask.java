@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 public abstract class InstanceTask<T> implements Callable<T> {
     protected final static Logger LOGGER = Logger.getLogger(InstanceTask.class.getName());
     protected Instance instance;
+    protected String warning;
 
     public InstanceTask(Instance instance) {
         this.instance = instance;
@@ -18,12 +19,21 @@ public abstract class InstanceTask<T> implements Callable<T> {
         return instance;
     }
 
+    public void setWarning(String warning) {
+       this.warning = warning;
+    }
+
+    public String getWarning() {
+        return warning;
+    }
+
     abstract public T call() throws Exception;
 }
 
 class MetricCollectionTask extends InstanceTask<LinkedList<HashMap<String, Object>>> {
     MetricCollectionTask(Instance instance) {
         super(instance);
+        setWarning("Unable to collect metrics or refresh bean list.");
     }
 
     @Override
@@ -46,6 +56,7 @@ class InstanceInitializingTask extends InstanceTask<Void> {
         InstanceInitializingTask(Instance instance, boolean reconnect) {
             super(instance);
             this.reconnect = reconnect;
+            setWarning("Unable to instantiate or initialize instance " + instance);
         }
 
         @Override
@@ -62,6 +73,7 @@ class InstanceCleanupTask extends InstanceTask<Void> {
 
         InstanceCleanupTask(Instance instance) {
             super(instance);
+            setWarning("Unable to cleanup instance " + instance);
         }
 
         @Override
