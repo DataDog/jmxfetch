@@ -1,5 +1,6 @@
 package org.datadog.jmxfetch;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -179,7 +180,8 @@ public class Instance {
         }
     }
 
-    private void loadMetricConfigFiles(AppConfig appConfig, LinkedList<Configuration> configurationList) {
+    @VisibleForTesting
+    static void loadMetricConfigFiles(AppConfig appConfig, LinkedList<Configuration> configurationList) {
         if (appConfig.getMetricConfigFiles() != null) {
             for (String fileName : appConfig.getMetricConfigFiles()) {
                 String yamlPath = new File(fileName).getAbsolutePath();
@@ -208,7 +210,8 @@ public class Instance {
         }
     }
 
-    private void loadMetricConfigResources(AppConfig config, LinkedList<Configuration> configurationList) {
+    @VisibleForTesting
+    static void loadMetricConfigResources(AppConfig config, LinkedList<Configuration> configurationList) {
         List<String> resourceConfigList = config.getMetricConfigResources();
         if (resourceConfigList != null) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
