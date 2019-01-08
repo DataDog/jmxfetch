@@ -502,8 +502,10 @@ public abstract class JMXAttribute {
             alias = alias.replace("$value", getJmxValue().toString());
         } catch (JMException e) {
             // If we haven't been able to get the value, it wasn't replaced.
+            LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName);
         } catch (IOException e) {
             // Same as above
+            LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName);
         }
 
         return alias;

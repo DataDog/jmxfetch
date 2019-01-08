@@ -13,6 +13,12 @@ instances:
                     ShouldBe1000:
                         metric_type: gauge
                         alias: this.is.thousand.$value
+                    ShouldBeConverted:
+                        metric_type: gauge
+                        alias: this.is.five.$value
+                        values:
+                            ShouldBe0: 0
+                            ShouldBe5: 5
                     Hashmap.thisis0:
                         metric_type: gauge
                         alias: $domain.$qux.$attribute
