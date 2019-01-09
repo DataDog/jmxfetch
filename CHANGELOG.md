@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.24.1 / 2018-01-09
+
+### Changes
+
+* [SECURITY] Bump FasterXML to 2.9.8. See [#206][] and [CVE-2018-1000873](https://nvd.nist.gov/vuln/detail/CVE-2018-1000873).
+
 # 0.24.0 / 2018-12-10
 
 ### Changes
@@ -278,6 +284,7 @@ Changes
 [#197]: https://github.com/DataDog/jmxfetch/issues/197
 [#198]: https://github.com/DataDog/jmxfetch/issues/198
 [#201]: https://github.com/DataDog/jmxfetch/issues/201
+[#206]: https://github.com/DataDog/jmxfetch/issues/206
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
