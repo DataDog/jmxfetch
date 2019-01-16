@@ -37,6 +37,7 @@ public class TestLogInitialization {
             return AppConfig.create(
                     ImmutableList.of("org/datadog/jmxfetch/dd-java-agent-jmx.yaml"),
                     Collections.<String>emptyList(),
+                    Collections.<String>emptyList(),
                     (int) TimeUnit.SECONDS.toMillis(30),
                     (int) TimeUnit.SECONDS.toMillis(30),
                     Collections.<String, String>emptyMap(),
@@ -50,6 +51,7 @@ public class TestLogInitialization {
         public AppConfig call() throws Exception {
             return AppConfig.create(
                     ImmutableList.of("org/datadog/jmxfetch/remote-jmx.yaml"),
+                    Collections.<String>emptyList(),
                     Collections.<String>emptyList(),
                     (int) TimeUnit.SECONDS.toMillis(30),
                     (int) TimeUnit.SECONDS.toMillis(30),

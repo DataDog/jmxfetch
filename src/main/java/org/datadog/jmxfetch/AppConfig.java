@@ -121,6 +121,8 @@ public class AppConfig {
 
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
+    // This is used by things like APM agent to provide metric configuration from resources
+    private List<String> metricConfigResources;
     // This is used by things like APM agent to provide metric configuration from files
     private List<String> metricConfigFiles;
     // This is used by things like APM agent to provide global override for bean refresh period
@@ -229,6 +231,10 @@ public class AppConfig {
         return instanceConfigResources;
     }
 
+    public List<String> getMetricConfigResources() {
+        return metricConfigResources;
+    }
+
     public List<String> getMetricConfigFiles() {
         return metricConfigFiles;
     }
@@ -246,6 +252,7 @@ public class AppConfig {
      */
     public static AppConfig create(
             List<String> instanceConfigResources,
+            List<String> metricConfigResources,
             List<String> metricConfigFiles,
             Integer checkPeriod,
             Integer refreshBeansPeriod,
@@ -256,6 +263,7 @@ public class AppConfig {
         AppConfig config = new AppConfig();
         config.action = ImmutableList.of(ACTION_COLLECT);
         config.instanceConfigResources = ImmutableList.copyOf(instanceConfigResources);
+        config.metricConfigResources = ImmutableList.copyOf(metricConfigResources);
         config.metricConfigFiles = ImmutableList.copyOf(metricConfigFiles);
         if (checkPeriod != null) {
             config.checkPeriod = checkPeriod;

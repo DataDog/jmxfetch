@@ -32,6 +32,7 @@
     </developers>
 
     <properties>
+        <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
 
         <commons-io.version>2.4</commons-io.version>
@@ -91,12 +92,6 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons-lang.version}</version>
-        </dependency>
-        <dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${apache-commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>com.datadoghq</groupId>

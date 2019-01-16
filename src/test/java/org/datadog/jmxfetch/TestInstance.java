@@ -4,7 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Arrays;
@@ -71,5 +75,28 @@ public class TestInstance extends TestCommon {
 			String[] tags = (String[]) sc.get("tags");
 			this.assertHostnameTags(Arrays.asList(tags));
         }
+	}
+
+	@Test
+	public void testLoadMetricConfigFiles() throws Exception {
+		URL defaultConfig = Instance.class.getResource("default-jmx-metrics.yaml");
+		AppConfig config = mock(AppConfig.class);
+		when(config.getMetricConfigFiles()).thenReturn(Lists.newArrayList(defaultConfig.getPath()));
+		LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
+		Instance.loadMetricConfigFiles(config, configurationList);
+
+		assertEquals(2, configurationList.size());
+	}
+
+	@Test
+	public void testLoadMetricConfigResources() throws Exception {
+		URL defaultConfig = Instance.class.getResource("sample-metrics.yaml");
+		String configResource = defaultConfig.getPath().split("test-classes/")[1];
+		AppConfig config = mock(AppConfig.class);
+		when(config.getMetricConfigResources()).thenReturn(Lists.newArrayList(configResource));
+		LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
+		Instance.loadMetricConfigResources(config, configurationList);
+
+		assertEquals(2, configurationList.size());
 	}
 }
