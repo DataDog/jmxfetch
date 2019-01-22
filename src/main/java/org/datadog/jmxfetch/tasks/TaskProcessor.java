@@ -5,7 +5,6 @@ import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.InstanceTask;
 
 import org.apache.log4j.Logger;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
