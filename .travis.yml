@@ -1,11 +1,13 @@
+dist: precise
+
 language: java
 jdk:
+- oraclejdk8
 - oraclejdk7
 - openjdk7
-- openjdk6
-notifications:
-  slack:
-    secure: bUPdpDtrBYvlJ93AmfqvPU6ZSZhFHZJiIoNf0bXJVNZyxp2rjfMC8BG6XkesbKk62s7NJM0yfZhhLAzjNG3tSA9iL5i3npbl8kRaUi2zEDOCEG0zZ+FX2NxTiNH937S6QRmCBHe9/KEkSRuMY3HNRUidAq8w6dVCrWxxj5NwxjU=
+
+install: mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script: mvn test -B -Dhttps.protocols=TLSv1.2 -Dlog4j.configuration=log4j.travis.properties
 
 addons:
   hostname: dd-jmxfetch-testhost

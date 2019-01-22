@@ -1,0 +1,54 @@
+init_config:
+    canonical_rate: true
+
+instances:
+    -   process_name_regex: .*surefire.*
+        refresh_beans: 4
+        name: jmx_test_instance
+        tags:
+            - "env:stage"
+            - "newTag:test"
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+               attribute:
+                    ShouldBe100:
+                        metric_type: gauge
+                        alias: this.is.100
+                        tags:
+                            - "foo"
+                            - "bar:baz"
+                            - gorch
+                    ShouldBeCounter:
+                        metric_type: counter
+                        alias: test.counter
+                    ShouldBeBoolean:
+                        metric_type: gauge
+                        alias: test.boolean
+                    Hashmap.thisis0:
+                        metric_type: gauge
+                        alias: subattr.this.is.0
+                    Hashmap.thisiscounter:
+                        metric_type: counter
+                        alias: subattr.counter
+                    ShouldBeConverted:
+                        metric_type: gauge
+                        alias: test.converted
+                        values:
+                          ShouldBe0: 0
+                          ShouldBe5: 5
+                    ShouldBeDefaulted:
+                        metric_type: gauge
+                        alias: test.defaulted
+                        values:
+                          default: 32
+                    Tabulardata.foo:
+                        metric_type: gauge
+                        alias: multiattr.foo
+                        tags:
+                          foo: $foo
+                          toto: $toto
+                        limit: 1
+                        sort: desc
+            - include:
+               domain: org.datadog.jmxfetch.test

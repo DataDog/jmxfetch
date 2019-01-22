@@ -19,13 +19,11 @@ import javax.management.openmbean.CompositeData;
 @SuppressWarnings("unchecked")
 public class JMXComplexAttribute extends JMXAttribute {
 
-    public static final String ALIAS = "alias";
-    public static final String METRIC_TYPE = "metric_type";
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
     public JMXComplexAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                               Connection connection, HashMap<String, String> instanceTags) {
-        super(attribute, beanName, instanceName, connection, instanceTags, false);
+                               Connection connection, HashMap<String, String> instanceTags, boolean emptyDefaultHostname) {
+        super(attribute, beanName, instanceName, connection, instanceTags, false, emptyDefaultHostname);
         this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
     }
 
@@ -36,8 +34,8 @@ public class JMXComplexAttribute extends JMXAttribute {
             for (String key : data.getCompositeType().keySet()) {
                 this.subAttributeList.put(key, new HashMap<String, Object>());
             }
-        } else if ("java.util.HashMap".equals(attributeType)) {
-            HashMap<String, Double> data = (HashMap<String, Double>) attributeValue;
+        } else if (("java.util.HashMap".equals(attributeType)) || ("java.util.Map".equals(attributeType))){
+            Map<String, Double> data = (Map<String, Double>) attributeValue;
             for (String key : data.keySet()) {
                 this.subAttributeList.put(key, new HashMap<String, Object>());
             }
@@ -67,7 +65,7 @@ public class JMXComplexAttribute extends JMXAttribute {
                 metric.put("tags", getTags());
             }
 
-            metric.put("value", getValue(subAttribute));
+            metric.put("value", castToDouble(getValue(subAttribute), subAttribute));
             metrics.add(metric);
 
         }
@@ -75,7 +73,7 @@ public class JMXComplexAttribute extends JMXAttribute {
 
     }
 
-    private double getValue(String subAttribute) throws AttributeNotFoundException, InstanceNotFoundException,
+    private Object getValue(String subAttribute) throws AttributeNotFoundException, InstanceNotFoundException,
             MBeanException, ReflectionException, IOException {
 
         Object value = this.getJmxValue();
@@ -83,11 +81,10 @@ public class JMXComplexAttribute extends JMXAttribute {
 
         if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
             CompositeData data = (CompositeData) value;
-            return getValueAsDouble(data.get(subAttribute));
-
-        } else if ("java.util.HashMap".equals(attributeType)) {
-            HashMap<String, Object> data = (HashMap<String, Object>) value;
-            return getValueAsDouble(data.get(subAttribute));
+            return data.get(subAttribute);
+        } else if (("java.util.HashMap".equals(attributeType)) || ("java.util.Map".equals(attributeType))) {
+            Map<String, Object> data = (Map<String, Object>) value;
+            return data.get(subAttribute);
         }
         throw new NumberFormatException();
     }
@@ -111,20 +108,6 @@ public class JMXComplexAttribute extends JMXAttribute {
 
         return metricType;
     }
-
-    private String getAlias(String subAttribute) {
-        String subAttributeName = getAttribute().getName() + "." + subAttribute;
-
-        Filter include = getMatchingConf().getInclude();
-        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
-        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            return ((LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute())).get(subAttributeName).get(ALIAS);
-        } else if (conf.get("metric_prefix") != null) {
-            return conf.get("metric_prefix") + "." + getDomain() + "." + subAttributeName;
-        }
-        return "jmx." + getDomain() + "." + subAttributeName;
-    }
-
 
     @Override
     public boolean match(Configuration configuration) {

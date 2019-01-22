@@ -1,0 +1,85 @@
+{
+    "configs": {
+        "jmx": {
+            "instances": [
+                {
+                    "process_name_regex": ".*surefire.*",
+                    "name": "jmx_test_instance",
+                    "conf": [
+                        {
+                            "include": {
+                                "scope": "sameScope",
+                                "domain": "org.datadog.jmxfetch.test",
+                                "type": "sameType",
+                                "additional": "additionalParam",
+                                "param": "sameParam"
+                            }
+                        },
+                        {
+                            "include": {
+                                "scope": "sameScope",
+                                "domain": "org.datadog.jmxfetch.test",
+                                "type": "sameType",
+                                "param": "sameParam"
+                            }
+                        },
+                        {
+                            "include": {
+                                "scope": "sameScope",
+                                "domain": "org.datadog.jmxfetch.test",
+                                "type": [
+                                    "sameType",
+                                    "notTheSameType"
+                                ],
+                                "param": "sameParam"
+                            }
+                        },
+                        {
+                            "include": {
+                                "bean": [
+                                    "org.datadog.jmxfetch.test:scope=sameScope,param=sameParam,type=sameType",
+                                    "org.datadog.jmxfetch.test:scope=sameScope,param=notTheSameParam,type=sameType"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "init_config": null
+        },
+        "cassandra": {
+            "instances": [
+                {
+                    "process_name_regex": ".*surefire.*",
+                    "name": "jmx_first_instance",
+                    "conf": [
+                        {
+                            "include": {
+                                "attribute": [
+                                    "ShouldBe100"
+                                ],
+                                "bean": "org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks"
+                            }
+                        }
+                    ],
+                    "cassandra_aliasing": true
+                },
+                {
+                    "process_name_regex": ".*surefire.*",
+                    "name": "jmx_second_instance",
+                    "conf": [
+                        {
+                            "include": {
+                                "attribute": [
+                                    "ShouldBe1000"
+                                ],
+                                "bean": "org.apache.cassandra.metrics:keyspace=MyKeySpace,type=ColumnFamily,scope=MyColumnFamily,name=PendingTasks"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "init_config": null
+        }
+    }
+}

@@ -1,6 +1,12 @@
 package org.datadog.jmxfetch;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ClassCastException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,6 +15,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
@@ -17,6 +25,7 @@ import javax.security.auth.login.FailedLoginException;
 
 import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.yaml.snakeyaml.Yaml;
 
 public class Instance {
     private final static Logger LOGGER = Logger.getLogger(Instance.class.getName());
@@ -24,11 +33,19 @@ public class Instance {
             "java.lang.String", "int", "float", "double", "java.lang.Double","java.lang.Float", "java.lang.Integer", "java.lang.Long",
             "java.util.concurrent.atomic.AtomicInteger", "java.util.concurrent.atomic.AtomicLong",
             "java.lang.Object", "java.lang.Boolean", "boolean", "java.lang.Number");
-    private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap");
+    private final static List<String> COMPOSED_TYPES = Arrays.asList("javax.management.openmbean.CompositeData", "java.util.HashMap", "java.util.Map");
+    private final static List<String> MULTI_TYPES = Arrays.asList("javax.management.openmbean.TabularData");
     private final static int MAX_RETURNED_METRICS = 350;
     private final static int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String ATTRIBUTE = "Attribute: ";
+
+    private static final ThreadLocal<Yaml> YAML = new ThreadLocal<Yaml>() {
+        @Override
+        public Yaml initialValue() {
+            return new Yaml();
+        }
+    };
 
     private Set<ObjectName> beans;
     private LinkedList<String> beanScopes;
@@ -36,8 +53,10 @@ public class Instance {
     private LinkedList<JMXAttribute> matchingAttributes;
     private HashSet<JMXAttribute> failingAttributes;
     private Integer refreshBeansPeriod;
+    private long lastCollectionTime;
+    private Integer minCollectionPeriod;
     private long lastRefreshTime;
-    private LinkedHashMap<String, Object> yaml;
+    private LinkedHashMap<String, Object> instanceMap;
     private LinkedHashMap<String, Object> initConfig;
     private String instanceName;
     private LinkedHashMap<String, String> tags;
@@ -47,11 +66,12 @@ public class Instance {
     private Connection connection;
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
+    private boolean emptyDefaultHostname;
 
 
     public Instance(Instance instance, AppConfig appConfig) {
-        this(instance.getYaml() != null
-                ? new LinkedHashMap<String, Object>(instance.getYaml())
+        this(instance.getInstanceMap() != null
+                ? new LinkedHashMap<String, Object>(instance.getInstanceMap())
                         : null,
                         instance.getInitConfig() != null
                         ? new LinkedHashMap<String, Object>(instance.getInitConfig())
@@ -61,25 +81,43 @@ public class Instance {
     }
 
     @SuppressWarnings("unchecked")
-    public Instance(LinkedHashMap<String, Object> yamlInstance, LinkedHashMap<String, Object> initConfig,
+    public Instance(LinkedHashMap<String, Object> instanceMap, LinkedHashMap<String, Object> initConfig,
             String checkName, AppConfig appConfig) {
         this.appConfig = appConfig;
-        this.yaml = yamlInstance != null ? new LinkedHashMap<String, Object>(yamlInstance) : null;
+        this.instanceMap = instanceMap != null ? new LinkedHashMap<String, Object>(instanceMap) : null;
         this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
-        this.instanceName = (String) yaml.get("name");
-        this.tags = (LinkedHashMap<String, String>) yaml.get("tags");
+        this.instanceName = (String) instanceMap.get("name");
+        this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
         this.matchingAttributes = new LinkedList<JMXAttribute>();
         this.failingAttributes = new HashSet<JMXAttribute>();
-        this.refreshBeansPeriod = (Integer) yaml.get("refresh_beans");
-        if (this.refreshBeansPeriod == null) {
-            this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
-            // Useful because sometimes if the application restarts, jmxfetch might read
-            // a jmxtree that is not completely initialized and would be missing some attributes
+        if (appConfig.getRefreshBeansPeriod() == null) {
+            this.refreshBeansPeriod = (Integer) instanceMap.get("refresh_beans");
+            if (this.refreshBeansPeriod == null) {
+                this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every 10 minutes
+                // Useful because sometimes if the application restarts, jmxfetch might read
+                // a jmxtree that is not completely initialized and would be missing some attributes
+            }
+        } else {
+            // Allow global overrides
+            this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
         }
+
+        this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
+        if (this.minCollectionPeriod == null && initConfig != null) {
+        	this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
+        }
+
+        try {
+            this.emptyDefaultHostname = (Boolean) this.instanceMap.get("empty_default_hostname");
+        } catch (NullPointerException e) {
+            this.emptyDefaultHostname = false;
+        }
+
+        this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
-        Object maxReturnedMetrics = this.yaml.get("max_returned_metrics");
+        Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
         if (maxReturnedMetrics == null) {
             this.maxReturnedMetrics = MAX_RETURNED_METRICS;
         } else {
@@ -88,10 +126,10 @@ public class Instance {
 
         // Generate an instance name that will be send as a tag with the metrics
         if (this.instanceName == null) {
-            if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
-                this.instanceName = this.checkName + "-" + this.yaml.get(PROCESS_NAME_REGEX);
-            } else if (this.yaml.get("host") != null) {
-                this.instanceName = this.checkName + "-" + this.yaml.get("host") + "-" + this.yaml.get("port");
+            if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+                this.instanceName = this.checkName + "-" + this.instanceMap.get(PROCESS_NAME_REGEX);
+            } else if (this.instanceMap.get("host") != null) {
+                this.instanceName = this.checkName + "-" + this.instanceMap.get("host") + "-" + this.instanceMap.get("port");
             } else {
                 LOGGER.warn("Cannot determine a unique instance name. Please define a name in your instance configuration");
                 this.instanceName = this.checkName;
@@ -100,33 +138,168 @@ public class Instance {
 
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
-        this.cassandraAliasing = (Boolean) yaml.get("cassandra_aliasing");
+        this.cassandraAliasing = (Boolean) instanceMap.get("cassandra_aliasing");
         if (this.cassandraAliasing == null){
             this.cassandraAliasing = false;
         }
 
         // In case the configuration to match beans is not specified in the "instance" parameter but in the initConfig one
-        Object yamlConf = this.yaml.get("conf");
-        if (yamlConf == null && this.initConfig != null) {
-            yamlConf = this.initConfig.get("conf");
+        Object instanceConf = this.instanceMap.get("conf");
+        if (instanceConf == null && this.initConfig != null) {
+            instanceConf = this.initConfig.get("conf");
         }
 
-        if (yamlConf == null) {
+        if (instanceConf == null) {
             LOGGER.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
-            for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (yamlConf)) {
+            for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (instanceConf)) {
                 configurationList.add(new Configuration(conf));
             }
         }
 
-        // Add the configuration to get the default basic metrics from the JVM
-        configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-1.yaml")).getParsedYaml()));
-        configurationList.add(new Configuration((LinkedHashMap<String, Object>) new YamlParser(this.getClass().getResourceAsStream("/jmx-2.yaml")).getParsedYaml()));
+        loadMetricConfigFiles(appConfig, configurationList);
+        loadMetricConfigResources(appConfig, configurationList);
+
+        String gcMetricConfig = "old-gc-default-jmx-metrics.yaml";
+
+        if (this.initConfig != null) {
+            Boolean newGcMetrics = (Boolean) this.initConfig.get("new_gc_metrics");
+            if (newGcMetrics != null && newGcMetrics) {
+                gcMetricConfig = "new-gc-default-jmx-metrics.yaml";
+            }
+        }
+
+        loadDefaultConfig("default-jmx-metrics.yaml");
+        loadDefaultConfig(gcMetricConfig);
+    }
+
+    private void loadDefaultConfig(String configResourcePath) {
+        ArrayList<LinkedHashMap<String, Object>> defaultConf = (ArrayList<LinkedHashMap<String, Object>>) YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
+        for (LinkedHashMap<String, Object> conf : defaultConf) {
+            configurationList.add(new Configuration(conf));
+        }
+    }
+
+    @VisibleForTesting
+    static void loadMetricConfigFiles(AppConfig appConfig, LinkedList<Configuration> configurationList) {
+        if (appConfig.getMetricConfigFiles() != null) {
+            for (String fileName : appConfig.getMetricConfigFiles()) {
+                String yamlPath = new File(fileName).getAbsolutePath();
+                FileInputStream yamlInputStream = null;
+                LOGGER.info("Reading metric config file " + yamlPath);
+                try {
+                    yamlInputStream = new FileInputStream(yamlPath);
+                    ArrayList<LinkedHashMap<String, Object>> confs = (ArrayList<LinkedHashMap<String, Object>>) YAML.get().load(yamlInputStream);
+                    for (LinkedHashMap<String, Object> conf : confs) {
+                        configurationList.add(new Configuration(conf));
+                    }
+                } catch (FileNotFoundException e) {
+                    LOGGER.warn("Cannot find metric config file " + yamlPath);
+                } catch (Exception e) {
+                    LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
+                } finally {
+                    if (yamlInputStream != null) {
+                        try {
+                            yamlInputStream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @VisibleForTesting
+    static void loadMetricConfigResources(AppConfig config, LinkedList<Configuration> configurationList) {
+        List<String> resourceConfigList = config.getMetricConfigResources();
+        if (resourceConfigList != null) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            for (String resourceName : resourceConfigList) {
+                LOGGER.info("Reading metric config resource " + resourceName);
+                InputStream inputStream = classLoader.getResourceAsStream(resourceName);
+                if (inputStream == null) {
+                    LOGGER.warn("Cannot find metric config resource" + resourceName);
+                } else {
+                    try {
+                        LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>> topYaml = (LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>>) YAML.get().load(inputStream);
+                        ArrayList<LinkedHashMap<String, Object>> jmxConf = topYaml.get("jmx_metrics");
+                        if(jmxConf != null) {
+                            for (LinkedHashMap<String, Object> conf : jmxConf) {
+                                configurationList.add(new Configuration(conf));
+                            }
+                        } else {
+                            LOGGER.warn("jmx_metrics block not found in resource " + resourceName);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("Cannot parse yaml resource " + resourceName, e);
+                    } finally {
+                        try {
+                            inputStream.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Format the instance tags defined in the YAML configuration file to a `LinkedHashMap`.
+     * Supported inputs: `List`, `Map`.
+     */
+    private static LinkedHashMap<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
+        LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
+        if (appConfig.getGlobalTags() != null) {
+            tags.putAll(appConfig.getGlobalTags());
+        }
+        if (tagsMap != null) {
+            try {
+                // Input has `Map` format
+                tags.putAll((Map<String, String>) tagsMap);
+            } catch (ClassCastException e) {
+                // Input has `List` format
+                for (String tag : (List<String>) tagsMap) {
+                    tags.put(tag, null);
+                }
+            }
+        }
+        return tags;
+    }
+
+    public boolean getCanonicalRateConfig() {
+        Object canonical = null;
+        if (this.initConfig != null) {
+            canonical = this.initConfig.get("canonical_rate");
+        }
+
+        if (canonical == null) {
+            return false;
+        }
+
+        if (canonical instanceof Boolean) {
+            return ((Boolean)canonical).booleanValue();
+        }
+
+        return false;
+    }
+
+    public Connection getConnection(LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection) throws IOException {
+        if (connection == null || !connection.isAlive()) {
+            LOGGER.info("Connection closed or does not exist. Creating a new connection!");
+            return ConnectionFactory.createConnection(connectionParams);
+        } else if (forceNewConnection) {
+                LOGGER.info("Forcing the creation of a new connection");
+                connection.closeConnector();
+                return ConnectionFactory.createConnection(connectionParams);
+        }
+        return connection;
     }
 
     public void init(boolean forceNewConnection) throws IOException, FailedLoginException, SecurityException {
         LOGGER.info("Trying to connect to JMX Server at " + this.toString());
-        connection = ConnectionManager.getInstance().getConnection(yaml, forceNewConnection);
+        connection = getConnection(instanceMap, forceNewConnection);
         LOGGER.info("Connected to JMX Server at " + this.toString());
         this.refreshBeansList();
         this.getMatchingAttributes();
@@ -134,19 +307,19 @@ public class Instance {
 
     @Override
     public String toString() {
-        if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
-            return "process_regex: " + this.yaml.get(PROCESS_NAME_REGEX);
-        } else if (this.yaml.get("jmx_url") != null) {
-            return (String) this.yaml.get("jmx_url");
+        if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+            return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
+        } else if (this.instanceMap.get("jmx_url") != null) {
+            return (String) this.instanceMap.get("jmx_url");
         } else {
-            return this.yaml.get("host") + ":" + this.yaml.get("port");
+            return this.instanceMap.get("host") + ":" + this.instanceMap.get("port");
         }
     }
 
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
-        // To enable this, a "refresh_beans" parameter must be specified in the yaml config file
+        // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
         if (this.refreshBeansPeriod != null && (System.currentTimeMillis() - this.lastRefreshTime) / 1000 > this.refreshBeansPeriod) {
             LOGGER.info("Refreshing bean list");
             this.refreshBeansList();
@@ -155,6 +328,9 @@ public class Instance {
 
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         Iterator<JMXAttribute> it = matchingAttributes.iterator();
+
+        // increment the lastCollectionTime
+        this.lastCollectionTime = System.currentTimeMillis();
 
         while (it.hasNext()) {
             JMXAttribute jmxAttr = it.next();
@@ -181,6 +357,16 @@ public class Instance {
             }
         }
         return metrics;
+    }
+
+    public boolean timeToCollect() {
+    	if (this.minCollectionPeriod == null) {
+    		return true;
+    	} else if ((System.currentTimeMillis() - this.lastCollectionTime) / 1000 < this.minCollectionPeriod) {
+    		return false;
+    	} else {
+    		return true;
+    	}
     }
 
     private void getMatchingAttributes() {
@@ -233,10 +419,13 @@ public class Instance {
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
                     LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo simple type");
-                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing);
+                    jmxAttribute = new JMXSimpleAttribute(attributeInfo, beanName, instanceName, connection, tags, cassandraAliasing, emptyDefaultHostname);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo complex type");
-                    jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags);
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo composite type");
+                    jmxAttribute = new JMXComplexAttribute(attributeInfo, beanName, instanceName, connection, tags, emptyDefaultHostname);
+                } else if (MULTI_TYPES.contains(attributeType)) {
+                    LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has attributeInfo tabular type");
+                    jmxAttribute = new JMXTabularAttribute(attributeInfo, beanName, instanceName, connection, tags, emptyDefaultHostname);
                 } else {
                     try {
                         LOGGER.debug(ATTRIBUTE + beanName + " : " + attributeInfo + " has an unsupported type: " + attributeType);
@@ -293,7 +482,7 @@ public class Instance {
     private void refreshBeansList() throws IOException {
         this.beans = new HashSet<ObjectName>();
         String action = appConfig.getAction();
-        Boolean limitQueryScopes = !action.equals(AppConfig.ACTION_LIST_EVERYTHING) && !action.equals(AppConfig.ACTION_LIST_EVERYTHING);
+        Boolean limitQueryScopes = !action.equals(AppConfig.ACTION_LIST_EVERYTHING) && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
         if (limitQueryScopes) {
             try {
@@ -313,12 +502,24 @@ public class Instance {
     }
 
     public String[] getServiceCheckTags() {
-
         List<String> tags = new ArrayList<String>();
-        if (this.yaml.get("host") != null) {
-            tags.add("jmx_server:" + this.yaml.get("host"));
+        if (this.instanceMap.get("host") != null) {
+            tags.add("jmx_server:" + this.instanceMap.get("host"));
+        }
+        if (this.tags != null) {
+            for (Entry<String, String> e : this.tags.entrySet()) {
+                if (e.getValue()!=null){
+                    tags.add(e.getKey() + ":" + e.getValue());
+                } else {
+                    tags.add(e.getKey());
+                }
+            }
         }
         tags.add("instance:" + this.instanceName);
+
+        if (this.emptyDefaultHostname) {
+            tags.add("host:");
+        }
         return tags.toArray(new String[tags.size()]);
     }
 
@@ -326,8 +527,8 @@ public class Instance {
         return this.instanceName;
     }
 
-    LinkedHashMap<String, Object> getYaml() {
-        return this.yaml;
+    LinkedHashMap<String, Object> getInstanceMap() {
+        return this.instanceMap;
     }
 
     LinkedHashMap<String, Object> getInitConfig() {

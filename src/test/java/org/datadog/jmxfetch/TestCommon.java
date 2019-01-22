@@ -4,7 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import  org.mockito.Spy;
+import static org.mockito.Mockito.*;
+
 import java.lang.management.ManagementFactory;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +38,7 @@ import com.beust.jcommander.JCommander;
 
 
 public class TestCommon {
-    AppConfig appConfig = new AppConfig();
+    AppConfig appConfig = spy(new AppConfig());
     App app;
     MBeanServer mbs;
     ArrayList<ObjectName> objectNames = new ArrayList<ObjectName>();
@@ -79,16 +85,51 @@ public class TestCommon {
     /**
      * Init JMXFetch with the given YAML configuration file.
      */
-    protected void initApplication(String yamlFileName){
+    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile) throws FileNotFoundException, IOException {
         // We do a first collection
         // We initialize the main app that will collect these metrics using JMX
         String confdDirectory = Thread.currentThread().getContextClassLoader().getResource(yamlFileName).getPath();
         confdDirectory = new String(confdDirectory.substring(0, confdDirectory.length() - yamlFileName.length()));
-        String[] params = {"--reporter", "console", "-c", yamlFileName, "--conf_directory", confdDirectory, "collect"};
-        new JCommander(appConfig, params);
+        List<String> params = new ArrayList<String>();
+        boolean sdEnabled = (autoDiscoveryPipeFile.length() > 0);
+        params.add("--reporter");
+        params.add("console");
+
+        if (confdDirectory != null) {
+            params.add("-c");
+            params.add(yamlFileName);
+            params.add("--conf_directory");
+            params.add(confdDirectory);
+            params.add("collect");
+        }
+
+        if (sdEnabled) {
+            params.add(4, "--tmp_directory");
+            params.add(5, "/foo"); //could be anything we're stubbing it out
+            params.add(6, "--sd_enabled");
+        }
+        new JCommander(appConfig, params.toArray(new String[params.size()]));
+
+       if (sdEnabled) {
+           String autoDiscoveryPipe = Thread.currentThread().getContextClassLoader().getResource(
+                   autoDiscoveryPipeFile).getPath();
+           when(appConfig.getAutoDiscoveryPipe()).thenReturn(autoDiscoveryPipe); //mocking with fixture file.
+       }
 
         app = new App(appConfig);
+        if (sdEnabled) {
+            FileInputStream sdPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe());
+            int len = sdPipe.available();
+            byte[] buffer = new byte[len];
+            sdPipe.read(buffer);
+            app.setReinit(app.processAutoDiscovery(buffer));
+        }
+
         app.init(false);
+    }
+
+    protected void initApplication(String yamlFileName) throws FileNotFoundException, IOException {
+        initApplication(yamlFileName, "");
     }
 
     /**
@@ -99,6 +140,13 @@ public class TestCommon {
             app.doIteration();
             metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
         }
+    }
+
+    /**
+     * Return configured instances
+     */
+    protected ArrayList<Instance> getInstances() {
+        return app.getInstances();
     }
 
     /**
@@ -140,9 +188,11 @@ public class TestCommon {
      *
      * @param countTags         number of metric tags
      *
+     * @param metricType        type of the metric (gauge, histogram, ...)
+     *
      * @return                  fail if the metric was not found
      */
-    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags){
+    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
         List<String> tags = new ArrayList<String>(commonTags);
         tags.addAll(additionalTags);
 
@@ -166,6 +216,10 @@ public class TestCommon {
                 for (String t: tags) {
                     assertTrue(mTags.contains(t));
                 }
+
+                if (metricType != null) {
+                    assertEquals(metricType, m.get("type"));
+                }
                 // Brand the metric
                 m.put("tested", true);
 
@@ -175,24 +229,47 @@ public class TestCommon {
         fail("Metric assertion failed (name: "+name+", value: "+value+", tags: "+tags+", #tags: "+countTags+").");
     }
 
+    public void assertMetric(String name, Number value, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags) {
+        assertMetric(name, value, lowerBound, upperBound, commonTags, additionalTags, countTags, null);
+    }
+
     public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags){
-        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags);
+        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, null);
+    }
+
+    public void assertMetric(String name, Number value, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
+        assertMetric(name, value, -1, -1, commonTags, additionalTags, countTags, metricType);
     }
 
     public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags){
-        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags);
+        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, null);
+    }
+    public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> commonTags, List<String> additionalTags, int countTags, String metricType){
+        assertMetric(name, -1, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType);
     }
 
     public void assertMetric(String name, Number value, List<String> tags, int countTags){
         assertMetric(name, value, tags, new ArrayList<String>(), countTags);
     }
 
+    public void assertMetric(String name, Number value, List<String> tags, int countTags, String metricType){
+        assertMetric(name, value, tags, new ArrayList<String>(), countTags, metricType);
+    }
+
     public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> tags, int countTags){
         assertMetric(name, lowerBound, upperBound, tags, new ArrayList<String>(), countTags);
     }
 
+    public void assertMetric(String name, Number lowerBound, Number upperBound, List<String> tags, int countTags, String metricType){
+        assertMetric(name, lowerBound, upperBound, tags, new ArrayList<String>(), countTags, metricType);
+    }
+
     public void assertMetric(String name, List<String> tags, int countTags){
         assertMetric(name, -1, tags, new ArrayList<String>(), countTags);
+    }
+
+    public void assertMetric(String name, List<String> tags, int countTags, String metricType){
+        assertMetric(name, -1, tags, new ArrayList<String>(), countTags, metricType);
     }
 
     /**

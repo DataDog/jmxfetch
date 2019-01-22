@@ -16,13 +16,12 @@ import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
 public class JMXSimpleAttribute extends JMXAttribute {
-
-    private String alias;
     private String metricType;
 
     public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                              Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing) {
-        super(attribute, beanName, instanceName, connection, instanceTags, cassandraAliasing);
+                              Connection connection, HashMap<String, String> instanceTags, boolean cassandraAliasing,
+                              Boolean emptyDefaultHostname) {
+        super(attribute, beanName, instanceName, connection, instanceTags, cassandraAliasing, emptyDefaultHostname);
     }
 
     @Override
@@ -31,14 +30,13 @@ public class JMXSimpleAttribute extends JMXAttribute {
         HashMap<String, Object> metric = new HashMap<String, Object>();
 
         metric.put("alias", getAlias());
-        metric.put("value", getValue());
+        metric.put("value", castToDouble(getValue(), null));
         metric.put("tags", getTags());
         metric.put("metric_type", getMetricType());
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
         metrics.add(metric);
         return metrics;
     }
-
 
     public boolean match(Configuration configuration) {
         return matchDomain(configuration)
@@ -82,49 +80,13 @@ public class JMXSimpleAttribute extends JMXAttribute {
         return false;
     }
 
-    private String getAlias() {
-        Filter include = getMatchingConf().getInclude();
-        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
-        if (alias != null) {
-            return alias;
-        } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
-            alias = attribute.get(getAttribute().getName()).get("alias");
-        } else if (conf.get("metric_prefix") != null) {
-            alias = conf.get("metric_prefix") + "." + getDomain() + "." + getAttributeName();
-        } else if (getDomain().startsWith("org.apache.cassandra")) {
-            alias = getCassandraAlias();
-        }
-
-        //If still null - generate generic alias,
-        if (alias == null) {
-            alias = "jmx." + getDomain() + "." + getAttributeName();
-        }
-        alias = convertMetricName(alias);
-        return alias;
-    }
-
-    private String getCassandraAlias() {
-        if (renameCassandraMetrics()) {
-            Map<String, String> beanParameters = getBeanParameters();
-            String metricName = beanParameters.get("name");
-            String attributeName = getAttributeName();
-            if (attributeName.equals("Value")) {
-                return "cassandra." + metricName;
-            }
-            return "cassandra." + metricName + "." + attributeName;
-        }
-        //Deprecated Cassandra metric.  Remove domain prefix.
-        return getDomain().replace("org.apache.", "") + "." + getAttributeName();
-    }
-
     private String getMetricType() {
         Filter include = getMatchingConf().getInclude();
         if (metricType != null) {
             return metricType;
         } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
             LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
-            metricType = attribute.get(getAttributeName()).get("metric_type");
+            metricType = attribute.get(getAttributeName()).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(getAttributeName()).get("type");
             }
@@ -137,8 +99,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         return metricType;
     }
 
-    private double getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+    private Object getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
             ReflectionException, IOException, NumberFormatException {
-        return getValueAsDouble(this.getJmxValue());
+        return this.getJmxValue();
     }
 }

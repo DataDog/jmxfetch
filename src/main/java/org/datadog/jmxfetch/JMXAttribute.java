@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
@@ -24,13 +26,17 @@ import org.apache.log4j.Logger;
 
 public abstract class JMXAttribute {
 
-    private final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
-    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean", "bean_regex", "attribute");
+    protected static final String ALIAS = "alias";
+    protected static final String METRIC_TYPE = "metric_type";
+    protected final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
+    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean",
+                                                                           "bean_regex", "attribute", "exclude_tags", "tags");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
     private static final String DOT_UNDERSCORE = "_*\\._*";
     protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
+
     private MBeanAttributeInfo attribute;
     private Connection connection;
     private ObjectName beanName;
@@ -38,14 +44,15 @@ public abstract class JMXAttribute {
     private String beanStringName;
     private HashMap<String, String> beanParameters;
     private String attributeName;
-    private LinkedHashMap<Object, Object> valueConversions;
+    private LinkedHashMap<String, LinkedHashMap<Object, Object>> valueConversions = new LinkedHashMap<String, LinkedHashMap<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
     private Boolean cassandraAliasing;
 
     JMXAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing) {
+            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing,
+            boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.matchingConf = null;
@@ -67,6 +74,43 @@ public abstract class JMXAttribute {
 
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = sanitizeParameters(beanParametersList);
+        if (emptyDefaultHostname) {
+            this.defaultTagsList.add("host:");
+        }
+    }
+
+    /**
+     * Remove tags listed in the 'exclude_tags' list from configuration.
+     */
+    private void applyTagsBlackList() {
+        Filter include = this.matchingConf.getInclude();
+        if (include != null) {
+
+            for (String excludedTagName : include.getExcludeTags()) {
+                for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext();) {
+                    if (it.next().startsWith(excludedTagName + ":")) {
+                        it.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Add alias tag from the 'tag_alias' configuration list
+     */
+    private void addAdditionalTags() {
+        Filter include = this.matchingConf.getInclude();
+        if (include != null) {
+            for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
+            		String alias = this.replaceByAlias(tag.getValue());
+            		if ((alias.trim().length() > 0) && alias != null) {
+            			this.defaultTagsList.add(tag.getKey() + ":" + alias);
+            		} else {
+            			LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
+            		}
+            }
+        }
     }
 
     public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
@@ -99,7 +143,12 @@ public abstract class JMXAttribute {
 
         if (instanceTags != null) {
             for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
-                beanTags.add(tag.getKey() + ":" + tag.getValue());
+                if (tag.getValue() != null) {
+                    beanTags.add(tag.getKey() + ":" + tag.getValue());
+                }
+                else {
+                    beanTags.add(tag.getKey());
+                }
             }
         }
 
@@ -205,21 +254,21 @@ public abstract class JMXAttribute {
             || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
     }
 
-    Object convertMetricValue(Object metricValue) {
+    Object convertMetricValue(Object metricValue, String field) {
         Object converted = metricValue;
 
-        if (!getValueConversions().isEmpty()) {
-            converted = getValueConversions().get(metricValue);
-            if (converted == null && getValueConversions().get("default") != null) {
-                converted = getValueConversions().get("default");
+        if (!getValueConversions(field).isEmpty()) {
+            converted = getValueConversions(field).get(metricValue);
+            if (converted == null && getValueConversions(field).get("default") != null) {
+                converted = getValueConversions(field).get("default");
             }
         }
 
         return converted;
     }
 
-    double getValueAsDouble(Object metricValue) {
-        Object value = convertMetricValue(metricValue);
+    double castToDouble(Object metricValue, String field) {
+        Object value = convertMetricValue(metricValue, field);
 
         if (value instanceof String) {
             return Double.parseDouble((String) value);
@@ -255,7 +304,12 @@ public abstract class JMXAttribute {
         }
 
         for (Pattern beanRegex : beanRegexes) {
-            if(beanRegex.matcher(beanStringName).matches()) {
+            Matcher m = beanRegex.matcher(beanStringName);
+
+            if(m.matches()) {
+                for (int i = 0; i<= m.groupCount(); i++) {
+            		this.beanParameters.put(Integer.toString(i), m.group(i));
+                }
                 return true;
             }
         }
@@ -319,24 +373,24 @@ public abstract class JMXAttribute {
     }
 
     @SuppressWarnings("unchecked")
-    HashMap<Object, Object> getValueConversions() {
-        if (valueConversions == null) {
+    HashMap<Object, Object> getValueConversions(String field) {
+        String fullAttributeName =(field!=null)?(getAttribute().getName() + "." + field):(getAttribute().getName());
+        if (valueConversions.get(fullAttributeName) == null) {
             Object includedAttribute = matchingConf.getInclude().getAttribute();
             if (includedAttribute instanceof LinkedHashMap<?, ?>) {
-                String attributeName = this.attribute.getName();
                 LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute =
-                        ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>) includedAttribute).get(attributeName);
+                        ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>) includedAttribute).get(fullAttributeName);
 
                 if (attribute != null) {
-                    valueConversions = attribute.get("values");
+                    valueConversions.put(fullAttributeName, attribute.get("values"));
                 }
             }
-            if (valueConversions == null) {
-                valueConversions = new LinkedHashMap<Object, Object>();
+            if (valueConversions.get(fullAttributeName) == null) {
+                valueConversions.put(fullAttributeName, new LinkedHashMap<Object, Object>());
             }
         }
 
-        return valueConversions;
+        return valueConversions.get(fullAttributeName);
     }
 
     public Configuration getMatchingConf() {
@@ -345,11 +399,131 @@ public abstract class JMXAttribute {
 
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
+
+        // Now that we have the matchingConf we can:
+        // - add additional tags
+        this.addAdditionalTags();
+        // - filter out excluded tags
+        this.applyTagsBlackList();
     }
 
     MBeanAttributeInfo getAttribute() {
         return attribute;
     }
+
+    public ObjectName getBeanName() {
+      return beanName;
+    }
+
+    /**
+     * Get attribute alias.
+     *
+     * In order, tries to:
+     * * Use `alias_match` to generate an alias with a regular expression
+     * * Use `alias` directly
+     * * Create an generic alias prefixed with user's `metric_prefix` preference or default to `jmx`
+     *
+     * Argument(s):
+     * * (Optional) `field`
+     *   `Null` for `JMXSimpleAttribute`.
+     */
+    protected String getAlias(String field) {
+        String alias = null;
+
+        Filter include = getMatchingConf().getInclude();
+        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
+
+        String fullAttributeName =(field!=null)?(getAttribute().getName() + "." + field):(getAttribute().getName());
+
+        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+            alias = getUserAlias(attribute, fullAttributeName);
+        }
+
+        if (alias == null) {
+            if (conf.get("metric_prefix") != null) {
+                alias = conf.get("metric_prefix") + "." + getDomain() + "." + fullAttributeName;
+            } else if (getDomain().startsWith("org.apache.cassandra")) {
+                alias = getCassandraAlias();
+            }
+        }
+
+        //If still null - generate generic alias
+        if (alias == null) {
+            alias = "jmx." + getDomain() + "." + fullAttributeName;
+        }
+        alias = convertMetricName(alias);
+        return alias;
+    }
+
+    /**
+     * Metric name aliasing specific to Cassandra.
+     *
+     * * (Default) `cassandra_aliasing` == False.
+     *   Legacy aliasing: drop `org.apache` prefix.
+     * * `cassandra_aliasing` == True
+     *   Comply with CASSANDRA-4009
+     *
+     * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+     */
+    private String getCassandraAlias() {
+        if (renameCassandraMetrics()) {
+            Map<String, String> beanParameters = getBeanParameters();
+            String metricName = beanParameters.get("name");
+            String attributeName = getAttributeName();
+            if (attributeName.equals("Value")) {
+                return "cassandra." + metricName;
+            }
+            return "cassandra." + metricName + "." + attributeName;
+        }
+        //Deprecated Cassandra metric.  Remove domain prefix.
+        return getDomain().replace("org.apache.", "") + "." + getAttributeName();
+    }
+
+    /**
+     * Retrieve user defined alias. Substitute regular expression named groups.
+     *
+     * Example:
+     *   ```
+     *   bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz
+     *   attribute:
+     *     toto:
+     *       alias: my.metric.$foo.$attribute
+     *   ```
+     *   returns a metric name `my.metric.bar.toto`
+     */
+    private String getUserAlias(LinkedHashMap<String, LinkedHashMap<String, String>> attribute, String fullAttributeName){
+        String alias = attribute.get(fullAttributeName).get(ALIAS);
+        if (alias == null) {
+            return null;
+        }
+
+        alias = this.replaceByAlias(alias);
+
+        // Attribute & domain
+        alias = alias.replace("$attribute", fullAttributeName);
+        alias = alias.replace("$domain", domain);
+
+        return alias;
+    }
+
+    private String replaceByAlias(String alias){
+        // Bean parameters
+        for (Map.Entry<String, String> param : beanParameters.entrySet()) {
+            alias = alias.replace("$" + param.getKey(), param.getValue());
+        }
+        return alias;
+    }
+
+    /**
+     * Overload `getAlias` method.
+     *
+     * Note: used for `JMXSimpleAttribute` only, as `field` is null.
+     */
+    protected String getAlias(){
+        return getAlias(null);
+    }
+
 
     @SuppressWarnings("unchecked")
     protected String[] getTags() {

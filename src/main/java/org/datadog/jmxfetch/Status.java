@@ -3,10 +3,15 @@ package org.datadog.jmxfetch;
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.lang.System;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class Status {
 
@@ -16,22 +21,31 @@ public class Status {
     private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
     private final static String INITIALIZED_CHECKS = "initialized_checks";
     private final static String FAILED_CHECKS = "failed_checks";
+    private final static String API_STATUS_PATH = "agent/jmx/status";
     private HashMap<String, Object> instanceStats;
+    private ObjectMapper mapper;
     private String statusFileLocation;
+    private HttpClient client;
     private boolean isEnabled;
 
     public Status() {
         this(null);
     }
 
-    public Status(String statusFileLocation) {
-        configure(statusFileLocation);
+    public Status(String host, int port) {
+        mapper = new ObjectMapper();
+        client = new HttpClient(host, port, false);
+        configure(null, host, port);
     }
 
-    void configure(String statusFileLocation) {
+    public Status(String statusFileLocation) {
+        configure(statusFileLocation, null, 0);
+    }
+
+    void configure(String statusFileLocation, String host, int port) {
         this.statusFileLocation = statusFileLocation;
-        this.isEnabled = this.statusFileLocation != null;
         this.instanceStats = new HashMap<String, Object>();
+        this.isEnabled = (this.statusFileLocation != null || this.client != null);
         this.clearStats();
     }
 
@@ -87,15 +101,34 @@ public class Status {
         return yaml.dump(status);
     }
 
+    private String generateJson() throws JsonProcessingException {
+        HashMap<String, Object> status = new HashMap<String, Object>();
+        status.put("timestamp", System.currentTimeMillis());
+        status.put("checks", this.instanceStats);
+        return mapper.writeValueAsString(status);
+    }
+
     public void flush() {
         if (isEnabled()) {
-            String yaml = generateYaml();
-            try {
-                File f = new File(this.statusFileLocation);
-                LOGGER.debug("Writing status to temp yaml file: " + f.getAbsolutePath());
-                FileUtils.writeStringToFile(f, yaml);
-            } catch (Exception e) {
-                LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
+            if (this.client != null) {
+                try {
+                    String json = generateJson();
+                    HttpClient.HttpResponse response = this.client.request("POST", json, API_STATUS_PATH);
+                    if (!response.isResponse2xx()) {
+                        LOGGER.debug("Problem submitting JSON status: " + json);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Could not post status: " + e.getMessage());
+                }
+            } else {
+                String yaml = generateYaml();
+                try {
+                    File f = new File(this.statusFileLocation);
+                    LOGGER.debug("Writing status to temp yaml file: " + f.getAbsolutePath());
+                    FileUtils.writeStringToFile(f, yaml);
+                } catch (Exception e) {
+                    LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
+                }
             }
         }
         this.clearStats();

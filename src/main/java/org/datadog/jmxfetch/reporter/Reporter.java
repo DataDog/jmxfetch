@@ -35,7 +35,7 @@ public abstract class Reporter {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
 
-    public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName) {
+    public void sendMetrics(LinkedList<HashMap<String, Object>> metrics, String instanceName, boolean canonicalRate) {
         HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
@@ -70,7 +70,9 @@ public abstract class Reporter {
             String[] tags = Arrays.asList((String[]) metric.get("tags")).toArray(new String[0]);
 
             // StatsD doesn't support rate metrics so we need to have our own aggregator to compute rates
-            if (!"gauge".equals(metricType)) {
+            if ("gauge".equals(metricType) || "histogram".equals(metricType)) {
+                sendMetricPoint(metricType, metricName, currentValue, tags);
+            } else { // The metric should be 'counter'
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
                     HashMap<String, Object> rateInfo = new HashMap<String, Object>();
@@ -86,14 +88,17 @@ public abstract class Reporter {
                 long now = System.currentTimeMillis();
                 double rate = 1000 * (currentValue - oldValue) / (now - oldTs);
 
-                if (!Double.isNaN(rate) && !Double.isInfinite(rate)) {
-                    sendMetricPoint(metricName, rate, tags);
+                boolean sane = (!Double.isNaN(rate) && !Double.isInfinite(rate));
+                boolean submit = (rate >= 0 || !canonicalRate);
+
+                if  (sane && submit) {
+                    sendMetricPoint(metricType, metricName, rate, tags);
+                } else if (sane) {
+                    LOGGER.info("Canonical rate option set, and negative rate (counter reset) - not submitting.");
                 }
 
                 instanceRatesAggregator.get(key).put("ts", now);
                 instanceRatesAggregator.get(key).put(VALUE, currentValue);
-            } else { // The metric is a gauge
-                sendMetricPoint(metricName, currentValue, tags);
             }
         }
 
@@ -131,7 +136,7 @@ public abstract class Reporter {
         return StringUtils.join(chunks, ".");
     }
 
-    protected abstract void sendMetricPoint(String metricName, double value, String[] tags);
+    protected abstract void sendMetricPoint(String metricType, String metricName, double value, String[] tags);
 
     protected abstract void doSendServiceCheck(String checkName, String status, String message, String[] tags);
 

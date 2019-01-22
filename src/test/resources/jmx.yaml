@@ -2,10 +2,11 @@ init_config:
 
 instances:
     -   process_name_regex: .*surefire.*
+        refresh_beans: 4
         name: jmx_test_instance
         tags:
-            env: stage
-            newTag: test
+            - "env:stage"
+            - "newTag:test"
         conf:
             - include:
                domain: org.datadog.jmxfetch.test
@@ -29,6 +30,11 @@ instances:
                     Hashmap.thisiscounter:
                         metric_type: counter
                         alias: subattr.counter
+                    Hashmap.shouldBeDefaulted:
+                        metric_type: gauge
+                        alias: subattr.defaulted
+                        values:
+                          default: 42
                     ShouldBeConverted:
                         metric_type: gauge
                         alias: test.converted
@@ -40,5 +46,13 @@ instances:
                         alias: test.defaulted
                         values:
                           default: 32
+                    Tabulardata.foo:
+                        metric_type: gauge
+                        alias: multiattr.foo
+                        tags:
+                          foo: $foo
+                          toto: $toto
+                        limit: 1
+                        sort: desc
             - include:
                domain: org.datadog.jmxfetch.test

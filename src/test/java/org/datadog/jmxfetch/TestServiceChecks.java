@@ -41,8 +41,10 @@ public class TestServiceChecks extends TestCommon {
 
         assertEquals(Reporter.formatServiceCheckPrefix("jmx"), scName);
         assertEquals(Status.STATUS_OK, scStatus);
-        assertEquals(scTags.length, 1);
+        assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
     }
 
     @Test
@@ -81,8 +83,10 @@ public class TestServiceChecks extends TestCommon {
         assertEquals(Reporter.formatServiceCheckPrefix("too_many_metrics"), scName);
         // We should have an OK service check status when too many metrics are getting sent
         assertEquals(Status.STATUS_OK, scStatus);
-        assertEquals(scTags.length, 1);
+        assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
     }
 
     @Test
@@ -109,8 +113,8 @@ public class TestServiceChecks extends TestCommon {
 
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
-        assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.* Cannot find JVM matching regex: .*non_running_process_test.*", scMessage);
-        assertEquals(scTags.length, 1);
+        assertEquals("Cannot connect to instance process_regex: `.*non_running_process_test.*`. No match found. Available JVMs can be listed with the `list_jvms` command.", scMessage);
+        assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
 
 
@@ -133,9 +137,11 @@ public class TestServiceChecks extends TestCommon {
 
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
-        assertEquals("Cannot connect to instance process_regex: .*non_running_process_test.*. Is a JMX Server running at this address?", scMessage);
-        assertEquals(scTags.length, 1);
+        assertEquals("Cannot connect to instance process_regex: `.*non_running_process_test.*`. Is a JMX Server running at this address?", scMessage);
+        assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
+        assertTrue(Arrays.asList(scTags).contains("env:stage"));
+        assertTrue(Arrays.asList(scTags).contains("newTag:test"));
 
     }
 

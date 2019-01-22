@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import org.junit.Test;
 
 public class TestConfiguration {
 	static LinkedList<Configuration> configurations = new LinkedList<Configuration>();
+    static JsonParser adConfigs;
 
 	/**
 	 * Setup Configuration tests
@@ -26,7 +28,7 @@ public class TestConfiguration {
 	 */
 	@SuppressWarnings("unchecked")
 	@BeforeClass
-    public static void init() throws FileNotFoundException {
+    public static void init() throws FileNotFoundException, IOException {
 		File f = new File("src/test/resources/", "jmx_bean_scope.yaml");
 		String yamlPath = f.getAbsolutePath();
 		FileInputStream yamlInputStream = new FileInputStream(yamlPath);
@@ -39,6 +41,39 @@ public class TestConfiguration {
 			    configurations.add(new Configuration(conf));
 			}
 		}
+
+        // lets also collect auto-discovery configs
+		f = new File("src/test/resources/", "auto_discovery_configs.json");
+		String jsonPath = f.getAbsolutePath();
+		FileInputStream jsonInputStream = new FileInputStream(jsonPath);
+        adConfigs = new JsonParser(jsonInputStream);
+    }
+
+    /**
+     * Stringify a bean pattern to comply with the representation of a MBean
+     * @throws SecurityException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    @Test
+    public void testAutoDiscoveryConfigs() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+        HashMap<String, Object> configs = (HashMap<String, Object>) adConfigs.getJsonConfigs();
+
+		assertEquals(configurations.size(), 4);
+        int nconfigs = 0;
+        for (String check :  configs.keySet()) {
+            ArrayList<LinkedHashMap<String, Object>> configInstances = ((ArrayList<LinkedHashMap<String, Object>>) adConfigs.getJsonInstances(check));
+            for (LinkedHashMap<String, Object> config : configInstances) {
+                Object jsonConf = config.get("conf");
+                for (LinkedHashMap<String, Object> conf : (ArrayList<LinkedHashMap<String, Object>>) (jsonConf)) {
+                    configurations.add(new Configuration(conf));
+                    nconfigs++;
+                }
+            }
+        }
+		assertEquals(configurations.size(), 4 + nconfigs);
     }
 
 	/**
@@ -91,7 +126,7 @@ public class TestConfiguration {
 		HashMap<String, Set<String>> parametersIntersectionByDomain = (HashMap<String, Set<String>>) getCommonBeanKeysByDomain.invoke(null, filtersByDomain);
 
 		// Only contains 'org.datadog.jmxfetch.test' domain
-		assertEquals(parametersIntersectionByDomain.size(), 1);
+		assertEquals(parametersIntersectionByDomain.size(), 2);
 		assertTrue(parametersIntersectionByDomain.containsKey("org.datadog.jmxfetch.test"));
 
 		// Parameters intersection should match: 'param', 'scope' and 'type'
@@ -129,7 +164,7 @@ public class TestConfiguration {
 		HashMap<String, LinkedHashMap<String, String>> commonBeanScopeByDomain = (HashMap<String, LinkedHashMap<String, String>>) getCommonScopeByDomain.invoke(null, parametersIntersectionByDomain, filtersByDomain);
 
 		// Only contains 'org.datadog.jmxfetch.test' domain
-		assertEquals(commonBeanScopeByDomain.size(), 1);
+		assertEquals(commonBeanScopeByDomain.size(), 2);
 		assertTrue(commonBeanScopeByDomain.containsKey("org.datadog.jmxfetch.test"));
 		LinkedHashMap<String, String> beanScope = commonBeanScopeByDomain.get("org.datadog.jmxfetch.test");
 
