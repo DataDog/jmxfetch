@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/DataDog/jmxfetch.png?branch=master)](http://travis-ci.org/DataDog/jmxfetch)
+[![Build Status](https://travis-ci.com/DataDog/jmxfetch.png?branch=master)](https://travis-ci.com/DataDog/jmxfetch)
 
 # [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
 
