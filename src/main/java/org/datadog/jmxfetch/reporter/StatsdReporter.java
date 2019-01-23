@@ -3,6 +3,8 @@ package org.datadog.jmxfetch.reporter;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.ServiceCheck;
 import com.timgroup.statsd.StatsDClient;
+import com.timgroup.statsd.StatsDClientErrorHandler;
+import org.apache.log4j.Logger;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
 import org.datadog.jmxfetch.Status;
@@ -10,10 +12,19 @@ import org.datadog.jmxfetch.Status;
 /** A reporter class to submit metrics via statsd. */
 public class StatsdReporter extends Reporter {
 
+    private static final Logger LOGGER = Logger.getLogger(StatsdReporter.class.getName());
     private StatsDClient statsDClient;
     private String statsdHost;
     private int statsdPort;
     private long initializationTime;
+
+    private class LoggingErrorHandler implements StatsDClientErrorHandler {
+
+        @Override
+        public void handle(Exception exception) {
+            LOGGER.error("statsd client error:", exception);
+        }
+    }
 
     /** Constructor, instantiates statsd reported to provided host and port. */
     public StatsdReporter(String statsdHost, int statsdPort) {
@@ -26,7 +37,11 @@ public class StatsdReporter extends Reporter {
         initializationTime = System.currentTimeMillis();
         statsDClient =
                 new NonBlockingStatsDClient(
-                        null, this.statsdHost, this.statsdPort, new String[] {});
+                        null,
+                        this.statsdHost,
+                        this.statsdPort,
+                        new String[] {},
+                        new LoggingErrorHandler());
     }
 
     protected void sendMetricPoint(
