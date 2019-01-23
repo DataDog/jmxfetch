@@ -1,7 +1,14 @@
 Changes
 =======
 
-# 0.24.1 / 2018-01-09
+# 0.25.0 / 2019-01-23
+
+### Changes
+
+* [FEATURE] Allow `metrics.yaml` configs to be loaded via resources. See [#205][]
+* [FEATURE] Allow replacing `$value` by the JMX value in a metric name. See [#204][]
+
+# 0.24.1 / 2019-01-09
 
 ### Changes
 
@@ -284,6 +291,8 @@ Changes
 [#197]: https://github.com/DataDog/jmxfetch/issues/197
 [#198]: https://github.com/DataDog/jmxfetch/issues/198
 [#201]: https://github.com/DataDog/jmxfetch/issues/201
+[#204]: https://github.com/DataDog/jmxfetch/issues/204
+[#205]: https://github.com/DataDog/jmxfetch/issues/205
 [#206]: https://github.com/DataDog/jmxfetch/issues/206
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
