@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
@@ -12,7 +14,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -26,12 +27,10 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.apache.log4j.Logger;
-
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
     private static final long JMX_TIMEOUT = 20;
-    private final static Logger LOGGER = Logger.getLogger(Connection.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
@@ -43,11 +42,19 @@ public class Connection {
         return wrapper;
     }
 
-    public MBeanAttributeInfo[] getAttributesForBean(ObjectName bean_name)
-            throws InstanceNotFoundException, IntrospectionException, ReflectionException, IOException {
-        return mbs.getMBeanInfo(bean_name).getAttributes();
+    /**
+     * Gets attributes for matching bean name.
+     */
+    public MBeanAttributeInfo[] getAttributesForBean(ObjectName beanName)
+            throws InstanceNotFoundException, IntrospectionException, ReflectionException,
+                    IOException {
+        return mbs.getMBeanInfo(beanName).getAttributes();
     }
 
+    /**
+     * Queries beans on specific scope.
+     * Returns set of matching query names.. 
+     */
     public Set<ObjectName> queryNames(ObjectName name) throws IOException {
         String scope = (name != null) ? name.toString() : "*:*";
         LOGGER.debug("Querying bean names on scope: " + scope);
@@ -62,42 +69,49 @@ public class Connection {
         mbs = connector.getMBeanServerConnection();
     }
 
-    public Object getAttribute(ObjectName objectName, String attributeName) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
-        Object o = mbs.getAttribute(objectName, attributeName);
-        if (o instanceof javax.management.Attribute){
-            return ((Attribute)o).getValue();
+    /**
+     * Gets attribute for matching bean and attribute name. 
+     */
+    public Object getAttribute(ObjectName objectName, String attributeName)
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
+        Object attr = mbs.getAttribute(objectName, attributeName);
+        if (attr instanceof javax.management.Attribute) {
+            return ((Attribute) attr).getValue();
         }
-        return o;
+        return attr;
     }
 
     /**
-     * Connect to a MBean Server with a timeout
-     * This code comes from this blog post:
-     * https://weblogs.java.net/blog/emcmanus/archive/2007/05/making_a_jmx_co.html
+     * Connect to a MBean Server with a timeout This code comes from this blog post:
+     * https://weblogs.java.net/blog/emcmanus/archive/2007/05/making_a_jmx_co.html.
      */
-    JMXConnector connectWithTimeout(final JMXServiceURL url, final Map<String, Object> env) throws IOException {
+    JMXConnector connectWithTimeout(final JMXServiceURL url, final Map<String, Object> env)
+            throws IOException {
 
         final BlockingQueue<Object> mailbox = new ArrayBlockingQueue<Object>(1);
 
         ExecutorService executor = Executors.newSingleThreadExecutor(daemonThreadFactory);
-        executor.submit(new Runnable() {
-            public void run() {
-                try {
-                    JMXConnector connector = JMXConnectorFactory.connect(url, env);
-                    if (!mailbox.offer(connector)) {
-                        connector.close();
+        executor.submit(
+                new Runnable() {
+                    public void run() {
+                        try {
+                            JMXConnector connector = JMXConnectorFactory.connect(url, env);
+                            if (!mailbox.offer(connector)) {
+                                connector.close();
+                            }
+                        } catch (Throwable t) {
+                            mailbox.offer(t);
+                        }
                     }
-                } catch (Throwable t) {
-                    mailbox.offer(t);
-                }
-            }
-        });
+                });
         Object result;
         try {
             result = mailbox.poll(JMX_TIMEOUT, TimeUnit.SECONDS);
             if (result == null) {
-                if (!mailbox.offer(""))
+                if (!mailbox.offer("")) { 
                     result = mailbox.take();
+                }
             }
         } catch (InterruptedException e) {
             throw initCause(new InterruptedIOException(e.getMessage()), e);
@@ -118,6 +132,9 @@ public class Connection {
         }
     }
 
+    /**
+     * Closes the connector. 
+     */
     public void closeConnector() {
         if (connector != null) {
             try {
@@ -128,6 +145,9 @@ public class Connection {
         }
     }
 
+    /**
+     * Returns a boolean describing if the connection is still alive. 
+     */
     public boolean isAlive() {
         if (connector == null) {
             return false;
@@ -141,11 +161,10 @@ public class Connection {
     }
 
     private static class DaemonThreadFactory implements ThreadFactory {
-        public Thread newThread(Runnable r) {
-            Thread t = Executors.defaultThreadFactory().newThread(r);
-            t.setDaemon(true);
-            return t;
+        public Thread newThread(Runnable run) {
+            Thread thread = Executors.defaultThreadFactory().newThread(run);
+            thread.setDaemon(true);
+            return thread;
         }
     }
 }
-

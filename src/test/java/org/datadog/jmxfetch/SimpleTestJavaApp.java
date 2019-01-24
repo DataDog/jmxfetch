@@ -1,5 +1,9 @@
 package org.datadog.jmxfetch;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
@@ -9,10 +13,6 @@ import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
@@ -91,7 +91,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     }
 
     public void populateHashMap(int count) {
-        for (Integer i =1;i <= count ; i++ ) {
+        for (Integer i = 1; i <= count; i++) {
             hashmap.put(i.toString(), i);
         }
     }
@@ -124,19 +124,20 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         return int424242;
     }
 
-    public float getPrimitiveFloat(){
+    public float getPrimitiveFloat() {
         return primitiveFloat;
     }
 
-    public Float getInstanceFloat(){
+    public Float getInstanceFloat() {
         return instanceFloat;
     }
 
     private TabularData buildTabularType() {
         try {
             CompositeType rowType = buildCompositeType();
-            TabularType tabularType = new TabularType("myTabularType", "My tabular type", rowType,
-                    new String[]{"foo"});
+            TabularType tabularType =
+                    new TabularType(
+                            "myTabularType", "My tabular type", rowType, new String[] {"foo"});
             return new TabularDataSupport(tabularType);
         } catch (OpenDataException e) {
             return null;
@@ -145,10 +146,14 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     private CompositeType buildCompositeType() {
         try {
-            return new CompositeType("myCompositeType", "My composite type",
-                    new String[]{"foo", "bar", "toto"},
-                    new String[]{"Description of `foo`", "Description of `bar`", "Description of `toto`"},
-                    new OpenType[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING});
+            return new CompositeType(
+                    "myCompositeType",
+                    "My composite type",
+                    new String[] {"foo", "bar", "toto"},
+                    new String[] {
+                        "Description of `foo`", "Description of `bar`", "Description of `toto`"
+                    },
+                    new OpenType[] {SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING});
         } catch (OpenDataException e) {
             return null;
         }
@@ -156,9 +161,10 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     private CompositeData buildCompositeData(Integer i) {
         try {
-            return new CompositeDataSupport(compositetype,
-                    new String[]{"foo", "bar", "toto"},
-                    new Object[]{i.toString(), i, "tata"});
+            return new CompositeDataSupport(
+                    compositetype,
+                    new String[] {"foo", "bar", "toto"},
+                    new Object[] {i.toString(), i, "tata"});
         } catch (OpenDataException e) {
             return null;
         }
@@ -171,5 +177,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         }
     }
 
-    public TabularData getTabulardata() { return tabulardata; }
+    public TabularData getTabulardata() {
+        return tabulardata;
+    }
 }

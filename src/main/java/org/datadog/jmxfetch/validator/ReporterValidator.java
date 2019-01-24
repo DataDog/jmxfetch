@@ -6,8 +6,12 @@ import com.beust.jcommander.ParameterException;
 public class ReporterValidator implements IParameterValidator {
 
     private static final String STATSD_PREFIX = "statsd:";
-    private final PositiveIntegerValidator positiveIntegerValidator = new PositiveIntegerValidator();
+    private final PositiveIntegerValidator positiveIntegerValidator =
+            new PositiveIntegerValidator();
 
+    /**
+     * Validates a reporter configurations (console, statsd).
+     * */
     public void validate(String name, String value) throws ParameterException {
         if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) {
             String[] splitValue = value.split(":");
@@ -15,12 +19,15 @@ public class ReporterValidator implements IParameterValidator {
             try {
                 positiveIntegerValidator.validate(name, port);
             } catch (ParameterException pe) {
-                throw new ParameterException("Statsd Port should be a positive integer (found " + port + ")");
+                throw new ParameterException(
+                        "Statsd Port should be a positive integer (found " + port + ")");
             }
             return;
         }
         if (!value.equals("console")) {
-            throw new ParameterException("Parameter " + name + " should be either 'console', 'statsd:[STATSD_PORT]' or 'statsd:[STATSD_HOST]:[STATSD_PORT]'");
+            throw new ParameterException(
+                "Parameter " + name + " should be either 'console', 'statsd:[STATSD_PORT]' "
+                + "or 'statsd:[STATSD_HOST]:[STATSD_PORT]'");
         }
     }
 }

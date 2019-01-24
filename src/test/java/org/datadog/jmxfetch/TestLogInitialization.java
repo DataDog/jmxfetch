@@ -1,9 +1,14 @@
 package org.datadog.jmxfetch;
 
+import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
+import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.sun.jmx.remote.util.ClassLogger;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -17,56 +22,51 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.LogManager;
 import javax.management.ObjectName;
 import javax.management.remote.JMXServiceURL;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
-import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 public class TestLogInitialization {
-    public static final Callable<AppConfig> LOCAL_CONFIG = new Callable<AppConfig>() {
-        public AppConfig call() throws Exception {
-            return AppConfig.create(
-                    ImmutableList.of("org/datadog/jmxfetch/dd-java-agent-jmx.yaml"),
-                    Collections.<String>emptyList(),
-                    Collections.<String>emptyList(),
-                    (int) TimeUnit.SECONDS.toMillis(30),
-                    (int) TimeUnit.SECONDS.toMillis(30),
-                    Collections.<String, String>emptyMap(),
-                    "console",
-                    "System.err",
-                    "DEBUG");
-        }
-    };
+    public static final Callable<AppConfig> LOCAL_CONFIG =
+            new Callable<AppConfig>() {
+                public AppConfig call() throws Exception {
+                    return AppConfig.create(
+                            ImmutableList.of("org/datadog/jmxfetch/dd-java-agent-jmx.yaml"),
+                            Collections.<String>emptyList(),
+                            Collections.<String>emptyList(),
+                            (int) TimeUnit.SECONDS.toMillis(30),
+                            (int) TimeUnit.SECONDS.toMillis(30),
+                            Collections.<String, String>emptyMap(),
+                            "console",
+                            "System.err",
+                            "DEBUG");
+                }
+            };
 
-    public static final Callable<AppConfig> REMOTE_CONFIG = new Callable<AppConfig>() {
-        public AppConfig call() throws Exception {
-            return AppConfig.create(
-                    ImmutableList.of("org/datadog/jmxfetch/remote-jmx.yaml"),
-                    Collections.<String>emptyList(),
-                    Collections.<String>emptyList(),
-                    (int) TimeUnit.SECONDS.toMillis(30),
-                    (int) TimeUnit.SECONDS.toMillis(30),
-                    Collections.<String, String>emptyMap(),
-                    "console",
-                    "System.err",
-                    "DEBUG");
-        }
-    };
+    public static final Callable<AppConfig> REMOTE_CONFIG =
+            new Callable<AppConfig>() {
+                public AppConfig call() throws Exception {
+                    return AppConfig.create(
+                            ImmutableList.of("org/datadog/jmxfetch/remote-jmx.yaml"),
+                            Collections.<String>emptyList(),
+                            Collections.<String>emptyList(),
+                            (int) TimeUnit.SECONDS.toMillis(30),
+                            (int) TimeUnit.SECONDS.toMillis(30),
+                            Collections.<String, String>emptyMap(),
+                            "console",
+                            "System.err",
+                            "DEBUG");
+                }
+            };
 
     @After
     public void unregisterLockingMBean() {
         try {
-        ManagementFactory.getPlatformMBeanServer()
-                .unregisterMBean(new ObjectName("org.datadog.jmxfetch.log_init_test:type=TriggeringMBean"));
+            ManagementFactory.getPlatformMBeanServer()
+                    .unregisterMBean(
+                            new ObjectName(
+                                    "org.datadog.jmxfetch.log_init_test:type=TriggeringMBean"));
 
         } catch (Exception e) {
             // Ignore
@@ -103,8 +103,8 @@ public class TestLogInitialization {
         assertTrue(classLoader.classLoaded(JMXServiceURL.class.getName()));
     }
 
-    private AtomicReference<Exception> runInThread(final TrackingClassLoader classLoader,
-                                                   String configName) throws Exception {
+    private AtomicReference<Exception> runInThread(
+            final TrackingClassLoader classLoader, String configName) throws Exception {
         final AtomicReference<Exception> errored = new AtomicReference<Exception>();
 
         Class<?> appClass = classLoader.loadClass(App.class.getName());
@@ -115,20 +115,22 @@ public class TestLogInitialization {
 
         Class<?> thisClass = classLoader.loadClass(getClass().getName());
         Field appConfigField = thisClass.getField(configName);
-        final Callable config = (Callable)appConfigField.get(null);
+        final Callable config = (Callable) appConfigField.get(null);
 
-        Thread task = new Thread(new Runnable() {
-            public void run() {
-                // This will run forever, so we need to run in a different thread.
-                try {
-                    // App.run(appConfig);
-                    runMethod.invoke(null, config.call());
-                } catch (Exception e) {
-                    errored.set(e);
-                    e.printStackTrace();
-                }
-            }
-        });
+        Thread task =
+                new Thread(
+                        new Runnable() {
+                            public void run() {
+                                // This will run forever, so we need to run in a different thread.
+                                try {
+                                    // App.run(appConfig);
+                                    runMethod.invoke(null, config.call());
+                                } catch (Exception e) {
+                                    errored.set(e);
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
         task.start();
 
         return errored;
@@ -138,7 +140,9 @@ public class TestLogInitialization {
         CountDownLatch latch = new CountDownLatch(1);
         TriggeringMBean bean = new Triggering(latch);
         ManagementFactory.getPlatformMBeanServer()
-                .registerMBean(bean, new ObjectName("org.datadog.jmxfetch.log_init_test:type=TriggeringMBean"));
+                .registerMBean(
+                        bean,
+                        new ObjectName("org.datadog.jmxfetch.log_init_test:type=TriggeringMBean"));
         return latch;
     }
 
@@ -170,7 +174,7 @@ public class TestLogInitialization {
 
         public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             loadedClasses.add(name);
-            if(name.startsWith("org.apache.log4j")) {
+            if (name.startsWith("org.apache.log4j")) {
                 return getSystemClassLoader().loadClass(name);
             }
             return super.loadClass(name, resolve);
@@ -183,13 +187,15 @@ public class TestLogInitialization {
         private static URL[] getClasspathUrls() throws MalformedURLException {
 
             ImmutableList.Builder<URL> urls = ImmutableList.builder();
-            for (String entry : Splitter.on(PATH_SEPARATOR.value()).split(JAVA_CLASS_PATH.value())) {
+            for (String entry :
+                    Splitter.on(PATH_SEPARATOR.value()).split(JAVA_CLASS_PATH.value())) {
                 try {
                     urls.add(new File(entry).toURI().toURL());
-                } catch (SecurityException e) { // File.toURI checks to see if the file is a directory
+                } catch (
+                        SecurityException
+                                e) { // File.toURI checks to see if the file is a directory
                     urls.add(new URL("file", null, new File(entry).getAbsolutePath()));
                 }
-
             }
             return urls.build().toArray(new URL[0]);
         }

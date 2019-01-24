@@ -1,9 +1,9 @@
 package org.datadog.jmxfetch;
 
+import org.yaml.snakeyaml.Yaml;
+
 import java.io.InputStream;
 import java.util.HashMap;
-
-import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings("unchecked")
 class YamlParser {
@@ -29,5 +29,4 @@ class YamlParser {
     public Object getParsedYaml() {
         return parsedYaml;
     }
-
 }

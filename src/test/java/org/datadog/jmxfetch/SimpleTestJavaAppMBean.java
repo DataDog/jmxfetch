@@ -1,9 +1,9 @@
 package org.datadog.jmxfetch;
 
-import javax.management.openmbean.TabularData;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.management.openmbean.TabularData;
 
 public interface SimpleTestJavaAppMBean {
 
