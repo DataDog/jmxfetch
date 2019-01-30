@@ -402,7 +402,7 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
-                lastJSONConfigTS = 0;  // reset TS to get AC instances 
+                lastJsonConfigTs = 0;  // reset TS to get AC instances
                 appConfig.getStatus().flush();
                 configs = getConfigs(appConfig);
                 init(true);
@@ -728,7 +728,7 @@ public class App {
         reporter.resetServiceCheckCount(checkName);
     }
 
-    private void instantiate(
+    private Instance instantiate(
             LinkedHashMap<String, Object> instanceMap,
             LinkedHashMap<String, Object> initConfig,
             String checkName,
