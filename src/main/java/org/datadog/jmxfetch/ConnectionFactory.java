@@ -5,18 +5,13 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 
-/** 
- * Singleton used to create connections to the MBeanServer.
- * */
+/** Singleton used to create connections to the MBeanServer. */
 public class ConnectionFactory {
     private static final Logger LOGGER = Logger.getLogger(ConnectionFactory.class.getName());
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     private static ConnectionFactory connectionFactory = null;
 
-    /** 
-     * Factory method to create connections, both remote and local to 
-     * the target JVM.
-     * */
+    /** Factory method to create connections, both remote and local to the target JVM. */
     public static Connection createConnection(LinkedHashMap<String, Object> connectionParams)
             throws IOException {
         if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
@@ -25,7 +20,7 @@ public class ConnectionFactory {
             } catch (ClassNotFoundException e) {
                 throw new IOException(
                         "Unable to find tools.jar."
-                        + " Are you using a JDK and did you set the pass to tools.jar ?");
+                                + " Are you using a JDK and did you set the pass to tools.jar ?");
             }
             LOGGER.info("Connecting using Attach API");
             return new AttachApiConnection(connectionParams);

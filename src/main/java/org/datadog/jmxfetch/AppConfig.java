@@ -112,23 +112,26 @@ public class AppConfig {
             required = false)
     private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
-    @Parameter(names = {"--reconnection_thread_pool_size", "-u"},
+    @Parameter(
+            names = {"--reconnection_thread_pool_size", "-u"},
             description = "The size of the reconnection thread pool",
             validateWith = PositiveIntegerValidator.class,
             required = false)
     private int reconnectionThreadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
-    @Parameter(names = {"--collection_timeout", "-x"},
+    @Parameter(
+            names = {"--collection_timeout", "-x"},
             description = "The concurrent collection timeout in seconds",
             validateWith = PositiveIntegerValidator.class,
             required = false)
-    private int collectionTO = DEFAULT_COLLECTION_TO_S;
+    private int collectionTimeout = DEFAULT_COLLECTION_TO_S;
 
-    @Parameter(names = {"--reconnection_timeout", "-y"},
+    @Parameter(
+            names = {"--reconnection_timeout", "-y"},
             description = "The reconnection timeout in seconds",
             validateWith = PositiveIntegerValidator.class,
             required = false)
-    private int reconnectionTO = DEFAULT_RECONNECTION_TO_S;
+    private int reconnectionTimeout = DEFAULT_RECONNECTION_TO_S;
 
     @Parameter(
             names = {"--ad_enabled", "--sd_enabled", "-w"},
@@ -153,7 +156,7 @@ public class AppConfig {
             names = {"--exit_file_location", "-e"},
             description =
                     "Absolute path of the trigger file to watch to exit. "
-                    + "(default to null = no exit on file)",
+                            + "(default to null = no exit on file)",
             converter = ExitWatcherConverter.class,
             required = false)
     private ExitWatcher exitWatcher = new ExitWatcher();
@@ -192,10 +195,7 @@ public class AppConfig {
 
     private Status status = new Status();
 
-    /**
-     * Updates the status and returns a boolean describing if the
-     * status was indeed updated..
-     * */
+    /** Updates the status and returns a boolean describing if the status was indeed updated.. */
     public boolean updateStatus() {
         if (statusLocation != null) {
             status = new Status(statusLocation);
@@ -249,11 +249,11 @@ public class AppConfig {
     }
 
     public int getCollectionTimeout() {
-        return collectionTO;
+        return collectionTimeout;
     }
 
     public int getReconnectionTimeout() {
-        return reconnectionTO;
+        return reconnectionTimeout;
     }
 
     public String getIpcHost() {
@@ -292,10 +292,7 @@ public class AppConfig {
         return logLocation;
     }
 
-    /** 
-     * Returns path to auto-discovery pipe.
-     * Deprecated.. 
-     * */
+    /** Returns path to auto-discovery pipe. Deprecated.. */
     public String getAutoDiscoveryPipe() {
         String pipePath;
 
@@ -331,9 +328,7 @@ public class AppConfig {
         return globalTags;
     }
 
-    /** 
-     * Factory method used by dd-tracer-agent to run jmxfetch in the same process. 
-     * */
+    /** Factory method used by dd-tracer-agent to run jmxfetch in the same process. */
     public static AppConfig create(
             List<String> instanceConfigResources,
             List<String> metricConfigResources,

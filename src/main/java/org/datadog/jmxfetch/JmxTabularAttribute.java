@@ -26,9 +26,7 @@ public class JmxTabularAttribute extends JmxAttribute {
     private String instanceName;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;
 
-    /**
-     * Default constructor.
-     * */
+    /** Default constructor. */
     public JmxTabularAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,

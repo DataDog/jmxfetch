@@ -20,9 +20,7 @@ public class JmxComplexAttribute extends JmxAttribute {
 
     private HashMap<String, HashMap<String, Object>> subAttributeList;
 
-    /**
-     * JmxComplexAttribute constructor.
-     * */
+    /** JmxComplexAttribute constructor. */
     public JmxComplexAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,

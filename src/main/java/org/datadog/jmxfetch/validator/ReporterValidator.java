@@ -9,9 +9,7 @@ public class ReporterValidator implements IParameterValidator {
     private final PositiveIntegerValidator positiveIntegerValidator =
             new PositiveIntegerValidator();
 
-    /**
-     * Validates a reporter configurations (console, statsd).
-     * */
+    /** Validates a reporter configurations (console, statsd). */
     public void validate(String name, String value) throws ParameterException {
         if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) {
             String[] splitValue = value.split(":");
@@ -26,8 +24,10 @@ public class ReporterValidator implements IParameterValidator {
         }
         if (!value.equals("console")) {
             throw new ParameterException(
-                "Parameter " + name + " should be either 'console', 'statsd:[STATSD_PORT]' "
-                + "or 'statsd:[STATSD_HOST]:[STATSD_PORT]'");
+                    "Parameter "
+                            + name
+                            + " should be either 'console', 'statsd:[STATSD_PORT]' "
+                            + "or 'statsd:[STATSD_HOST]:[STATSD_PORT]'");
         }
     }
 }

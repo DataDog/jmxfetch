@@ -26,17 +26,13 @@ public class HttpClient {
         private int responseCode;
         private String responseBody;
 
-        /**
-         * HttpResponse constructor for provided response code and response string. 
-         * */
+        /** HttpResponse constructor for provided response code and response string. */
         public HttpResponse(int responseCode, String responseBody) {
             this.responseCode = responseCode;
             this.responseBody = responseBody;
         }
 
-        /**
-         * HttpResponse constructor for provided response code and response stream. 
-         * */
+        /** HttpResponse constructor for provided response code and response stream. */
         public HttpResponse(int responseCode, InputStreamReader responseStream) throws IOException {
             String inputLine;
             BufferedReader in = new BufferedReader(responseStream);
@@ -68,9 +64,7 @@ public class HttpClient {
         }
     }
 
-    /**
-     * HttpClient constructor to provided host and port. 
-     * */
+    /** HttpClient constructor to provided host and port. */
     public HttpClient(String host, int port, boolean verify) {
         this.host = host;
         this.port = port;

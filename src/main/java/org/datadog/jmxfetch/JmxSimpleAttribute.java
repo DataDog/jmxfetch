@@ -16,9 +16,7 @@ import javax.management.ReflectionException;
 public class JmxSimpleAttribute extends JmxAttribute {
     private String metricType;
 
-    /**
-     * JmxSimpleAttribute constructor.
-     * */
+    /** JmxSimpleAttribute constructor. */
     public JmxSimpleAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
@@ -52,9 +50,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
         return metrics;
     }
 
-    /**
-     * Returns whether an attribute matches in a configuration spec.
-     * */
+    /** Returns whether an attribute matches in a configuration spec. */
     public boolean match(Configuration configuration) {
         return matchDomain(configuration)
                 && matchBean(configuration)
