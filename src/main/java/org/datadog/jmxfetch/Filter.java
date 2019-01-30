@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-
 class Filter {
     HashMap<String, Object> filter;
     Pattern domainRegex;
@@ -14,14 +13,11 @@ class Filter {
     HashMap<String, String> additionalTags = null;
 
     /**
-     * A simple class to manipulate include/exclude filter elements more easily
-     * A filter may contain:
-     * - A domain (key: 'domain') or a domain regex (key: 'domain_regex')
-     * - Bean names (key: 'bean' or 'bean_name') or bean regexes (key: 'bean_regex')
-     * - Attributes (key: 'attribute')
-     * - Additional bean parameters (other keys)
+     * A simple class to manipulate include/exclude filter elements more easily A filter may
+     * contain: - A domain (key: 'domain') or a domain regex (key: 'domain_regex') - Bean names
+     * (key: 'bean' or 'bean_name') or bean regexes (key: 'bean_regex') - Attributes (key:
+     * 'attribute') - Additional bean parameters (other keys).
      */
-
     @SuppressWarnings("unchecked")
     public Filter(Object filter) {
         HashMap<String, Object> castFilter;
@@ -41,7 +37,7 @@ class Filter {
         return filter.keySet();
     }
 
-    @SuppressWarnings({ "unchecked", "serial" })
+    @SuppressWarnings({"unchecked", "serial"})
     private static ArrayList<String> toStringArrayList(final Object toCast) {
         // Return object as an ArrayList wherever it's defined as
         // list or not
@@ -53,27 +49,30 @@ class Filter {
         // ### OR
         // object: singleValue
         // ###
-        try{
+        try {
             return (ArrayList<String>) toCast;
-        } catch (ClassCastException e){
-            return new ArrayList<String>() {{
-                add(((String) toCast));
-            }};
+        } catch (ClassCastException e) {
+            return new ArrayList<String>() {
+                {
+                    add(((String) toCast));
+                }
+            };
         }
     }
 
-
     public ArrayList<String> getBeanNames() {
-        if (isEmptyBeanName()){
+        if (isEmptyBeanName()) {
             return new ArrayList<String>();
         }
-        final Object beanNames = (filter.get("bean") != null) ? filter.get("bean") : filter.get("bean_name");
+        final Object beanNames =
+                (filter.get("bean") != null) ? filter.get("bean") : filter.get("bean_name");
         // Return bean names as an ArrayList wherever it's defined as
         // list or not
         //
         // ### Example
         // bean:
-        //                  - org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
+        //                  -
+        // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         //                  - org.datadog.jmxfetch.test:type=type=SimpleTestJavaApp
         // ### OR
         // bean: org.datadog.jmxfetch.test:type=type=SimpleTestJavaApp
@@ -96,7 +95,7 @@ class Filter {
         // a list or not
 
         if (this.beanRegexes == null) {
-            if (filter.get("bean_regex") == null){
+            if (filter.get("bean_regex") == null) {
                 this.beanRegexes = new ArrayList<Pattern>();
             } else {
                 final Object beanRegexNames = filter.get("bean_regex");
@@ -111,7 +110,7 @@ class Filter {
         // Return excluded tags  as an ArrayList whether it's defined as a list or not
 
         if (this.excludeTags == null) {
-            if (filter.get("exclude_tags") == null){
+            if (filter.get("exclude_tags") == null) {
                 this.excludeTags = new ArrayList<String>();
             } else {
                 final Object exclude_tags = filter.get("exclude_tags");
@@ -125,10 +124,10 @@ class Filter {
     public HashMap<String, String> getAdditionalTags() {
         // Return additional tags
         if (this.additionalTags == null) {
-            if (filter.get("tags") == null){
+            if (filter.get("tags") == null) {
                 this.additionalTags = new HashMap<String, String>();
             } else {
-                this.additionalTags = (HashMap<String, String>)filter.get("tags");
+                this.additionalTags = (HashMap<String, String>) filter.get("tags");
             }
         }
 
@@ -173,5 +172,4 @@ class Filter {
     public boolean isEmptyBeanName() {
         return (filter.get("bean") == null && filter.get("bean_name") == null);
     }
-
 }

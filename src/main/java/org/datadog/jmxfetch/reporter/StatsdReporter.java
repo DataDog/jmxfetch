@@ -1,13 +1,15 @@
 package org.datadog.jmxfetch.reporter;
 
-import org.datadog.jmxfetch.Instance;
-import org.datadog.jmxfetch.JMXAttribute;
-import org.datadog.jmxfetch.Status;
-
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.ServiceCheck;
 import com.timgroup.statsd.StatsDClient;
+import org.datadog.jmxfetch.Instance;
+import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.Status;
 
+/**
+ * A reporter class to submit metrics via statsd.
+ * */
 public class StatsdReporter extends Reporter {
 
     private StatsDClient statsDClient;
@@ -15,6 +17,9 @@ public class StatsdReporter extends Reporter {
     private int statsdPort;
     private long initializationTime;
 
+    /**
+     * Constructor, instantiates statsd reported to provided host and port.
+     * */
     public StatsdReporter(String statsdHost, int statsdPort) {
         this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
@@ -23,10 +28,13 @@ public class StatsdReporter extends Reporter {
 
     private void init() {
         initializationTime = System.currentTimeMillis();
-        statsDClient = new NonBlockingStatsDClient(null, this.statsdHost, this.statsdPort, new String[]{});
+        statsDClient =
+                new NonBlockingStatsDClient(
+                        null, this.statsdHost, this.statsdPort, new String[] {});
     }
 
-    protected void sendMetricPoint(String metricType, String metricName, double value, String[] tags) {
+    protected void sendMetricPoint(
+            String metricType, String metricName, double value, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();
             init();
@@ -50,14 +58,21 @@ public class StatsdReporter extends Reporter {
         return 3;
     }
 
+    /**
+     * Submits service check.
+     * */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();
             init();
         }
 
-        ServiceCheck sc = new ServiceCheck(String.format("%s.can_connect", checkName),
-            this.statusToInt(status), message, tags);
+        ServiceCheck sc =
+                new ServiceCheck(
+                        String.format("%s.can_connect", checkName),
+                        this.statusToInt(status),
+                        message,
+                        tags);
         statsDClient.serviceCheck(sc);
     }
 
@@ -65,11 +80,11 @@ public class StatsdReporter extends Reporter {
         throw new UnsupportedOperationException();
     }
 
-    public void displayMatchingAttributeName(JMXAttribute jmxAttribute, int rank, int limit) {
+    public void displayMatchingAttributeName(JmxAttribute jmxAttribute, int rank, int limit) {
         throw new UnsupportedOperationException();
     }
 
-    public void displayNonMatchingAttributeName(JMXAttribute jmxAttribute) {
+    public void displayNonMatchingAttributeName(JmxAttribute jmxAttribute) {
         throw new UnsupportedOperationException();
     }
 

@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
-
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
@@ -15,18 +13,34 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
-public class JMXSimpleAttribute extends JMXAttribute {
+public class JmxSimpleAttribute extends JmxAttribute {
     private String metricType;
 
-    public JMXSimpleAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                              Connection connection, HashMap<String, String> instanceTags, boolean cassandraAliasing,
-                              Boolean emptyDefaultHostname) {
-        super(attribute, beanName, instanceName, connection, instanceTags, cassandraAliasing, emptyDefaultHostname);
+    /**
+     * JmxSimpleAttribute constructor.
+     * */
+    public JmxSimpleAttribute(
+            MBeanAttributeInfo attribute,
+            ObjectName beanName,
+            String instanceName,
+            Connection connection,
+            HashMap<String, String> instanceTags,
+            boolean cassandraAliasing,
+            Boolean emptyDefaultHostname) {
+        super(
+                attribute,
+                beanName,
+                instanceName,
+                connection,
+                instanceTags,
+                cassandraAliasing,
+                emptyDefaultHostname);
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException,
-            InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+    public LinkedList<HashMap<String, Object>> getMetrics()
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
         HashMap<String, Object> metric = new HashMap<String, Object>();
 
         metric.put("alias", getAlias());
@@ -38,12 +52,14 @@ public class JMXSimpleAttribute extends JMXAttribute {
         return metrics;
     }
 
+    /**
+     * Returns whether an attribute matches in a configuration spec.
+     * */
     public boolean match(Configuration configuration) {
         return matchDomain(configuration)
                 && matchBean(configuration)
                 && matchAttribute(configuration)
-                && !(
-                excludeMatchDomain(configuration)
+                && !(excludeMatchDomain(configuration)
                         || excludeMatchBean(configuration)
                         || excludeMatchAttribute(configuration));
     }
@@ -53,7 +69,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         if (exclude.getAttribute() == null) {
             return false;
         } else if ((exclude.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (exclude.getAttribute())).containsKey(getAttributeName())) {
+                && ((LinkedHashMap<String, Object>) (exclude.getAttribute()))
+                        .containsKey(getAttributeName())) {
             return true;
 
         } else if ((exclude.getAttribute() instanceof ArrayList<?>
@@ -69,7 +86,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
             return true;
 
         } else if ((include.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (include.getAttribute())).containsKey(getAttributeName())) {
+                && ((LinkedHashMap<String, Object>) (include.getAttribute()))
+                        .containsKey(getAttributeName())) {
             return true;
 
         } else if ((include.getAttribute() instanceof ArrayList<?>
@@ -85,7 +103,8 @@ public class JMXSimpleAttribute extends JMXAttribute {
         if (metricType != null) {
             return metricType;
         } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute =
+                    (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             metricType = attribute.get(getAttributeName()).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(getAttributeName()).get("type");
@@ -99,8 +118,9 @@ public class JMXSimpleAttribute extends JMXAttribute {
         return metricType;
     }
 
-    private Object getValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
-            ReflectionException, IOException, NumberFormatException {
+    private Object getValue()
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException, NumberFormatException {
         return this.getJmxValue();
     }
 }

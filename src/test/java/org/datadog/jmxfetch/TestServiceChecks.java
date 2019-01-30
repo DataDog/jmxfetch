@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.junit.Test;
 
@@ -65,7 +64,7 @@ public class TestServiceChecks extends TestCommon {
         // Test that an WARNING service check status is sent
         LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
         LinkedList<HashMap<String, Object>> metrics = getMetrics();
-        assertTrue(metrics.size() >= 350 );
+        assertTrue(metrics.size() >= 350);
 
         assertEquals(1, serviceChecks.size());
         HashMap<String, Object> sc = serviceChecks.getFirst();
@@ -92,9 +91,10 @@ public class TestServiceChecks extends TestCommon {
     @Test
     public void testServiceCheckCRITICAL() throws Exception {
         // Test that a non-running service sends a critical service check
-        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test_non_running:type=ServiceCheckTest2");
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test_non_running:type=ServiceCheckTest2");
         initApplication("non_running_process.yaml");
-
 
         // Test that a CRITICAL service check status is sent on initialization
         LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
@@ -113,10 +113,11 @@ public class TestServiceChecks extends TestCommon {
 
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
-        assertEquals("Cannot connect to instance process_regex: `.*non_running_process_test.*`. No match found. Available JVMs can be listed with the `list_jvms` command.", scMessage);
+        assertEquals(
+                "Cannot connect to instance process_regex: `.*non_running_process_test.*`. No match found. Available JVMs can be listed with the `list_jvms` command.",
+                scMessage);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
-
 
         // Test that a CRITICAL service check status is sent on iteration
         run();
@@ -137,12 +138,13 @@ public class TestServiceChecks extends TestCommon {
 
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
-        assertEquals("Cannot connect to instance process_regex: `.*non_running_process_test.*`. Is a JMX Server running at this address?", scMessage);
+        assertEquals(
+                "Cannot connect to instance process_regex: `.*non_running_process_test.*`. Is a JMX Server running at this address?",
+                scMessage);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
         assertTrue(Arrays.asList(scTags).contains("env:stage"));
         assertTrue(Arrays.asList(scTags).contains("newTag:test"));
-
     }
 
     @Test
@@ -173,12 +175,12 @@ public class TestServiceChecks extends TestCommon {
         // Let's get a list of Strings to test (add real versionned check names
         // here when you add  new versionned check)
         String[][] data = {
-                {"activemq_58.foo.bar12", "activemq.foo.bar12"},
-                {"test_package-X86_64-VER1:0.weird.metric_name", "testpackage.weird.metric_name" }
+            {"activemq_58.foo.bar12", "activemq.foo.bar12"},
+            {"test_package-X86_64-VER1:0.weird.metric_name", "testpackage.weird.metric_name"}
         };
 
         // Let's test them all
-        for(int i=0; i<data.length; ++i)
+        for (int i = 0; i < data.length; ++i)
             assertEquals(data[i][1], Reporter.formatServiceCheckPrefix(data[i][0]));
     }
 }

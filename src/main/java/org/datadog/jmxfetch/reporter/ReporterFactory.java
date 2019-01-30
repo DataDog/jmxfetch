@@ -1,11 +1,14 @@
 package org.datadog.jmxfetch.reporter;
 
-import java.util.Arrays;
-
 import com.google.common.base.Joiner;
+
+import java.util.Arrays;
 
 public class ReporterFactory {
 
+    /**
+     * Gets the reporter for the correspndonding type string (console, statsd).
+     * */
     public static Reporter getReporter(String type) {
         if (type == null || type.length() <= 0) {
             throw new IllegalArgumentException("Null or empty reporter type");
@@ -17,7 +20,8 @@ public class ReporterFactory {
             String host = "localhost";
             Integer port = Integer.valueOf(typeElements[typeElements.length - 1]);
             if (typeElements.length > 2) {
-                host = Joiner.on(":").join(Arrays.copyOfRange(typeElements, 1, typeElements.length - 1));
+                host = Joiner.on(":")
+                    .join(Arrays.copyOfRange(typeElements, 1, typeElements.length - 1));
             }
             return new StatsdReporter(host, port);
         } else {

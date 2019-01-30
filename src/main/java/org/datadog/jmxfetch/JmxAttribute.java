@@ -1,31 +1,45 @@
 package org.datadog.jmxfetch;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.management.*;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
 
-import org.apache.log4j.Logger;
-
-public abstract class JMXAttribute {
+public abstract class JmxAttribute {
 
     protected static final String ALIAS = "alias";
     protected static final String METRIC_TYPE = "metric_type";
-    protected final static Logger LOGGER = Logger.getLogger(JMXAttribute.class.getName());
-    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList("domain", "domain_regex", "bean_name", "bean",
-                                                                           "bean_regex", "attribute", "exclude_tags", "tags");
+    protected static final Logger LOGGER = Logger.getLogger(JmxAttribute.class.getName());
+    private static final List<String> EXCLUDED_BEAN_PARAMS =
+            Arrays.asList(
+                    "domain",
+                    "domain_regex",
+                    "bean_name",
+                    "bean",
+                    "bean_regex",
+                    "attribute",
+                    "exclude_tags",
+                    "tags");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
@@ -39,14 +53,20 @@ public abstract class JMXAttribute {
     private String beanStringName;
     private HashMap<String, String> beanParameters;
     private String attributeName;
-    private LinkedHashMap<String, LinkedHashMap<Object, Object>> valueConversions = new LinkedHashMap<String, LinkedHashMap<Object, Object>>();
+    private LinkedHashMap<String, LinkedHashMap<Object, Object>> valueConversions =
+            new LinkedHashMap<String, LinkedHashMap<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
     private Boolean cassandraAliasing;
 
-    JMXAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-            Connection connection, HashMap<String, String> instanceTags, Boolean cassandraAliasing,
+    JmxAttribute(
+            MBeanAttributeInfo attribute,
+            ObjectName beanName,
+            String instanceName,
+            Connection connection,
+            HashMap<String, String> instanceTags,
+            Boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
@@ -56,16 +76,19 @@ public abstract class JMXAttribute {
         this.beanStringName = beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
 
-        // A bean name is formatted like that: org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
+        // A bean name is formatted like that:
+        // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
         // i.e. : domain:bean_parameter1,bean_parameter2
-        //Note: some beans have a ':' in the name. Example:  some.domain:name="some.bean.0.0.0.0:80.some-metric"
+        // Note: some beans have a ':' in the name. Example:
+        // some.domain:name="some.bean.0.0.0.0:80.some-metric"
         int splitPosition = beanStringName.indexOf(':');
-       	String domain = beanStringName.substring(0, splitPosition);
-       	String beanParameters = beanStringName.substring(splitPosition+1);
+        String domain = beanStringName.substring(0, splitPosition);
+        String beanParameters = beanStringName.substring(splitPosition + 1);
         this.domain = domain;
 
         HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
-        LinkedList<String> beanParametersList = getBeanParametersList(instanceName, beanParametersHash, instanceTags);
+        LinkedList<String> beanParametersList =
+                getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = sanitizeParameters(beanParametersList);
@@ -74,15 +97,13 @@ public abstract class JMXAttribute {
         }
     }
 
-    /**
-     * Remove tags listed in the 'exclude_tags' list from configuration.
-     */
+    /** Remove tags listed in the 'exclude_tags' list from configuration. */
     private void applyTagsBlackList() {
         Filter include = this.matchingConf.getInclude();
         if (include != null) {
 
             for (String excludedTagName : include.getExcludeTags()) {
-                for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext();) {
+                for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext(); ) {
                     if (it.next().startsWith(excludedTagName + ":")) {
                         it.remove();
                     }
@@ -91,23 +112,24 @@ public abstract class JMXAttribute {
         }
     }
 
-    /**
-     * Add alias tag from the 'tag_alias' configuration list
-     */
+    /** Add alias tag from the 'tag_alias' configuration list. */
     private void addAdditionalTags() {
         Filter include = this.matchingConf.getInclude();
         if (include != null) {
             for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
-            		String alias = this.replaceByAlias(tag.getValue());
-            		if ((alias.trim().length() > 0) && alias != null) {
-            			this.defaultTagsList.add(tag.getKey() + ":" + alias);
-            		} else {
-            			LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
-            		}
+                String alias = this.replaceByAlias(tag.getValue());
+                if ((alias.trim().length() > 0) && alias != null) {
+                    this.defaultTagsList.add(tag.getKey() + ":" + alias);
+                } else {
+                    LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
+                }
             }
         }
     }
 
+    /** 
+     * Gets bean parameter hash map. 
+     * */
     public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
         String[] beanParameters = beanParametersString.split(",");
         HashMap<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
@@ -123,7 +145,10 @@ public abstract class JMXAttribute {
         return beanParamsMap;
     }
 
-    private LinkedList<String> getBeanParametersList(String instanceName, Map<String, String> beanParameters, HashMap<String, String> instanceTags) {
+    private LinkedList<String> getBeanParametersList(
+            String instanceName,
+            Map<String, String> beanParameters,
+            HashMap<String, String> instanceTags) {
         LinkedList<String> beanTags = new LinkedList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
@@ -140,8 +165,7 @@ public abstract class JMXAttribute {
             for (Map.Entry<String, String> tag : instanceTags.entrySet()) {
                 if (tag.getValue() != null) {
                     beanTags.add(tag.getKey() + ":" + tag.getValue());
-                }
-                else {
+                } else {
                     beanTags.add(tag.getKey());
                 }
             }
@@ -151,13 +175,12 @@ public abstract class JMXAttribute {
     }
 
     /**
-     * Sanitize MBean parameter names and values, i.e.
-     * - Rename parameter names conflicting with existing tags
-     * - Remove illegal characters
+     * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
+     * existing tags - Remove illegal characters
      */
     private static LinkedList<String> sanitizeParameters(LinkedList<String> beanParametersList) {
         LinkedList<String> defaultTagsList = new LinkedList<String>();
-        for (String rawBeanParameter: beanParametersList) {
+        for (String rawBeanParameter : beanParametersList) {
             // Remove `|` characters
             String beanParameter = rawBeanParameter.replace("|", "");
 
@@ -175,7 +198,7 @@ public abstract class JMXAttribute {
         return defaultTagsList;
     }
 
-    protected Boolean renameCassandraMetrics(){
+    protected Boolean renameCassandraMetrics() {
         return cassandraAliasing && domain.equals(CASSANDRA_DOMAIN);
     }
 
@@ -183,7 +206,7 @@ public abstract class JMXAttribute {
         Collection<String> tags = new LinkedList<String>();
         for (Map.Entry<String, String> param : beanParameters.entrySet()) {
             if (param.getKey().equals("name")) {
-                //This is already in the alias
+                // This is already in the alias
                 continue;
             } else if (param.getKey().equals("scope")) {
                 String type = beanParameters.get("type");
@@ -203,23 +226,36 @@ public abstract class JMXAttribute {
         return metricName;
     }
 
+    /** 
+     * Returns string reprensentation of JMX Attribute. 
+     * */
     @Override
     public String toString() {
-        return "Bean name: " + beanStringName +
-                " - Attribute name: " + attributeName +
-                "  - Attribute type: " + attribute.getType();
+        return "Bean name: "
+                + beanStringName
+                + " - Attribute name: "
+                + attributeName
+                + "  - Attribute type: "
+                + attribute.getType();
     }
 
-    public abstract LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException;
+    public abstract LinkedList<HashMap<String, Object>> getMetrics()
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException;
 
     /**
-     * An abstract function implemented in the inherited classes JMXSimpleAttribute and JMXComplexAttribute
+     * An abstract function implemented in the inherited classes JmxSimpleAttribute and
+     * JmxComplexAttribute.
      *
-     * @param conf Configuration a Configuration object that will be used to check if the JMX Attribute match this configuration
+     * @param conf Configuration a Configuration object that will be used to check if the Jmx
+     *     Attribute match this configuration
      * @return a boolean that tells if the attribute matches the configuration or not
      */
     public abstract boolean match(Configuration conf);
 
+    /** 
+     * Gets the metric count for the attribute. 
+     * */
     public int getMetricsCount() {
         try {
             return this.getMetrics().size();
@@ -229,7 +265,9 @@ public abstract class JMXAttribute {
         }
     }
 
-    Object getJmxValue() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+    Object getJmxValue()
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
         return this.connection.getAttribute(this.beanName, this.attribute.getName());
     }
 
@@ -238,15 +276,15 @@ public abstract class JMXAttribute {
         Pattern includeDomainRegex = conf.getInclude().getDomainRegex();
 
         return (includeDomain == null || includeDomain.equals(domain))
-            && (includeDomainRegex == null || includeDomainRegex.matcher(domain).matches());
+                && (includeDomainRegex == null || includeDomainRegex.matcher(domain).matches());
     }
 
     boolean excludeMatchDomain(Configuration conf) {
         String excludeDomain = conf.getExclude().getDomain();
         Pattern excludeDomainRegex = conf.getExclude().getDomainRegex();
 
-        return excludeDomain != null  && excludeDomain.equals(domain)
-            || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
+        return excludeDomain != null && excludeDomain.equals(domain)
+                || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
     }
 
     Object convertMetricValue(Object metricValue, String field) {
@@ -272,15 +310,15 @@ public abstract class JMXAttribute {
         } else if (value instanceof AtomicInteger) {
             return new Double(((AtomicInteger) (value)).get());
         } else if (value instanceof AtomicLong) {
-            Long l = ((AtomicLong) (value)).get();
-            return l.doubleValue();
+            Long longValue = ((AtomicLong) (value)).get();
+            return longValue.doubleValue();
         } else if (value instanceof Double) {
             return (Double) value;
         } else if (value instanceof Boolean) {
             return ((Boolean) value ? 1.0 : 0.0);
         } else if (value instanceof Long) {
-            Long l = new Long((Long) value);
-            return l.doubleValue();
+            Long longValue = new Long((Long) value);
+            return longValue.doubleValue();
         } else if (value instanceof Number) {
             return ((Number) value).doubleValue();
         } else {
@@ -299,11 +337,11 @@ public abstract class JMXAttribute {
         }
 
         for (Pattern beanRegex : beanRegexes) {
-            Matcher m = beanRegex.matcher(beanStringName);
+            Matcher matcher = beanRegex.matcher(beanStringName);
 
-            if(m.matches()) {
-                for (int i = 0; i<= m.groupCount(); i++) {
-            		this.beanParameters.put(Integer.toString(i), m.group(i));
+            if (matcher.matches()) {
+                for (int i = 0; i <= matcher.groupCount(); i++) {
+                    this.beanParameters.put(Integer.toString(i), matcher.group(i));
                 }
                 return true;
             }
@@ -318,16 +356,17 @@ public abstract class JMXAttribute {
             return false;
         }
 
-        for (String bean_attr : include.keySet()) {
-            if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
+        for (String beanAttr : include.keySet()) {
+            if (EXCLUDED_BEAN_PARAMS.contains(beanAttr)) {
                 continue;
             }
 
-            ArrayList<String> beanValues = include.getParameterValues(bean_attr);
+            ArrayList<String> beanValues = include.getParameterValues(beanAttr);
 
-            if (beanParameters.get(bean_attr) == null || !(beanValues.contains(beanParameters.get(bean_attr)))){
-                    return false;
-                }
+            if (beanParameters.get(beanAttr) == null
+                    || !(beanValues.contains(beanParameters.get(beanAttr)))) {
+                return false;
+            }
         }
         return true;
     }
@@ -336,22 +375,22 @@ public abstract class JMXAttribute {
         Filter exclude = conf.getExclude();
         ArrayList<String> beanNames = exclude.getBeanNames();
 
-        if(beanNames.contains(beanStringName)){
+        if (beanNames.contains(beanStringName)) {
             return true;
         }
 
-        for (String bean_attr : exclude.keySet()) {
-            if (EXCLUDED_BEAN_PARAMS.contains(bean_attr)) {
+        for (String beanAttr : exclude.keySet()) {
+            if (EXCLUDED_BEAN_PARAMS.contains(beanAttr)) {
                 continue;
             }
 
-            if (beanParameters.get(bean_attr) == null) {
+            if (beanParameters.get(beanAttr) == null) {
                 continue;
             }
 
-            ArrayList<String> beanValues = exclude.getParameterValues(bean_attr);
+            ArrayList<String> beanValues = exclude.getParameterValues(beanAttr);
             for (String beanVal : beanValues) {
-                if (beanParameters.get(bean_attr).equals(beanVal)) {
+                if (beanParameters.get(beanAttr).equals(beanVal)) {
                     return true;
                 }
             }
@@ -364,17 +403,26 @@ public abstract class JMXAttribute {
     }
 
     boolean excludeMatchBean(Configuration configuration) {
-        return excludeMatchBeanName(configuration) || matchBeanRegex(configuration.getExclude(), false);
+        return excludeMatchBeanName(configuration)
+                || matchBeanRegex(configuration.getExclude(), false);
     }
 
     @SuppressWarnings("unchecked")
     HashMap<Object, Object> getValueConversions(String field) {
-        String fullAttributeName =(field!=null)?(getAttribute().getName() + "." + field):(getAttribute().getName());
+        String fullAttributeName =
+                (field != null)
+                        ? (getAttribute().getName() + "." + field)
+                        : (getAttribute().getName());
         if (valueConversions.get(fullAttributeName) == null) {
             Object includedAttribute = matchingConf.getInclude().getAttribute();
             if (includedAttribute instanceof LinkedHashMap<?, ?>) {
                 LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute =
-                        ((LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<Object, Object>>>) includedAttribute).get(fullAttributeName);
+                        ((LinkedHashMap<
+                                                String,
+                                                LinkedHashMap<
+                                                        String, LinkedHashMap<Object, Object>>>)
+                                        includedAttribute)
+                                .get(fullAttributeName);
 
                 if (attribute != null) {
                     valueConversions.put(fullAttributeName, attribute.get("values"));
@@ -388,10 +436,16 @@ public abstract class JMXAttribute {
         return valueConversions.get(fullAttributeName);
     }
 
+    /**
+     * Gets the matching configuration for the attribute.
+     * */
     public Configuration getMatchingConf() {
         return matchingConf;
     }
 
+    /**
+     * Sets a matching configuration for the attribute.
+     * */
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
 
@@ -407,20 +461,17 @@ public abstract class JMXAttribute {
     }
 
     public ObjectName getBeanName() {
-      return beanName;
+        return beanName;
     }
 
     /**
      * Get attribute alias.
      *
-     * In order, tries to:
-     * * Use `alias_match` to generate an alias with a regular expression
-     * * Use `alias` directly
-     * * Create an generic alias prefixed with user's `metric_prefix` preference or default to `jmx`
+     * <p>In order, tries to: * Use `alias_match` to generate an alias with a regular expression *
+     * Use `alias` directly * Create an generic alias prefixed with user's `metric_prefix`
+     * preference or default to `jmx`
      *
-     * Argument(s):
-     * * (Optional) `field`
-     *   `Null` for `JMXSimpleAttribute`.
+     * <p>Argument(s): * (Optional) `field` `Null` for `JmxSimpleAttribute`.
      */
     protected String getAlias(String field) {
         String alias = null;
@@ -428,10 +479,14 @@ public abstract class JMXAttribute {
         Filter include = getMatchingConf().getInclude();
         LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
 
-        String fullAttributeName =(field!=null)?(getAttribute().getName() + "." + field):(getAttribute().getName());
+        String fullAttributeName =
+                (field != null)
+                        ? (getAttribute().getName() + "." + field)
+                        : (getAttribute().getName());
 
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute =
+                    (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             alias = getUserAlias(attribute, fullAttributeName);
         }
 
@@ -443,7 +498,7 @@ public abstract class JMXAttribute {
             }
         }
 
-        //If still null - generate generic alias
+        // If still null - generate generic alias
         if (alias == null) {
             alias = "jmx." + getDomain() + "." + fullAttributeName;
         }
@@ -452,14 +507,22 @@ public abstract class JMXAttribute {
     }
 
     /**
+     * Overload `getAlias` method.
+     *
+     * <p>Note: used for `JmxSimpleAttribute` only, as `field` is null.
+     */
+    protected String getAlias() {
+        return getAlias(null);
+    }
+
+
+    /**
      * Metric name aliasing specific to Cassandra.
      *
-     * * (Default) `cassandra_aliasing` == False.
-     *   Legacy aliasing: drop `org.apache` prefix.
-     * * `cassandra_aliasing` == True
-     *   Comply with CASSANDRA-4009
+     * <p>* (Default) `cassandra_aliasing` == False. Legacy aliasing: drop `org.apache` prefix. *
+     * `cassandra_aliasing` == True Comply with CASSANDRA-4009
      *
-     * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+     * <p>More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
      */
     private String getCassandraAlias() {
         if (renameCassandraMetrics()) {
@@ -471,23 +534,19 @@ public abstract class JMXAttribute {
             }
             return "cassandra." + metricName + "." + attributeName;
         }
-        //Deprecated Cassandra metric.  Remove domain prefix.
+        // Deprecated Cassandra metric.  Remove domain prefix.
         return getDomain().replace("org.apache.", "") + "." + getAttributeName();
     }
 
     /**
      * Retrieve user defined alias. Substitute regular expression named groups.
      *
-     * Example:
-     *   ```
-     *   bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz
-     *   attribute:
-     *     toto:
-     *       alias: my.metric.$foo.$attribute
-     *   ```
-     *   returns a metric name `my.metric.bar.toto`
+     * <p>Example: ``` bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz attribute: toto: alias:
+     * my.metric.$foo.$attribute ``` returns a metric name `my.metric.bar.toto`
      */
-    private String getUserAlias(LinkedHashMap<String, LinkedHashMap<String, String>> attribute, String fullAttributeName){
+    private String getUserAlias(
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute,
+            String fullAttributeName) {
         String alias = attribute.get(fullAttributeName).get(ALIAS);
         if (alias == null) {
             return null;
@@ -511,7 +570,7 @@ public abstract class JMXAttribute {
         return alias;
     }
 
-    private String replaceByAlias(String alias){
+    private String replaceByAlias(String alias) {
         // Bean parameters
         for (Map.Entry<String, String> param : beanParameters.entrySet()) {
             alias = alias.replace("$" + param.getKey(), param.getValue());
@@ -519,19 +578,9 @@ public abstract class JMXAttribute {
         return alias;
     }
 
-    /**
-     * Overload `getAlias` method.
-     *
-     * Note: used for `JMXSimpleAttribute` only, as `field` is null.
-     */
-    protected String getAlias(){
-        return getAlias(null);
-    }
-
-
     @SuppressWarnings("unchecked")
     protected String[] getTags() {
-        if(tags != null) {
+        if (tags != null) {
             return tags;
         }
 
@@ -539,10 +588,13 @@ public abstract class JMXAttribute {
         if (include != null) {
             Object includeAttribute = include.getAttribute();
             if (includeAttribute instanceof LinkedHashMap<?, ?>) {
-                LinkedHashMap<String, ArrayList<String>> attributeParams = ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)includeAttribute).get(attributeName);
+                LinkedHashMap<String, ArrayList<String>> attributeParams =
+                        ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)
+                                        includeAttribute)
+                                .get(attributeName);
                 if (attributeParams != null) {
                     ArrayList<String> yamlTags = attributeParams.get("tags");
-                    if ( yamlTags != null) {
+                    if (yamlTags != null) {
                         defaultTagsList.addAll(yamlTags);
                     }
                 }
@@ -561,7 +613,7 @@ public abstract class JMXAttribute {
         return attributeName;
     }
 
-    public static List<String> getExcludedBeanParams(){
+    public static List<String> getExcludedBeanParams() {
         return EXCLUDED_BEAN_PARAMS;
     }
 

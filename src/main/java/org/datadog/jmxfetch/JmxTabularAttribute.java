@@ -17,18 +17,33 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.InvalidKeyException;
 import javax.management.openmbean.TabularData;
-import javax.management.ReflectionException;
 
-public class JMXTabularAttribute extends JMXAttribute {
+public class JmxTabularAttribute extends JmxAttribute {
     private String instanceName;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;
 
-    public JMXTabularAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String instanceName,
-                             Connection connection, HashMap<String, String> instanceTags, boolean emptyDefaultHostname) {
-        super(attribute, beanName, instanceName, connection, instanceTags, false, emptyDefaultHostname);
+    /**
+     * Default constructor.
+     * */
+    public JmxTabularAttribute(
+            MBeanAttributeInfo attribute,
+            ObjectName beanName,
+            String instanceName,
+            Connection connection,
+            HashMap<String, String> instanceTags,
+            boolean emptyDefaultHostname) {
+        super(
+                attribute,
+                beanName,
+                instanceName,
+                connection,
+                instanceTags,
+                false,
+                emptyDefaultHostname);
         subAttributeList = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
     }
 
@@ -36,7 +51,9 @@ public class JMXTabularAttribute extends JMXAttribute {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (Object key : keys) {
-            if (!first) { sb.append(","); }
+            if (!first) {
+                sb.append(",");
+            }
             // I hope these have sane toString() methods
             sb.append(key.toString());
             first = false;
@@ -50,10 +67,12 @@ public class JMXTabularAttribute extends JMXAttribute {
             Collection keys = (Collection) rowKey;
             CompositeData compositeData = data.get(keys.toArray());
             String pathKey = getMultiKey(keys);
-            HashMap<String, HashMap<String, Object>> subAttributes = new HashMap<String, HashMap<String, Object>>();
+            HashMap<String, HashMap<String, Object>> subAttributes =
+                    new HashMap<String, HashMap<String, Object>>();
             for (String key : compositeData.getCompositeType().keySet()) {
                 if (compositeData.get(key) instanceof CompositeData) {
-                    for (String subKey : ((CompositeData) compositeData.get(key)).getCompositeType().keySet()) {
+                    for (String subKey :
+                            ((CompositeData) compositeData.get(key)).getCompositeType().keySet()) {
                         subAttributes.put(key + "." + subKey, new HashMap<String, Object>());
                     }
                 } else {
@@ -64,27 +83,28 @@ public class JMXTabularAttribute extends JMXAttribute {
         }
     }
 
-    protected String[] getTags(String key, String subAttribute) throws AttributeNotFoundException,
-            InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+    protected String[] getTags(String key, String subAttribute)
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
         List<String> tagsList = new ArrayList<String>();
         String fullMetricKey = getAttributeName() + "." + subAttribute;
         Map<String, ?> attributeParams = getAttributesFor(fullMetricKey);
         if (attributeParams != null) {
             Map<String, String> yamlTags = (Map) attributeParams.get("tags");
-                for (String tagName : yamlTags.keySet()) {
-                    String tag = tagName;
-                    String value = yamlTags.get(tagName);
-                    Object resolvedValue;
+            for (String tagName : yamlTags.keySet()) {
+                String tag = tagName;
+                String value = yamlTags.get(tagName);
+                Object resolvedValue;
 
-                    if (value.startsWith("$")){
-                        resolvedValue = getValue(key, value.substring(1));
-                        if (resolvedValue != null){
-                            value = (String) resolvedValue;
-                        }
+                if (value.startsWith("$")) {
+                    resolvedValue = getValue(key, value.substring(1));
+                    if (resolvedValue != null) {
+                        value = (String) resolvedValue;
                     }
-
-                    tagsList.add(tag + ":" + value);
                 }
+
+                tagsList.add(tag + ":" + value);
+            }
         }
         String[] defaultTags = super.getTags();
         tagsList.addAll(Arrays.asList(defaultTags));
@@ -99,24 +119,23 @@ public class JMXTabularAttribute extends JMXAttribute {
         if (include != null) {
             Object includeAttribute = include.getAttribute();
             if (includeAttribute instanceof LinkedHashMap<?, ?>) {
-                return (Map<String, ?>) ((Map)includeAttribute).get(key);
+                return (Map<String, ?>) ((Map) includeAttribute).get(key);
             }
         }
         return null;
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics() throws AttributeNotFoundException,
-            InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+    public LinkedList<HashMap<String, Object>> getMetrics()
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
         LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-        HashMap<String, LinkedList<HashMap<String, Object>>> subMetrics = new HashMap<String,
-                LinkedList<HashMap<String, Object>>>();
+        HashMap<String, LinkedList<HashMap<String, Object>>> subMetrics =
+                new HashMap<String, LinkedList<HashMap<String, Object>>>();
 
         for (String dataKey : subAttributeList.keySet()) {
             HashMap<String, HashMap<String, Object>> subSub = subAttributeList.get(dataKey);
             for (String metricKey : subSub.keySet()) {
-                String fullMetricKey = getAttributeName() + "." + metricKey;
-
                 HashMap<String, Object> metric = subSub.get(metricKey);
 
                 if (metric.get(ALIAS) == null) {
@@ -133,7 +152,8 @@ public class JMXTabularAttribute extends JMXAttribute {
 
                 metric.put("value", castToDouble(getValue(dataKey, metricKey), null));
 
-                if(!subMetrics.containsKey(fullMetricKey)) {
+                String fullMetricKey = getAttributeName() + "." + metricKey;
+                if (!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new LinkedList<HashMap<String, Object>>());
                 }
                 subMetrics.get(fullMetricKey).add(metric);
@@ -150,8 +170,8 @@ public class JMXTabularAttribute extends JMXAttribute {
         return metrics;
     }
 
-    private List<HashMap<String, Object>> sortAndFilter(String metricKey, LinkedList<HashMap<String, Object>>
-            metrics) {
+    private List<HashMap<String, Object>> sortAndFilter(
+            String metricKey, LinkedList<HashMap<String, Object>> metrics) {
         Map<String, ?> attributes = getAttributesFor(metricKey);
         if (!attributes.containsKey("limit")) {
             return metrics;
@@ -179,11 +199,11 @@ public class JMXTabularAttribute extends JMXAttribute {
         }
     }
 
-    private Object getValue(String key, String subAttribute) throws AttributeNotFoundException,
-            InstanceNotFoundException,
-            MBeanException, ReflectionException, IOException {
+    private Object getValue(String key, String subAttribute)
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
 
-        try{
+        try {
             Object value = this.getJmxValue();
             String attributeType = getAttribute().getType();
 
@@ -195,11 +215,11 @@ public class JMXTabularAttribute extends JMXAttribute {
                     CompositeData compositeData = data.get(keys.toArray());
                     if (subAttribute.contains(".")) {
                         // walk down the path
-                        Object o;
+                        Object obj;
                         for (String subPathKey : subAttribute.split("\\.")) {
-                            o = compositeData.get(subPathKey);
-                            if (o instanceof CompositeData) {
-                                compositeData = (CompositeData) o;
+                            obj = compositeData.get(subPathKey);
+                            if (obj instanceof CompositeData) {
+                                compositeData = (CompositeData) obj;
                             } else {
                                 return compositeData.get(subPathKey);
                             }
@@ -209,9 +229,13 @@ public class JMXTabularAttribute extends JMXAttribute {
                     }
                 }
             }
-        }
-        catch (InvalidKeyException e){
-            LOGGER.warn("`"+getAttribute().getName()+"` attribute does not have a `"+subAttribute+"` key.");
+        } catch (InvalidKeyException e) {
+            LOGGER.warn(
+                    "`"
+                            + getAttribute().getName()
+                            + "` attribute does not have a `"
+                            + subAttribute
+                            + "` key.");
             return null;
         }
 
@@ -224,8 +248,8 @@ public class JMXTabularAttribute extends JMXAttribute {
 
         Filter include = getMatchingConf().getInclude();
         if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute = (LinkedHashMap<String,
-                    LinkedHashMap<String, String>>) (include.getAttribute());
+            LinkedHashMap<String, LinkedHashMap<String, String>> attribute =
+                    (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
             metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(subAttributeName).get("type");
@@ -254,12 +278,14 @@ public class JMXTabularAttribute extends JMXAttribute {
             return false;
         }
 
-        return matchAttribute(configuration);//TODO && !excludeMatchAttribute(configuration);
+        return matchAttribute(configuration); // TODO && !excludeMatchAttribute(configuration);
     }
 
-    private boolean matchSubAttribute(Filter params, String subAttributeName, boolean matchOnEmpty) {
+    private boolean matchSubAttribute(
+            Filter params, String subAttributeName, boolean matchOnEmpty) {
         if ((params.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (params.getAttribute())).containsKey(subAttributeName)) {
+                && ((LinkedHashMap<String, Object>) (params.getAttribute()))
+                        .containsKey(subAttributeName)) {
             return true;
         } else if ((params.getAttribute() instanceof ArrayList<?>
                 && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {
@@ -282,7 +308,8 @@ public class JMXTabularAttribute extends JMXAttribute {
             Iterator<String> it2 = subSub.keySet().iterator();
             while (it2.hasNext()) {
                 String subKey = it2.next();
-                if (!matchSubAttribute(configuration.getInclude(), getAttributeName() + "." + subKey, true)) {
+                if (!matchSubAttribute(
+                        configuration.getInclude(), getAttributeName() + "." + subKey, true)) {
                     it2.remove();
                 }
             }

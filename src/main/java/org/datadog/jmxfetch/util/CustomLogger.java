@@ -1,17 +1,26 @@
 package org.datadog.jmxfetch.util;
 
-import org.apache.log4j.*;
-
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
 public class CustomLogger {
     private static final Logger LOGGER = Logger.getLogger(CustomLogger.class.getName());
     private static final Multiset<String> messageCount = HashMultiset.create();
     private static final String LOGGER_LAYOUT = "%d | %-5p| %c{1} | %m%n";
 
+    /**
+     * Sets up the custom logger to the specified level and location.
+     * */
     public static void setup(Level level, String logLocation) {
-        if (logLocation != null && !ConsoleAppender.SYSTEM_ERR.equals(logLocation) && !ConsoleAppender.SYSTEM_OUT.equals(logLocation)) {
+        if (logLocation != null
+                && !ConsoleAppender.SYSTEM_ERR.equals(logLocation)
+                && !ConsoleAppender.SYSTEM_OUT.equals(logLocation)) {
             RollingFileAppender fa = new RollingFileAppender();
             fa.setName("FileLogger");
             fa.setFile(logLocation);
@@ -33,6 +42,9 @@ public class CustomLogger {
         }
     }
 
+    /**
+     * Laconic logging for reduced verbosity.
+     * */
     public static void laconic(Logger logger, Level level, String message, int max) {
         if (messageCount.count(message) <= max) {
             logger.log(level, message);
@@ -41,4 +53,4 @@ public class CustomLogger {
     }
 
     private CustomLogger() {}
-} 
+}
