@@ -42,6 +42,7 @@ public abstract class Reporter {
     public void clearRatesAggregator(String instanceName) {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
+
     public void clearCountersAggregator(String instanceName) {
         countersAggregator.put(instanceName, new HashMap<String, Long>());
     }
@@ -113,7 +114,7 @@ public abstract class Reporter {
                 long oldValue = instanceCountersAggregator.get(key);
                 long delta = currentValue.longValue() - oldValue;
 
-                if(Double.isNaN(delta) || Double.isInfinite(delta)) {
+                if (Double.isNaN(delta) || Double.isInfinite(delta)) {
                     continue;
                 }
 
