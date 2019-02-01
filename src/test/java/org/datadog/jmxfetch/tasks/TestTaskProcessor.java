@@ -88,7 +88,7 @@ public class TestTaskProcessor {
     public void testTaskProcessor() throws Throwable {
     
         ExecutorService testThreadPool = Executors.newFixedThreadPool(2);
-        TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null, LOGGER);
+        TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null);
 
         List<InstanceTask<Boolean>> instanceTestTasks = new ArrayList<InstanceTask<Boolean>>();
 
@@ -125,7 +125,7 @@ public class TestTaskProcessor {
     public void testTaskProcessorTimeout() throws Throwable {
     
         ExecutorService testThreadPool = Executors.newFixedThreadPool(2);
-        TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null, LOGGER);
+        TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null);
 
         List<InstanceTask<Boolean>> instanceTestTasks = new ArrayList<InstanceTask<Boolean>>();
 

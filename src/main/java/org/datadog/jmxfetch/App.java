@@ -89,13 +89,13 @@ public class App {
                         ? Executors.newFixedThreadPool(appConfig.getThreadPoolSize())
                         : Executors.newCachedThreadPool();
         collectionProcessor =
-                new TaskProcessor(collectionThreadPool, appConfig.getReporter(), LOGGER);
+                new TaskProcessor(collectionThreadPool, appConfig.getReporter());
 
         ExecutorService recoveryThreadPool =
                 appConfig.getReconnectionThreadPoolSize() >= 1
                         ? Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize())
                         : Executors.newCachedThreadPool();
-        recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter(), LOGGER);
+        recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
 
         // setup client
         if (appConfig.remoteEnabled()) {

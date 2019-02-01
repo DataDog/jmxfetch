@@ -2,6 +2,7 @@ package org.datadog.jmxfetch.tasks;
 
 import org.apache.log4j.Logger;
 
+import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.InstanceTask;
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -15,17 +16,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TaskProcessor {
-    private final Logger logger;
+    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private Reporter reporter;
     private ExecutorService threadPoolExecutor;
 
     /**
      * TaskProcess constructor.
      * */
-    public TaskProcessor(ExecutorService executor, Reporter reporter, Logger logger) {
+    public TaskProcessor(ExecutorService executor, Reporter reporter) {
         threadPoolExecutor = executor;
         this.reporter = reporter;
-        this.logger = logger;
     }
 
     public void setThreadPoolExecutor(ExecutorService executor) {
@@ -66,7 +66,7 @@ public class TaskProcessor {
                     statuses.add(processor.invoke(instance, future, reporter));
 
                 } catch (Exception e) {
-                    logger.warn(
+                    LOGGER.warn(
                             "There was an error processing concurrent instance: " + instance, e);
 
                     statuses.add(new TaskStatusHandler(e));
@@ -74,7 +74,7 @@ public class TaskProcessor {
             }
         } catch (Exception e) {
             // Should we do anything else here?
-            logger.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
+            LOGGER.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
             throw e;
         }
 
