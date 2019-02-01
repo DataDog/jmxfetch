@@ -1,10 +1,10 @@
 package org.datadog.jmxfetch;
 
-public class AppHook extends Thread {
+public class AppShutdownHook extends Thread {
 
     private App app;
 
-    public AppHook(App app) {
+    public AppShutdownHook(App app) {
         this.app = app;
     }
 

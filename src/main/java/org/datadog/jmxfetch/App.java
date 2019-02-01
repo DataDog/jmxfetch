@@ -176,7 +176,7 @@ public class App {
         App app = new App(config);
 
         // Adding another shutdown hook for App related tasks
-        Runtime.getRuntime().addShutdownHook(new AppHook(app));
+        Runtime.getRuntime().addShutdownHook(new AppShutdownHook(app));
 
         // Get config from the ipc endpoint for "list_*" actions
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT)) {
