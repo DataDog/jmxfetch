@@ -33,9 +33,7 @@ public class ConsoleReporter extends Reporter {
         metrics.add(metric);
     }
 
-    /**
-     * Returns list of metrics to report and clears stored metric map. 
-     * */
+    /** Returns list of metrics to report and clears stored metric map. */
     public LinkedList<HashMap<String, Object>> getMetrics() {
         LinkedList<HashMap<String, Object>> returnedMetrics =
                 new LinkedList<HashMap<String, Object>>();
@@ -46,9 +44,7 @@ public class ConsoleReporter extends Reporter {
         return returnedMetrics;
     }
 
-    /**
-     * Adds service check to report on. 
-     * */
+    /** Adds service check to report on. */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         String tagString = "";
         if (tags != null && tags.length > 0) {
@@ -65,9 +61,7 @@ public class ConsoleReporter extends Reporter {
         serviceChecks.add(sc);
     }
 
-    /**
-     * Returns list of service checks to report and clears stored service check map.. 
-     * */
+    /** Returns list of service checks to report and clears stored service check map.. */
     public LinkedList<HashMap<String, Object>> getServiceChecks() {
         LinkedList<HashMap<String, Object>> returnedServiceChecks =
                 new LinkedList<HashMap<String, Object>>();

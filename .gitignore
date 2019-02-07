@@ -14,3 +14,6 @@ target/*
 *.ucls
 
 *.png
+
+# jenv
+.java_version

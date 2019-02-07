@@ -14,9 +14,7 @@ public class AttachApiConnection extends Connection {
     private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private String processRegex;
 
-    /**
-     * AttachApiConnection constructor for specified connection parameters.
-     * */
+    /** AttachApiConnection constructor for specified connection parameters. */
     public AttachApiConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
         processRegex = (String) connectionParams.get("process_name_regex");
         this.env = new HashMap<String, Object>();

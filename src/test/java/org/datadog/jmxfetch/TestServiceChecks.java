@@ -114,7 +114,9 @@ public class TestServiceChecks extends TestCommon {
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals(
-                "Cannot connect to instance process_regex: `.*non_running_process_test.*`. No match found. Available JVMs can be listed with the `list_jvms` command.",
+                "Unable to instantiate or initialize instance process_regex: `.*non_running_process_test.*`. "
+                + "Is the target JMX Server or JVM running? No match found. Available JVMs can be listed with "
+                + "the `list_jvms` command.",
                 scMessage);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
@@ -139,7 +141,9 @@ public class TestServiceChecks extends TestCommon {
         assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals(
-                "Cannot connect to instance process_regex: `.*non_running_process_test.*`. Is a JMX Server running at this address?",
+                "Unable to instantiate or initialize instance process_regex: `.*non_running_process_test.*`. "
+                + "Is the target JMX Server or JVM running? No match found. Available JVMs can be listed with "
+                + "the `list_jvms` command.",
                 scMessage);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));

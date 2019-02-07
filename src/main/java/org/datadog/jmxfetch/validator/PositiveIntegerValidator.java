@@ -5,9 +5,7 @@ import com.beust.jcommander.ParameterException;
 
 public class PositiveIntegerValidator implements IParameterValidator {
 
-    /**
-     * Validates whether an integer is positive.
-     * */
+    /** Validates whether an integer is positive. */
     public void validate(String name, String value) throws ParameterException {
         try {
             int num = Integer.parseInt(value);

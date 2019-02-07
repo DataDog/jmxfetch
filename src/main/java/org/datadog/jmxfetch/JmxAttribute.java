@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -127,9 +126,7 @@ public abstract class JmxAttribute {
         }
     }
 
-    /** 
-     * Gets bean parameter hash map. 
-     * */
+    /** Gets bean parameter hash map. */
     public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
         String[] beanParameters = beanParametersString.split(",");
         HashMap<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
@@ -226,9 +223,7 @@ public abstract class JmxAttribute {
         return metricName;
     }
 
-    /** 
-     * Returns string reprensentation of JMX Attribute. 
-     * */
+    /** Returns string reprensentation of JMX Attribute. */
     @Override
     public String toString() {
         return "Bean name: "
@@ -253,9 +248,7 @@ public abstract class JmxAttribute {
      */
     public abstract boolean match(Configuration conf);
 
-    /** 
-     * Gets the metric count for the attribute. 
-     * */
+    /** Gets the metric count for the attribute. */
     public int getMetricsCount() {
         try {
             return this.getMetrics().size();
@@ -436,16 +429,12 @@ public abstract class JmxAttribute {
         return valueConversions.get(fullAttributeName);
     }
 
-    /**
-     * Gets the matching configuration for the attribute.
-     * */
+    /** Gets the matching configuration for the attribute. */
     public Configuration getMatchingConf() {
         return matchingConf;
     }
 
-    /**
-     * Sets a matching configuration for the attribute.
-     * */
+    /** Sets a matching configuration for the attribute. */
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
 
@@ -514,7 +503,6 @@ public abstract class JmxAttribute {
     protected String getAlias() {
         return getAlias(null);
     }
-
 
     /**
      * Metric name aliasing specific to Cassandra.

@@ -14,9 +14,7 @@ public class CustomLogger {
     private static final Multiset<String> messageCount = HashMultiset.create();
     private static final String LOGGER_LAYOUT = "%d | %-5p| %c{1} | %m%n";
 
-    /**
-     * Sets up the custom logger to the specified level and location.
-     * */
+    /** Sets up the custom logger to the specified level and location. */
     public static void setup(Level level, String logLocation) {
         if (logLocation != null
                 && !ConsoleAppender.SYSTEM_ERR.equals(logLocation)
@@ -42,9 +40,7 @@ public class CustomLogger {
         }
     }
 
-    /**
-     * Laconic logging for reduced verbosity.
-     * */
+    /** Laconic logging for reduced verbosity. */
     public static void laconic(Logger logger, Level level, String message, int max) {
         if (messageCount.count(message) <= max) {
             logger.log(level, message);

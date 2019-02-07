@@ -10,7 +10,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-
 public class Status {
 
     public static final String STATUS_WARNING = "WARNING";
@@ -26,25 +25,19 @@ public class Status {
     private HttpClient client;
     private boolean isEnabled;
 
-    /**
-     * Default constructor.
-     * */
+    /** Default constructor. */
     public Status() {
         this(null);
     }
 
-    /**
-     * Status constructor for remote configuration host.
-     * */
+    /** Status constructor for remote configuration host. */
     public Status(String host, int port) {
         mapper = new ObjectMapper();
         client = new HttpClient(host, port, false);
         configure(null, host, port);
     }
 
-    /**
-     * status constructor for provided status file location.
-     * */
+    /** status constructor for provided status file location. */
     public Status(String statusFileLocation) {
         configure(statusFileLocation, null, 0);
     }
@@ -61,9 +54,7 @@ public class Status {
         instanceStats.put(FAILED_CHECKS, new HashMap<String, Object>());
     }
 
-    /**
-     * Adds instance stats to the status.
-     * */
+    /** Adds instance stats to the status. */
     public void addInstanceStats(
             String checkName,
             String instance,
@@ -136,9 +127,7 @@ public class Status {
         return mapper.writeValueAsString(status);
     }
 
-    /**
-     * Flushes current status.
-     * */
+    /** Flushes current status. */
     public void flush() {
         if (isEnabled()) {
             if (this.client != null) {
@@ -157,8 +146,7 @@ public class Status {
                 try {
                     File statusFile = new File(this.statusFileLocation);
                     LOGGER.debug(
-                            "Writing status to temp yaml file: " 
-                            + statusFile.getAbsolutePath());
+                            "Writing status to temp yaml file: " + statusFile.getAbsolutePath());
                     FileUtils.writeStringToFile(statusFile, yaml);
                 } catch (Exception e) {
                     LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
@@ -172,9 +160,7 @@ public class Status {
         return statusFileLocation;
     }
 
-    /**
-     * Described if the status is actually configured and enabled.
-     * */
+    /** Described if the status is actually configured and enabled. */
     public boolean isEnabled() {
         return isEnabled;
     }

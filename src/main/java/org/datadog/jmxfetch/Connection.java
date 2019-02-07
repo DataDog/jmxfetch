@@ -30,6 +30,7 @@ import javax.management.remote.JMXServiceURL;
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
     private static final long JMX_TIMEOUT = 20;
+    public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
     private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
@@ -42,19 +43,14 @@ public class Connection {
         return wrapper;
     }
 
-    /**
-     * Gets attributes for matching bean name.
-     */
+    /** Gets attributes for matching bean name. */
     public MBeanAttributeInfo[] getAttributesForBean(ObjectName beanName)
             throws InstanceNotFoundException, IntrospectionException, ReflectionException,
                     IOException {
         return mbs.getMBeanInfo(beanName).getAttributes();
     }
 
-    /**
-     * Queries beans on specific scope.
-     * Returns set of matching query names.. 
-     */
+    /** Queries beans on specific scope. Returns set of matching query names.. */
     public Set<ObjectName> queryNames(ObjectName name) throws IOException {
         String scope = (name != null) ? name.toString() : "*:*";
         LOGGER.debug("Querying bean names on scope: " + scope);
@@ -69,9 +65,7 @@ public class Connection {
         mbs = connector.getMBeanServerConnection();
     }
 
-    /**
-     * Gets attribute for matching bean and attribute name. 
-     */
+    /** Gets attribute for matching bean and attribute name. */
     public Object getAttribute(ObjectName objectName, String attributeName)
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
@@ -109,7 +103,7 @@ public class Connection {
         try {
             result = mailbox.poll(JMX_TIMEOUT, TimeUnit.SECONDS);
             if (result == null) {
-                if (!mailbox.offer("")) { 
+                if (!mailbox.offer("")) {
                     result = mailbox.take();
                 }
             }
@@ -132,9 +126,7 @@ public class Connection {
         }
     }
 
-    /**
-     * Closes the connector. 
-     */
+    /** Closes the connector. */
     public void closeConnector() {
         if (connector != null) {
             try {
@@ -145,9 +137,7 @@ public class Connection {
         }
     }
 
-    /**
-     * Returns a boolean describing if the connection is still alive. 
-     */
+    /** Returns a boolean describing if the connection is still alive. */
     public boolean isAlive() {
         if (connector == null) {
             return false;

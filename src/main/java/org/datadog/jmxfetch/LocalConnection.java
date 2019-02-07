@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 
-
 public class LocalConnection extends Connection {
     private static final Logger LOGGER = Logger.getLogger(LocalConnection.class.getName());
 
