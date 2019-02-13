@@ -1,6 +1,14 @@
 Changes
 =======
 
+# 0.26.0 / 2019-02-13
+
+### Changes
+
+* [FEATURE] Adding monotonic count support. See [#203][]
+* [FEATURE] Concurrent instance metric collection. See [#199][]
+* [IMPROVEMENT] `Checkstyle` + Google Java Style. See [#98][]
+
 # 0.25.0 / 2019-01-23
 
 ### Changes
@@ -252,6 +260,7 @@ Changes
 [#95]: https://github.com/DataDog/jmxfetch/issues/95
 [#96]: https://github.com/DataDog/jmxfetch/issues/96
 [#97]: https://github.com/DataDog/jmxfetch/issues/97
+[#98]: https://github.com/DataDog/jmxfetch/issues/98
 [#100]: https://github.com/DataDog/jmxfetch/issues/100
 [#102]: https://github.com/DataDog/jmxfetch/issues/102
 [#111]: https://github.com/DataDog/jmxfetch/issues/111
@@ -290,7 +299,9 @@ Changes
 [#191]: https://github.com/DataDog/jmxfetch/issues/191
 [#197]: https://github.com/DataDog/jmxfetch/issues/197
 [#198]: https://github.com/DataDog/jmxfetch/issues/198
+[#199]: https://github.com/DataDog/jmxfetch/issues/199
 [#201]: https://github.com/DataDog/jmxfetch/issues/201
+[#203]: https://github.com/DataDog/jmxfetch/issues/203
 [#204]: https://github.com/DataDog/jmxfetch/issues/204
 [#205]: https://github.com/DataDog/jmxfetch/issues/205
 [#206]: https://github.com/DataDog/jmxfetch/issues/206
