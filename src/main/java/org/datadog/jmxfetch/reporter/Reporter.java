@@ -43,13 +43,12 @@ public abstract class Reporter {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
 
+    /** Clears the counter aggregator for the provided instance name.  */
     public void clearCountersAggregator(String instanceName) {
         countersAggregator.put(instanceName, new HashMap<String, Long>());
     }
 
-    /**
-     * Submits the metrics in the implementing reporter. 
-     * */
+    /** Submits the metrics in the implementing reporter. */
     public void sendMetrics(
             LinkedList<HashMap<String, Object>> metrics,
             String instanceName,
