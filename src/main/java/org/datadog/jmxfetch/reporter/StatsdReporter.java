@@ -7,9 +7,7 @@ import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
 import org.datadog.jmxfetch.Status;
 
-/**
- * A reporter class to submit metrics via statsd.
- * */
+/** A reporter class to submit metrics via statsd. */
 public class StatsdReporter extends Reporter {
 
     private StatsDClient statsDClient;
@@ -17,9 +15,7 @@ public class StatsdReporter extends Reporter {
     private int statsdPort;
     private long initializationTime;
 
-    /**
-     * Constructor, instantiates statsd reported to provided host and port.
-     * */
+    /** Constructor, instantiates statsd reported to provided host and port. */
     public StatsdReporter(String statsdHost, int statsdPort) {
         this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
@@ -60,9 +56,7 @@ public class StatsdReporter extends Reporter {
         return 3;
     }
 
-    /**
-     * Submits service check.
-     * */
+    /** Submits service check. */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();

@@ -58,12 +58,13 @@ public class Instance {
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String ATTRIBUTE = "Attribute: ";
 
-    private static final ThreadLocal<Yaml> YAML = new ThreadLocal<Yaml>() {
-        @Override
-        public Yaml initialValue() {
-            return new Yaml();
-        }
-    };
+    private static final ThreadLocal<Yaml> YAML =
+        new ThreadLocal<Yaml>() {
+            @Override
+            public Yaml initialValue() {
+                return new Yaml();
+            }
+        };
 
     private Set<ObjectName> beans;
     private LinkedList<String> beanScopes;
@@ -86,9 +87,7 @@ public class Instance {
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
 
-    /**
-     * Constructor, instantiates Instance based of a previous instance and appConfig.
-     * */
+    /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
         this(
                 instance.getInstanceMap() != null
@@ -101,10 +100,7 @@ public class Instance {
                 appConfig);
     }
 
-    /**
-     * Default constructor, builds an Instance from the provided instance map
-     * and init configs.
-     * */
+    /** Default constructor, builds an Instance from the provided instance map and init configs. */
     @SuppressWarnings("unchecked")
     public Instance(
             LinkedHashMap<String, Object> instanceMap,
@@ -169,7 +165,7 @@ public class Instance {
             } else {
                 LOGGER.warn(
                         "Cannot determine a unique instance name. "
-                        + "Please define a name in your instance configuration");
+                                + "Please define a name in your instance configuration");
                 this.instanceName = this.checkName;
             }
         }
@@ -317,9 +313,7 @@ public class Instance {
         return tags;
     }
 
-    /**
-     * Returns a boolean describing if the canonical rate config is enabled.
-     * */
+    /** Returns a boolean describing if the canonical rate config is enabled. */
     public boolean getCanonicalRateConfig() {
         Object canonical = null;
         if (this.initConfig != null) {
@@ -337,39 +331,38 @@ public class Instance {
         return false;
     }
 
-    /**
-     * Returns the instance connection, creates one if not already connected.
-     * */
+    /** Returns the instance connection, creates one if not already connected. */
     public Connection getConnection(
             LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection)
             throws IOException {
         if (connection == null || !connection.isAlive()) {
-            LOGGER.info("Connection closed or does not exist. Creating a new connection!");
+            LOGGER.info(
+                    "Connection closed or does not exist. "
+                    + "Attempting to create a new connection...");
             return ConnectionFactory.createConnection(connectionParams);
         } else if (forceNewConnection) {
-            LOGGER.info("Forcing the creation of a new connection");
+            LOGGER.info("Forcing a new connection, attempting to create...");
             connection.closeConnector();
             return ConnectionFactory.createConnection(connectionParams);
         }
         return connection;
     }
 
-    /**
-     * Initializes the instance.
-     * May force a new connection..
-     * */
+    /** Initializes the instance. May force a new connection.. */
     public void init(boolean forceNewConnection)
             throws IOException, FailedLoginException, SecurityException {
         LOGGER.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
-        LOGGER.info("Connected to JMX Server at " + this.toString());
+        LOGGER.info(
+                "Trying to collect bean list for the first time for JMX Server at "
+                        + this.toString());
         this.refreshBeansList();
+        LOGGER.info("Connected to JMX Server at " + this.toString());
         this.getMatchingAttributes();
+        LOGGER.info("Done initializing JMX Server at " + this.toString());
     }
 
-    /**
-     * Returns a string representation for the instance.
-     * */
+    /** Returns a string representation for the instance. */
     @Override
     public String toString() {
         if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
@@ -381,9 +374,7 @@ public class Instance {
         }
     }
 
-    /**
-     * Returns a map of metrics collected.
-     * */
+    /** Returns a map of metrics collected. */
     public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
@@ -432,9 +423,7 @@ public class Instance {
         return metrics;
     }
 
-    /**
-     * Returns whather or not its time to collect metrics for the instance.
-     * */
+    /** Returns whather or not its time to collect metrics for the instance. */
     public boolean timeToCollect() {
         if (this.minCollectionPeriod == null) {
             return true;
@@ -446,7 +435,7 @@ public class Instance {
         }
     }
 
-    private void getMatchingAttributes() {
+    private void getMatchingAttributes() throws IOException {
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -473,6 +462,13 @@ public class Instance {
                 // Get all the attributes for bean_name
                 LOGGER.debug("Getting attributes for bean: " + beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
+            } catch (IOException e) {
+                // we should not continue
+                LOGGER.warn("Cannot get bean attributes " + e.getMessage());
+                if (e.getMessage() == connection.CLOSED_CLIENT_CAUSE) {
+                    throw e;
+                }
+                continue;
             } catch (Exception e) {
                 LOGGER.warn("Cannot get bean attributes " + e.getMessage());
                 continue;
@@ -580,7 +576,10 @@ public class Instance {
                     } catch (Exception e) {
                         LOGGER.error(
                                 "Error while trying to match attributeInfo configuration "
-                                + "with the Attribute: " + beanName + " : " + attributeInfo,
+                                        + "with the Attribute: "
+                                        + beanName
+                                        + " : "
+                                        + attributeInfo,
                                 e);
                     }
                 }
@@ -594,9 +593,7 @@ public class Instance {
         LOGGER.info("Found " + matchingAttributes.size() + " matching attributes");
     }
 
-    /**
-     * Returns a list of strings listing the bean scopes.
-     * */
+    /** Returns a list of strings listing the bean scopes. */
     public LinkedList<String> getBeansScopes() {
         if (this.beanScopes == null) {
             this.beanScopes = Configuration.getGreatestCommonScopes(configurationList);
@@ -633,9 +630,7 @@ public class Instance {
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
-    /**
-     * Returns a string array listing the service check tags.
-     * */
+    /** Returns a string array listing the service check tags. */
     public String[] getServiceCheckTags() {
         List<String> tags = new ArrayList<String>();
         if (this.instanceMap.get("host") != null) {
@@ -658,9 +653,7 @@ public class Instance {
         return tags.toArray(new String[tags.size()]);
     }
 
-    /**
-     * Returns the instance name.
-     * */
+    /** Returns the instance name. */
     public String getName() {
         return this.instanceName;
     }
@@ -673,35 +666,49 @@ public class Instance {
         return this.initConfig;
     }
 
-    /**
-     * Returns the check name.
-     * */
+    /** Returns the check name. */
     public String getCheckName() {
         return this.checkName;
     }
 
-    /**
-     * Returns the maximum number of metrics an instance may collect.
-     * */
+    /** Returns the maximum number of metrics an instance may collect. */
     public int getMaxNumberOfMetrics() {
         return this.maxReturnedMetrics;
     }
 
-    /**
-     * Returns whether or not the instance has reached the maximum
-     * bean collection limit.
-     * */
+    /** Returns whether or not the instance has reached the maximum bean collection limit. */
     public boolean isLimitReached() {
         return this.limitReached;
     }
 
-    /**
-     * Clean up config and close connection.
-     * */
+    /** Clean up config and close connection. */
     public void cleanUp() {
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
         }
+    }
+
+    /**
+     * Asynchronoush cleanup of instance, including connection.
+     * */
+    public void cleanUpAsync() {
+        class AsyncCleaner implements Runnable {
+            Instance instance;
+
+            AsyncCleaner(Instance instance) {
+                this.instance = instance;
+            }
+
+            @Override
+            public void run() {
+                instance.appConfig = null;
+                if (instance.connection != null) {
+                    instance.connection.closeConnector();
+                }
+            }
+        }
+
+        new Thread(new AsyncCleaner(this)).start();
     }
 }

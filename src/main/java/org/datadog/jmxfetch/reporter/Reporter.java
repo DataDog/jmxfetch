@@ -2,6 +2,7 @@ package org.datadog.jmxfetch.reporter;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
@@ -21,9 +22,7 @@ public abstract class Reporter {
     private HashMap<String, HashMap<String, Long>> countersAggregator =
             new HashMap<String, HashMap<String, Long>>();
 
-    /**
-     * Reporter constructor. 
-     * */
+    /** Reporter constructor. */
     public Reporter() {
         this.serviceCheckCount = new HashMap<String, Integer>();
     }
@@ -36,9 +35,7 @@ public abstract class Reporter {
         return key;
     }
 
-    /**
-     * Clears the rate aggregator for the provided instance name. 
-     * */
+    /** Clears the rate aggregator for the provided instance name. */
     public void clearRatesAggregator(String instanceName) {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
@@ -148,8 +145,8 @@ public abstract class Reporter {
                     sendMetricPoint(metricType, metricName, rate, tags);
                 } else if (sane) {
                     LOGGER.info(
-                            "Canonical rate option set, and negative rate (counter reset)" 
-                            + "not submitting.");
+                            "Canonical rate option set, and negative rate (counter reset)"
+                                    + "not submitting.");
                 }
 
                 instanceRatesAggregator.get(key).put("ts", now);
@@ -161,9 +158,7 @@ public abstract class Reporter {
         countersAggregator.put(instanceName, instanceCountersAggregator);
     }
 
-    /**
-     * Submits service check. 
-     * */
+    /** Submits service check. */
     public void sendServiceCheck(String checkName, String status, String message, String[] tags) {
         this.incrementServiceCheckCount(checkName);
         String dataName = Reporter.formatServiceCheckPrefix(checkName);
@@ -171,9 +166,7 @@ public abstract class Reporter {
         this.doSendServiceCheck(dataName, status, message, tags);
     }
 
-    /**
-     * Increments the service check count - for book-keeping purposes. 
-     * */
+    /** Increments the service check count - for book-keeping purposes. */
     public void incrementServiceCheckCount(String checkName) {
         int scCount = this.getServiceCheckCount(checkName);
         this.getServiceCheckCountMap().put(checkName, new Integer(scCount + 1));
@@ -192,9 +185,7 @@ public abstract class Reporter {
         return this.serviceCheckCount;
     }
 
-    /**
-     * Formats the service check prefix. 
-     * */
+    /** Formats the service check prefix. */
     public static String formatServiceCheckPrefix(String fullname) {
         String[] chunks = fullname.split("\\.");
         chunks[0] = chunks[0].replaceAll("[A-Z0-9:_\\-]", "");

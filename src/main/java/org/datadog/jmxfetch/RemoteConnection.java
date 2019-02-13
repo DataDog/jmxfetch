@@ -28,9 +28,7 @@ public class RemoteConnection extends Connection {
             "15000"; // Match the collection period default
     private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
 
-    /**
-     * RemoteConnection constructor for specified remote connection parameters.
-     * */
+    /** RemoteConnection constructor for specified remote connection parameters. */
     public RemoteConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
         host = (String) connectionParams.get("host");
         try {

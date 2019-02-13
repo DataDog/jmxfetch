@@ -11,6 +11,10 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.tasks.TaskMethod;
+import org.datadog.jmxfetch.tasks.TaskProcessException;
+import org.datadog.jmxfetch.tasks.TaskProcessor;
+import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
 
@@ -23,15 +27,24 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,7 +55,6 @@ import javax.security.auth.login.FailedLoginException;
 public class App {
     private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private static final String AUTO_DISCOVERY_PREFIX = "AD-";
-    public static final String CANNOT_CONNECT_TO_INSTANCE = "Cannot connect to instance ";
     private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
     private static final String AD_CONFIG_TERM = "#### AUTO-DISCOVERY TERM ####";
@@ -59,17 +71,32 @@ public class App {
     private ConcurrentHashMap<String, YamlParser> adPipeConfigs =
             new ConcurrentHashMap<String, YamlParser>();
     private ArrayList<Instance> instances = new ArrayList<Instance>();
-    private LinkedList<Instance> brokenInstances = new LinkedList<Instance>();
+    private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<String, Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
+
+    private TaskProcessor collectionProcessor;
+    private TaskProcessor recoveryProcessor;
 
     private AppConfig appConfig;
     private HttpClient client;
 
-    /**
-     * Application constructor.
-     * */
+    /** Application constructor. */
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
+
+        ExecutorService collectionThreadPool =
+                appConfig.getThreadPoolSize() >= 1
+                        ? Executors.newFixedThreadPool(appConfig.getThreadPoolSize())
+                        : Executors.newCachedThreadPool();
+        collectionProcessor =
+                new TaskProcessor(collectionThreadPool, appConfig.getReporter());
+
+        ExecutorService recoveryThreadPool =
+                appConfig.getReconnectionThreadPoolSize() >= 1
+                        ? Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize())
+                        : Executors.newCachedThreadPool();
+        recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
+
         // setup client
         if (appConfig.remoteEnabled()) {
             client = new HttpClient(appConfig.getIpcHost(), appConfig.getIpcPort(), false);
@@ -148,6 +175,9 @@ public class App {
 
         App app = new App(config);
 
+        // Adding another shutdown hook for App related tasks
+        Runtime.getRuntime().addShutdownHook(new AppShutdownHook(app));
+
         // Get config from the ipc endpoint for "list_*" actions
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT)) {
             app.getJsonConfigs();
@@ -200,12 +230,48 @@ public class App {
         return loopCounter;
     }
 
-    private static void clearInstances(List<Instance> instances) {
+    private void clearInstances(Collection<Instance> instances) {
+        List<InstanceTask<Void>> cleanupInstanceTasks = new ArrayList<InstanceTask<Void>>();
+
         Iterator<Instance> iterator = instances.iterator();
         while (iterator.hasNext()) {
             Instance instance = iterator.next();
-            instance.cleanUp();
-            iterator.remove();
+
+            // create the cleanup task
+            cleanupInstanceTasks.add(new InstanceCleanupTask(instance));
+        }
+
+        try {
+            if (!recoveryProcessor.ready()) {
+                LOGGER.warn(
+                        "Executor has to be replaced for recovery processor, "
+                        + "previous one hogging threads");
+                recoveryProcessor.stop();
+                recoveryProcessor.setThreadPoolExecutor(
+                        Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+            }
+
+            List<TaskStatusHandler> statuses =
+                    recoveryProcessor.processTasks(
+                            cleanupInstanceTasks,
+                            appConfig.getReconnectionTimeout(),
+                            TimeUnit.SECONDS,
+                            new TaskMethod<Void>() {
+                                @Override
+                                public TaskStatusHandler invoke(
+                                        Instance instance, Future<Void> future, Reporter reporter) {
+                                    return App.processRecoveryResults(instance, future, reporter);
+                                }
+                            });
+
+        } catch (Exception e) {
+            LOGGER.warn(
+                    "Unable to terminate all connections gracefully "
+                    + "- possible network connectivity issues.");
+        } finally {
+            // This is a best effort thing, we always clear the list - eventually 'orphaned'
+            // instances should get GC'd anyhow.
+            instances.clear();
         }
     }
 
@@ -327,14 +393,15 @@ public class App {
                 }
             } catch (IOException e) {
                 LOGGER.warn(
-                        "Unable to read from pipe" 
-                        + "- Service Discovery configuration may have been skipped.");
+                        "Unable to read from pipe"
+                                + "- Service Discovery configuration may have been skipped.");
             } catch (Exception e) {
                 LOGGER.warn("Problem parsing auto-discovery configuration: " + e);
             }
 
             long start = System.currentTimeMillis();
             if (this.reinit.get()) {
+                LOGGER.info("Reinitializing...");
                 init(true);
             }
 
@@ -342,15 +409,17 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
+                lastJsonConfigTs = 0; // reset TS to get AC instances
                 appConfig.getStatus().flush();
                 configs = getConfigs(appConfig);
                 init(true);
             }
-            long length = System.currentTimeMillis() - start;
-            LOGGER.debug("Iteration ran in " + length + " ms");
+            long duration = System.currentTimeMillis() - start;
+            LOGGER.debug("Iteration ran in " + duration + " ms");
             // Sleep until next collection
             try {
-                int loopPeriod = appConfig.getCheckPeriod();
+                long loopPeriod = appConfig.getCheckPeriod();
+                long sleepPeriod = (duration > loopPeriod) ? loopPeriod : loopPeriod - duration;
                 LOGGER.debug("Sleeping for " + loopPeriod + " ms.");
                 Thread.sleep(loopPeriod);
             } catch (InterruptedException e) {
@@ -359,141 +428,75 @@ public class App {
         }
     }
 
-    /** 
-     * Iterates enabled instances collecting JMX metrics from them. 
-     * Also attempts to fix any broken instances.
-     * */
+    void stop() {
+        collectionProcessor.stop();
+        recoveryProcessor.stop();
+    }
+
+    /**
+     * Iterates enabled instances collecting JMX metrics from them. Also attempts to fix any broken
+     * instances.
+     */
     public void doIteration() {
-        loopCounter++;
         Reporter reporter = appConfig.getReporter();
+        loopCounter++;
 
-        Iterator<Instance> it = instances.iterator();
-        while (it.hasNext()) {
-            Instance instance = it.next();
-            LinkedList<HashMap<String, Object>> metrics;
-            String instanceStatus = Status.STATUS_OK;
-            String scStatus = Status.STATUS_OK;
-            String instanceMessage = null;
-            int numberOfMetrics = 0;
+        try {
+            List<InstanceTask<LinkedList<HashMap<String, Object>>>> getMetricsTasks =
+                    new ArrayList<InstanceTask<LinkedList<HashMap<String, Object>>>>();
 
-            try {
-                if (!instance.timeToCollect()) {
-                    LOGGER.debug(
-                            "it is not time to collect, skipping run for " + instance.getName());
-                    continue;
-                }
-
-                metrics = instance.getMetrics();
-                numberOfMetrics = metrics.size();
-
-                if (numberOfMetrics == 0) {
-                    instanceMessage = "Instance " + instance + " didn't return any metrics";
-                    LOGGER.warn(instanceMessage);
-                    instanceStatus = Status.STATUS_ERROR;
-                    scStatus = Status.STATUS_ERROR;
-                    brokenInstances.add(instance);
-                } else if (instance.isLimitReached()) {
-                    instanceMessage =
-                            "Number of returned metrics is too high for instance: "
-                                    + instance.getName()
-                                    + ". Please read http://docs.datadoghq.com/integrations/java/ or get in touch with Datadog "
-                                    + "Support for more details. Truncating to "
-                                    + instance.getMaxNumberOfMetrics()
-                                    + " metrics.";
-
-                    instanceStatus = Status.STATUS_WARNING;
-                    // We don't want to log the warning at every iteration so we use this custom
-                    // logger.
-                    CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
-                }
-
-                if (numberOfMetrics > 0) {
-                    reporter.sendMetrics(
-                            metrics, instance.getName(), instance.getCanonicalRateConfig());
-                }
-
-            } catch (IOException e) {
-                instanceMessage = "Unable to refresh bean list for instance " + instance;
-                LOGGER.warn(instanceMessage, e);
-                instanceStatus = Status.STATUS_ERROR;
-                scStatus = Status.STATUS_ERROR;
-                brokenInstances.add(instance);
+            for (Instance instance : instances) {
+                getMetricsTasks.add(new MetricCollectionTask(instance));
             }
 
-            this.reportStatus(
-                    appConfig,
-                    reporter,
-                    instance,
-                    numberOfMetrics,
-                    instanceMessage,
-                    instanceStatus);
-            this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
-        }
+            if (!collectionProcessor.ready()) {
+                LOGGER.warn("Executor has to be replaced, previous one hogging threads");
+                collectionProcessor.stop();
+                collectionProcessor.setThreadPoolExecutor(
+                        Executors.newFixedThreadPool(appConfig.getThreadPoolSize()));
+            }
 
-        // Iterate over broken" instances to fix them by resetting them
-        it = brokenInstances.iterator();
-        while (it.hasNext()) {
-            Instance instance = it.next();
+            List<TaskStatusHandler> statuses =
+                    collectionProcessor.processTasks(
+                            getMetricsTasks,
+                            appConfig.getCollectionTimeout(),
+                            TimeUnit.SECONDS,
+                            new TaskMethod<LinkedList<HashMap<String, Object>>>() {
+                                @Override
+                                public TaskStatusHandler invoke(
+                                        Instance instance,
+                                        Future<LinkedList<HashMap<String, Object>>> future,
+                                        Reporter reporter) {
+                                    return App.processCollectionResults(instance, future, reporter);
+                                }
+                            });
 
-            // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
-            reporter.clearRatesAggregator(instance.getName());
-            reporter.clearCountersAggregator(instance.getName());
+            processCollectionStatus(getMetricsTasks, statuses);
 
-            LOGGER.warn(
-                    "Instance "
-                            + instance
-                            + " didn't return any metrics."
-                            + "Maybe the server got disconnected ? Trying to reconnect.");
+        } catch (Exception e) {
+            // INTERNAL ERROR
+            // This might also have a place in the status processor
 
-            // Remove the broken instance from the good instance list so jmxfetch won't try to
-            // collect metrics from this broken instance during next collection
-            instance.cleanUp();
-            instances.remove(instance);
+            String instanceMessage;
+            String instanceStatus = Status.STATUS_ERROR;
+            String scStatus = Status.STATUS_ERROR;
 
-            // Resetting the instance
-            Instance newInstance = new Instance(instance, appConfig);
-            try {
-                // Try to reinit the connection and force to renew it
-                LOGGER.info("Trying to reconnect to: " + newInstance);
-                newInstance.init(true);
-                // If we are here, the connection succeeded, the instance is fixed. It can be
-                // readded to the good instances list
-                instances.add(newInstance);
-                it.remove();
-            } catch (Exception e) {
-                String warning = null;
+            LOGGER.warn("JMXFetch internal error invoking concurrent tasks: ", e);
 
-                if (e instanceof IOException) {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + ". Is a JMX Server running at this address?";
-                    LOGGER.warn(warning);
-                } else if (e instanceof SecurityException) {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + " because of bad credentials. Please check your credentials";
-                    LOGGER.warn(warning);
-                } else if (e instanceof FailedLoginException) {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + " because of bad credentials. Please check your credentials";
-                    LOGGER.warn(warning);
-                } else {
-                    warning =
-                            CANNOT_CONNECT_TO_INSTANCE
-                                    + instance
-                                    + " for an unknown reason."
-                                    + e.getMessage();
-                    LOGGER.fatal(warning, e);
-                }
-
-                this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-                this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+            for (Instance instance : instances) {
+                // don't add instances to broken instances, issue was internal
+                instanceMessage =
+                        "Internal JMXFetch error refreshing bean list for instance " + instance;
+                this.reportStatus(
+                        appConfig, reporter, instance, 0, instanceMessage, instanceStatus);
+                this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
             }
         }
+
+        // Attempt to fix broken instances
+        LOGGER.debug("Trying to recover broken instances...");
+        fixBrokenInstances(reporter);
+        LOGGER.debug("Done trying to recover broken instances.");
 
         try {
             appConfig.getStatus().flush();
@@ -502,10 +505,71 @@ public class App {
         }
     }
 
-    /** 
-     * Adds a configuration to the auto-discovery pipe-collected
-     * configuration list.  This method is deprecated.
-     * */
+    private void fixBrokenInstances(Reporter reporter) {
+        List<InstanceTask<Void>> fixInstanceTasks = new ArrayList<InstanceTask<Void>>();
+
+        for (Instance instance : brokenInstanceMap.values()) {
+            // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
+            reporter.clearRatesAggregator(instance.getName());
+            reporter.clearCountersAggregator(instance.getName());
+
+            LOGGER.warn(
+                    "Instance "
+                            + instance
+                            + " didn't return any metrics. "
+                            + "Maybe the server got disconnected ? Trying to reconnect.");
+
+            // Remove the broken instance from the good instance list so jmxfetch won't try to
+            // collect metrics from this broken instance during next collection and close
+            // ongoing connections (do so asynchronously to avoid locking on network timeout).
+            instance.cleanUpAsync();
+            instances.remove(instance);
+
+            // Resetting the instance
+            Instance newInstance = new Instance(instance, appConfig);
+
+            // create the initializing task
+            fixInstanceTasks.add(new InstanceInitializingTask(newInstance, true));
+        }
+
+        try {
+            if (!recoveryProcessor.ready()) {
+                LOGGER.warn(
+                        "Executor has to be replaced for recovery processor, "
+                        + "previous one hogging threads");
+                recoveryProcessor.stop();
+                recoveryProcessor.setThreadPoolExecutor(
+                        Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+            }
+
+            Collections.shuffle(fixInstanceTasks);
+            List<TaskStatusHandler> statuses =
+                    recoveryProcessor.processTasks(
+                            fixInstanceTasks,
+                            appConfig.getReconnectionTimeout(),
+                            TimeUnit.SECONDS,
+                            new TaskMethod<Void>() {
+                                @Override
+                                public TaskStatusHandler invoke(
+                                        Instance instance, Future<Void> future, Reporter reporter) {
+                                    return App.processRecoveryResults(instance, future, reporter);
+                                }
+                            });
+
+            processFixedStatus(fixInstanceTasks, statuses);
+
+            // update with statuses
+            processStatus(fixInstanceTasks, statuses);
+
+        } catch (Exception e) {
+            // NADA
+        }
+    }
+
+    /**
+     * Adds a configuration to the auto-discovery pipe-collected configuration list. This method is
+     * deprecated.
+     */
     public boolean addConfig(String name, YamlParser config) {
         // named groups not supported with Java6:
         //
@@ -547,10 +611,7 @@ public class App {
         return true;
     }
 
-    /** 
-     * Adds a configuration to the auto-discovery HTTP collected
-     * configuration list (JSON). 
-     * */
+    /** Adds a configuration to the auto-discovery HTTP collected configuration list (JSON). */
     public boolean addJsonConfig(String name, String json) {
         return false;
     }
@@ -645,7 +706,7 @@ public class App {
                 return update;
             }
 
-            LOGGER.debug("Received the following JSON configs: " + response.getResponseBody());
+            LOGGER.info("Received the following JSON configs: " + response.getResponseBody());
 
             InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
@@ -654,7 +715,7 @@ public class App {
                 adJsonConfigs = (HashMap<String, Object>) parser.getJsonConfigs();
                 lastJsonConfigTs = timestamp;
                 update = true;
-                LOGGER.debug("update is in order - updating timestamp: " + lastJsonConfigTs);
+                LOGGER.info("update is in order - updating timestamp: " + lastJsonConfigTs);
             }
         } catch (JsonProcessingException e) {
             LOGGER.error("error processing JSON response: " + e);
@@ -690,12 +751,11 @@ public class App {
         reporter.resetServiceCheckCount(checkName);
     }
 
-    private void instantiate(
+    private Instance instantiate(
             LinkedHashMap<String, Object> instanceMap,
             LinkedHashMap<String, Object> initConfig,
             String checkName,
-            AppConfig appConfig,
-            boolean forceNewConnection) {
+            AppConfig appConfig) {
 
         Instance instance;
         Reporter reporter = appConfig.getReporter();
@@ -706,44 +766,27 @@ public class App {
             String warning = "Unable to create instance. Please check your yaml file";
             appConfig.getStatus().addInitFailedCheck(checkName, warning, Status.STATUS_ERROR);
             LOGGER.error(warning, e);
-            return;
+            return null;
         }
 
-        try {
-            //  initiate the JMX Connection
-            instance.init(forceNewConnection);
-            instances.add(instance);
-        } catch (IOException e) {
-            instance.cleanUp();
-            brokenInstances.add(instance);
-            String warning = CANNOT_CONNECT_TO_INSTANCE + instance + ". " + e.getMessage();
-            this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-            LOGGER.error(warning, e);
-        } catch (Exception e) {
-            instance.cleanUp();
-            brokenInstances.add(instance);
-            String warning =
-                    "Unexpected exception while initiating instance "
-                            + instance
-                            + " : "
-                            + e.getMessage();
-            this.reportStatus(appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
-            this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
-            LOGGER.error(warning, e);
-        }
+        return instance;
     }
 
-    /** 
-     * Initializes instances and metric collection. 
-     * */
+    /** Initializes instances and metric collection. */
     public void init(boolean forceNewConnection) {
+        LOGGER.info("Cleaning up instances...");
         clearInstances(instances);
-        clearInstances(brokenInstances);
+        clearInstances(brokenInstanceMap.values());
+        brokenInstanceMap.clear();
 
+        List<InstanceTask<Void>> instanceInitTasks = new ArrayList<InstanceTask<Void>>();
+        List<Instance> newInstances = new ArrayList<Instance>();
+
+        LOGGER.info("Dealing with YAML config instances...");
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         Iterator<Entry<String, YamlParser>> itPipeConfigs = adPipeConfigs.entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
+            LOGGER.info("iterating statics...");
             Map.Entry<String, YamlParser> entry;
             boolean fromPipeIterator = false;
             if (it.hasNext()) {
@@ -771,16 +814,19 @@ public class App {
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
                 // Create a new Instance object
-                instantiate(
-                        configInstance,
-                        (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
-                        name,
-                        appConfig,
-                        forceNewConnection);
+                LOGGER.info("Instantiating instance for: " + name);
+                Instance instance =
+                        instantiate(
+                                configInstance,
+                                (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                                name,
+                                appConfig);
+                newInstances.add(instance);
             }
         }
 
         // Process JSON configurations
+        LOGGER.info("Dealing with Auto-Config instances collected...");
         if (adJsonConfigs != null) {
             for (String check : adJsonConfigs.keySet()) {
                 HashMap<String, Object> checkConfig =
@@ -791,9 +837,302 @@ public class App {
                         (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
                 String checkName = (String) checkConfig.get("check_name");
                 for (LinkedHashMap<String, Object> configInstance : configInstances) {
-                    instantiate(
-                            configInstance, initConfig, checkName, appConfig, forceNewConnection);
+                    LOGGER.info("Instantiating instance for: " + checkName);
+                    Instance instance =
+                            instantiate(configInstance, initConfig, checkName, appConfig);
+                    newInstances.add(instance);
                 }
+            }
+        }
+
+        for (Instance instance : newInstances) {
+            // create the initializing tasks
+            instanceInitTasks.add(new InstanceInitializingTask(instance, forceNewConnection));
+        }
+
+        // Initialize the instances
+        LOGGER.info("Started instance initialization...");
+
+        try {
+            if (!recoveryProcessor.ready()) {
+                LOGGER.warn(
+                        "Executor has to be replaced for recovery processor, "
+                        + "previous one hogging threads");
+                recoveryProcessor.stop();
+                recoveryProcessor.setThreadPoolExecutor(
+                        Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+            }
+
+            List<TaskStatusHandler> statuses =
+                    recoveryProcessor.processTasks(
+                            instanceInitTasks,
+                            appConfig.getCollectionTimeout(),
+                            TimeUnit.SECONDS,
+                            new TaskMethod<Void>() {
+                                @Override
+                                public TaskStatusHandler invoke(
+                                        Instance instance, Future<Void> future, Reporter reporter) {
+                                    return App.processRecoveryResults(instance, future, reporter);
+                                }
+                            });
+
+            LOGGER.info("Completed instance initialization...");
+
+            processInstantiationStatus(instanceInitTasks, statuses);
+
+            // update with statuses
+            processStatus(instanceInitTasks, statuses);
+        } catch (Exception e) {
+            // NADA
+            LOGGER.warn("critical issue initializing instances: " + e);
+        }
+    }
+
+    static TaskStatusHandler processRecoveryResults(
+            Instance instance, Future<Void> future, Reporter reporter) {
+
+        TaskStatusHandler status = new TaskStatusHandler();
+        Throwable exc = null;
+
+        try {
+            if (future.isDone()) {
+                future.get();
+            } else if (future.isCancelled()) {
+                // Build custom exception
+                exc = new TaskProcessException("could not schedule reconnect for instance.");
+            }
+        } catch (Exception e) {
+            exc = e;
+        }
+
+        if (exc != null) {
+            status.setThrowableStatus(exc);
+        }
+
+        return status;
+    }
+
+    static TaskStatusHandler processCollectionResults(
+            Instance instance,
+            Future<LinkedList<HashMap<String, Object>>> future,
+            Reporter reporter) {
+
+        TaskStatusHandler status = new TaskStatusHandler();
+        Throwable exc = null;
+
+        try {
+            int numberOfMetrics = 0;
+
+            if (future.isDone()) {
+                LinkedList<HashMap<String, Object>> metrics;
+                metrics = future.get();
+                numberOfMetrics = metrics.size();
+
+                status.setData(metrics);
+
+                if (numberOfMetrics == 0) {
+                    // Build custom throwable
+                    exc =
+                            new TaskProcessException(
+                                    "Instance " + instance + " didn't return any metrics");
+                }
+
+            } else if (future.isCancelled()) {
+                // Build custom exception
+                exc =
+                        new TaskProcessException(
+                                "metric collection could not be scheduled in time for: "
+                                        + instance);
+            }
+        } catch (Exception e) {
+            // Exception running task
+            exc = e;
+        }
+
+        if (exc != null) {
+            status.setThrowableStatus(exc);
+        }
+
+        return status;
+    }
+
+    private <T> void processInstantiationStatus(
+            List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+
+        // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
+        ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
+        int idx = statuses.size();
+        while (sit.hasPrevious()) {
+            idx--;
+
+            Instance instance = tasks.get(idx).getInstance();
+
+            try {
+                TaskStatusHandler status = sit.previous();
+                status.raiseForStatus();
+
+                // All was good, add instance
+                instances.add(instance);
+                LOGGER.info("Recovered broken instance: " + idx);
+            } catch (Throwable e) {
+                LOGGER.info("Instance remains broken: " + instance.getName());
+                instance.cleanUpAsync();
+                brokenInstanceMap.put(instance.toString(), instance);
+            }
+        }
+    }
+
+    private <T> void processFixedStatus(
+            List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+        // cleanup fixed broken instances - matching indices between statuses and tasks
+        ListIterator<TaskStatusHandler> it = statuses.listIterator();
+        int idx = 0;
+        while (it.hasNext()) {
+            TaskStatusHandler status = it.next();
+
+            try {
+                status.raiseForStatus();
+
+                Instance instance = tasks.get(idx).getInstance();
+                brokenInstanceMap.remove(instance.toString());
+                this.instances.add(instance);
+
+            } catch (Throwable e) {
+                // Not much to do here, instance didn't recover
+            } finally {
+                idx++;
+            }
+        }
+    }
+
+    private <T> void processStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+        for (int i = 0; i < statuses.size(); i++) {
+
+            InstanceTask task = tasks.get(i);
+            TaskStatusHandler status = statuses.get(i);
+            Instance instance = task.getInstance();
+            Reporter reporter = appConfig.getReporter();
+            String warning = task.getWarning();
+
+            try {
+                status.raiseForStatus();
+                warning = null;
+            } catch (TaskProcessException e) {
+                // NOTHING serious
+            } catch (ExecutionException ee) {
+                Throwable exc = ee.getCause();
+
+                if (exc instanceof IOException) {
+                    warning += ". Is the target JMX Server or JVM running? ";
+                    warning += exc.getMessage();
+                } else if (exc instanceof SecurityException) {
+                    warning += " because of bad credentials. Please check your credentials";
+                } else if (exc instanceof FailedLoginException) {
+                    warning += " because of bad credentials. Please check your credentials";
+                } else {
+                    warning += " for an unknown reason." + exc.getMessage();
+                }
+
+            } catch (CancellationException ce) {
+                warning +=
+                        " because connection timed out and was canceled. "
+                        + "Please check your network.";
+            } catch (InterruptedException ie) {
+                warning += " attempt interrupted waiting on IO";
+            } catch (Throwable e) {
+                warning += " There was an unexpected exception: " + e.getMessage();
+            } finally {
+                if (warning != null) {
+                    LOGGER.warn(warning);
+
+                    this.reportStatus(
+                            appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                    this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
+                }
+            }
+        }
+    }
+
+    private <T> void processCollectionStatus(
+            List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+        for (int i = 0; i < statuses.size(); i++) {
+            String instanceMessage = null;
+            String instanceStatus = Status.STATUS_OK;
+            String scStatus = Status.STATUS_OK;
+            LinkedList<HashMap<String, Object>> metrics;
+
+            Integer numberOfMetrics = new Integer(0);
+
+            InstanceTask task = tasks.get(i);
+            TaskStatusHandler status = statuses.get(i);
+            Instance instance = task.getInstance();
+            Reporter reporter = appConfig.getReporter();
+
+            try {
+                status.raiseForStatus();
+
+                // If we get here all was good - metric count  available
+                metrics = (LinkedList<HashMap<String, Object>>) status.getData();
+                numberOfMetrics = metrics.size();
+
+                if (instance.isLimitReached()) {
+                    instanceMessage =
+                            "Number of returned metrics is too high for instance: "
+                                    + instance.getName()
+                                    + ". Please read http://docs.datadoghq.com/integrations/java/ or get in touch with Datadog "
+                                    + "Support for more details. Truncating to "
+                                    + instance.getMaxNumberOfMetrics()
+                                    + " metrics.";
+
+                    instanceStatus = Status.STATUS_WARNING;
+                    CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
+                }
+
+                if (numberOfMetrics > 0) {
+                    reporter.sendMetrics(
+                            metrics, instance.getName(), instance.getCanonicalRateConfig());
+                }
+
+            } catch (TaskProcessException te) {
+                // This would be "fine" - no need to evict
+                instanceStatus = Status.STATUS_WARNING;
+                scStatus = Status.STATUS_WARNING;
+
+                instanceMessage = te.toString();
+
+                LOGGER.warn(instanceMessage);
+            } catch (ExecutionException ee) {
+                instanceMessage = task.getWarning();
+                instanceStatus = Status.STATUS_ERROR;
+
+                brokenInstanceMap.put(instance.toString(), instance);
+                LOGGER.debug("Adding broken instance to list: " + instance.getName());
+
+                LOGGER.warn(instanceMessage, ee.getCause());
+            } catch (Throwable t) {
+                // Legit exception during task - eviction necessary
+                LOGGER.debug("Adding broken instance to list: " + instance.getName());
+                brokenInstanceMap.put(instance.toString(), instance);
+
+                instanceStatus = Status.STATUS_ERROR;
+                instanceMessage = task.getWarning() + ": " + t.toString();
+
+                LOGGER.warn(instanceMessage);
+
+            } finally {
+
+                if (instanceStatus == Status.STATUS_ERROR) {
+                    scStatus = Status.STATUS_ERROR;
+                }
+
+                this.reportStatus(
+                        appConfig,
+                        reporter,
+                        instance,
+                        numberOfMetrics.intValue(),
+                        instanceMessage,
+                        instanceStatus);
+                this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
             }
         }
     }

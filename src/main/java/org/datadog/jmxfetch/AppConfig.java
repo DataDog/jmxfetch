@@ -47,6 +47,10 @@ public class AppConfig {
     private static final String AD_PIPE_NAME = "dd-auto_discovery";
     private static final String AD_LAUNCH_FILE = "jmx.launch";
 
+    private static final int DEFAULT_THREAD_POOL_SIZE = 3;
+    private static final int DEFAULT_COLLECTION_TO_S = 60;
+    private static final int DEFAULT_RECONNECTION_TO_S = 15;
+
     @Parameter(
             names = {"--help", "-h"},
             description = "Display this help page",
@@ -102,6 +106,34 @@ public class AppConfig {
     private int checkPeriod = 15000;
 
     @Parameter(
+            names = {"--thread_pool_size", "-t"},
+            description = "The size of the thread pool",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
+
+    @Parameter(
+            names = {"--reconnection_thread_pool_size", "-u"},
+            description = "The size of the reconnection thread pool",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int reconnectionThreadPoolSize = DEFAULT_THREAD_POOL_SIZE;
+
+    @Parameter(
+            names = {"--collection_timeout", "-x"},
+            description = "The concurrent collection timeout in seconds",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int collectionTimeout = DEFAULT_COLLECTION_TO_S;
+
+    @Parameter(
+            names = {"--reconnection_timeout", "-y"},
+            description = "The reconnection timeout in seconds",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    private int reconnectionTimeout = DEFAULT_RECONNECTION_TO_S;
+
+    @Parameter(
             names = {"--ad_enabled", "--sd_enabled", "-w"},
             description = "Enable Auto Discovery.",
             required = false)
@@ -124,7 +156,7 @@ public class AppConfig {
             names = {"--exit_file_location", "-e"},
             description =
                     "Absolute path of the trigger file to watch to exit. "
-                    + "(default to null = no exit on file)",
+                            + "(default to null = no exit on file)",
             converter = ExitWatcherConverter.class,
             required = false)
     private ExitWatcher exitWatcher = new ExitWatcher();
@@ -163,10 +195,7 @@ public class AppConfig {
 
     private Status status = new Status();
 
-    /**
-     * Updates the status and returns a boolean describing if the
-     * status was indeed updated..
-     * */
+    /** Updates the status and returns a boolean describing if the status was indeed updated.. */
     public boolean updateStatus() {
         if (statusLocation != null) {
             status = new Status(statusLocation);
@@ -211,6 +240,22 @@ public class AppConfig {
         return checkPeriod;
     }
 
+    public int getThreadPoolSize() {
+        return threadPoolSize;
+    }
+
+    public int getReconnectionThreadPoolSize() {
+        return reconnectionThreadPoolSize;
+    }
+
+    public int getCollectionTimeout() {
+        return collectionTimeout;
+    }
+
+    public int getReconnectionTimeout() {
+        return reconnectionTimeout;
+    }
+
     public String getIpcHost() {
         return ipcHost;
     }
@@ -247,10 +292,7 @@ public class AppConfig {
         return logLocation;
     }
 
-    /** 
-     * Returns path to auto-discovery pipe.
-     * Deprecated.. 
-     * */
+    /** Returns path to auto-discovery pipe. Deprecated.. */
     public String getAutoDiscoveryPipe() {
         String pipePath;
 
@@ -286,9 +328,7 @@ public class AppConfig {
         return globalTags;
     }
 
-    /** 
-     * Factory method used by dd-tracer-agent to run jmxfetch in the same process. 
-     * */
+    /** Factory method used by dd-tracer-agent to run jmxfetch in the same process. */
     public static AppConfig create(
             List<String> instanceConfigResources,
             List<String> metricConfigResources,

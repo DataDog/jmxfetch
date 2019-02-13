@@ -13,9 +13,7 @@ public class Log4JLevelValidator implements IParameterValidator {
             Arrays.asList(
                     "ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL", "WARN");
 
-    /**
-     * Validates a string as a valid Log4J logging level.
-     * */
+    /** Validates a string as a valid Log4J logging level. */
     public void validate(String name, String value) throws ParameterException {
 
         if (!LOG4J_LEVELS.contains(value)) {

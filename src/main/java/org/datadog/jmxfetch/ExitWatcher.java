@@ -7,9 +7,7 @@ public class ExitWatcher {
     private String exitFileLocation;
     private boolean isEnabled;
 
-    /**
-     * Default constructor.
-     * */
+    /** Default constructor. */
     public ExitWatcher() {
         this(null);
     }
@@ -27,9 +25,7 @@ public class ExitWatcher {
         return isEnabled;
     }
 
-    /**
-     * Evaluates if its time to exit according to exit-file presence.
-     * */
+    /** Evaluates if its time to exit according to exit-file presence. */
     public boolean shouldExit() {
         if (isEnabled()) {
             File file = new File(exitFileLocation);
