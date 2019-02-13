@@ -19,6 +19,8 @@ public abstract class Reporter {
     private HashMap<String, Integer> serviceCheckCount;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator =
             new HashMap<String, HashMap<String, HashMap<String, Object>>>();
+    private HashMap<String, HashMap<String, Long>> countersAggregator =
+            new HashMap<String, HashMap<String, Long>>();
 
     /** Reporter constructor. */
     public Reporter() {
@@ -38,16 +40,29 @@ public abstract class Reporter {
         ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
     }
 
+    /** Clears the counter aggregator for the provided instance name.  */
+    public void clearCountersAggregator(String instanceName) {
+        countersAggregator.put(instanceName, new HashMap<String, Long>());
+    }
+
     /** Submits the metrics in the implementing reporter. */
     public void sendMetrics(
             LinkedList<HashMap<String, Object>> metrics,
             String instanceName,
             boolean canonicalRate) {
         HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
+        HashMap<String, Long> instanceCountersAggregator;
+
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
         } else {
             instanceRatesAggregator = new HashMap<String, HashMap<String, Object>>();
+        }
+
+        if (countersAggregator.containsKey(instanceName)) {
+            instanceCountersAggregator = countersAggregator.get(instanceName);
+        } else {
+            instanceCountersAggregator = new HashMap<String, Long>();
         }
 
         int loopCounter = App.getLoopCounter();
@@ -85,6 +100,28 @@ public abstract class Reporter {
             // rates
             if ("gauge".equals(metricType) || "histogram".equals(metricType)) {
                 sendMetricPoint(metricType, metricName, currentValue, tags);
+            } else if ("monotonic_count".equals(metricType)) {
+                String key = generateId(metric);
+                if (!instanceCountersAggregator.containsKey(key)) {
+                    instanceCountersAggregator.put(key,  currentValue.longValue());
+                    continue;
+                }
+
+                long oldValue = instanceCountersAggregator.get(key);
+                long delta = currentValue.longValue() - oldValue;
+
+                if (Double.isNaN(delta) || Double.isInfinite(delta)) {
+                    continue;
+                }
+
+                instanceCountersAggregator.put(key, currentValue.longValue());
+
+                if (delta < 0) {
+                    LOGGER.info("Counter " + metricName + " has been reset - not submitting.");
+                    continue;
+                }
+                sendMetricPoint(metricType, metricName, delta, tags);
+
             } else { // The metric should be 'counter'
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
@@ -118,6 +155,7 @@ public abstract class Reporter {
         }
 
         ratesAggregator.put(instanceName, instanceRatesAggregator);
+        countersAggregator.put(instanceName, instanceCountersAggregator);
     }
 
     /** Submits service check. */
