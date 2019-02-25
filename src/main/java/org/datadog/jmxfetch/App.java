@@ -450,7 +450,9 @@ public class App {
             }
 
             if (!collectionProcessor.ready()) {
-                LOGGER.warn("Executor has to be replaced, previous one hogging threads");
+                LOGGER.warn(
+                        "Executor has to be replaced for collection processor, "
+                        + "previous one hogging threads");
                 collectionProcessor.stop();
                 collectionProcessor.setThreadPoolExecutor(
                         Executors.newFixedThreadPool(appConfig.getThreadPoolSize()));
@@ -786,7 +788,6 @@ public class App {
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         Iterator<Entry<String, YamlParser>> itPipeConfigs = adPipeConfigs.entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
-            LOGGER.info("iterating statics...");
             Map.Entry<String, YamlParser> entry;
             boolean fromPipeIterator = false;
             if (it.hasNext()) {
@@ -884,7 +885,7 @@ public class App {
             processStatus(instanceInitTasks, statuses);
         } catch (Exception e) {
             // NADA
-            LOGGER.warn("critical issue initializing instances: " + e);
+            LOGGER.warn("Critical issue initializing instances: " + e);
         }
     }
 
@@ -973,9 +974,11 @@ public class App {
 
                 // All was good, add instance
                 instances.add(instance);
-                LOGGER.info("Recovered broken instance: " + idx);
+                LOGGER.info("Successfully initialized instance: " + instance.getName());
             } catch (Throwable e) {
-                LOGGER.info("Instance remains broken: " + instance.getName());
+                LOGGER.info(
+                    "Could not initialize instance: " + instance.getName()
+                    + ": " + e.toString());
                 instance.cleanUpAsync();
                 brokenInstanceMap.put(instance.toString(), instance);
             }
