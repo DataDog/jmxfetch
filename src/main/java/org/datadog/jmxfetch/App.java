@@ -85,16 +85,12 @@ public class App {
         this.appConfig = appConfig;
 
         ExecutorService collectionThreadPool =
-                appConfig.getThreadPoolSize() >= 1
-                        ? Executors.newFixedThreadPool(appConfig.getThreadPoolSize())
-                        : Executors.newCachedThreadPool();
+                Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
         collectionProcessor =
                 new TaskProcessor(collectionThreadPool, appConfig.getReporter());
 
         ExecutorService recoveryThreadPool =
-                appConfig.getReconnectionThreadPoolSize() >= 1
-                        ? Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize())
-                        : Executors.newCachedThreadPool();
+                Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize());
         recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
 
         // setup client
