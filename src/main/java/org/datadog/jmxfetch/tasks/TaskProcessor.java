@@ -38,7 +38,7 @@ public class TaskProcessor {
      * */
     public boolean ready() {
         ThreadPoolExecutor tpe = (ThreadPoolExecutor) threadPoolExecutor;
-        return !(tpe.getPoolSize() == tpe.getActiveCount());
+        return !(tpe.getMaximumPoolSize() == tpe.getActiveCount());
     }
 
     /**

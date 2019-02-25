@@ -59,7 +59,7 @@ public class TestTaskProcessor {
             }
         } catch (Exception e){
             exc = e;
-        } 
+        }
 
         if (exc != null) {
             status.setThrowableStatus(exc);
@@ -82,13 +82,15 @@ public class TestTaskProcessor {
     }
 
     /**
-     * Test Task Processor 
+     * Test Task Processor
      */
     @Test
     public void testTaskProcessor() throws Throwable {
-    
+
         ExecutorService testThreadPool = Executors.newFixedThreadPool(2);
         TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null);
+
+        assertTrue(testProcessor.ready());
 
         List<InstanceTask<Boolean>> instanceTestTasks = new ArrayList<InstanceTask<Boolean>>();
 
@@ -105,7 +107,7 @@ public class TestTaskProcessor {
                         return TestTaskProcessor.processTestResults(instance, future, reporter);
                     };
                 });
- 
+
         // this should all be green
         for (int i=0 ; i<statuses.size(); i++) {
 
@@ -119,11 +121,11 @@ public class TestTaskProcessor {
     }
 
     /**
-     * Test Timeout in Task Processor 
+     * Test Timeout in Task Processor
      */
     @Test
     public void testTaskProcessorTimeout() throws Throwable {
-    
+
         ExecutorService testThreadPool = Executors.newFixedThreadPool(2);
         TaskProcessor testProcessor = new TaskProcessor(testThreadPool, null);
 
@@ -142,7 +144,7 @@ public class TestTaskProcessor {
                         return TestTaskProcessor.processTestResults(instance, future, reporter);
                     };
                 });
- 
+
         // this should all be green
         for (int i=0 ; i<statuses.size(); i++) {
 
