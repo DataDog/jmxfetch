@@ -5,7 +5,7 @@
 
     <groupId>com.datadoghq</groupId>
     <artifactId>jmxfetch</artifactId>
-    <version>0.26.0</version>
+    <version>0.26.1</version>
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
@@ -45,7 +45,7 @@
         <jackson.version>2.9.8</jackson.version>
         <snakeyaml.version>1.13</snakeyaml.version>
         <!-- Note: using project checkstyle with AOSP style
-        find the default google java checkstyle config here -  
+        find the default google java checkstyle config here -
 		<checkstyle.config.location>google_checks.xml</checkstyle.config.location>
          -->
 		<checkstyle.config.location>style.xml</checkstyle.config.location>
