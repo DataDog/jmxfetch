@@ -1,6 +1,13 @@
 Changes
 =======
 
+# 0.26.1 / 2019-02-26
+
+### Changes
+
+* [BUGFIX] fix task processor readiness log + remove unused code. See [#210][]
+* [IMPROVEMENT] better log entries. See [#210][]
+
 # 0.26.0 / 2019-02-13
 
 ### Changes
@@ -305,6 +312,7 @@ Changes
 [#204]: https://github.com/DataDog/jmxfetch/issues/204
 [#205]: https://github.com/DataDog/jmxfetch/issues/205
 [#206]: https://github.com/DataDog/jmxfetch/issues/206
+[#210]: https://github.com/DataDog/jmxfetch/issues/210
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
