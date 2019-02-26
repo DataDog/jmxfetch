@@ -12,8 +12,6 @@ class InstanceInitializingTask extends InstanceTask<Void> {
     @Override
     public Void call() throws Exception {
         // Try to reinit the connection and force to renew it
-        LOGGER.info("Trying to reconnect to: " + instance);
-
         instance.init(reconnect);
         return null;
     }
