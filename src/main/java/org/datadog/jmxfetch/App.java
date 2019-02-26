@@ -704,7 +704,7 @@ public class App {
                 return update;
             }
 
-            LOGGER.info("Received the following JSON configs: " + response.getResponseBody());
+            LOGGER.debug("Received the following JSON configs: " + response.getResponseBody());
 
             InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
