@@ -1,6 +1,15 @@
 Changes
 =======
 
+# 0.27.0 / 2019-03-01
+
+### Changes
+
+* [IMPROVEMENT] `java-dogstatsd-client` has been upgraded to version 2.7. See [#207][] (Thanks [@mattdrees][])
+* [IMPROVEMENT] `java-dogstatsd-client` connections errors are now logged. See [#208][] (Thanks [@mattdrees][])
+* [BUGFIX] GC metrics `jvm.gc.eden_size` and `jvm.gc.survivor_size` were not collected for
+`Eden Space` and `Survivor Space` memory pools. See [#214][]
+
 # 0.26.1 / 2019-02-26
 
 ### Changes
@@ -312,7 +321,11 @@ Changes
 [#204]: https://github.com/DataDog/jmxfetch/issues/204
 [#205]: https://github.com/DataDog/jmxfetch/issues/205
 [#206]: https://github.com/DataDog/jmxfetch/issues/206
+[#207]: https://github.com/DataDog/jmxfetch/issues/207
+[#208]: https://github.com/DataDog/jmxfetch/issues/208
 [#210]: https://github.com/DataDog/jmxfetch/issues/210
+[#212]: https://github.com/DataDog/jmxfetch/issues/212
+[#214]: https://github.com/DataDog/jmxfetch/issues/214
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
@@ -320,4 +333,5 @@ Changes
 [@brothhaar]: https://github.com/brothhaar
 [@coupacooke]: https://github.com/coupacooke
 [@cslee00]: https://github.com/cslee00
+[@mattdrees]: https://github.com/mattdrees
 [@nwillems]: https://github.com/nwillems
