@@ -258,6 +258,7 @@ public abstract class JmxAttribute {
         }
     }
 
+    /** Gets the JMX Attribute info value. Makes a call through the connection */
     Object getJmxValue()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
@@ -545,14 +546,18 @@ public abstract class JmxAttribute {
         // Attribute & domain
         alias = alias.replace("$attribute", fullAttributeName);
         alias = alias.replace("$domain", domain);
-        try {
-            alias = alias.replace("$value", getJmxValue().toString());
-        } catch (JMException e) {
-            // If we haven't been able to get the value, it wasn't replaced.
-            LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
-        } catch (IOException e) {
-            // Same as above
-            LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+        if (alias.contains("$value")) {
+            // getJmxValue() hits the JMX target (potentially through remote network connection),
+            // so only call it if needed.
+            try {
+                alias = alias.replace("$value", getJmxValue().toString());
+            } catch (JMException e) {
+                // If we haven't been able to get the value, it wasn't replaced.
+                LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+            } catch (IOException e) {
+                // Same as above
+                LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+            }
         }
 
         return alias;
