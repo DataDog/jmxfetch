@@ -7,6 +7,7 @@ Changes
 
 * [IMPROVEMENT] `java-dogstatsd-client` has been upgraded to version 2.7. See [#207][] (Thanks [@mattdrees][])
 * [IMPROVEMENT] `java-dogstatsd-client` connections errors are now logged. See [#208][] (Thanks [@mattdrees][])
+* [IMPROVEMENT] Lower log level of log entry dumping all configs from AutoConfig. See [#212][]
 * [BUGFIX] GC metrics `jvm.gc.eden_size` and `jvm.gc.survivor_size` were not collected for
 `Eden Space` and `Survivor Space` memory pools. See [#214][]
 
