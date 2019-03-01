@@ -69,6 +69,14 @@
 
 # GC Memory Pools
 - include:
+      domain: java.lang
+      type: MemoryPool
+      name: Eden Space
+      attribute:
+        Usage.used:
+          alias: jvm.gc.eden_size
+          metric_type: gauge
+- include:
     domain: java.lang
     type: MemoryPool
     name: PS Eden Space
@@ -91,6 +99,14 @@
     attribute:
       Usage.used:
         alias: jvm.gc.eden_size
+        metric_type: gauge
+- include:
+    domain: java.lang
+    type: MemoryPool
+    name: Survivor Space
+    attribute:
+      Usage.used:
+        alias: jvm.gc.survivor_size
         metric_type: gauge
 - include:
     domain: java.lang
