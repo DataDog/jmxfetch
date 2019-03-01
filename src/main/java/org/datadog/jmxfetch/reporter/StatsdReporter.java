@@ -44,16 +44,15 @@ public class StatsdReporter extends Reporter {
         }
     }
 
-    private int statusToInt(String status) {
+    private ServiceCheck.Status statusToServiceCheckStatus(String status) {
         if (status == Status.STATUS_OK) {
-            return 0;
+            return ServiceCheck.Status.OK;
         } else if (status == Status.STATUS_WARNING) {
-            return 1;
+            return ServiceCheck.Status.WARNING;
         } else if (status == Status.STATUS_ERROR) {
-            // critical
-            return 2;
+            return ServiceCheck.Status.CRITICAL;
         }
-        return 3;
+        return ServiceCheck.Status.UNKNOWN;
     }
 
     /** Submits service check. */
@@ -63,12 +62,13 @@ public class StatsdReporter extends Reporter {
             init();
         }
 
-        ServiceCheck sc =
-                new ServiceCheck(
-                        String.format("%s.can_connect", checkName),
-                        this.statusToInt(status),
-                        message,
-                        tags);
+        ServiceCheck sc = ServiceCheck.builder()
+                .withName(String.format("%s.can_connect", checkName))
+                .withStatus(this.statusToServiceCheckStatus(status))
+                .withMessage(message)
+                .withTags(tags)
+                .build();
+
         statsDClient.serviceCheck(sc);
     }
 
