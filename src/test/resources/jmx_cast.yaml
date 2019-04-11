@@ -1,0 +1,14 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        refresh_beans: 4
+        name: jmx_test_instance
+        conf:
+            - include:
+                domain: org.datadog.jmxfetch.test
+                attribute:
+                    ShouldBe100:
+                        metric_type: gauge
+                    ShouldBeDefaulted:
+                        metric_type: gauge

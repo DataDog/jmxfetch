@@ -842,4 +842,33 @@ public class TestApp extends TestCommon {
         // 2(jmx_alias_match)  + 1 (jmx_sd_pipe_longname discards one)
         assertEquals(2, instances.size());
     }
+
+    /** Test that when a metric fails to be fetched and there is no default for
+     *  it, that metric is ignored while others still get fetched */
+    @Test
+    public void testMetricError() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        initApplication("jmx_cast.yaml");
+
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang + 2 defined - 1 error
+        assertEquals(14, metrics.size());
+
+        List<String> tags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp"
+        );
+
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be100", 100.0, tags, -1);
+
+        assertCoverage();
+    }
+
 }
