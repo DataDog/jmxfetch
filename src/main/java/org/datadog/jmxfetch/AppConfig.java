@@ -223,6 +223,7 @@ public class AppConfig {
         return this.statusLocation;
     }
 
+    /** Returns the action parameter of the app if any, or null otherwise. */
     public String getAction() {
         if (this.action == null || this.action.isEmpty()) {
             return null;
