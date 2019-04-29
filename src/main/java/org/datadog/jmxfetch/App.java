@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -118,13 +119,32 @@ public class App {
             System.exit(1);
         }
 
+        // Display the version and quit
+        if (config.isVersion() || AppConfig.ACTION_HELP.equals(config.getAction())) {
+            JCommander.getConsole().println("JMX Fetch " + getVersion());
+            System.exit(0);
+        }
+
         // Display the help and quit
-        if (config.isHelp() || config.getAction().equals(AppConfig.ACTION_HELP)) {
+        if (config.isHelp() || AppConfig.ACTION_HELP.equals(config.getAction())) {
             commander.usage();
             System.exit(0);
         }
 
         System.exit(run(config));
+    }
+
+    /**  Returns our own version number. */
+    public static String getVersion() {
+        try {
+            final Properties properties = new Properties();
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            properties.load(classLoader.getResourceAsStream("project.properties"));
+            return properties.getProperty("version");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "?.?.?";
+        }
     }
 
     /**
@@ -164,7 +184,7 @@ public class App {
         // Set up the shutdown hook to properly close resources
         attachShutdownHook();
 
-        LOGGER.info("JMX Fetch has started");
+        LOGGER.info("JMX Fetch " + getVersion() + " has started");
 
         // set up the config status
         config.updateStatus();

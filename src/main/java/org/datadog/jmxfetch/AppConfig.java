@@ -30,6 +30,7 @@ public class AppConfig {
     public static final String ACTION_LIST_NOT_MATCHING = "list_not_matching_attributes";
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
+    public static final String ACTION_VERSION = "version";
     public static final HashSet<String> ACTIONS =
             new HashSet<String>(
                     Arrays.asList(
@@ -40,10 +41,10 @@ public class AppConfig {
                             ACTION_LIST_NOT_MATCHING,
                             ACTION_LIST_LIMITED,
                             ACTION_HELP,
+                            ACTION_VERSION,
                             ACTION_LIST_JVMS));
 
     private static final String AD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
-    private static final String AD_LEGACY_PIPE_NAME = "dd-service_discovery";
     private static final String AD_PIPE_NAME = "dd-auto_discovery";
     private static final String AD_LAUNCH_FILE = "jmx.launch";
 
@@ -56,6 +57,12 @@ public class AppConfig {
             description = "Display this help page",
             help = true)
     private boolean help;
+
+    @Parameter(
+            names = {"--version", "-v"},
+            description = "Display the version number and exit",
+            help = true)
+    private boolean version;
 
     @Parameter(
             names = {"--log_level", "-L"},
@@ -216,7 +223,11 @@ public class AppConfig {
         return this.statusLocation;
     }
 
+    /** Returns the action parameter of the app if any, or null otherwise. */
     public String getAction() {
+        if (this.action == null || this.action.isEmpty()) {
+            return null;
+        }
         return this.action.get(0);
     }
 
@@ -226,6 +237,10 @@ public class AppConfig {
 
     public boolean isHelp() {
         return help;
+    }
+
+    public boolean isVersion() {
+        return version;
     }
 
     public Status getStatus() {
