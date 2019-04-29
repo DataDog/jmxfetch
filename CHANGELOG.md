@@ -1,6 +1,13 @@
 Changes
 =======
 
+# 0.28.0 / 2019-04-29
+
+### Changes
+
+* [IMPROVEMENT] Added --version command. See [#218][]
+* [BUGFIX] Don't print a stacktrace when failing to get a metric. See [#219][]
+
 # 0.27.0 / 2019-03-01
 
 ### Changes
@@ -327,6 +334,8 @@ Changes
 [#210]: https://github.com/DataDog/jmxfetch/issues/210
 [#212]: https://github.com/DataDog/jmxfetch/issues/212
 [#214]: https://github.com/DataDog/jmxfetch/issues/214
+[#218]: https://github.com/DataDog/jmxfetch/issues/218
+[#219]: https://github.com/DataDog/jmxfetch/issues/219
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
