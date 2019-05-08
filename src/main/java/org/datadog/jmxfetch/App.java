@@ -5,6 +5,7 @@ import com.google.common.primitives.Bytes;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
@@ -17,6 +18,8 @@ import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -53,8 +56,8 @@ import javax.security.auth.login.FailedLoginException;
 
 
 @SuppressWarnings("unchecked")
+@Slf4j
 public class App {
-    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private static final String AUTO_DISCOVERY_PREFIX = "AD-";
     private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
@@ -131,6 +134,9 @@ public class App {
             System.exit(0);
         }
 
+        // Set up the logger to add file handler
+        CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
+
         System.exit(run(config));
     }
 
@@ -152,18 +158,18 @@ public class App {
      * System#exit}.
      */
     public static int run(AppConfig config) {
-        // Set up the logger to add file handler
-        CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
+        Marker fatal = MarkerFactory.getMarker("FATAL");
 
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(config.getAction())) {
-            LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
+            LOGGER.error(fatal,
+                    config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
             return 1;
         }
 
         // The "list_*" actions can only be used with the reporter
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
-            LOGGER.fatal(
+            LOGGER.error(fatal,
                     config.getAction()
                             + " argument can only be used with the console reporter. Exiting.");
             return 1;
@@ -215,21 +221,20 @@ public class App {
     private static void attachShutdownHook() {
         class ShutdownHook {
             public void attachShutDownHook() {
-                Runtime.getRuntime()
-                        .addShutdownHook(
-                                new Thread() {
-                                    @Override
-                                    public void run() {
-                                        LOGGER.info("JMXFetch is closing");
-                                        // Properly close log handlers
-                                        Enumeration<Appender> enume =
-                                                (Enumeration<Appender>) LOGGER.getAllAppenders();
-                                        while (enume.hasMoreElements()) {
-                                            Appender appender = enume.nextElement();
-                                            appender.close();
-                                        }
-                                    }
-                                });
+                Runtime.getRuntime().addShutdownHook(
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            LOGGER.info("JMXFetch is closing");
+                            // Properly close log handlers
+                            Enumeration<Appender> enume =
+                                (Enumeration<Appender>) Logger.getRootLogger().getAllAppenders();
+                            while (enume.hasMoreElements()) {
+                                Appender appender = enume.nextElement();
+                                appender.close();
+                            }
+                        }
+                    });
             }
         }
 
@@ -1104,7 +1109,7 @@ public class App {
                                     + " metrics.";
 
                     instanceStatus = Status.STATUS_WARNING;
-                    CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
+                    CustomLogger.laconic(LOGGER, instanceMessage, 0);
                 }
 
                 if (numberOfMetrics > 0) {

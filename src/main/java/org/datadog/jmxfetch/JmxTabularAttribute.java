@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +24,7 @@ import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.InvalidKeyException;
 import javax.management.openmbean.TabularData;
 
+@Slf4j
 public class JmxTabularAttribute extends JmxAttribute {
     private String instanceName;
     private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;

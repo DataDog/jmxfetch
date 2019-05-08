@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -27,11 +27,11 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Slf4j
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
     private static final long JMX_TIMEOUT = 20;
     public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
-    private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
     protected MBeanServerConnection mbs;

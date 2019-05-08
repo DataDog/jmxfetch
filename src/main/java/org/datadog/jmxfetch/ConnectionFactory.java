@@ -1,13 +1,13 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 
 /** Singleton used to create connections to the MBeanServer. */
+@Slf4j
 public class ConnectionFactory {
-    private static final Logger LOGGER = Logger.getLogger(ConnectionFactory.class.getName());
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     private static ConnectionFactory connectionFactory = null;
 

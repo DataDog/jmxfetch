@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -11,6 +11,7 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
+@Slf4j
 public class RemoteConnection extends Connection {
 
     private String host;
@@ -26,7 +27,6 @@ public class RemoteConnection extends Connection {
     private static final String KEY_STORE_PASSWORD_KEY = "key_store_password";
     private static final String DEFAULT_RMI_RESPONSE_TIMEOUT =
             "15000"; // Match the collection period default
-    private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
 
     /** RemoteConnection constructor for specified remote connection parameters. */
     public RemoteConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {

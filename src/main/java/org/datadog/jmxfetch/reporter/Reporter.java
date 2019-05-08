@@ -1,7 +1,7 @@
 package org.datadog.jmxfetch.reporter;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
@@ -11,9 +11,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+@Slf4j
 public abstract class Reporter {
 
-    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     public static final String VALUE = "value";
 
     private HashMap<String, Integer> serviceCheckCount;

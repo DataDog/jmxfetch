@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,11 +24,11 @@ import javax.management.MBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+@Slf4j
 public abstract class JmxAttribute {
 
     protected static final String ALIAS = "alias";
     protected static final String METRIC_TYPE = "metric_type";
-    protected static final Logger LOGGER = Logger.getLogger(JmxAttribute.class.getName());
     private static final List<String> EXCLUDED_BEAN_PARAMS =
             Arrays.asList(
                     "domain",

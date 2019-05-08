@@ -2,7 +2,7 @@ package org.datadog.jmxfetch;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.yaml.snakeyaml.Yaml;
@@ -27,8 +27,8 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
+@Slf4j
 public class Instance {
-    private static final Logger LOGGER = Logger.getLogger(Instance.class.getName());
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
                     "long",

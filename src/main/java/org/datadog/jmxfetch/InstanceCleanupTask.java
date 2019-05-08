@@ -1,5 +1,8 @@
 package org.datadog.jmxfetch;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 class InstanceCleanupTask extends InstanceTask<Void> {
 
     InstanceCleanupTask(Instance instance) {

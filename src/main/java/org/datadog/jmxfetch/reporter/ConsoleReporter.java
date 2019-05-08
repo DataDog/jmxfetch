@@ -2,7 +2,7 @@ package org.datadog.jmxfetch.reporter;
 
 import com.google.common.base.Joiner;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
@@ -10,9 +10,8 @@ import org.datadog.jmxfetch.JmxAttribute;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+@Slf4j
 public class ConsoleReporter extends Reporter {
-
-    private static final Logger LOGGER = Logger.getLogger(ConsoleReporter.class.getName());
 
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
     private LinkedList<HashMap<String, Object>> serviceChecks =

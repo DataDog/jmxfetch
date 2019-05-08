@@ -1,8 +1,7 @@
 package org.datadog.jmxfetch.tasks;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
-import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.InstanceTask;
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -15,8 +14,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class TaskProcessor {
-    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private Reporter reporter;
     private ExecutorService threadPoolExecutor;
 
