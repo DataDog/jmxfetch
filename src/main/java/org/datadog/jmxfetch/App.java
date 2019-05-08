@@ -7,9 +7,8 @@ import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.tasks.TaskMethod;
@@ -32,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -134,9 +132,16 @@ public class App {
             System.exit(0);
         }
 
-        // Set up the logger to add file handler
-        CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
+        {
+            // Running these commands here because they are logging specific,
+            // not needed in dd-java-agent, which calls run directly.
 
+            // Set up the logger to add file handler
+            CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
+
+            // Set up the shutdown hook to properly close resources
+            attachShutdownHook();
+        }
         System.exit(run(config));
     }
 
@@ -187,9 +192,6 @@ public class App {
             return 0;
         }
 
-        // Set up the shutdown hook to properly close resources
-        attachShutdownHook();
-
         LOGGER.info("JMX Fetch " + getVersion() + " has started");
 
         // set up the config status
@@ -219,26 +221,16 @@ public class App {
 
     /** Attach a Shutdown Hook that will be called when SIGTERM is sent to JMXFetch. */
     private static void attachShutdownHook() {
-        class ShutdownHook {
-            public void attachShutDownHook() {
-                Runtime.getRuntime().addShutdownHook(
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            LOGGER.info("JMXFetch is closing");
-                            // Properly close log handlers
-                            Enumeration<Appender> enume =
-                                (Enumeration<Appender>) Logger.getRootLogger().getAllAppenders();
-                            while (enume.hasMoreElements()) {
-                                Appender appender = enume.nextElement();
-                                appender.close();
-                            }
-                        }
-                    });
+        Runtime.getRuntime().addShutdownHook(
+            new Thread() {
+                @Override
+                public void run() {
+                    LOGGER.info("JMXFetch is closing");
+                    // Properly close log handlers
+                    LogManager.shutdown();
+                }
             }
-        }
-
-        new ShutdownHook().attachShutDownHook();
+        );
     }
 
     /** Sets reinitialization flag. */
