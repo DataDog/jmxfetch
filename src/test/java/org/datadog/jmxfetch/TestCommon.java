@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 
 public class TestCommon {
-    AppConfig appConfig = spy(new AppConfig());
+    AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
     MBeanServer mbs;
     ArrayList<ObjectName> objectNames = new ArrayList<ObjectName>();

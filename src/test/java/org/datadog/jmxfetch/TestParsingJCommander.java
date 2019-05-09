@@ -28,7 +28,7 @@ public class TestParsingJCommander {
     private static final String IPC_PORT = "5001";
 
     private static AppConfig testCommand(String[] params) throws ParameterException {
-        AppConfig appConfig = new AppConfig();
+        AppConfig appConfig = AppConfig.builder().build();
         new JCommander(appConfig, params);
         return appConfig;
     }

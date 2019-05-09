@@ -110,7 +110,7 @@ public class App {
     public static void main(String[] args) {
 
         // Load the config from the args
-        AppConfig config = new AppConfig();
+        AppConfig config = AppConfig.builder().build();
         JCommander commander = null;
         try {
             // Try to parse the args using JCommander
