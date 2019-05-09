@@ -16,7 +16,7 @@ class MetricCollectionTask extends InstanceTask<LinkedList<HashMap<String, Objec
     public LinkedList<HashMap<String, Object>> call() throws Exception {
 
         if (!instance.timeToCollect()) {
-            LOGGER.debug(
+            log.debug(
                     "it is not time to collect, skipping run for instance: " + instance.getName());
 
             // Maybe raise an exception here instead...

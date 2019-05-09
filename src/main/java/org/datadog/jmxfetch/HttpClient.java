@@ -92,7 +92,7 @@ public class HttpClient {
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
             } catch (Exception e) {
-                LOGGER.debug("session token unavailable - not setting");
+                log.debug("session token unavailable - not setting");
                 this.token = "";
             }
         }
@@ -103,8 +103,8 @@ public class HttpClient {
         HttpClient.HttpResponse response = new HttpClient.HttpResponse(0, "");
         try {
             String url = "https://" + host + ":" + port + "/" + path;
-            LOGGER.debug("attempting to connect to: " + url);
-            LOGGER.debug("with body: " + body);
+            log.debug("attempting to connect to: " + url);
+            log.debug("with body: " + body);
 
             URL uri = new URL(url);
             HttpsURLConnection con = (HttpsURLConnection) uri.openConnection();
@@ -126,7 +126,7 @@ public class HttpClient {
 
             int responseCode = con.getResponseCode();
             if (responseCode < 200 || responseCode >= 300) {
-                LOGGER.debug("HTTP error stream: " + con.getErrorStream());
+                log.debug("HTTP error stream: " + con.getErrorStream());
                 response.setResponseCode(responseCode);
             } else {
                 response =
@@ -135,7 +135,7 @@ public class HttpClient {
             }
 
         } catch (Exception e) {
-            LOGGER.info("problem creating http request: " + e.toString());
+            log.info("problem creating http request: " + e.toString());
         }
 
         return response;

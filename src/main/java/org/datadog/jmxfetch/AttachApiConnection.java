@@ -67,7 +67,7 @@ public class AttachApiConnection extends Connection {
         try {
             vm.loadAgent(agent);
         } catch (Exception e) {
-            LOGGER.warn("Error initializing JMX agent", e);
+            log.warn("Error initializing JMX agent", e);
         }
     }
 }

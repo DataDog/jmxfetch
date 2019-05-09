@@ -22,7 +22,7 @@ public class StatsdReporter extends Reporter {
 
         @Override
         public void handle(Exception exception) {
-            LOGGER.error("statsd client error:", exception);
+            log.error("statsd client error:", exception);
         }
     }
 

@@ -21,7 +21,7 @@ public class ConsoleReporter extends Reporter {
     protected void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags) {
         String tagString = "[" + Joiner.on(",").join(tags) + "]";
-        LOGGER.info(
+        log.info(
                 metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
         HashMap<String, Object> metric = new HashMap<String, Object>();
@@ -49,7 +49,7 @@ public class ConsoleReporter extends Reporter {
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";
         }
-        LOGGER.info(
+        log.info(
                 checkName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
 
         HashMap<String, Object> sc = new HashMap<String, Object>();
@@ -73,24 +73,24 @@ public class ConsoleReporter extends Reporter {
 
     @Override
     public void displayMetricReached() {
-        LOGGER.info(
+        log.info(
                 "       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");
     }
 
     @Override
     public void displayMatchingAttributeName(JmxAttribute jmxAttribute, int rank, int limit) {
-        LOGGER.info("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
+        log.info("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
     }
 
     @Override
     public void displayNonMatchingAttributeName(JmxAttribute jmxAttribute) {
-        LOGGER.info("       Not Matching: " + jmxAttribute);
+        log.info("       Not Matching: " + jmxAttribute);
     }
 
     @Override
     public void displayInstanceName(Instance instance) {
-        LOGGER.info("#####################################");
-        LOGGER.info("Instance: " + instance);
-        LOGGER.info("#####################################");
+        log.info("#####################################");
+        log.info("Instance: " + instance);
+        log.info("#####################################");
     }
 }

@@ -67,7 +67,7 @@ public class RemoteConnection extends Connection {
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
 
-                LOGGER.info(
+                log.info(
                         "Setting trustStore path: " + trustStorePath + " and trustStorePassword");
             }
         }
@@ -82,7 +82,7 @@ public class RemoteConnection extends Connection {
                 System.setProperty("javax.net.ssl.keyStore", keyStorePath);
                 System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 
-                LOGGER.info("Setting keyStore path: " + keyStorePath + " and keyStorePassword");
+                log.info("Setting keyStore path: " + keyStorePath + " and keyStorePassword");
             }
         }
 

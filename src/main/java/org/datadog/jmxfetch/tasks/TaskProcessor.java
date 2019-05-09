@@ -65,7 +65,7 @@ public class TaskProcessor {
                     statuses.add(processor.invoke(instance, future, reporter));
 
                 } catch (Exception e) {
-                    LOGGER.warn(
+                    log.warn(
                             "There was an error processing concurrent instance: " + instance, e);
 
                     statuses.add(new TaskStatusHandler(e));
@@ -73,7 +73,7 @@ public class TaskProcessor {
             }
         } catch (Exception e) {
             // Should we do anything else here?
-            LOGGER.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
+            log.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
             throw e;
         }
 

@@ -231,7 +231,7 @@ public class JmxTabularAttribute extends JmxAttribute {
                 }
             }
         } catch (InvalidKeyException e) {
-            LOGGER.warn(
+            log.warn(
                     "`"
                             + getAttribute().getName()
                             + "` attribute does not have a `"

@@ -120,7 +120,7 @@ public abstract class JmxAttribute {
                 if ((alias.trim().length() > 0) && alias != null) {
                     this.defaultTagsList.add(tag.getKey() + ":" + alias);
                 } else {
-                    LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
+                    log.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
                 }
             }
         }
@@ -253,7 +253,7 @@ public abstract class JmxAttribute {
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
-            LOGGER.warn("Unable to get metrics from " + beanStringName + " - "
+            log.warn("Unable to get metrics from " + beanStringName + " - "
                                                 + attributeName + ": " + e.toString());
             return 0;
         }
@@ -554,10 +554,10 @@ public abstract class JmxAttribute {
                 alias = alias.replace("$value", getJmxValue().toString());
             } catch (JMException e) {
                 // If we haven't been able to get the value, it wasn't replaced.
-                LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+                log.warn("Unable to replace $value for attribute " + fullAttributeName, e);
             } catch (IOException e) {
                 // Same as above
-                LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+                log.warn("Unable to replace $value for attribute " + fullAttributeName, e);
             }
         }
 

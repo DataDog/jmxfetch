@@ -12,7 +12,7 @@ class InstanceCleanupTask extends InstanceTask<Void> {
 
     @Override
     public Void call() throws Exception {
-        LOGGER.info("Trying to cleanup: " + instance);
+        log.info("Trying to cleanup: " + instance);
 
         instance.cleanUp();
         return null;

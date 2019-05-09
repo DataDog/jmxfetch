@@ -136,20 +136,20 @@ public class Status {
                     HttpClient.HttpResponse response =
                             this.client.request("POST", json, API_STATUS_PATH);
                     if (!response.isResponse2xx()) {
-                        LOGGER.debug("Problem submitting JSON status: " + json);
+                        log.debug("Problem submitting JSON status: " + json);
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Could not post status: " + e.getMessage());
+                    log.warn("Could not post status: " + e.getMessage());
                 }
             } else {
                 String yaml = generateYaml();
                 try {
                     File statusFile = new File(this.statusFileLocation);
-                    LOGGER.debug(
+                    log.debug(
                             "Writing status to temp yaml file: " + statusFile.getAbsolutePath());
                     FileUtils.writeStringToFile(statusFile, yaml);
                 } catch (Exception e) {
-                    LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
+                    log.warn("Cannot write status to temp file: " + e.getMessage());
                 }
             }
         }
