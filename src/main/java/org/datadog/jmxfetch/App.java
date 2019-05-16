@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import static org.datadog.jmxfetch.Instance.isDirectInstance;
+
 import com.google.common.primitives.Bytes;
 
 import com.beust.jcommander.JCommander;
@@ -827,8 +829,16 @@ public class App {
             }
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                if (appConfig.isAllowDirectInstances() != isDirectInstance(configInstance)) {
+                    log.debug("Skipping instance '{}'. allowDirectInstances={} jvm_direct={}",
+                            name,
+                            appConfig.isAllowDirectInstances(),
+                            isDirectInstance(configInstance));
+                    continue;
+                }
+
                 // Create a new Instance object
-                log.info("Instantiating instance for: " + name);
+                log.info("Instantiating instance for: {}", name);
                 Instance instance =
                         instantiate(
                                 configInstance,

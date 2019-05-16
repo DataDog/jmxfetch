@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ public class TestServiceChecks extends TestCommon {
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=ServiceCheckTest");
 
         // We do a first collection
+        when(appConfig.isAllowDirectInstances()).thenReturn(true);
         initApplication("jmx.yaml");
 
         run();
@@ -153,6 +155,7 @@ public class TestServiceChecks extends TestCommon {
 
     @Test
     public void testServiceCheckCounter() throws Exception {
+        when(appConfig.isAllowDirectInstances()).thenReturn(true);
         initApplication("jmx.yaml");
 
         Reporter repo = getReporter();

@@ -3,6 +3,7 @@ package org.datadog.jmxfetch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -490,6 +491,7 @@ public class TestApp extends TestCommon {
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
 
         // We do a first collection
+        when(appConfig.isAllowDirectInstances()).thenReturn(true);
         initApplication("jmx.yaml");
 
         run();
