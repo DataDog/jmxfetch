@@ -491,7 +491,7 @@ public class TestApp extends TestCommon {
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
 
         // We do a first collection
-        when(appConfig.isAllowDirectInstances()).thenReturn(true);
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
         initApplication("jmx.yaml");
 
         run();

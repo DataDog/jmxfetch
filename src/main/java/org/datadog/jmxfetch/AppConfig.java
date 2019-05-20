@@ -1,8 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
@@ -12,7 +9,6 @@ import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
-import org.datadog.jmxfetch.reporter.ReporterFactory;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
@@ -209,7 +205,7 @@ public class AppConfig {
      * If set to true, other instances will be ignored.
      */
     @Builder.Default
-    private boolean allowDirectInstances = false;
+    private boolean targetDirectInstances = false;
 
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
@@ -346,8 +342,8 @@ public class AppConfig {
         return getTmpDirectory() + "/" + AD_LAUNCH_FILE;
     }
 
-    public boolean isAllowDirectInstances() {
-        return allowDirectInstances;
+    public boolean isTargetDirectInstances() {
+        return targetDirectInstances;
     }
 
     public List<String> getInstanceConfigResources() {

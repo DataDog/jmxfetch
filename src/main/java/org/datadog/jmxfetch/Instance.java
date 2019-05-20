@@ -374,7 +374,9 @@ public class Instance {
     /** Returns a string representation for the instance. */
     @Override
     public String toString() {
-        if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+        if (isDirectInstance(instanceMap)) {
+            return "jvm_direct";
+        } else if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
             return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
         } else if (this.instanceMap.get("jmx_url") != null) {
             return (String) this.instanceMap.get("jmx_url");

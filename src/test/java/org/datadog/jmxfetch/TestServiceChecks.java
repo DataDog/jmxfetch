@@ -20,7 +20,7 @@ public class TestServiceChecks extends TestCommon {
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=ServiceCheckTest");
 
         // We do a first collection
-        when(appConfig.isAllowDirectInstances()).thenReturn(true);
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
         initApplication("jmx.yaml");
 
         run();
@@ -155,7 +155,7 @@ public class TestServiceChecks extends TestCommon {
 
     @Test
     public void testServiceCheckCounter() throws Exception {
-        when(appConfig.isAllowDirectInstances()).thenReturn(true);
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
         initApplication("jmx.yaml");
 
         Reporter repo = getReporter();
