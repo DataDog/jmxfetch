@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -12,6 +12,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+@Slf4j
 public class HttpClient {
     private String token;
     private TrustManager[] dummyTrustManager;
@@ -20,7 +21,6 @@ public class HttpClient {
     private int port;
 
     private static final String USER_AGENT = "Datadog/JMXFetch";
-    private static final Logger LOGGER = Logger.getLogger(Status.class.getName());
 
     public static class HttpResponse {
         private int responseCode;
@@ -92,7 +92,7 @@ public class HttpClient {
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
             } catch (Exception e) {
-                LOGGER.debug("session token unavailable - not setting");
+                log.debug("session token unavailable - not setting");
                 this.token = "";
             }
         }
@@ -103,8 +103,8 @@ public class HttpClient {
         HttpClient.HttpResponse response = new HttpClient.HttpResponse(0, "");
         try {
             String url = "https://" + host + ":" + port + "/" + path;
-            LOGGER.debug("attempting to connect to: " + url);
-            LOGGER.debug("with body: " + body);
+            log.debug("attempting to connect to: " + url);
+            log.debug("with body: " + body);
 
             URL uri = new URL(url);
             HttpsURLConnection con = (HttpsURLConnection) uri.openConnection();
@@ -126,7 +126,7 @@ public class HttpClient {
 
             int responseCode = con.getResponseCode();
             if (responseCode < 200 || responseCode >= 300) {
-                LOGGER.debug("HTTP error stream: " + con.getErrorStream());
+                log.debug("HTTP error stream: " + con.getErrorStream());
                 response.setResponseCode(responseCode);
             } else {
                 response =
@@ -135,7 +135,7 @@ public class HttpClient {
             }
 
         } catch (Exception e) {
-            LOGGER.info("problem creating http request: " + e.toString());
+            log.info("problem creating http request: " + e.toString());
         }
 
         return response;

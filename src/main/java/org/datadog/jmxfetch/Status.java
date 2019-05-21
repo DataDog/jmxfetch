@@ -2,20 +2,20 @@ package org.datadog.jmxfetch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+@Slf4j
 public class Status {
 
     public static final String STATUS_WARNING = "WARNING";
     public static final String STATUS_OK = "OK";
     public static final String STATUS_ERROR = "ERROR";
-    private static final Logger LOGGER = Logger.getLogger(Status.class.getName());
     private static final String INITIALIZED_CHECKS = "initialized_checks";
     private static final String FAILED_CHECKS = "failed_checks";
     private static final String API_STATUS_PATH = "agent/jmx/status";
@@ -136,20 +136,20 @@ public class Status {
                     HttpClient.HttpResponse response =
                             this.client.request("POST", json, API_STATUS_PATH);
                     if (!response.isResponse2xx()) {
-                        LOGGER.debug("Problem submitting JSON status: " + json);
+                        log.debug("Problem submitting JSON status: " + json);
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Could not post status: " + e.getMessage());
+                    log.warn("Could not post status: " + e.getMessage());
                 }
             } else {
                 String yaml = generateYaml();
                 try {
                     File statusFile = new File(this.statusFileLocation);
-                    LOGGER.debug(
+                    log.debug(
                             "Writing status to temp yaml file: " + statusFile.getAbsolutePath());
                     FileUtils.writeStringToFile(statusFile, yaml);
                 } catch (Exception e) {
-                    LOGGER.warn("Cannot write status to temp file: " + e.getMessage());
+                    log.warn("Cannot write status to temp file: " + e.getMessage());
                 }
             }
         }

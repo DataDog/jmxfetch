@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -27,11 +27,11 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Slf4j
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
     private static final long JMX_TIMEOUT = 20;
     public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
-    private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
@@ -53,14 +53,14 @@ public class Connection {
     /** Queries beans on specific scope. Returns set of matching query names.. */
     public Set<ObjectName> queryNames(ObjectName name) throws IOException {
         String scope = (name != null) ? name.toString() : "*:*";
-        LOGGER.debug("Querying bean names on scope: " + scope);
+        log.debug("Querying bean names on scope: " + scope);
         return mbs.queryNames(name, null);
     }
 
     protected void createConnection() throws IOException {
         this.env.put("attribute.remote.x.request.waiting.timeout", CONNECTION_TIMEOUT);
         closeConnector();
-        LOGGER.info("Connecting to: " + this.address);
+        log.info("Connecting to: " + this.address);
         connector = connectWithTimeout(this.address, this.env);
         mbs = connector.getMBeanServerConnection();
     }
@@ -113,7 +113,7 @@ public class Connection {
             executor.shutdown();
         }
         if (result == null) {
-            LOGGER.warn("Connection timed out: " + url);
+            log.warn("Connection timed out: " + url);
             throw new SocketTimeoutException("Connection timed out: " + url);
         }
         if (result instanceof JMXConnector) {

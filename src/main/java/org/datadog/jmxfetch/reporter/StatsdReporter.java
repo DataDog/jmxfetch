@@ -4,15 +4,15 @@ import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.ServiceCheck;
 import com.timgroup.statsd.StatsDClient;
 import com.timgroup.statsd.StatsDClientErrorHandler;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
 import org.datadog.jmxfetch.Status;
 
 /** A reporter class to submit metrics via statsd. */
+@Slf4j
 public class StatsdReporter extends Reporter {
 
-    private static final Logger LOGGER = Logger.getLogger(StatsdReporter.class.getName());
     private StatsDClient statsDClient;
     private String statsdHost;
     private int statsdPort;
@@ -22,7 +22,7 @@ public class StatsdReporter extends Reporter {
 
         @Override
         public void handle(Exception exception) {
-            LOGGER.error("statsd client error:", exception);
+            log.error("statsd client error:", exception);
         }
     }
 
