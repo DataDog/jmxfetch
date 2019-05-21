@@ -830,7 +830,7 @@ public class App {
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
                 if (appConfig.isTargetDirectInstances() != isDirectInstance(configInstance)) {
-                    log.debug("Skipping instance '{}'. targetDirectInstances={} jvm_direct={}",
+                    log.info("Skipping instance '{}'. targetDirectInstances={} != jvm_direct={}",
                             name,
                             appConfig.isTargetDirectInstances(),
                             isDirectInstance(configInstance));
