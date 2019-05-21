@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 public class TestInstance extends TestCommon {
-    private static final Logger LOGGER = Logger.getLogger("Test Instance");
+    private static final Logger log = Logger.getLogger("Test Instance");
 
     @Test
     public void testMinCollectionInterval() throws Exception {
@@ -32,7 +32,7 @@ public class TestInstance extends TestCommon {
         metrics = getMetrics();
         assertEquals(0, metrics.size());
 
-        LOGGER.info("sleeping before the next collection");
+        log.info("sleeping before the next collection");
         Thread.sleep(5000);
         run();
         metrics = getMetrics();

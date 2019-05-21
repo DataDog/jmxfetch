@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,11 +24,11 @@ import javax.management.MBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+@Slf4j
 public abstract class JmxAttribute {
 
     protected static final String ALIAS = "alias";
     protected static final String METRIC_TYPE = "metric_type";
-    protected static final Logger LOGGER = Logger.getLogger(JmxAttribute.class.getName());
     private static final List<String> EXCLUDED_BEAN_PARAMS =
             Arrays.asList(
                     "domain",
@@ -120,7 +120,7 @@ public abstract class JmxAttribute {
                 if ((alias.trim().length() > 0) && alias != null) {
                     this.defaultTagsList.add(tag.getKey() + ":" + alias);
                 } else {
-                    LOGGER.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
+                    log.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
                 }
             }
         }
@@ -253,7 +253,8 @@ public abstract class JmxAttribute {
         try {
             return this.getMetrics().size();
         } catch (Exception e) {
-            LOGGER.warn("Unable to get metrics from " + beanStringName + " - " + attributeName, e);
+            log.warn("Unable to get metrics from " + beanStringName + " - "
+                                                + attributeName + ": " + e.toString());
             return 0;
         }
     }
@@ -545,14 +546,18 @@ public abstract class JmxAttribute {
         // Attribute & domain
         alias = alias.replace("$attribute", fullAttributeName);
         alias = alias.replace("$domain", domain);
-        try {
-            alias = alias.replace("$value", getJmxValue().toString());
-        } catch (JMException e) {
-            // If we haven't been able to get the value, it wasn't replaced.
-            LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
-        } catch (IOException e) {
-            // Same as above
-            LOGGER.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+        if (alias.contains("$value")) {
+            // getJmxValue() hits the JMX target (potentially through remote network connection),
+            // so only call it if needed.
+            try {
+                alias = alias.replace("$value", getJmxValue().toString());
+            } catch (JMException e) {
+                // If we haven't been able to get the value, it wasn't replaced.
+                log.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+            } catch (IOException e) {
+                // Same as above
+                log.warn("Unable to replace $value for attribute " + fullAttributeName, e);
+            }
         }
 
         return alias;
