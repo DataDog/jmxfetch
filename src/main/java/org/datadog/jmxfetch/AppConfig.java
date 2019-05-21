@@ -1,16 +1,14 @@
 package org.datadog.jmxfetch;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import lombok.Builder;
+import lombok.ToString;
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
-import org.datadog.jmxfetch.reporter.ReporterFactory;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
@@ -20,6 +18,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+@Builder
+@ToString
 @Parameters(separators = "=")
 public class AppConfig {
     public static final String ACTION_COLLECT = "collect";
@@ -69,6 +69,7 @@ public class AppConfig {
             description = "Level of verbosity",
             validateWith = Log4JLevelValidator.class,
             required = false)
+    @Builder.Default
     private String logLevel = "INFO";
 
     @Parameter(
@@ -87,6 +88,7 @@ public class AppConfig {
             names = {"--tmp_directory", "-T"},
             description = "Absolute path to a temporary directory",
             required = false)
+    @Builder.Default
     private String tmpDirectory = "/tmp";
 
     @Parameter(
@@ -110,6 +112,7 @@ public class AppConfig {
             description = "Sleeping time during two iterations in ms",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+    @Builder.Default
     private int checkPeriod = 15000;
 
     @Parameter(
@@ -117,6 +120,7 @@ public class AppConfig {
             description = "The size of the thread pool",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+    @Builder.Default
     private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
     @Parameter(
@@ -124,6 +128,7 @@ public class AppConfig {
             description = "The size of the reconnection thread pool",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+    @Builder.Default
     private int reconnectionThreadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
     @Parameter(
@@ -131,6 +136,7 @@ public class AppConfig {
             description = "The concurrent collection timeout in seconds",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+    @Builder.Default
     private int collectionTimeout = DEFAULT_COLLECTION_TO_S;
 
     @Parameter(
@@ -138,18 +144,21 @@ public class AppConfig {
             description = "The reconnection timeout in seconds",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+    @Builder.Default
     private int reconnectionTimeout = DEFAULT_RECONNECTION_TO_S;
 
     @Parameter(
             names = {"--ad_enabled", "--sd_enabled", "-w"},
             description = "Enable Auto Discovery.",
             required = false)
+    @Builder.Default
     private boolean adEnabled = false;
 
     @Parameter(
             names = {"--ad_pipe", "--sd_pipe", "-P"},
             description = "Auto Discovery pipe name.",
             required = false)
+    @Builder.Default
     private String adPipe = AD_PIPE_NAME;
 
     @Parameter(
@@ -166,6 +175,7 @@ public class AppConfig {
                             + "(default to null = no exit on file)",
             converter = ExitWatcherConverter.class,
             required = false)
+    @Builder.Default
     private ExitWatcher exitWatcher = new ExitWatcher();
 
     @Parameter(
@@ -174,7 +184,7 @@ public class AppConfig {
                     + "list_everything, list_collected_attributes, list_matching_attributes, "
                     + "list_not_matching_attributes, list_limited_attributes, list_jvms]",
             required = true)
-    private List<String> action = null;
+    private List<String> action;
 
     @Parameter(
             names = {"--ipc_host", "-H"},
@@ -187,7 +197,15 @@ public class AppConfig {
             description = "IPC port",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+    @Builder.Default
     private int ipcPort = 0;
+
+    /**
+     * Boolean setting to determine whether to ignore jvm_direct instances.
+     * If set to true, other instances will be ignored.
+     */
+    @Builder.Default
+    private boolean targetDirectInstances = false;
 
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
@@ -200,6 +218,7 @@ public class AppConfig {
     // This is used by things like APM agent to provide tags that should be set with all metrics
     private Map<String, String> globalTags;
 
+    @Builder.Default
     private Status status = new Status();
 
     /** Updates the status and returns a boolean describing if the status was indeed updated.. */
@@ -323,6 +342,10 @@ public class AppConfig {
         return getTmpDirectory() + "/" + AD_LAUNCH_FILE;
     }
 
+    public boolean isTargetDirectInstances() {
+        return targetDirectInstances;
+    }
+
     public List<String> getInstanceConfigResources() {
         return instanceConfigResources;
     }
@@ -341,32 +364,5 @@ public class AppConfig {
 
     public Map<String, String> getGlobalTags() {
         return globalTags;
-    }
-
-    /** Factory method used by dd-tracer-agent to run jmxfetch in the same process. */
-    public static AppConfig create(
-            List<String> instanceConfigResources,
-            List<String> metricConfigResources,
-            List<String> metricConfigFiles,
-            Integer checkPeriod,
-            Integer refreshBeansPeriod,
-            Map<String, String> globalTags,
-            String reporter,
-            String logLocation,
-            String logLevel) {
-        AppConfig config = new AppConfig();
-        config.action = ImmutableList.of(ACTION_COLLECT);
-        config.instanceConfigResources = ImmutableList.copyOf(instanceConfigResources);
-        config.metricConfigResources = ImmutableList.copyOf(metricConfigResources);
-        config.metricConfigFiles = ImmutableList.copyOf(metricConfigFiles);
-        if (checkPeriod != null) {
-            config.checkPeriod = checkPeriod;
-        }
-        config.refreshBeansPeriod = refreshBeansPeriod;
-        config.globalTags = ImmutableMap.copyOf(globalTags);
-        config.reporter = ReporterFactory.getReporter(reporter);
-        config.logLocation = logLocation;
-        config.logLevel = logLevel;
-        return config;
     }
 }

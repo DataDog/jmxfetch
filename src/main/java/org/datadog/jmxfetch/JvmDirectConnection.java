@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 
 @Slf4j
-public class LocalConnection extends Connection {
+public class JvmDirectConnection extends Connection {
 
-    public LocalConnection() throws IOException {
+    public JvmDirectConnection() throws IOException {
         createConnection();
     }
 

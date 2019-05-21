@@ -56,6 +56,7 @@ public class Instance {
     private static final int MAX_RETURNED_METRICS = 350;
     private static final int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
+    public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
 
     private static final ThreadLocal<Yaml> YAML =
@@ -209,6 +210,11 @@ public class Instance {
         loadDefaultConfig(gcMetricConfig);
     }
 
+    public static boolean isDirectInstance(LinkedHashMap<String, Object> configInstance) {
+        Object directInstance = configInstance.get(JVM_DIRECT);
+        return directInstance instanceof Boolean && (Boolean) directInstance;
+    }
+
     private void loadDefaultConfig(String configResourcePath) {
         ArrayList<LinkedHashMap<String, Object>> defaultConf =
                 (ArrayList<LinkedHashMap<String, Object>>)
@@ -221,8 +227,11 @@ public class Instance {
     @VisibleForTesting
     static void loadMetricConfigFiles(
             AppConfig appConfig, LinkedList<Configuration> configurationList) {
-        if (appConfig.getMetricConfigFiles() != null) {
-            for (String fileName : appConfig.getMetricConfigFiles()) {
+        List<String> metricConfigFiles = appConfig.getMetricConfigFiles();
+        if (metricConfigFiles != null && !metricConfigFiles.isEmpty()) {
+            log.warn("Loading files via metricConfigFiles setting is deprecated.  Please "
+                    + "migrate to using standard agent config files in the conf.d directory.");
+            for (String fileName : metricConfigFiles) {
                 String yamlPath = new File(fileName).getAbsolutePath();
                 FileInputStream yamlInputStream = null;
                 log.info("Reading metric config file " + yamlPath);
@@ -365,7 +374,9 @@ public class Instance {
     /** Returns a string representation for the instance. */
     @Override
     public String toString() {
-        if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+        if (isDirectInstance(instanceMap)) {
+            return "jvm_direct";
+        } else if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
             return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
         } else if (this.instanceMap.get("jmx_url") != null) {
             return (String) this.instanceMap.get("jmx_url");

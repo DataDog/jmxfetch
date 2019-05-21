@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import static org.datadog.jmxfetch.Instance.isDirectInstance;
+
 import com.google.common.primitives.Bytes;
 
 import com.beust.jcommander.JCommander;
@@ -110,7 +112,7 @@ public class App {
     public static void main(String[] args) {
 
         // Load the config from the args
-        AppConfig config = new AppConfig();
+        AppConfig config = AppConfig.builder().build();
         JCommander commander = null;
         try {
             // Try to parse the args using JCommander
@@ -827,8 +829,16 @@ public class App {
             }
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                if (appConfig.isTargetDirectInstances() != isDirectInstance(configInstance)) {
+                    log.info("Skipping instance '{}'. targetDirectInstances={} != jvm_direct={}",
+                            name,
+                            appConfig.isTargetDirectInstances(),
+                            isDirectInstance(configInstance));
+                    continue;
+                }
+
                 // Create a new Instance object
-                log.info("Instantiating instance for: " + name);
+                log.info("Instantiating instance for: {}", name);
                 Instance instance =
                         instantiate(
                                 configInstance,

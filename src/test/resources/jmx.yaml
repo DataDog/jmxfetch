@@ -1,7 +1,7 @@
 init_config:
 
 instances:
-    -   process_name_regex: .*surefire.*
+    -   jvm_direct: true
         refresh_beans: 4
         name: jmx_test_instance
         tags:

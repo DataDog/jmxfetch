@@ -24,8 +24,8 @@ import org.junit.BeforeClass;
 public class TestTaskProcessor {
     private static List<Instance> instances = null;
 
-	class TestSimpleTask extends InstanceTask<Boolean> {
-         TestSimpleTask(Instance instance) {
+    class TestSimpleTask extends InstanceTask<Boolean> {
+        TestSimpleTask(Instance instance) {
              super(instance);
         }
 
