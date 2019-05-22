@@ -1,6 +1,13 @@
 Changes
 =======
 
+# 0.29.0 / 2019-05-22
+
+### Changes
+
+* [IMPROVEMENT] Log via slf4j instead of directly to log4j. See [#223][]
+* [IMPROVEMENT] Use Lombok builder for AppConfig, formalize jvm_direct connection. See [#225][]
+
 # 0.28.0 / 2019-04-29
 
 ### Changes
@@ -336,6 +343,8 @@ Changes
 [#214]: https://github.com/DataDog/jmxfetch/issues/214
 [#218]: https://github.com/DataDog/jmxfetch/issues/218
 [#219]: https://github.com/DataDog/jmxfetch/issues/219
+[#223]: https://github.com/DataDog/jmxfetch/issues/223
+[#225]: https://github.com/DataDog/jmxfetch/issues/225
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
