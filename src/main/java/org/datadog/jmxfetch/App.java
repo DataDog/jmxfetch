@@ -732,7 +732,7 @@ public class App {
                 update = true;
                 log.info("update is in order - updating timestamp: " + lastJsonConfigTs);
                 for (String checkName : adJsonConfigs.keySet()) {
-                    log.debug("check " + checkName + " will be run");
+                    log.debug("received config for check '" + checkName + "'");
                 }
             }
         } catch (JsonProcessingException e) {
