@@ -704,8 +704,6 @@ public class App {
                 return update;
             }
 
-            LOGGER.info("Received the following JSON configs: " + response.getResponseBody());
-
             InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
             int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
@@ -714,6 +712,9 @@ public class App {
                 lastJsonConfigTs = timestamp;
                 update = true;
                 LOGGER.info("update is in order - updating timestamp: " + lastJsonConfigTs);
+                for (String checkName : adJsonConfigs.keySet()) {
+                    LOGGER.debug("received config for check '" + checkName + "'");
+                }
             }
         } catch (JsonProcessingException e) {
             LOGGER.error("error processing JSON response: " + e);
