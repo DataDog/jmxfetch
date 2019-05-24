@@ -723,8 +723,6 @@ public class App {
                 return update;
             }
 
-            log.debug("Received the following JSON configs: " + response.getResponseBody());
-
             InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
             int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
@@ -733,6 +731,9 @@ public class App {
                 lastJsonConfigTs = timestamp;
                 update = true;
                 log.info("update is in order - updating timestamp: " + lastJsonConfigTs);
+                for (String checkName : adJsonConfigs.keySet()) {
+                    log.debug("check " + checkName + " will be run");
+                }
             }
         } catch (JsonProcessingException e) {
             log.error("error processing JSON response: " + e);
