@@ -5,7 +5,7 @@
 
     <groupId>com.datadoghq</groupId>
     <artifactId>jmxfetch</artifactId>
-    <version>0.27.0</version>
+    <version>0.27.1</version>
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
