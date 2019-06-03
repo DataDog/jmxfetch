@@ -78,9 +78,11 @@
         </profile>-->
         <profile>
             <id>sonatype</id>
-            <property>
-                <name>!skipSonatypeDeploy</name>
-            </property>
+            <activation>
+                <property>
+                    <name>!skipSonatypeDeploy</name>
+                </property>
+            </activation>
             <distributionManagement>
                 <snapshotRepository>
                     <id>ossrh</id>
