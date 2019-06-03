@@ -82,7 +82,7 @@
 - include:
     domain: java.lang
     type: GarbageCollector
-    name: G1 Mixed Generation
+    name: G1 Old Generation
     attribute:
       CollectionCount:
         alias: jvm.gc.major_collection_count
