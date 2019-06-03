@@ -88,6 +88,9 @@
             </distributionManagement>
         </profile>
     </profiles>
+    <activeProfiles>
+        <activeProfile>sonatype</activeProfile>
+    </activeProfiles>
 
     <dependencies>
         <dependency>
