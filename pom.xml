@@ -65,15 +65,17 @@
     </properties>
 
     <profiles>
-        <profile>
+        <!--<profile>
             <id>bintray</id>
+            <activation>
+            </activation>
             <distributionManagement>
                 <repository>
                     <id>bintray-jmxfetch</id>
                     <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
                 </repository>
             </distributionManagement>
-        </profile>
+        </profile>-->
         <profile>
             <id>sonatype</id>
             <distributionManagement>
@@ -88,9 +90,6 @@
             </distributionManagement>
         </profile>
     </profiles>
-    <activeProfiles>
-        <activeProfile>sonatype</activeProfile>
-    </activeProfiles>
 
     <dependencies>
         <dependency>
