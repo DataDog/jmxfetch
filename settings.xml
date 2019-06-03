@@ -7,5 +7,10 @@
             <username>${env.BINTRAY_USER}</username>
             <password>${env.BINTRAY_API_KEY}</password>
         </server>
+        <server>
+            <id>ossrh</id>
+            <username>${env.SONATYPE_USER}</username>
+            <password>${env.SONATYPE_PWD}</password>
+        </server>
     </servers>
 </settings>
