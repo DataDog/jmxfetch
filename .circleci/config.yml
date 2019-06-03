@@ -59,7 +59,8 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run: mvn validate jar:jar source:jar javadoc:jar assembly:single deploy:deploy -e --settings ./settings.xml
+      #- run: mvn validate jar:jar source:jar javadoc:jar assembly:single deploy:deploy -e --settings ./settings.xml
+      - run: mvn clean deploy
         
 workflows:
   version: 2
