@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.29.1 / 2019-06-04
+
+### Changes
+* [SECURITY] Bump jackson dependency to 2.9.9. See [#227][]
+* [IMPROVEMENT] Log new check names instead of their complete configuration. See [#229][]
+
 # 0.29.0 / 2019-05-22
 
 ### Changes
@@ -15,6 +21,12 @@ Changes
 * [IMPROVEMENT] Added --version command. See [#218][]
 * [BUGFIX] Don't print a stacktrace when failing to get a metric. See [#219][]
 
+# 0.27.1 / 2019-06-04
+
+### Changes
+* [SECURITY] Bump jackson dependency to 2.9.9. See [#227][]
+* [IMPROVEMENT] Log new check names instead of their complete configuration. See [#229][]
+
 # 0.27.0 / 2019-03-01
 
 ### Changes
@@ -24,6 +36,12 @@ Changes
 * [IMPROVEMENT] Lower log level of log entry dumping all configs from AutoConfig. See [#212][]
 * [BUGFIX] GC metrics `jvm.gc.eden_size` and `jvm.gc.survivor_size` were not collected for
 `Eden Space` and `Survivor Space` memory pools. See [#214][]
+
+# 0.26.2 / 2019-06-04
+
+### Changes
+* [SECURITY] Bump jackson dependency to 2.9.9. See [#227][]
+* [IMPROVEMENT] Log new check names instead of their complete configuration. See [#229][]
 
 # 0.26.1 / 2019-02-26
 
@@ -345,6 +363,8 @@ Changes
 [#219]: https://github.com/DataDog/jmxfetch/issues/219
 [#223]: https://github.com/DataDog/jmxfetch/issues/223
 [#225]: https://github.com/DataDog/jmxfetch/issues/225
+[#227]: https://github.com/DataDog/jmxfetch/issues/227
+[#229]: https://github.com/DataDog/jmxfetch/issues/229
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
