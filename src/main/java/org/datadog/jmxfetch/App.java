@@ -123,7 +123,7 @@ public class App {
         }
 
         // Display the version and quit
-        if (config.isVersion() || AppConfig.ACTION_HELP.equals(config.getAction())) {
+        if (config.isVersion() || AppConfig.ACTION_VERSION.equals(config.getAction())) {
             JCommander.getConsole().println("JMX Fetch " + getVersion());
             System.exit(0);
         }
