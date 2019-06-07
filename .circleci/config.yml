@@ -59,8 +59,18 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run: mvn validate jar:jar source:jar javadoc:jar assembly:single deploy:deploy -e --settings ./settings.xml
-        
+      - run:
+          name: Deploy to bintray
+          command: mvn validate jar:jar source:jar javadoc:jar assembly:single deploy:deploy -e --settings ./settings.xml
+      - run:
+          name: Sync with mavencentral
+          command: |
+            VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+            curl -X POST -H "Content-Type: application/json" \
+            --user ${BINTRAY_USER}:${BINTRAY_API_KEY} \
+            --data "{\"username\":\"${SONATYPE_USER}\", \"password\":\"${SONATYPE_PWD}\"}" \
+            https://api.bintray.com/maven_central_sync/datadog/datadog-maven/jmxfetch/versions/$VERSION
+
 workflows:
   version: 2
   build_test_deploy:
