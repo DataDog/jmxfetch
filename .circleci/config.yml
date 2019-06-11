@@ -84,6 +84,6 @@ workflows:
           - build
         filters:
           branches:
-            ignore: /.*/
-          tags:
-            only: /^\d+\.\d+\.\d+/
+            only: /kserrania.*/
+          #tags:
+          #  only: /^\d+\.\d+\.\d+/
