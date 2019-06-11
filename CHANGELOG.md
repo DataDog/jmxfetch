@@ -1,6 +1,15 @@
 Changes
 =======
 
+# 0.26.3 / 2019-06-11
+
+* [IMPROVEMENT] Avoid logging config with Auto Discovery. See [#235][]
+
+# 0.26.2 / 2019-05-27
+
+* [IMPROVEMENT] Bump jackson dependency versions to 2.9.9. See [#227][]
+* [IMPROVEMENT] Only log check names instead of their config. See [#229][]
+
 # 0.26.1 / 2019-02-26
 
 ### Changes
@@ -313,6 +322,9 @@ Changes
 [#205]: https://github.com/DataDog/jmxfetch/issues/205
 [#206]: https://github.com/DataDog/jmxfetch/issues/206
 [#210]: https://github.com/DataDog/jmxfetch/issues/210
+[#227]: https://github.com/DataDog/jmxfetch/issues/227
+[#229]: https://github.com/DataDog/jmxfetch/issues/229
+[#235]: https://github.com/DataDog/jmxfetch/issues/235
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
