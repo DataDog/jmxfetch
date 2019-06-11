@@ -328,7 +328,7 @@ public class App {
             }
 
             String name = getAutoDiscoveryName(config);
-            log.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
+            log.debug("Attempting to apply config. Name: " + name);
             InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
             YamlParser yaml = new YamlParser(stream);
 
