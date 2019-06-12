@@ -2,12 +2,9 @@
 #
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 #
-version: 2
+version: 2.1
 
 defaults: &defaults
-  docker:
-    - image: circleci/openjdk:8-jdk
-
   working_directory: ~/jmxfetch
 
   environment:
@@ -20,33 +17,55 @@ cache_keys: &cache_keys
     - jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}
     - jmxfetch-{{ checksum "pom.xml" }}
 
+build_steps: &build_steps
+  steps:
+    - checkout
+
+    # Download and cache dependencies
+    - restore_cache:
+        <<: *cache_keys
+
+    - run: mvn install
+
+    - save_cache:
+        paths:
+          - ~/.m2
+        key: jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}-{{ .Revision }}
+
+    - store_test_results:
+        path: ./target/surefire-reports/
+
+    - persist_to_workspace:
+        root: .
+        paths:
+          - target
+
 jobs:
-  build:
+  build8:
+    docker:
+      - image: circleci/openjdk:8-jdk
     <<: *defaults
 
-    steps:
-      - checkout
+    <<: *build_steps
 
-      # Download and cache dependencies
-      - restore_cache:
-          <<: *cache_keys
+  build9:
+    docker:
+      - image: circleci/openjdk:9-jdk
+    <<: *defaults
 
-      - run: mvn install
+    <<: *build_steps
 
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}-{{ .Revision }}
+  build11:
+    docker:
+      - image: circleci/openjdk:11-jdk
+    <<: *defaults
 
-      - store_test_results:
-          path: ./target/surefire-reports/
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - target
+    <<: *build_steps
 
   deploy:
+    docker:
+      - image: circleci/openjdk:8-jdk
+
     <<: *defaults
 
     steps:
@@ -60,18 +79,27 @@ jobs:
           at: .
 
       - run: mvn validate jar:jar source:jar javadoc:jar assembly:single deploy:deploy -e --settings ./settings.xml
-        
+
+
+filters: &workflow_build_filters
+  tags:
+    only: /.*/
+
 workflows:
   version: 2
   build_test_deploy:
     jobs:
-    - build:
-        filters:
-          tags:
-            only: /.*/
+    - build8:
+      <<: *workflow_build_filters
+    - build9:
+      <<: *workflow_build_filters
+    - build11:
+      <<: *workflow_build_filters
     - deploy:
         requires:
-          - build
+          - build8
+          - build9
+          - build11
         filters:
           branches:
             ignore: /.*/
