@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -89,12 +90,12 @@ public class App {
         this.appConfig = appConfig;
 
         ExecutorService collectionThreadPool =
-                Executors.newFixedThreadPool(appConfig.getThreadPoolSize());
+                buildExecutorService(appConfig.getThreadPoolSize());
         collectionProcessor =
                 new TaskProcessor(collectionThreadPool, appConfig.getReporter());
 
         ExecutorService recoveryThreadPool =
-                Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize());
+                buildExecutorService(appConfig.getReconnectionThreadPoolSize());
         recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
 
         // setup client
@@ -263,7 +264,7 @@ public class App {
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
                 recoveryProcessor.setThreadPoolExecutor(
-                        Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+                        buildExecutorService(appConfig.getReconnectionThreadPoolSize()));
             }
 
             List<TaskStatusHandler> statuses =
@@ -288,6 +289,24 @@ public class App {
             // instances should get GC'd anyhow.
             instances.clear();
         }
+    }
+
+    /**
+     * Builds an {@link ExecutorService} of the specified fixed size. Threads will be created
+     * and executed as daemons the if {@link AppConfig#isDaemon()} is true. Defaults to false.
+     *
+     * @param size The thread pool size
+     * @return The create executor
+     */
+    private ExecutorService buildExecutorService(int size) {
+        return Executors.newFixedThreadPool(size, new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                thread.setDaemon(appConfig.isDaemon());
+                return thread;
+            }
+        });
     }
 
     private String getAutoDiscoveryName(String config) {
@@ -470,7 +489,7 @@ public class App {
                         + "previous one hogging threads");
                 collectionProcessor.stop();
                 collectionProcessor.setThreadPoolExecutor(
-                        Executors.newFixedThreadPool(appConfig.getThreadPoolSize()));
+                        buildExecutorService(appConfig.getThreadPoolSize()));
             }
 
             List<TaskStatusHandler> statuses =
@@ -556,7 +575,7 @@ public class App {
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
                 recoveryProcessor.setThreadPoolExecutor(
-                        Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+                        buildExecutorService(appConfig.getReconnectionThreadPoolSize()));
             }
 
             Collections.shuffle(fixInstanceTasks);
@@ -885,7 +904,7 @@ public class App {
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
                 recoveryProcessor.setThreadPoolExecutor(
-                        Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize()));
+                        buildExecutorService(appConfig.getReconnectionThreadPoolSize()));
             }
 
             List<TaskStatusHandler> statuses =

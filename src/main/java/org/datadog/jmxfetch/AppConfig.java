@@ -207,6 +207,13 @@ public class AppConfig {
     @Builder.Default
     private boolean targetDirectInstances = false;
 
+    /**
+     * Boolean setting to determine whether to ignore jvm_direct instances.
+     * If set to true, other instances will be ignored.
+     */
+    @Builder.Default
+    private boolean daemon = false;
+
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
     // This is used by things like APM agent to provide metric configuration from resources
@@ -364,5 +371,9 @@ public class AppConfig {
 
     public Map<String, String> getGlobalTags() {
         return globalTags;
+    }
+
+    public boolean isDaemon() {
+        return daemon;
     }
 }
