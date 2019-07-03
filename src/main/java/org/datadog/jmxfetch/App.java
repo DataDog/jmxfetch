@@ -293,7 +293,7 @@ public class App {
 
     /**
      * Builds an {@link ExecutorService} of the specified fixed size. Threads will be created
-     * and executed as daemons the if {@link AppConfig#isDaemon()} is true. Defaults to false.
+     * and executed as daemons if {@link AppConfig#isDaemon()} is true. Defaults to false.
      *
      * @param size The thread pool size
      * @return The create executor

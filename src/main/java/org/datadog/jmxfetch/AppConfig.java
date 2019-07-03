@@ -373,6 +373,9 @@ public class AppConfig {
         return globalTags;
     }
 
+    /**
+     * @return Whether or not internal threads will be run as daemon.
+     */
     public boolean isDaemon() {
         return daemon;
     }
