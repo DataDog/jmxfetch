@@ -209,7 +209,7 @@ public class AppConfig {
 
     /**
      * Boolean setting to determine whether internal executors are launched as daemons or not.
-     * This is usefull when JMXFetch is embedded in a client app, e.g. for the java tracer,
+     * This is useful when JMXFetch is embedded in a client app, e.g. for the java tracer,
      * so that the client app's exit doesn't block on the termination of these internal threads.
      */
     @Builder.Default
