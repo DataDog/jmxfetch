@@ -208,8 +208,9 @@ public class AppConfig {
     private boolean targetDirectInstances = false;
 
     /**
-     * Boolean setting to determine whether to ignore jvm_direct instances.
-     * If set to true, other instances will be ignored.
+     * Boolean setting to determine whether internal executors are launched as daemons or not.
+     * This is usefull when JMXFetch is embedded in a client app, e.g. for the java tracer,
+     * so that the client app's exit doesn't block on the termination of these internal threads.
      */
     @Builder.Default
     private boolean daemon = false;
