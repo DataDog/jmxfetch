@@ -5,6 +5,8 @@ Changes
 
 ### Changes
 * [IMPROVEMENT] Provided a configuration option to execute jmxfetch tasks as daemons. See [#237][]
+* [BUGFIX] Fix JMX metric name for G1GC old generation statistics. See [#231][]
+* [IMPROVEMENT] Bump guava dependency to '27.1-android' (compatible with Java7). See [#228][]
 
 # 0.29.1 / 2019-06-04
 
@@ -369,7 +371,10 @@ Changes
 [#223]: https://github.com/DataDog/jmxfetch/issues/223
 [#225]: https://github.com/DataDog/jmxfetch/issues/225
 [#227]: https://github.com/DataDog/jmxfetch/issues/227
+[#228]: https://github.com/DataDog/jmxfetch/issues/228
 [#229]: https://github.com/DataDog/jmxfetch/issues/229
+[#231]: https://github.com/DataDog/jmxfetch/issues/231
+[#237]: https://github.com/DataDog/jmxfetch/issues/237
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
