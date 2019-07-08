@@ -207,6 +207,14 @@ public class AppConfig {
     @Builder.Default
     private boolean targetDirectInstances = false;
 
+    /**
+     * Boolean setting to determine whether internal executors are launched as daemons or not.
+     * This is useful when JMXFetch is embedded in a client app, e.g. for the java tracer,
+     * so that the client app's exit doesn't block on the termination of these internal threads.
+     */
+    @Builder.Default
+    private boolean daemon = false;
+
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
     // This is used by things like APM agent to provide metric configuration from resources
@@ -364,5 +372,12 @@ public class AppConfig {
 
     public Map<String, String> getGlobalTags() {
         return globalTags;
+    }
+
+    /**
+     * @return Whether or not internal threads will be run as daemon.
+     */
+    public boolean isDaemon() {
+        return daemon;
     }
 }
