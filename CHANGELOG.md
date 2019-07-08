@@ -1,6 +1,11 @@
 Changes
 =======
 
+# 0.30.0 / 2019-07-08
+
+### Changes
+* [IMPROVEMENT] Provided a configuration option to execute jmxfetch tasks as daemons. See [#237][]
+
 # 0.29.1 / 2019-06-04
 
 ### Changes
