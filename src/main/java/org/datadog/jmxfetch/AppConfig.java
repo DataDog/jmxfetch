@@ -8,6 +8,7 @@ import lombok.ToString;
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.reporter.JsonReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
@@ -27,6 +28,7 @@ public class AppConfig {
     public static final String ACTION_LIST_EVERYTHING = "list_everything";
     public static final String ACTION_LIST_COLLECTED = "list_collected_attributes";
     public static final String ACTION_LIST_MATCHING = "list_matching_attributes";
+    public static final String ACTION_LIST_WITH_METRICS = "list_with_metrics";
     public static final String ACTION_LIST_NOT_MATCHING = "list_not_matching_attributes";
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
@@ -38,6 +40,7 @@ public class AppConfig {
                             ACTION_LIST_EVERYTHING,
                             ACTION_LIST_COLLECTED,
                             ACTION_LIST_MATCHING,
+                            ACTION_LIST_WITH_METRICS,
                             ACTION_LIST_NOT_MATCHING,
                             ACTION_LIST_LIMITED,
                             ACTION_HELP,
@@ -94,7 +97,8 @@ public class AppConfig {
     @Parameter(
             names = {"--reporter", "-r"},
             description =
-                    "Reporter to use: should be either \"statsd:[STATSD_PORT]\" or \"console\"",
+                    "Reporter to use: should be either \"statsd:[STATSD_PORT]\", "
+                     + "\"console\" or \"json\"",
             validateWith = ReporterValidator.class,
             converter = ReporterConverter.class,
             required = false)
@@ -182,7 +186,8 @@ public class AppConfig {
             description =
                     "Action to take, should be in [help, collect, "
                     + "list_everything, list_collected_attributes, list_matching_attributes, "
-                    + "list_not_matching_attributes, list_limited_attributes, list_jvms]",
+                    + "list_with_metrics, list_not_matching_attributes, "
+                    + "list_limited_attributes, list_jvms]",
             required = true)
     private List<String> action;
 
@@ -260,6 +265,10 @@ public class AppConfig {
 
     public boolean isConsoleReporter() {
         return reporter != null && (reporter instanceof ConsoleReporter);
+    }
+
+    public boolean isJsonReporter() {
+        return reporter != null && (reporter instanceof JsonReporter);
     }
 
     public boolean isHelp() {

@@ -13,6 +13,8 @@ public class ReporterFactory {
         }
         if ("console".equals(type)) {
             return new ConsoleReporter();
+        } else if ("json".equals(type)) {
+            return new JsonReporter();
         } else if (type.startsWith("statsd:")) {
             String[] typeElements = type.split(":");
             String host = "localhost";

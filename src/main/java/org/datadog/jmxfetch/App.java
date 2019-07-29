@@ -167,23 +167,25 @@ public class App {
      */
     public static int run(AppConfig config) {
         Marker fatal = MarkerFactory.getMarker("FATAL");
+        String action = config.getAction();
 
         // The specified action is unknown
-        if (!AppConfig.ACTIONS.contains(config.getAction())) {
+        if (!AppConfig.ACTIONS.contains(action)) {
             log.error(fatal,
-                    config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
+                    action + " is not in " + AppConfig.ACTIONS + ". Exiting.");
             return 1;
         }
 
-        // The "list_*" actions can only be used with the reporter
-        if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
+        if (!action.equals(AppConfig.ACTION_COLLECT)
+            && !(config.isConsoleReporter() || config.isJsonReporter())) {
+            // The "list_*" actions can not be used with the statsd reporter
             log.error(fatal,
-                    config.getAction()
-                            + " argument can only be used with the console reporter. Exiting.");
+                      action
+                      + " argument can only be used with the console or json reporter. Exiting.");
             return 1;
         }
 
-        if (config.getAction().equals(AppConfig.ACTION_LIST_JVMS)) {
+        if (action.equals(AppConfig.ACTION_LIST_JVMS)) {
             List<com.sun.tools.attach.VirtualMachineDescriptor> descriptors =
                     com.sun.tools.attach.VirtualMachine.list();
 
@@ -206,7 +208,7 @@ public class App {
         Runtime.getRuntime().addShutdownHook(new AppShutdownHook(app));
 
         // Get config from the ipc endpoint for "list_*" actions
-        if (!config.getAction().equals(AppConfig.ACTION_COLLECT)) {
+        if (!action.equals(AppConfig.ACTION_COLLECT)) {
             app.getJsonConfigs();
         }
 
@@ -215,9 +217,12 @@ public class App {
 
         // We don't want to loop if the action is list_* as it's just used for display information
         // about what will be collected
-        if (config.getAction().equals(AppConfig.ACTION_COLLECT)) {
+        if (action.equals(AppConfig.ACTION_COLLECT)) {
             // Start the main loop
             app.start();
+        }
+        if (action.equals(AppConfig.ACTION_LIST_WITH_METRICS)) {
+            app.displayMetrics();
         }
         return 0;
     }
@@ -364,6 +369,11 @@ public class App {
 
     protected ArrayList<Instance> getInstances() {
         return this.instances;
+    }
+
+    /* Display metrics on the console report */
+    void displayMetrics() {
+        doIteration();
     }
 
     void start() {
