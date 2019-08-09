@@ -1,6 +1,11 @@
 Changes
 =======
 
+# 0.30.1 / 2019-08-09
+
+### Changes
+* [SECURITY] Bump jackson-databind dependency to 2.9.9.3. See [#240][]
+
 # 0.30.0 / 2019-07-08
 
 ### Changes
@@ -375,6 +380,7 @@ Changes
 [#229]: https://github.com/DataDog/jmxfetch/issues/229
 [#231]: https://github.com/DataDog/jmxfetch/issues/231
 [#237]: https://github.com/DataDog/jmxfetch/issues/237
+[#240]: https://github.com/DataDog/jmxfetch/issues/240
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
