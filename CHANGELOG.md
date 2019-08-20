@@ -1,6 +1,11 @@
 Changes
 =======
 
+# 0.31.0 / 2019-08-21
+
+### Changes
+* [IMPROVEMENT] Handle attributes that were being ignored on jasperserver. See [#243][]
+
 # 0.30.1 / 2019-08-09
 
 ### Changes
@@ -381,6 +386,7 @@ Changes
 [#231]: https://github.com/DataDog/jmxfetch/issues/231
 [#237]: https://github.com/DataDog/jmxfetch/issues/237
 [#240]: https://github.com/DataDog/jmxfetch/issues/240
+[#243]: https://github.com/DataDog/jmxfetch/issues/243
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
