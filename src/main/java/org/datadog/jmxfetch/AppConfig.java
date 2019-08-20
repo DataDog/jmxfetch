@@ -180,7 +180,7 @@ public class AppConfig {
 
     @Parameter(
             description =
-                    "Action to take, should be in [help, collect, "
+                    "Action to take, should be in [help, version, collect, "
                     + "list_everything, list_collected_attributes, list_matching_attributes, "
                     + "list_not_matching_attributes, list_limited_attributes, list_jvms]",
             required = true)
