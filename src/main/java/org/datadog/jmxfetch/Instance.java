@@ -45,7 +45,18 @@ public class Instance {
                     "java.lang.Object",
                     "java.lang.Boolean",
                     "boolean",
-                    "java.lang.Number");
+                    "java.lang.Number",
+                    //Workaround for jasperserver, which returns attribute types as `class <type>`
+                    "class java.lang.String",
+                    "class java.lang.Double",
+                    "class java.lang.Float",
+                    "class java.lang.Integer",
+                    "class java.lang.Long",
+                    "class java.util.concurrent.atomic.AtomicInteger",
+                    "class java.util.concurrent.atomic.AtomicLong",
+                    "class java.lang.Object",
+                    "class java.lang.Boolean",
+                    "class java.lang.Number");
     private static final List<String> COMPOSED_TYPES =
             Arrays.asList(
                     "javax.management.openmbean.CompositeData",
