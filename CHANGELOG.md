@@ -1,6 +1,11 @@
 Changes
 =======
 
+# 0.32.0 / 2019-08-26
+
+### Changes
+* [IMPROVEMENT] Bump java-dogstatsd-client to 2.8. See [#245][]
+
 # 0.31.0 / 2019-08-21
 
 ### Changes
@@ -387,6 +392,7 @@ Changes
 [#237]: https://github.com/DataDog/jmxfetch/issues/237
 [#240]: https://github.com/DataDog/jmxfetch/issues/240
 [#243]: https://github.com/DataDog/jmxfetch/issues/243
+[#245]: https://github.com/DataDog/jmxfetch/issues/245
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
