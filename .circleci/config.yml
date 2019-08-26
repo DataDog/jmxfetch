@@ -13,8 +13,7 @@ defaults: &defaults
   environment:
     MAVEN_OPTS: -Xmx3200m
 
-cache_keys: &cache_keys
-  # Reset the cache approx every release
+cache_keys: &cache_keys # Reset the cache approx every release
   keys:
     - jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}-{{ .Revision }}
     - jmxfetch-{{ checksum "pom.xml" }}-{{ .Branch }}
@@ -66,7 +65,7 @@ jobs:
           name: Sync with mavencentral
           command: |
             VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-            curl -X POST -H "Content-Type: application/json" \
+            curl -f -X POST -H "Content-Type: application/json" \
             --user ${BINTRAY_USER}:${BINTRAY_API_KEY} \
             --data "{\"username\":\"${SONATYPE_USER}\", \"password\":\"${SONATYPE_PWD}\"}" \
             https://api.bintray.com/maven_central_sync/datadog/datadog-maven/jmxfetch/versions/$VERSION
@@ -75,15 +74,15 @@ workflows:
   version: 2
   build_test_deploy:
     jobs:
-    - build:
-        filters:
-          tags:
-            only: /.*/
-    - deploy:
-        requires:
-          - build
-        filters:
-          branches:
-            ignore: /.*/
-          tags:
-            only: /^\d+\.\d+\.\d+/
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+/
