@@ -430,7 +430,7 @@ public class TestParsingJCommander {
             fail("Should have failed because action was not provided.");
         } catch (ParameterException pe) {
             String expectedMessage =
-                    "Main parameters are required (\"Action to take, should be in [help, collect, "
+                    "Main parameters are required (\"Action to take, should be in [help, version, collect, "
                             + "list_everything, list_collected_attributes, list_matching_attributes, "
                             + "list_not_matching_attributes, list_limited_attributes, list_jvms]\")";
             assertEquals(expectedMessage, pe.getMessage());
@@ -449,7 +449,7 @@ public class TestParsingJCommander {
             fail("Should have failed because action is not a valid one");
         } catch (ParameterException pe) {
             String expectedMessage =
-                    "Main parameters are required (\"Action to take, should be in [help, collect, "
+                    "Main parameters are required (\"Action to take, should be in [help, version, collect, "
                             + "list_everything, list_collected_attributes, list_matching_attributes, "
                             + "list_not_matching_attributes, list_limited_attributes, list_jvms]\")";
             assertEquals(expectedMessage, pe.getMessage());
