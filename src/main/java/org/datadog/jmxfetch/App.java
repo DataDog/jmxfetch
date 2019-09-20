@@ -117,6 +117,8 @@ public class App {
         JCommander commander = null;
         try {
             // Try to parse the args using JCommander
+            System.out.println(Arrays.toString(args));
+
             commander = new JCommander(config, args);
         } catch (ParameterException e) {
             System.out.println(e.getMessage());

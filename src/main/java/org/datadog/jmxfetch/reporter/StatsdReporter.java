@@ -18,6 +18,10 @@ public class StatsdReporter extends Reporter {
     private int statsdPort;
     private long initializationTime;
 
+    private native void gauge(String metric_name, int value);
+    private native void count(String metric_name, int value);
+    private native void histogram(String metric_name, int value);
+
     private class LoggingErrorHandler implements StatsDClientErrorHandler {
 
         @Override
@@ -51,10 +55,16 @@ public class StatsdReporter extends Reporter {
             init();
         }
         if (metricType.equals("monotonic_count")) {
+            log.info("JAVA sending count to agent: ", metricName, " -> ", value);
+            count(metricName, (int)value);
             statsDClient.count(metricName, (long) value, tags);
         } else if (metricType.equals("histogram")) {
+            log.info("JAVA sending histogram to agent: ", metricName, " -> ", value);
+            histogram(metricName, (int)value);
             statsDClient.histogram(metricName, value, tags);
         } else {
+            log.info("JAVA sending gauge to agent: ", metricName, " -> ", value);
+            gauge(metricName, (int)value);
             statsDClient.gauge(metricName, value, tags);
         }
     }
