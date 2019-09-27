@@ -1,6 +1,11 @@
 Changes
 =======
 
+# 0.32.1 / 2019-09-27
+
+### Changes
+* [SECURITY] Bump jackson dependency to 2.10.0. See [#250][]
+
 # 0.32.0 / 2019-08-26
 
 ### Changes
@@ -393,6 +398,7 @@ Changes
 [#240]: https://github.com/DataDog/jmxfetch/issues/240
 [#243]: https://github.com/DataDog/jmxfetch/issues/243
 [#245]: https://github.com/DataDog/jmxfetch/issues/245
+[#250]: https://github.com/DataDog/jmxfetch/issues/250
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
