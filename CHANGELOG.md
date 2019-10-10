@@ -1,6 +1,10 @@
 Changes
 =======
 
+# 0.33.0 / 2019-10-10
+
+* [IMPROVEMENT] Add the ability to list metrics in JSON. See [#241][]
+
 # 0.32.1 / 2019-09-27
 
 ### Changes
