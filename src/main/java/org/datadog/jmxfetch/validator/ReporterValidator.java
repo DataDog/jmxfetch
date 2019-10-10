@@ -22,11 +22,11 @@ public class ReporterValidator implements IParameterValidator {
             }
             return;
         }
-        if (!value.equals("console")) {
+        if (!value.equals("console") && !value.equals("json")) {
             throw new ParameterException(
                     "Parameter "
                             + name
-                            + " should be either 'console', 'statsd:[STATSD_PORT]' "
+                            + " should be either 'console', 'json', 'statsd:[STATSD_PORT]' "
                             + "or 'statsd:[STATSD_HOST]:[STATSD_PORT]'");
         }
     }

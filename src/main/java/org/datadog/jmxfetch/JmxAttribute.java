@@ -223,7 +223,7 @@ public abstract class JmxAttribute {
         return metricName;
     }
 
-    /** Returns string reprensentation of JMX Attribute. */
+    /** Returns string representation of JMX Attribute. */
     @Override
     public String toString() {
         return "Bean name: "

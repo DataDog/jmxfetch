@@ -28,7 +28,7 @@ public class ConnectionFactory {
             } catch (ClassNotFoundException e) {
                 throw new IOException(
                         "Unable to find tools.jar."
-                                + " Are you using a JDK and did you set the pass to tools.jar ?");
+                                + " Are you using a JDK and did you set the path to tools.jar ?");
             }
             log.info("Connecting using Attach API");
             return new AttachApiConnection(connectionParams);
