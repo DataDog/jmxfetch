@@ -1,6 +1,10 @@
 Changes
 =======
 
+# 0.33.1 / 2019-11-29
+
+* [IMPROVEMENT] Identify an instance with its configured name if available. [#255][]
+
 # 0.33.0 / 2019-10-10
 
 * [IMPROVEMENT] Add the ability to list metrics in JSON. See [#241][]
