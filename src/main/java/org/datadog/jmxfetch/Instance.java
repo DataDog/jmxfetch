@@ -389,6 +389,8 @@ public class Instance {
             return "jvm_direct";
         } else if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
             return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
+        } else if (this.instanceMap.get("name") != null) {
+            return (String) this.instanceMap.get("name");
         } else if (this.instanceMap.get("jmx_url") != null) {
             return (String) this.instanceMap.get("jmx_url");
         } else {
