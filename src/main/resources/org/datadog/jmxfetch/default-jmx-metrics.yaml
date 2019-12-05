@@ -28,6 +28,36 @@
         alias: jvm.non_heap_memory_max
         metric_type: gauge
 
+# Direct Memory Buffers
+- include:
+    domain: java.nio
+    type: BufferPool
+    name: direct
+    attribute:
+      Count:
+        alias: jvm.buffer_pool.direct.count
+        metric_type: gauge
+      MemoryUsed:
+        alias: jvm.buffer_pool.direct.used
+        metric_type: gauge
+      TotalCapacity:
+        alias: jvm.buffer_pool.direct.capacity
+        metric_type: gauge
+- include:
+    domain: java.nio
+    type: BufferPool
+    name: mapped
+    attribute:
+      Count:
+        alias: jvm.buffer_pool.mapped.count
+        metric_type: gauge
+      MemoryUsed:
+        alias: jvm.buffer_pool.mapped.used
+        metric_type: gauge
+      TotalCapacity:
+        alias: jvm.buffer_pool.mapped.capacity
+        metric_type: gauge
+
 # Threads
 - include:
     domain: java.lang
