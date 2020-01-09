@@ -13,22 +13,22 @@ matrix:
     - jdk: oraclejdk8
       env:
        - DESC="Oracle JDK8 linting"
-       - CMD="mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j2.travis.properties"
 
     - jdk: oraclejdk8
       env:
        - DESC="Oracle JDK8 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j2.travis.properties"
 
     - jdk: oraclejdk7
       env:
        - DESC="Oracle JDK7 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j2.travis.properties"
 
     - jdk: openjdk7
       env:
        - DESC="OpenJDK7 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j2.travis.properties"
 
 script: echo "Running $DESC..." && (eval $CMD)
 
