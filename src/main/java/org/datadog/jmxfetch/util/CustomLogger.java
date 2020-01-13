@@ -22,6 +22,9 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 public class CustomLogger {
     private static final Multiset<String> messageCount = HashMultiset.create();
     private static final String LOGGER_LAYOUT = "%d | %-5p| %c{1} | %m%n";
+    // log4j2 uses SYSTEM_OUT and SYSTEM_ERR - support both
+    private static final String SYSTEM_OUT_ALT = "STDOUT";
+    private static final String SYSTEM_ERR_ALT = "STDERR";
 
     /** Sets up the custom logger to the specified level and location. */
     public static void setup(Level level, String logLocation) {
@@ -31,7 +34,9 @@ public class CustomLogger {
 
         if (logLocation != null
                 && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
-                && !ConsoleAppender.Target.SYSTEM_OUT.toString().equals(logLocation)) {
+                && !SYSTEM_ERR_ALT.equals(logLocation)
+                && !ConsoleAppender.Target.SYSTEM_OUT.toString().equals(logLocation)
+                && !SYSTEM_OUT_ALT.equals(logLocation)) {
 
             target = "FileLogger";
 
@@ -58,7 +63,8 @@ public class CustomLogger {
         } else {
 
             if (logLocation != null
-                    && ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)) {
+                    && (ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
+                        || SYSTEM_ERR_ALT.equals(logLocation))) {
 
                 ConsoleAppender console = (ConsoleAppender)config.getAppender("CONSOLE");
                 console.stop();
