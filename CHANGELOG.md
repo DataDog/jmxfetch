@@ -1,12 +1,20 @@
-Changes
-=======
+Changelog
+=========
+
+# 0.34.0 / 2020-01-13
+
+### Changes
+* [IMPROVEMENT] Collect direct memory buffers by default. [#257][]
+* [SECURITY] Migrate to log4j2. [#258][]
 
 # 0.33.1 / 2019-11-29
 
+### Changes
 * [IMPROVEMENT] Identify an instance with its configured name if available. [#255][]
 
 # 0.33.0 / 2019-10-10
 
+### Changes
 * [IMPROVEMENT] Add the ability to list metrics in JSON. See [#241][]
 
 # 0.32.1 / 2019-09-27
@@ -404,9 +412,13 @@ Changes
 [#231]: https://github.com/DataDog/jmxfetch/issues/231
 [#237]: https://github.com/DataDog/jmxfetch/issues/237
 [#240]: https://github.com/DataDog/jmxfetch/issues/240
+[#241]: https://github.com/DataDog/jmxfetch/issues/241
 [#243]: https://github.com/DataDog/jmxfetch/issues/243
 [#245]: https://github.com/DataDog/jmxfetch/issues/245
 [#250]: https://github.com/DataDog/jmxfetch/issues/250
+[#255]: https://github.com/DataDog/jmxfetch/issues/255
+[#257]: https://github.com/DataDog/jmxfetch/issues/257
+[#258]: https://github.com/DataDog/jmxfetch/issues/258
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
