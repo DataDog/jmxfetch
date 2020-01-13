@@ -7,8 +7,8 @@ import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.tasks.TaskMethod;

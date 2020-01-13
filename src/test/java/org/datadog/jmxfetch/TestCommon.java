@@ -24,7 +24,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import org.apache.log4j.Level;
+import org.apache.logging.log4j.Level;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
