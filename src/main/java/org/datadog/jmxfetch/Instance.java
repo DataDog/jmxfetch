@@ -148,7 +148,8 @@ public class Instance {
         }
 
         Object emptyDefaultHostnameObj = this.instanceMap.get("empty_default_hostname");
-        this.emptyDefaultHostname = emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
+        this.emptyDefaultHostname =
+                emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
 
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
