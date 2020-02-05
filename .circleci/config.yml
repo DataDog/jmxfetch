@@ -35,7 +35,7 @@ default_test_steps: &default_test_steps
     - run: mvn dependency:go-offline
 
     - save_cache:
-        <<: &save_cache_steps
+        <<: *save_cache_steps
 
     - run: |
         mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j2.travis.properties
@@ -78,7 +78,7 @@ jobs:
       - run: mvn install
 
       - save_cache:
-          <<: &save_cache_steps
+          <<: *save_cache_steps
 
       - store_test_results:
           path: ./target/surefire-reports/
