@@ -33,6 +33,7 @@
 
     <profiles>
       <profile>
+        <id>default</id>
         <activation>
           <jdk>[1.7,9)</jdk>
         </activation>
@@ -53,8 +54,9 @@
       </profile>
 
       <profile>
+        <id>new-jdks</id>
         <activation>
-          <jdk>9.0)</jdk>
+          <jdk>9.0</jdk>
         </activation>
 
         <properties>
