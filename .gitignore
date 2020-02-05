@@ -18,3 +18,4 @@ target/*
 
 # jenv
 .java_version
+.ruby_version
