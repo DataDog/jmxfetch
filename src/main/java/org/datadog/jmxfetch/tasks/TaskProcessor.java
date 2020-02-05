@@ -36,6 +36,10 @@ public class TaskProcessor {
      * for work on tasks.
      * */
     public boolean ready() {
+        if (threadPoolExecutor == null) {
+            // assumes we are in embedded mode and tasks will process by the calling thread
+            return true;
+        }
         ThreadPoolExecutor tpe = (ThreadPoolExecutor) threadPoolExecutor;
         return !tpe.isTerminated() && !(tpe.getMaximumPoolSize() == tpe.getActiveCount());
     }
@@ -46,37 +50,36 @@ public class TaskProcessor {
     public <T> List<TaskStatusHandler> processTasks(
             List<InstanceTask<T>> tasks, int timeout, TimeUnit timeUnit, TaskMethod<T> processor)
             throws Exception {
-
         List<TaskStatusHandler> statuses = new ArrayList<TaskStatusHandler>();
-
         try {
-            List<Callable<T>> callables = new ArrayList<Callable<T>>();
-            for (InstanceTask<T> task : tasks) {
-                callables.add(task);
-            }
-            List<Future<T>> results = threadPoolExecutor.invokeAll(callables, timeout, timeUnit);
-
-            for (int i = 0; i < results.size(); i++) {
-
-                Instance instance = tasks.get(i).getInstance();
-                try {
-                    Future<T> future = results.get(i);
-
-                    statuses.add(processor.invoke(instance, future, reporter));
-
-                } catch (Exception e) {
-                    log.warn(
-                            "There was an error processing concurrent instance: " + instance, e);
-
-                    statuses.add(new TaskStatusHandler(e));
+            if (threadPoolExecutor != null) {
+                List<Callable<T>> callables = new ArrayList<Callable<T>>(tasks);
+                List<Future<T>> results = threadPoolExecutor.invokeAll(callables, timeout,
+                        timeUnit);
+                for (int i = 0; i < results.size(); i++) {
+                    Instance instance = tasks.get(i).getInstance();
+                    try {
+                        Future<T> future = results.get(i);
+                        statuses.add(processor.invoke(instance, future, reporter));
+                    } catch (Exception e) {
+                        log.warn("There was an error processing concurrent instance: "
+                                        + instance, e);
+                        statuses.add(new TaskStatusHandler(e));
+                    }
+                }
+            } else {
+                for (InstanceTask<T> task : tasks) {
+                    T result = task.call();
+                    statuses.add(processor.invoke(task.getInstance(), new SimpleFuture<T>(result),
+                            reporter));
                 }
             }
+
         } catch (Exception e) {
             // Should we do anything else here?
             log.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
             throw e;
         }
-
         return statuses;
     }
 
@@ -84,6 +87,44 @@ public class TaskProcessor {
      * Stops the excutor service.
      * */
     public void stop() {
-        threadPoolExecutor.shutdownNow();
+        if (threadPoolExecutor != null) {
+            threadPoolExecutor.shutdownNow();
+        }
+    }
+
+    /**
+     * used to wrap the result in embedded mode when not using executors.
+     */
+    private static class SimpleFuture<T> implements Future<T> {
+        private final T result;
+
+        public SimpleFuture(T result) {
+            this.result = result;
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        public boolean isDone() {
+            return true;
+        }
+
+        @Override
+        public T get() {
+            return result;
+        }
+
+        @Override
+        public T get(long timeout, TimeUnit unit) {
+            return result;
+        }
     }
 }

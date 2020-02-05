@@ -220,6 +220,14 @@ public class AppConfig {
     @Builder.Default
     private boolean daemon = false;
 
+    /**
+     * Boolean setting to determine whether JMXFetch is embedded in a client app, e.g. for the java
+     * tracer. This setting is uncoupled from daemon one, even though very similar. This setting
+     * is used to reduce number of threads used by assuming the JMX connection will be local.
+     */
+    @Builder.Default
+    private boolean embedded = false;
+
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
     // This is used by things like APM agent to provide metric configuration from resources
@@ -388,5 +396,9 @@ public class AppConfig {
      */
     public boolean isDaemon() {
         return daemon;
+    }
+
+    public boolean isEmbedded() {
+        return embedded;
     }
 }
