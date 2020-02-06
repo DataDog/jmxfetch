@@ -69,8 +69,8 @@ public class App {
     private static final int AD_MAX_MAG_INSTANCES =
             4; // 1000 instances ought to be enough for anyone
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    private static final String COLLECTION_POOL_NAME = "collectionPool";
-    private static final String RECOVERY_POOL_NAME = "recoveryPool";
+    private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
+    private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
 
     private static int loopCounter;
     private int lastJsonConfigTs;
