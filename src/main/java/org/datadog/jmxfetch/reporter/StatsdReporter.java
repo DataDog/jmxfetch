@@ -35,13 +35,18 @@ public class StatsdReporter extends Reporter {
 
     private void init() {
         initializationTime = System.currentTimeMillis();
+        /* Create the StatsDClient with "entity-id" set to "none" to avoid
+           having dogstatsd server adding origin tags, when the connection is
+           done with UDS. */
         statsDClient =
                 new NonBlockingStatsDClient(
                         null,
                         this.statsdHost,
                         this.statsdPort,
+                        Integer.MAX_VALUE,
                         new String[] {},
-                        new LoggingErrorHandler());
+                        new LoggingErrorHandler(),
+                        "none");
     }
 
     protected void sendMetricPoint(
