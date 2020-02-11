@@ -147,11 +147,9 @@ public class Instance {
             this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
 
-        try {
-            this.emptyDefaultHostname = (Boolean) this.instanceMap.get("empty_default_hostname");
-        } catch (NullPointerException e) {
-            this.emptyDefaultHostname = false;
-        }
+        Object emptyDefaultHostnameObj = this.instanceMap.get("empty_default_hostname");
+        this.emptyDefaultHostname =
+                emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
 
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
