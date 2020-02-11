@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +51,8 @@ public abstract class JmxAttribute {
     private String beanStringName;
     private HashMap<String, String> beanParameters;
     private String attributeName;
-    private LinkedHashMap<String, LinkedHashMap<Object, Object>> valueConversions =
-            new LinkedHashMap<String, LinkedHashMap<Object, Object>>();
+    private Map<String, Map<Object, Object>> valueConversions =
+            new HashMap<String, Map<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
     private LinkedList<String> defaultTagsList;
@@ -64,7 +63,7 @@ public abstract class JmxAttribute {
             ObjectName beanName,
             String instanceName,
             Connection connection,
-            HashMap<String, String> instanceTags,
+            Map<String, String> instanceTags,
             Boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
         this.attribute = attribute;
@@ -145,7 +144,7 @@ public abstract class JmxAttribute {
     private LinkedList<String> getBeanParametersList(
             String instanceName,
             Map<String, String> beanParameters,
-            HashMap<String, String> instanceTags) {
+            Map<String, String> instanceTags) {
         LinkedList<String> beanTags = new LinkedList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
@@ -403,20 +402,16 @@ public abstract class JmxAttribute {
     }
 
     @SuppressWarnings("unchecked")
-    HashMap<Object, Object> getValueConversions(String field) {
+    Map<Object, Object> getValueConversions(String field) {
         String fullAttributeName =
                 (field != null)
                         ? (getAttribute().getName() + "." + field)
                         : (getAttribute().getName());
         if (valueConversions.get(fullAttributeName) == null) {
             Object includedAttribute = matchingConf.getInclude().getAttribute();
-            if (includedAttribute instanceof LinkedHashMap<?, ?>) {
-                LinkedHashMap<String, LinkedHashMap<Object, Object>> attribute =
-                        ((LinkedHashMap<
-                                                String,
-                                                LinkedHashMap<
-                                                        String, LinkedHashMap<Object, Object>>>)
-                                        includedAttribute)
+            if (includedAttribute instanceof Map<?, ?>) {
+                Map<String, Map<Object, Object>> attribute =
+                        ((Map<String, Map<String, Map<Object, Object>>>) includedAttribute)
                                 .get(fullAttributeName);
 
                 if (attribute != null) {
@@ -424,7 +419,7 @@ public abstract class JmxAttribute {
                 }
             }
             if (valueConversions.get(fullAttributeName) == null) {
-                valueConversions.put(fullAttributeName, new LinkedHashMap<Object, Object>());
+                valueConversions.put(fullAttributeName, new HashMap<Object, Object>());
             }
         }
 
@@ -468,16 +463,16 @@ public abstract class JmxAttribute {
         String alias = null;
 
         Filter include = getMatchingConf().getInclude();
-        LinkedHashMap<String, Object> conf = getMatchingConf().getConf();
+        Map<String, Object> conf = getMatchingConf().getConf();
 
         String fullAttributeName =
                 (field != null)
                         ? (getAttribute().getName() + "." + field)
                         : (getAttribute().getName());
 
-        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute =
-                    (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+        if (include.getAttribute() instanceof Map<?, ?>) {
+            Map<String, Map<String, String>> attribute =
+                    (Map<String, Map<String, String>>) (include.getAttribute());
             alias = getUserAlias(attribute, fullAttributeName);
         }
 
@@ -534,8 +529,7 @@ public abstract class JmxAttribute {
      * <p>Example: ``` bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz attribute: toto: alias:
      * my.metric.$foo.$attribute ``` returns a metric name `my.metric.bar.toto`
      */
-    private String getUserAlias(
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute,
+    private String getUserAlias(Map<String, Map<String, String>> attribute,
             String fullAttributeName) {
         String alias = attribute.get(fullAttributeName).get(ALIAS);
         if (alias == null) {
@@ -581,9 +575,9 @@ public abstract class JmxAttribute {
         Filter include = matchingConf.getInclude();
         if (include != null) {
             Object includeAttribute = include.getAttribute();
-            if (includeAttribute instanceof LinkedHashMap<?, ?>) {
-                LinkedHashMap<String, ArrayList<String>> attributeParams =
-                        ((LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>>)
+            if (includeAttribute instanceof Map<?, ?>) {
+                Map<String, ArrayList<String>> attributeParams =
+                        ((Map<String, Map<String, ArrayList<String>>>)
                                         includeAttribute)
                                 .get(attributeName);
                 if (attributeParams != null) {

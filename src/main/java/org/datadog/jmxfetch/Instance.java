@@ -3,7 +3,6 @@ package org.datadog.jmxfetch;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.extern.slf4j.Slf4j;
-
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.yaml.snakeyaml.Yaml;
 
@@ -17,7 +16,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -87,10 +85,10 @@ public class Instance {
     private long lastCollectionTime;
     private Integer minCollectionPeriod;
     private long lastRefreshTime;
-    private LinkedHashMap<String, Object> instanceMap;
-    private LinkedHashMap<String, Object> initConfig;
+    private Map<String, Object> instanceMap;
+    private Map<String, Object> initConfig;
     private String instanceName;
-    private LinkedHashMap<String, String> tags;
+    private Map<String, String> tags;
     private String checkName;
     private int maxReturnedMetrics;
     private boolean limitReached;
@@ -103,10 +101,10 @@ public class Instance {
     public Instance(Instance instance, AppConfig appConfig) {
         this(
                 instance.getInstanceMap() != null
-                        ? new LinkedHashMap<String, Object>(instance.getInstanceMap())
+                        ? new HashMap<String, Object>(instance.getInstanceMap())
                         : null,
                 instance.getInitConfig() != null
-                        ? new LinkedHashMap<String, Object>(instance.getInitConfig())
+                        ? new HashMap<String, Object>(instance.getInitConfig())
                         : null,
                 instance.getCheckName(),
                 appConfig);
@@ -115,14 +113,14 @@ public class Instance {
     /** Default constructor, builds an Instance from the provided instance map and init configs. */
     @SuppressWarnings("unchecked")
     public Instance(
-            LinkedHashMap<String, Object> instanceMap,
-            LinkedHashMap<String, Object> initConfig,
+            Map<String, Object> instanceMap,
+            Map<String, Object> initConfig,
             String checkName,
             AppConfig appConfig) {
         this.appConfig = appConfig;
         this.instanceMap =
-                instanceMap != null ? new LinkedHashMap<String, Object>(instanceMap) : null;
-        this.initConfig = initConfig != null ? new LinkedHashMap<String, Object>(initConfig) : null;
+                instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
+        this.initConfig = initConfig != null ? new HashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
@@ -197,8 +195,8 @@ public class Instance {
         if (instanceConf == null) {
             log.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
-            for (LinkedHashMap<String, Object> conf :
-                    (ArrayList<LinkedHashMap<String, Object>>) (instanceConf)) {
+            for (Map<String, Object> conf :
+                    (ArrayList<Map<String, Object>>) (instanceConf)) {
                 configurationList.add(new Configuration(conf));
             }
         }
@@ -219,16 +217,16 @@ public class Instance {
         loadDefaultConfig(gcMetricConfig);
     }
 
-    public static boolean isDirectInstance(LinkedHashMap<String, Object> configInstance) {
+    public static boolean isDirectInstance(Map<String, Object> configInstance) {
         Object directInstance = configInstance.get(JVM_DIRECT);
         return directInstance instanceof Boolean && (Boolean) directInstance;
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        ArrayList<LinkedHashMap<String, Object>> defaultConf =
-                (ArrayList<LinkedHashMap<String, Object>>)
+        ArrayList<Map<String, Object>> defaultConf =
+                (ArrayList<Map<String, Object>>)
                         YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
-        for (LinkedHashMap<String, Object> conf : defaultConf) {
+        for (Map<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
         }
     }
@@ -246,10 +244,10 @@ public class Instance {
                 log.info("Reading metric config file " + yamlPath);
                 try {
                     yamlInputStream = new FileInputStream(yamlPath);
-                    ArrayList<LinkedHashMap<String, Object>> confs =
-                            (ArrayList<LinkedHashMap<String, Object>>)
+                    ArrayList<Map<String, Object>> confs =
+                            (ArrayList<Map<String, Object>>)
                                     YAML.get().load(yamlInputStream);
-                    for (LinkedHashMap<String, Object> conf : confs) {
+                    for (Map<String, Object> conf : confs) {
                         configurationList.add(new Configuration(conf));
                     }
                 } catch (FileNotFoundException e) {
@@ -282,13 +280,13 @@ public class Instance {
                     log.warn("Cannot find metric config resource" + resourceName);
                 } else {
                     try {
-                        LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>> topYaml =
-                                (LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>>)
+                        Map<String, ArrayList<Map<String, Object>>> topYaml =
+                                (Map<String, ArrayList<Map<String, Object>>>)
                                         YAML.get().load(inputStream);
-                        ArrayList<LinkedHashMap<String, Object>> jmxConf =
+                        ArrayList<Map<String, Object>> jmxConf =
                                 topYaml.get("jmx_metrics");
                         if (jmxConf != null) {
-                            for (LinkedHashMap<String, Object> conf : jmxConf) {
+                            for (Map<String, Object> conf : jmxConf) {
                                 configurationList.add(new Configuration(conf));
                             }
                         } else {
@@ -309,11 +307,11 @@ public class Instance {
     }
 
     /**
-     * Format the instance tags defined in the YAML configuration file to a `LinkedHashMap`.
+     * Format the instance tags defined in the YAML configuration file to a `HashMap`.
      * Supported inputs: `List`, `Map`.
      */
-    private static LinkedHashMap<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
-        LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
+    private static Map<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
+        Map<String, String> tags = new HashMap<String, String>();
         if (appConfig.getGlobalTags() != null) {
             tags.putAll(appConfig.getGlobalTags());
         }
@@ -351,7 +349,7 @@ public class Instance {
 
     /** Returns the instance connection, creates one if not already connected. */
     public Connection getConnection(
-            LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection)
+            Map<String, Object> connectionParams, boolean forceNewConnection)
             throws IOException {
         if (connection == null || !connection.isAlive()) {
             log.info(
@@ -680,11 +678,11 @@ public class Instance {
         return this.instanceName;
     }
 
-    LinkedHashMap<String, Object> getInstanceMap() {
+    Map<String, Object> getInstanceMap() {
         return this.instanceMap;
     }
 
-    LinkedHashMap<String, Object> getInitConfig() {
+    Map<String, Object> getInitConfig() {
         return this.initConfig;
     }
 

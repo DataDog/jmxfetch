@@ -35,7 +35,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -809,8 +808,8 @@ public class App {
     }
 
     private Instance instantiate(
-            LinkedHashMap<String, Object> instanceMap,
-            LinkedHashMap<String, Object> initConfig,
+            Map<String, Object> instanceMap,
+            Map<String, Object> initConfig,
             String checkName,
             AppConfig appConfig) {
 
@@ -859,8 +858,8 @@ public class App {
                 it.remove();
             }
 
-            ArrayList<LinkedHashMap<String, Object>> configInstances =
-                    ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
+            ArrayList<Map<String, Object>> configInstances =
+                    ((ArrayList<Map<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
                 log.warn(warning);
@@ -868,7 +867,7 @@ public class App {
                 continue;
             }
 
-            for (LinkedHashMap<String, Object> configInstance : configInstances) {
+            for (Map<String, Object> configInstance : configInstances) {
                 if (appConfig.isTargetDirectInstances() != isDirectInstance(configInstance)) {
                     log.info("Skipping instance '{}'. targetDirectInstances={} != jvm_direct={}",
                             name,
@@ -882,7 +881,7 @@ public class App {
                 Instance instance =
                         instantiate(
                                 configInstance,
-                                (LinkedHashMap<String, Object>) yamlConfig.getInitConfig(),
+                                (Map<String, Object>) yamlConfig.getInitConfig(),
                                 name,
                                 appConfig);
                 newInstances.add(instance);
@@ -895,12 +894,12 @@ public class App {
             for (String check : adJsonConfigs.keySet()) {
                 HashMap<String, Object> checkConfig =
                         (HashMap<String, Object>) adJsonConfigs.get(check);
-                LinkedHashMap<String, Object> initConfig =
-                        (LinkedHashMap<String, Object>) checkConfig.get("init_config");
-                ArrayList<LinkedHashMap<String, Object>> configInstances =
-                        (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
+                Map<String, Object> initConfig =
+                        (Map<String, Object>) checkConfig.get("init_config");
+                ArrayList<Map<String, Object>> configInstances =
+                        (ArrayList<Map<String, Object>>) checkConfig.get("instances");
                 String checkName = (String) checkConfig.get("check_name");
-                for (LinkedHashMap<String, Object> configInstance : configInstances) {
+                for (Map<String, Object> configInstance : configInstances) {
                     log.info("Instantiating instance for: " + checkName);
                     Instance instance =
                             instantiate(configInstance, initConfig, checkName, appConfig);
