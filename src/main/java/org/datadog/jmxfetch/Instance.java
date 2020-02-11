@@ -316,14 +316,14 @@ public class Instance {
             tags.putAll(appConfig.getGlobalTags());
         }
         if (tagsMap != null) {
-            try {
-                // Input has `Map` format
+            if (tagsMap instanceof Map) {
                 tags.putAll((Map<String, String>) tagsMap);
-            } catch (ClassCastException e) {
-                // Input has `List` format
+            } else if (tagsMap instanceof List) {
                 for (String tag : (List<String>) tagsMap) {
                     tags.put(tag, null);
                 }
+            } else {
+                log.warn("Unsupported type for tagsMap: " + tagsMap.getClass().getCanonicalName());
             }
         }
         return tags;
