@@ -51,6 +51,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.security.auth.login.FailedLoginException;
@@ -68,6 +69,8 @@ public class App {
     private static final int AD_MAX_MAG_INSTANCES =
             4; // 1000 instances ought to be enough for anyone
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
+    private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
 
     private static int loopCounter;
     private int lastJsonConfigTs;
@@ -90,12 +93,12 @@ public class App {
         this.appConfig = appConfig;
 
         ExecutorService collectionThreadPool =
-                buildExecutorService(appConfig.getThreadPoolSize());
+                buildExecutorService(appConfig.getThreadPoolSize(), COLLECTION_POOL_NAME);
         collectionProcessor =
                 new TaskProcessor(collectionThreadPool, appConfig.getReporter());
 
         ExecutorService recoveryThreadPool =
-                buildExecutorService(appConfig.getReconnectionThreadPoolSize());
+                buildExecutorService(appConfig.getReconnectionThreadPoolSize(), RECOVERY_POOL_NAME);
         recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
 
         // setup client
@@ -269,7 +272,8 @@ public class App {
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
                 recoveryProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getReconnectionThreadPoolSize()));
+                        buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                                RECOVERY_POOL_NAME));
             }
 
             List<TaskStatusHandler> statuses =
@@ -303,11 +307,15 @@ public class App {
      * @param size The thread pool size
      * @return The create executor
      */
-    private ExecutorService buildExecutorService(int size) {
+    private ExecutorService buildExecutorService(int size, final String poolName) {
         return Executors.newFixedThreadPool(size, new ThreadFactory() {
+
+            private final AtomicInteger counter = new AtomicInteger(0);
+
             @Override
             public Thread newThread(Runnable runnable) {
-                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                String threadName = poolName + "-" + counter.incrementAndGet();
+                Thread thread = new Thread(runnable, threadName);
                 thread.setDaemon(appConfig.isDaemon());
                 return thread;
             }
@@ -499,7 +507,7 @@ public class App {
                         + "previous one hogging threads");
                 collectionProcessor.stop();
                 collectionProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getThreadPoolSize()));
+                        buildExecutorService(appConfig.getThreadPoolSize(), COLLECTION_POOL_NAME));
             }
 
             List<TaskStatusHandler> statuses =
@@ -585,7 +593,8 @@ public class App {
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
                 recoveryProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getReconnectionThreadPoolSize()));
+                        buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                                RECOVERY_POOL_NAME));
             }
 
             Collections.shuffle(fixInstanceTasks);
@@ -914,7 +923,8 @@ public class App {
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
                 recoveryProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getReconnectionThreadPoolSize()));
+                        buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                                RECOVERY_POOL_NAME));
             }
 
             List<TaskStatusHandler> statuses =
