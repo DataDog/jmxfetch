@@ -100,17 +100,7 @@ public class TestTaskProcessor {
                         return TestTaskProcessor.processTestResults(instance, future, reporter);
                     };
                 });
-
-        // this should all be green
-        for (int i=0 ; i<statuses.size(); i++) {
-
-            TaskStatusHandler status = statuses.get(i);
-
-            status.raiseForStatus();
-
-            // It should be true - both instances ready to collect
-            assertTrue((Boolean)status.getData());
-        }
+        assertAllStatusGreen(statuses);
     }
 
     /**
@@ -153,6 +143,34 @@ public class TestTaskProcessor {
                 // only third instance should timeout given test structure.
                 assertEquals(i, 2);
             }
+        }
+    }
+
+    @Test
+    public void embeddedTaskProcessor() throws Throwable {
+        // null executor means embedded mode
+        TaskProcessor testProcessor = new TaskProcessor(null, null);
+        List<InstanceTask<Boolean>> instanceTestTasks = new ArrayList<InstanceTask<Boolean>>();
+        for (Instance instance: instances) {
+            instanceTestTasks.add(new TestSimpleTask(instance));
+        }
+        List<TaskStatusHandler> statuses = testProcessor.processTasks(
+                instanceTestTasks, 0, TimeUnit.SECONDS,
+                new TaskMethod<Boolean>() {
+                    @Override
+                    public TaskStatusHandler invoke(Instance instance, Future<Boolean> future, Reporter reporter) {
+                        return TestTaskProcessor.processTestResults(instance, future, reporter);
+                    };
+                });
+        assertTrue(statuses.size() > 0);
+        assertAllStatusGreen(statuses);
+
+    }
+
+    private void assertAllStatusGreen(List<TaskStatusHandler> statuses) throws Throwable {
+        for (TaskStatusHandler status : statuses) {
+            status.raiseForStatus();
+            assertTrue((Boolean)status.getData());
         }
     }
 }

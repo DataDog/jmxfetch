@@ -92,15 +92,16 @@ public class App {
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
 
-        ExecutorService collectionThreadPool =
-                buildExecutorService(appConfig.getThreadPoolSize(), COLLECTION_POOL_NAME);
-        collectionProcessor =
-                new TaskProcessor(collectionThreadPool, appConfig.getReporter());
-
-        ExecutorService recoveryThreadPool =
-                buildExecutorService(appConfig.getReconnectionThreadPoolSize(), RECOVERY_POOL_NAME);
+        ExecutorService collectionThreadPool = null;
+        ExecutorService recoveryThreadPool = null;
+        if (!appConfig.isEmbedded()) { // Creates executors in standalone mode only
+            collectionThreadPool = buildExecutorService(appConfig.getThreadPoolSize(),
+                    COLLECTION_POOL_NAME);
+            recoveryThreadPool = buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                    RECOVERY_POOL_NAME);
+        }
         recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
-
+        collectionProcessor = new TaskProcessor(collectionThreadPool, appConfig.getReporter());
         // setup client
         if (appConfig.remoteEnabled()) {
             client = new HttpClient(appConfig.getIpcHost(), appConfig.getIpcPort(), false);
@@ -1127,9 +1128,9 @@ public class App {
             String scStatus = Status.STATUS_OK;
             LinkedList<HashMap<String, Object>> metrics;
 
-            Integer numberOfMetrics = new Integer(0);
+            int numberOfMetrics = 0;
 
-            InstanceTask task = tasks.get(i);
+            InstanceTask<T> task = tasks.get(i);
             TaskStatusHandler status = statuses.get(i);
             Instance instance = task.getInstance();
             Reporter reporter = appConfig.getReporter();
@@ -1195,7 +1196,7 @@ public class App {
                         appConfig,
                         reporter,
                         instance,
-                        numberOfMetrics.intValue(),
+                        numberOfMetrics,
                         instanceMessage,
                         instanceStatus);
                 this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
