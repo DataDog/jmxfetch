@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -55,11 +55,12 @@ public class JmxComplexAttribute extends JmxAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics()
+    public List<HashMap<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
 
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+        List<HashMap<String, Object>> metrics = new ArrayList<HashMap<String, Object>>(
+                subAttributeList.entrySet().size());
 
         for (Map.Entry<String, HashMap<String, Object>> pair : subAttributeList.entrySet()) {
             String subAttribute = pair.getKey();
@@ -146,8 +147,8 @@ public class JmxComplexAttribute extends JmxAttribute {
                 && ((Map<String, Object>) (params.getAttribute()))
                         .containsKey(subAttributeName)) {
             return true;
-        } else if ((params.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {
+        } else if ((params.getAttribute() instanceof List<?>
+                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
             return true;
         } else if (params.getAttribute() == null) {
             return matchOnEmpty;

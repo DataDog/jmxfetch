@@ -9,9 +9,9 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -26,7 +26,7 @@ public class TestInstance extends TestCommon {
         initApplication("jmx_min_collection_period.yml");
 
         run();
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<HashMap<String, Object>> metrics = getMetrics();
         assertEquals(15, metrics.size());
 
         run();
@@ -62,14 +62,14 @@ public class TestInstance extends TestCommon {
         initApplication("jmx_empty_default_hostname.yaml");
         run();
 
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<HashMap<String, Object>> metrics = getMetrics();
         assertEquals(28, metrics.size());
         for (HashMap<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
             this.assertHostnameTags(Arrays.asList(tags));
         }
 
-        LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        List<HashMap<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(2, serviceChecks.size());
         for (HashMap<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
@@ -82,7 +82,7 @@ public class TestInstance extends TestCommon {
         URL defaultConfig = Instance.class.getResource("default-jmx-metrics.yaml");
         AppConfig config = mock(AppConfig.class);
         when(config.getMetricConfigFiles()).thenReturn(Lists.newArrayList(defaultConfig.getPath()));
-        LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
+        List<Configuration> configurationList = new ArrayList<Configuration>();
         Instance.loadMetricConfigFiles(config, configurationList);
 
         assertEquals(2, configurationList.size());
@@ -94,7 +94,7 @@ public class TestInstance extends TestCommon {
         String configResource = defaultConfig.getPath().split("test-classes/")[1];
         AppConfig config = mock(AppConfig.class);
         when(config.getMetricConfigResources()).thenReturn(Lists.newArrayList(configResource));
-        LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
+        List<Configuration> configurationList = new ArrayList<Configuration>();
         Instance.loadMetricConfigResources(config, configurationList);
 
         assertEquals(2, configurationList.size());

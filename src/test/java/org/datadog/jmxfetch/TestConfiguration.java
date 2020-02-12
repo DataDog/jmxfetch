@@ -11,14 +11,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TestConfiguration {
-    static LinkedList<Configuration> configurations = new LinkedList<Configuration>();
+    static List<Configuration> configurations = new ArrayList<Configuration>();
     static JsonParser adConfigs;
 
     /**
@@ -33,13 +33,13 @@ public class TestConfiguration {
         String yamlPath = f.getAbsolutePath();
         FileInputStream yamlInputStream = new FileInputStream(yamlPath);
         YamlParser fileConfig = new YamlParser(yamlInputStream);
-        ArrayList<Map<String, Object>> configInstances =
-                ((ArrayList<Map<String, Object>>) fileConfig.getYamlInstances());
+        List<Map<String, Object>> configInstances =
+                ((List<Map<String, Object>>) fileConfig.getYamlInstances());
 
         for (Map<String, Object> config : configInstances) {
             Object yamlConf = config.get("conf");
             for (Map<String, Object> conf :
-                    (ArrayList<Map<String, Object>>) (yamlConf)) {
+                    (List<Map<String, Object>>) (yamlConf)) {
                 configurations.add(new Configuration(conf));
             }
         }
@@ -69,12 +69,12 @@ public class TestConfiguration {
         assertEquals(configurations.size(), 4);
         int nconfigs = 0;
         for (String check : configs.keySet()) {
-            ArrayList<Map<String, Object>> configInstances =
-                    ((ArrayList<Map<String, Object>>) adConfigs.getJsonInstances(check));
+            List<Map<String, Object>> configInstances =
+                    ((List<Map<String, Object>>) adConfigs.getJsonInstances(check));
             for (Map<String, Object> config : configInstances) {
                 Object jsonConf = config.get("conf");
                 for (Map<String, Object> conf :
-                        (ArrayList<Map<String, Object>>) (jsonConf)) {
+                        (List<Map<String, Object>>) (jsonConf)) {
                     configurations.add(new Configuration(conf));
                     nconfigs++;
                 }
@@ -100,12 +100,12 @@ public class TestConfiguration {
         // Private method reflection
         Method getIncludeFiltersByDomain =
                 Configuration.class.getDeclaredMethod(
-                        "getIncludeFiltersByDomain", LinkedList.class);
+                        "getIncludeFiltersByDomain", List.class);
         getIncludeFiltersByDomain.setAccessible(true);
 
         // Assert
-        HashMap<String, LinkedList<Filter>> filtersByDomain =
-                (HashMap<String, LinkedList<Filter>>)
+        HashMap<String, List<Filter>> filtersByDomain =
+                (HashMap<String, List<Filter>>)
                         getIncludeFiltersByDomain.invoke(null, configurations);
 
         // Only contains 'org.datadog.jmxfetch.test' domain
@@ -133,7 +133,7 @@ public class TestConfiguration {
         // Private method reflection
         Method getIncludeFiltersByDomain =
                 Configuration.class.getDeclaredMethod(
-                        "getIncludeFiltersByDomain", LinkedList.class);
+                        "getIncludeFiltersByDomain", List.class);
         getIncludeFiltersByDomain.setAccessible(true);
 
         Method getCommonBeanKeysByDomain =
@@ -141,8 +141,8 @@ public class TestConfiguration {
         getCommonBeanKeysByDomain.setAccessible(true);
 
         // Assert
-        HashMap<String, LinkedList<Filter>> filtersByDomain =
-                (HashMap<String, LinkedList<Filter>>)
+        HashMap<String, List<Filter>> filtersByDomain =
+                (HashMap<String, List<Filter>>)
                         getIncludeFiltersByDomain.invoke(null, configurations);
         HashMap<String, Set<String>> parametersIntersectionByDomain =
                 (HashMap<String, Set<String>>)
@@ -177,7 +177,7 @@ public class TestConfiguration {
         // Private method reflection
         Method getIncludeFiltersByDomain =
                 Configuration.class.getDeclaredMethod(
-                        "getIncludeFiltersByDomain", LinkedList.class);
+                        "getIncludeFiltersByDomain", List.class);
         getIncludeFiltersByDomain.setAccessible(true);
 
         Method getCommonBeanKeysByDomain =
@@ -190,8 +190,8 @@ public class TestConfiguration {
         getCommonScopeByDomain.setAccessible(true);
 
         // Assert
-        Map<String, LinkedList<Filter>> filtersByDomain =
-                (Map<String, LinkedList<Filter>>)
+        Map<String, List<Filter>> filtersByDomain =
+                (Map<String, List<Filter>>)
                         getIncludeFiltersByDomain.invoke(null, configurations);
         Map<String, Set<String>> parametersIntersectionByDomain =
                 (Map<String, Set<String>>)
