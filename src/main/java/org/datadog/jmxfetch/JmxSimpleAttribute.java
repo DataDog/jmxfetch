@@ -3,8 +3,8 @@ package org.datadog.jmxfetch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
@@ -22,7 +22,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
             ObjectName beanName,
             String instanceName,
             Connection connection,
-            HashMap<String, String> instanceTags,
+            Map<String, String> instanceTags,
             boolean cassandraAliasing,
             Boolean emptyDefaultHostname) {
         super(
@@ -64,8 +64,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
         Filter exclude = configuration.getExclude();
         if (exclude.getAttribute() == null) {
             return false;
-        } else if ((exclude.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (exclude.getAttribute()))
+        } else if ((exclude.getAttribute() instanceof Map<?, ?>)
+                && ((Map<String, Object>) (exclude.getAttribute()))
                         .containsKey(getAttributeName())) {
             return true;
 
@@ -81,8 +81,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
         if (include.getAttribute() == null) {
             return true;
 
-        } else if ((include.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (include.getAttribute()))
+        } else if ((include.getAttribute() instanceof Map<?, ?>)
+                && ((Map<String, Object>) (include.getAttribute()))
                         .containsKey(getAttributeName())) {
             return true;
 
@@ -98,9 +98,9 @@ public class JmxSimpleAttribute extends JmxAttribute {
         Filter include = getMatchingConf().getInclude();
         if (metricType != null) {
             return metricType;
-        } else if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute =
-                    (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+        } else if (include.getAttribute() instanceof Map<?, ?>) {
+            Map<String, Map<String, String>> attribute =
+                    (Map<String, Map<String, String>>) (include.getAttribute());
             metricType = attribute.get(getAttributeName()).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(getAttributeName()).get("type");

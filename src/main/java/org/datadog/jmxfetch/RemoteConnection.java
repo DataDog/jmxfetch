@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
@@ -29,7 +29,7 @@ public class RemoteConnection extends Connection {
             "15000"; // Match the collection period default
 
     /** RemoteConnection constructor for specified remote connection parameters. */
-    public RemoteConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
+    public RemoteConnection(Map<String, Object> connectionParams) throws IOException {
         host = (String) connectionParams.get("host");
         try {
             port = (Integer) connectionParams.get("port");
@@ -55,7 +55,7 @@ public class RemoteConnection extends Connection {
             path = (String) connectionParams.get("path");
         }
         env = getEnv(connectionParams);
-        address = getAddress(connectionParams);
+        address = getAddress();
 
         String trustStorePath;
         String trustStorePassword;
@@ -92,7 +92,7 @@ public class RemoteConnection extends Connection {
         createConnection();
     }
 
-    private HashMap<String, Object> getEnv(LinkedHashMap<String, Object> connectionParams) {
+    private HashMap<String, Object> getEnv(Map<String, Object> connectionParams) {
 
         HashMap<String, Object> environment = new HashMap<String, Object>();
 
@@ -107,7 +107,7 @@ public class RemoteConnection extends Connection {
         return environment;
     }
 
-    private JMXServiceURL getAddress(LinkedHashMap<String, Object> connectionParams)
+    private JMXServiceURL getAddress()
             throws MalformedURLException {
         if (this.jmxUrl != null) {
             return new JMXServiceURL(this.jmxUrl);

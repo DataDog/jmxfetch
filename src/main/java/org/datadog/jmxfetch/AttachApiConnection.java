@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.management.remote.JMXServiceURL;
 
 @Slf4j
@@ -15,14 +15,14 @@ public class AttachApiConnection extends Connection {
     private String processRegex;
 
     /** AttachApiConnection constructor for specified connection parameters. */
-    public AttachApiConnection(LinkedHashMap<String, Object> connectionParams) throws IOException {
+    public AttachApiConnection(Map<String, Object> connectionParams) throws IOException {
         processRegex = (String) connectionParams.get("process_name_regex");
         this.env = new HashMap<String, Object>();
         this.address = getAddress(connectionParams);
         createConnection();
     }
 
-    private JMXServiceURL getAddress(LinkedHashMap<String, Object> connectionParams)
+    private JMXServiceURL getAddress(Map<String, Object> connectionParams)
             throws IOException {
         JMXServiceURL address;
         try {

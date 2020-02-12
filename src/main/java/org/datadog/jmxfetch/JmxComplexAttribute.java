@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
@@ -26,7 +25,7 @@ public class JmxComplexAttribute extends JmxAttribute {
             ObjectName beanName,
             String instanceName,
             Connection connection,
-            HashMap<String, String> instanceTags,
+            Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
         super(
                 attribute,
@@ -107,9 +106,9 @@ public class JmxComplexAttribute extends JmxAttribute {
         String metricType = null;
 
         Filter include = getMatchingConf().getInclude();
-        if (include.getAttribute() instanceof LinkedHashMap<?, ?>) {
-            LinkedHashMap<String, LinkedHashMap<String, String>> attribute =
-                    (LinkedHashMap<String, LinkedHashMap<String, String>>) (include.getAttribute());
+        if (include.getAttribute() instanceof Map<?, ?>) {
+            Map<String, Map<String, String>> attribute =
+                    (Map<String, Map<String, String>>) (include.getAttribute());
             metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
             if (metricType == null) {
                 metricType = attribute.get(subAttributeName).get("type");
@@ -143,8 +142,8 @@ public class JmxComplexAttribute extends JmxAttribute {
 
     private boolean matchSubAttribute(
             Filter params, String subAttributeName, boolean matchOnEmpty) {
-        if ((params.getAttribute() instanceof LinkedHashMap<?, ?>)
-                && ((LinkedHashMap<String, Object>) (params.getAttribute()))
+        if ((params.getAttribute() instanceof Map<?, ?>)
+                && ((Map<String, Object>) (params.getAttribute()))
                         .containsKey(subAttributeName)) {
             return true;
         } else if ((params.getAttribute() instanceof ArrayList<?>

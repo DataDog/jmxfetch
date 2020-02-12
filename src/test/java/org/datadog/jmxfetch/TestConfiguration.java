@@ -11,8 +11,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,13 +33,13 @@ public class TestConfiguration {
         String yamlPath = f.getAbsolutePath();
         FileInputStream yamlInputStream = new FileInputStream(yamlPath);
         YamlParser fileConfig = new YamlParser(yamlInputStream);
-        ArrayList<LinkedHashMap<String, Object>> configInstances =
-                ((ArrayList<LinkedHashMap<String, Object>>) fileConfig.getYamlInstances());
+        ArrayList<Map<String, Object>> configInstances =
+                ((ArrayList<Map<String, Object>>) fileConfig.getYamlInstances());
 
-        for (LinkedHashMap<String, Object> config : configInstances) {
+        for (Map<String, Object> config : configInstances) {
             Object yamlConf = config.get("conf");
-            for (LinkedHashMap<String, Object> conf :
-                    (ArrayList<LinkedHashMap<String, Object>>) (yamlConf)) {
+            for (Map<String, Object> conf :
+                    (ArrayList<Map<String, Object>>) (yamlConf)) {
                 configurations.add(new Configuration(conf));
             }
         }
@@ -69,12 +69,12 @@ public class TestConfiguration {
         assertEquals(configurations.size(), 4);
         int nconfigs = 0;
         for (String check : configs.keySet()) {
-            ArrayList<LinkedHashMap<String, Object>> configInstances =
-                    ((ArrayList<LinkedHashMap<String, Object>>) adConfigs.getJsonInstances(check));
-            for (LinkedHashMap<String, Object> config : configInstances) {
+            ArrayList<Map<String, Object>> configInstances =
+                    ((ArrayList<Map<String, Object>>) adConfigs.getJsonInstances(check));
+            for (Map<String, Object> config : configInstances) {
                 Object jsonConf = config.get("conf");
-                for (LinkedHashMap<String, Object> conf :
-                        (ArrayList<LinkedHashMap<String, Object>>) (jsonConf)) {
+                for (Map<String, Object> conf :
+                        (ArrayList<Map<String, Object>>) (jsonConf)) {
                     configurations.add(new Configuration(conf));
                     nconfigs++;
                 }
@@ -137,7 +137,7 @@ public class TestConfiguration {
         getIncludeFiltersByDomain.setAccessible(true);
 
         Method getCommonBeanKeysByDomain =
-                Configuration.class.getDeclaredMethod("getCommonBeanKeysByDomain", HashMap.class);
+                Configuration.class.getDeclaredMethod("getCommonBeanKeysByDomain", Map.class);
         getCommonBeanKeysByDomain.setAccessible(true);
 
         // Assert
@@ -181,30 +181,30 @@ public class TestConfiguration {
         getIncludeFiltersByDomain.setAccessible(true);
 
         Method getCommonBeanKeysByDomain =
-                Configuration.class.getDeclaredMethod("getCommonBeanKeysByDomain", HashMap.class);
+                Configuration.class.getDeclaredMethod("getCommonBeanKeysByDomain", Map.class);
         getCommonBeanKeysByDomain.setAccessible(true);
 
         Method getCommonScopeByDomain =
                 Configuration.class.getDeclaredMethod(
-                        "getCommonScopeByDomain", HashMap.class, HashMap.class);
+                        "getCommonScopeByDomain", Map.class, Map.class);
         getCommonScopeByDomain.setAccessible(true);
 
         // Assert
-        HashMap<String, LinkedList<Filter>> filtersByDomain =
-                (HashMap<String, LinkedList<Filter>>)
+        Map<String, LinkedList<Filter>> filtersByDomain =
+                (Map<String, LinkedList<Filter>>)
                         getIncludeFiltersByDomain.invoke(null, configurations);
-        HashMap<String, Set<String>> parametersIntersectionByDomain =
-                (HashMap<String, Set<String>>)
+        Map<String, Set<String>> parametersIntersectionByDomain =
+                (Map<String, Set<String>>)
                         getCommonBeanKeysByDomain.invoke(null, filtersByDomain);
-        HashMap<String, LinkedHashMap<String, String>> commonBeanScopeByDomain =
-                (HashMap<String, LinkedHashMap<String, String>>)
+        Map<String, Map<String, String>> commonBeanScopeByDomain =
+                (Map<String, Map<String, String>>)
                         getCommonScopeByDomain.invoke(
                                 null, parametersIntersectionByDomain, filtersByDomain);
 
         // Only contains 'org.datadog.jmxfetch.test' domain
         assertEquals(commonBeanScopeByDomain.size(), 2);
         assertTrue(commonBeanScopeByDomain.containsKey("org.datadog.jmxfetch.test"));
-        LinkedHashMap<String, String> beanScope =
+        Map<String, String> beanScope =
                 commonBeanScopeByDomain.get("org.datadog.jmxfetch.test");
 
         // Bean scope contains 'scope' parameter only
@@ -231,34 +231,37 @@ public class TestConfiguration {
         // Private method reflection
         Method beanScopeToString =
                 Configuration.class.getDeclaredMethod(
-                        "beanScopeToString", String.class, LinkedHashMap.class);
+                        "beanScopeToString", String.class, Map.class);
         beanScopeToString.setAccessible(true);
 
         // Mock parameters
-        LinkedHashMap<String, String> beanScope = new LinkedHashMap<String, String>();
+        Map<String, String> beanScope = new HashMap<String, String>();
         beanScope.put("type", "someType");
         beanScope.put("param", "someParam");
 
         // No domain name, no parameters
         assertEquals(
-                (String) beanScopeToString.invoke(null, null, new LinkedHashMap<String, String>()),
+                (String) beanScopeToString.invoke(null, null, new HashMap<String, String>()),
                 "*:*");
 
         // No domain but parameters
-        assertEquals(
-                (String) beanScopeToString.invoke(null, null, beanScope),
-                "*:type=someType,param=someParam,*");
+        String scopeStr = (String) beanScopeToString.invoke(null, null, beanScope);
+        // order is not guaranteed, so just checking we find it into the result string
+        assertTrue(scopeStr.contains("type=someType"));
+        assertTrue(scopeStr.contains("param=someParam"));
 
         // Domain name with no parameters
         assertEquals(
                 (String)
                         beanScopeToString.invoke(
-                                null, "org.datadog.com", new LinkedHashMap<String, String>()),
+                                null, "org.datadog.com", new HashMap<String, String>()),
                 "org.datadog.com:*");
 
         // Domain name with parameters
-        assertEquals(
-                (String) beanScopeToString.invoke(null, "org.datadog.com", beanScope),
-                "org.datadog.com:type=someType,param=someParam,*");
+        scopeStr = (String) beanScopeToString.invoke(null, "org.datadog.com", beanScope);
+        // order is not guaranteed, so just checking we find it into the result string
+        assertTrue(scopeStr.startsWith("org.datadog.com:"));
+        assertTrue(scopeStr.contains("type=someType"));
+        assertTrue(scopeStr.contains("param=someParam"));
     }
 }

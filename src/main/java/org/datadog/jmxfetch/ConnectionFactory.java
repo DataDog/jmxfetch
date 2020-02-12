@@ -5,7 +5,7 @@ import static org.datadog.jmxfetch.Instance.isDirectInstance;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 /** Singleton used to create connections to the MBeanServer. */
 @Slf4j
@@ -13,7 +13,7 @@ public class ConnectionFactory {
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
 
     /** Factory method to create connections, both remote and local to the target JVM. */
-    public static Connection createConnection(LinkedHashMap<String, Object> connectionParams)
+    public static Connection createConnection(Map<String, Object> connectionParams)
             throws IOException {
         // This is used by dd-java-agent to enable directly connecting to the mbean server.
         // This works since jmxfetch is being run as a library inside the process being monitored.
