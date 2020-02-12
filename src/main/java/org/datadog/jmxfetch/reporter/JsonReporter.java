@@ -8,6 +8,7 @@ import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,6 +40,7 @@ public class JsonReporter extends Reporter {
 
     /** Use the service check callback to display the JSON. */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
+        log.debug("Displaying JSON output");
         HashMap<String, Object> aggregator = new HashMap<String, Object>();
         aggregator.put("metrics", metrics);
         HashMap<String, Object> serie = new HashMap<String, Object>();
@@ -49,11 +51,14 @@ public class JsonReporter extends Reporter {
         System.out.println("=== JSON ===");
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        StringWriter writer = new StringWriter();
         try {
-            mapper.writeValue(System.out, series);
+            mapper.writeValue(writer, series);
         } catch (IOException e) {
             log.error("Couln't produce JSON output");
         }
+        System.out.println(writer.toString());
+        metrics.clear();
     }
 
     public void displayMetricReached() {
