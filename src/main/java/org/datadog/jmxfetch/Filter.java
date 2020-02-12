@@ -55,7 +55,7 @@ class Filter {
         if (toCast instanceof List) {
             return (List<String>) toCast;
         }
-        return Collections.singletonList((String) toCast);
+        return new ArrayList<String>(Arrays.asList((String) toCast));
     }
 
     public List<String> getBeanNames() {
