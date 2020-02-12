@@ -10,24 +10,25 @@ import org.datadog.jmxfetch.JmxAttribute;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public abstract class Reporter {
 
     public static final String VALUE = "value";
 
-    private HashMap<String, Integer> serviceCheckCount;
-    private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator =
-            new HashMap<String, HashMap<String, HashMap<String, Object>>>();
-    private HashMap<String, HashMap<String, Long>> countersAggregator =
-            new HashMap<String, HashMap<String, Long>>();
+    private Map<String, Integer> serviceCheckCount;
+    private Map<String, Map<String, Map<String, Object>>> ratesAggregator =
+            new HashMap<String, Map<String, Map<String, Object>>>();
+    private Map<String, Map<String, Long>> countersAggregator =
+            new HashMap<String, Map<String, Long>>();
 
     /** Reporter constructor. */
     public Reporter() {
         this.serviceCheckCount = new HashMap<String, Integer>();
     }
 
-    String generateId(HashMap<String, Object> metric) {
+    String generateId(Map<String, Object> metric) {
         String key = (String) metric.get("alias");
         for (String tag : (String[]) metric.get("tags")) {
             key += tag;
@@ -37,7 +38,7 @@ public abstract class Reporter {
 
     /** Clears the rate aggregator for the provided instance name. */
     public void clearRatesAggregator(String instanceName) {
-        ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
+        ratesAggregator.put(instanceName, new HashMap<String, Map<String, Object>>());
     }
 
     /** Clears the counter aggregator for the provided instance name.  */
@@ -47,16 +48,16 @@ public abstract class Reporter {
 
     /** Submits the metrics in the implementing reporter. */
     public void sendMetrics(
-            List<HashMap<String, Object>> metrics,
+            List<Map<String, Object>> metrics,
             String instanceName,
             boolean canonicalRate) {
-        HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
-        HashMap<String, Long> instanceCountersAggregator;
+        Map<String, Map<String, Object>> instanceRatesAggregator;
+        Map<String, Long> instanceCountersAggregator;
 
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
         } else {
-            instanceRatesAggregator = new HashMap<String, HashMap<String, Object>>();
+            instanceRatesAggregator = new HashMap<String, Map<String, Object>>();
         }
 
         if (countersAggregator.containsKey(instanceName)) {
@@ -83,9 +84,9 @@ public abstract class Reporter {
             log.debug(sendingMessage);
         }
 
-        for (HashMap<String, Object> m : metrics) {
+        for (Map<String, Object> m : metrics) {
             // We need to edit metrics for legacy reasons (rename metrics, etc)
-            HashMap<String, Object> metric = new HashMap<String, Object>(m);
+            Map<String, Object> metric = new HashMap<String, Object>(m);
 
             Double currentValue = (Double) metric.get(VALUE);
             if (currentValue.isNaN() || currentValue.isInfinite()) {
@@ -125,7 +126,7 @@ public abstract class Reporter {
             } else { // The metric should be 'counter'
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
-                    HashMap<String, Object> rateInfo = new HashMap<String, Object>();
+                    Map<String, Object> rateInfo = new HashMap<String, Object>();
                     rateInfo.put("ts", System.currentTimeMillis());
                     rateInfo.put(VALUE, currentValue);
                     instanceRatesAggregator.put(key, rateInfo);
@@ -181,7 +182,7 @@ public abstract class Reporter {
         this.serviceCheckCount.put(checkName, new Integer(0));
     }
 
-    protected HashMap<String, Integer> getServiceCheckCountMap() {
+    protected Map<String, Integer> getServiceCheckCountMap() {
         return this.serviceCheckCount;
     }
 

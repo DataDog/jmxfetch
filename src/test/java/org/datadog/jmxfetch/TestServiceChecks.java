@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.junit.Test;
@@ -25,13 +26,13 @@ public class TestServiceChecks extends TestCommon {
         initApplication("jmx.yaml");
 
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // Test that an OK service check status is sent
-        List<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
 
         assertEquals(1, serviceChecks.size());
-        HashMap<String, Object> sc = serviceChecks.get(0);
+        Map<String, Object> sc = serviceChecks.get(0);
         assertNotNull(sc.get("name"));
         assertNotNull(sc.get("status"));
         assertNull(sc.get("message"));
@@ -65,12 +66,12 @@ public class TestServiceChecks extends TestCommon {
         run();
 
         // Test that an WARNING service check status is sent
-        List<HashMap<String, Object>> serviceChecks = getServiceChecks();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
+        List<Map<String, Object>> metrics = getMetrics();
         assertTrue(metrics.size() >= 350);
 
         assertEquals(1, serviceChecks.size());
-        HashMap<String, Object> sc = serviceChecks.get(0);
+        Map<String, Object> sc = serviceChecks.get(0);
         assertNotNull(sc.get("name"));
         assertNotNull(sc.get("status"));
 
@@ -100,10 +101,10 @@ public class TestServiceChecks extends TestCommon {
         initApplication("non_running_process.yaml");
 
         // Test that a CRITICAL service check status is sent on initialization
-        List<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(1, serviceChecks.size());
 
-        HashMap<String, Object> sc = serviceChecks.get(0);
+        Map<String, Object> sc = serviceChecks.get(0);
         assertNotNull(sc.get("name"));
         assertNotNull(sc.get("status"));
         assertNotNull(sc.get("message"));

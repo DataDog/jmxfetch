@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class Status {
@@ -20,7 +21,7 @@ public class Status {
     private static final String INITIALIZED_CHECKS = "initialized_checks";
     private static final String FAILED_CHECKS = "failed_checks";
     private static final String API_STATUS_PATH = "agent/jmx/status";
-    private HashMap<String, Object> instanceStats;
+    private Map<String, Object> instanceStats;
     private ObjectMapper mapper;
     private String statusFileLocation;
     private HttpClient client;
@@ -82,17 +83,17 @@ public class Status {
             String message,
             String status,
             String key) {
-        List<HashMap<String, Object>> checkStats;
-        HashMap<String, Object> initializedChecks;
-        initializedChecks = (HashMap<String, Object>) this.instanceStats.get(key);
+        List<Map<String, Object>> checkStats;
+        Map<String, Object> initializedChecks;
+        initializedChecks = (Map<String, Object>) this.instanceStats.get(key);
         if (initializedChecks == null) {
             initializedChecks = new HashMap<String, Object>();
         }
-        checkStats = (List<HashMap<String, Object>>) initializedChecks.get(checkName);
+        checkStats = (List<Map<String, Object>>) initializedChecks.get(checkName);
         if (checkStats == null) {
-            checkStats = new ArrayList<HashMap<String, Object>>();
+            checkStats = new ArrayList<Map<String, Object>>();
         }
-        HashMap<String, Object> instStats = new HashMap<String, Object>();
+        Map<String, Object> instStats = new HashMap<String, Object>();
         if (instance != null) {
             instStats.put("instance_name", instance);
         }
@@ -115,14 +116,14 @@ public class Status {
 
     private String generateYaml() {
         Yaml yaml = new Yaml();
-        HashMap<String, Object> status = new HashMap<String, Object>();
+        Map<String, Object> status = new HashMap<String, Object>();
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         return yaml.dump(status);
     }
 
     private String generateJson() throws JsonProcessingException {
-        HashMap<String, Object> status = new HashMap<String, Object>();
+        Map<String, Object> status = new HashMap<String, Object>();
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         return mapper.writeValueAsString(status);

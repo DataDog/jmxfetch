@@ -48,7 +48,7 @@ public abstract class JmxAttribute {
     private ObjectName beanName;
     private String domain;
     private String beanStringName;
-    private HashMap<String, String> beanParameters;
+    private Map<String, String> beanParameters;
     private String attributeName;
     private Map<String, Map<Object, Object>> valueConversions =
             new HashMap<String, Map<Object, Object>>();
@@ -83,7 +83,7 @@ public abstract class JmxAttribute {
         String beanParameters = beanStringName.substring(splitPosition + 1);
         this.domain = domain;
 
-        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
+        Map<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
         List<String> beanParametersList =
                 getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
@@ -125,9 +125,9 @@ public abstract class JmxAttribute {
     }
 
     /** Gets bean parameter hash map. */
-    public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
+    public static Map<String, String> getBeanParametersHash(String beanParametersString) {
         String[] beanParameters = beanParametersString.split(",");
-        HashMap<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
+        Map<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
         for (String param : beanParameters) {
             String[] paramSplit = param.split("=");
             if (paramSplit.length > 1) {
@@ -232,7 +232,7 @@ public abstract class JmxAttribute {
                 + attribute.getType();
     }
 
-    public abstract List<HashMap<String, Object>> getMetrics()
+    public abstract List<Map<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException;
 
@@ -608,7 +608,7 @@ public abstract class JmxAttribute {
         return domain;
     }
 
-    protected HashMap<String, String> getBeanParameters() {
+    protected Map<String, String> getBeanParameters() {
         return beanParameters;
     }
 }

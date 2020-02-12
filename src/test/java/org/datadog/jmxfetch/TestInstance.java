@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.junit.Test;
@@ -26,7 +28,7 @@ public class TestInstance extends TestCommon {
         initApplication("jmx_min_collection_period.yml");
 
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
         assertEquals(15, metrics.size());
 
         run();
@@ -62,16 +64,16 @@ public class TestInstance extends TestCommon {
         initApplication("jmx_empty_default_hostname.yaml");
         run();
 
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
         assertEquals(28, metrics.size());
-        for (HashMap<String, Object> metric : metrics) {
+        for (Map<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
             this.assertHostnameTags(Arrays.asList(tags));
         }
 
-        List<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(2, serviceChecks.size());
-        for (HashMap<String, Object> sc : serviceChecks) {
+        for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertHostnameTags(Arrays.asList(tags));
         }

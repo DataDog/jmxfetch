@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.junit.Test;
 
 public class TestApp extends TestCommon {
@@ -53,7 +55,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
         assertEquals(14, metrics.size());
@@ -79,7 +81,7 @@ public class TestApp extends TestCommon {
 
         // Collect metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // Assertions
 
@@ -112,7 +114,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // Assertions
 
@@ -146,7 +148,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 2*13 metrics from java.lang + 2*1 metric explicitly defined in the yaml config file
         assertEquals(28, metrics.size());
@@ -185,7 +187,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
         assertEquals(14, metrics.size());
@@ -209,7 +211,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 29 = 13 metrics from java.lang + 16 metrics implicitly defined
         assertEquals(29, metrics.size());
@@ -227,7 +229,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly
         // defined in the exclude section
@@ -247,7 +249,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly
         // defined in exclude section
@@ -264,7 +266,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 13 default metrics from java.lang
         assertEquals(13, metrics.size());
@@ -280,7 +282,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
         assertEquals(14, metrics.size());
@@ -296,7 +298,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 13 = 13 metrics from java.lang + 2 metrics explicitly defined - 2 explicitly
         // defined
@@ -313,7 +315,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
         assertEquals(14, metrics.size());
@@ -332,7 +334,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 15 = 13 metrics from java.lang + 2 metrics explicitly defined
         assertEquals(15, metrics.size());
@@ -351,7 +353,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
         assertEquals(14, metrics.size());
@@ -370,7 +372,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 14 = 13 metrics from java.lang + 1 metrics explicitly defined
         assertEquals(14, metrics.size());
@@ -401,7 +403,7 @@ public class TestApp extends TestCommon {
         initApplication("jmx_histogram.yaml");
 
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
@@ -435,7 +437,7 @@ public class TestApp extends TestCommon {
         // We do a first collection
         initApplication("jmx_exclude_tags.yml");
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
@@ -459,7 +461,7 @@ public class TestApp extends TestCommon {
         // We do a first collection
         initApplication("jmx_additional_tags.yml");
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
@@ -494,7 +496,7 @@ public class TestApp extends TestCommon {
         initApplication("jmx.yaml");
 
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 29 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
@@ -608,7 +610,7 @@ public class TestApp extends TestCommon {
         initApplication("jmx_canonical.yaml");
 
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
@@ -768,7 +770,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
         assertEquals(63, metrics.size());
@@ -835,7 +837,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
         List<Instance> instances = getInstances();
 
         assertEquals(35, metrics.size());
@@ -856,7 +858,7 @@ public class TestApp extends TestCommon {
         initApplication("jmx_cast.yaml");
 
         run();
-        List<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // 13 metrics from java.lang + 2 defined - 1 error
         assertEquals(14, metrics.size());

@@ -35,7 +35,7 @@ public class Connection {
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
-    protected HashMap<String, Object> env;
+    protected Map<String, Object> env;
     protected JMXServiceURL address;
 
     private static <T extends Throwable> T initCause(T wrapper, Throwable wrapped) {

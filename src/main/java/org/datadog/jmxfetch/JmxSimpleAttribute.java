@@ -36,16 +36,16 @@ public class JmxSimpleAttribute extends JmxAttribute {
     }
 
     @Override
-    public List<HashMap<String, Object>> getMetrics()
+    public List<Map<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        HashMap<String, Object> metric = new HashMap<String, Object>();
+        Map<String, Object> metric = new HashMap<String, Object>();
 
         metric.put("alias", getAlias());
         metric.put("value", castToDouble(getValue(), null));
         metric.put("tags", getTags());
         metric.put("metric_type", getMetricType());
-        List<HashMap<String, Object>> metrics = new ArrayList<HashMap<String, Object>>(1);
+        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>(1);
         metrics.add(metric);
         return metrics;
     }

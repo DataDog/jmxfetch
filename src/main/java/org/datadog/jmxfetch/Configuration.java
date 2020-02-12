@@ -72,9 +72,9 @@ public class Configuration {
      * @param configurationList the configuration list to process
      * @return filters by domain name
      */
-    private static HashMap<String, List<Filter>> getIncludeFiltersByDomain(
+    private static Map<String, List<Filter>> getIncludeFiltersByDomain(
             List<Configuration> configurationList) {
-        HashMap<String, List<Filter>> includeFiltersByDomain =
+        Map<String, List<Filter>> includeFiltersByDomain =
                 new HashMap<String, List<Filter>>();
 
         for (Configuration conf : configurationList) {
@@ -89,7 +89,7 @@ public class Configuration {
                     String[] splitBeanName = beanName.split(":");
                     String domain = splitBeanName[0];
                     String rawBeanParameters = splitBeanName[1];
-                    HashMap<String, String> beanParametersHash =
+                    Map<String, String> beanParametersHash =
                             JmxAttribute.getBeanParametersHash(rawBeanParameters);
                     beanParametersHash.put("domain", domain);
                     filters.add(new Filter(beanParametersHash));

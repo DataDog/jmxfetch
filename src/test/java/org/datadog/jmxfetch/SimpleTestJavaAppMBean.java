@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.openmbean.TabularData;
@@ -19,7 +19,7 @@ public interface SimpleTestJavaAppMBean {
 
     boolean getShouldBeBoolean();
 
-    HashMap<String, Integer> getHashmap();
+    Map<String, Integer> getHashmap();
 
     AtomicInteger getAtomic42();
 
