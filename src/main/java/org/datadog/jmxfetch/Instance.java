@@ -403,7 +403,7 @@ public class Instance {
     }
 
     /** Returns a map of metrics collected. */
-    public List<Map<String, Object>> getMetrics() throws IOException {
+    public List<Metric> getMetrics() throws IOException {
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
         // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
@@ -415,7 +415,7 @@ public class Instance {
             this.getMatchingAttributes();
         }
 
-        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>();
+        List<Metric> metrics = new ArrayList<Metric>();
         Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
         // increment the lastCollectionTime
@@ -424,9 +424,9 @@ public class Instance {
         while (it.hasNext()) {
             JmxAttribute jmxAttr = it.next();
             try {
-                List<Map<String, Object>> jmxAttrMetrics = jmxAttr.getMetrics();
-                for (Map<String, Object> m : jmxAttrMetrics) {
-                    m.put("check_name", this.checkName);
+                List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
+                for (Metric m : jmxAttrMetrics) {
+                    m.setCheckName(this.checkName);
                     metrics.add(m);
                 }
 

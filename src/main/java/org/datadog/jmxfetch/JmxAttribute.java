@@ -232,7 +232,7 @@ public abstract class JmxAttribute {
                 + attribute.getType();
     }
 
-    public abstract List<Map<String, Object>> getMetrics()
+    public abstract List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException;
 

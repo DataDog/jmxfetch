@@ -90,16 +90,16 @@ public class TestInstance extends TestCommon {
         initApplication("jmx_service_tag_global.yaml");
         run();
 
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
         assertEquals(28, metrics.size());
-        for (HashMap<String, Object> metric : metrics) {
+        for (Map<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
             this.assertServiceTag(Arrays.asList(tags), "global");
         }
 
-        LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(2, serviceChecks.size());
-        for (HashMap<String, Object> sc : serviceChecks) {
+        for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertServiceTag(Arrays.asList(tags), "global");
         }
@@ -111,16 +111,16 @@ public class TestInstance extends TestCommon {
         initApplication("jmx_service_tag_instance_override.yaml");
         run();
 
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
         assertEquals(28, metrics.size());
-        for (HashMap<String, Object> metric : metrics) {
+        for (Map<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
             this.assertServiceTag(Arrays.asList(tags), "override");
         }
 
-        LinkedList<HashMap<String, Object>> serviceChecks = getServiceChecks();
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(2, serviceChecks.size());
-        for (HashMap<String, Object> sc : serviceChecks) {
+        for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertServiceTag(Arrays.asList(tags), "override");
         }

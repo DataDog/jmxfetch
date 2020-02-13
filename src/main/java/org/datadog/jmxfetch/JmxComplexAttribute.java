@@ -2,7 +2,6 @@ package org.datadog.jmxfetch;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +16,7 @@ import javax.management.openmbean.CompositeData;
 @SuppressWarnings("unchecked")
 public class JmxComplexAttribute extends JmxAttribute {
 
-    private Map<String, Map<String, Object>> subAttributeList;
+    private List<String> subAttributeList = new ArrayList<String>();
 
     /** JmxComplexAttribute constructor. */
     public JmxComplexAttribute(
@@ -35,7 +34,6 @@ public class JmxComplexAttribute extends JmxAttribute {
                 instanceTags,
                 false,
                 emptyDefaultHostname);
-        this.subAttributeList = new HashMap<String, Map<String, Object>>();
     }
 
     private void populateSubAttributeList(Object attributeValue) {
@@ -43,43 +41,27 @@ public class JmxComplexAttribute extends JmxAttribute {
         if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
             CompositeData data = (CompositeData) attributeValue;
             for (String key : data.getCompositeType().keySet()) {
-                this.subAttributeList.put(key, new HashMap<String, Object>());
+                this.subAttributeList.add(key);
             }
         } else if (("java.util.HashMap".equals(attributeType))
                 || ("java.util.Map".equals(attributeType))) {
             Map<String, Double> data = (Map<String, Double>) attributeValue;
             for (String key : data.keySet()) {
-                this.subAttributeList.put(key, new HashMap<String, Object>());
+                this.subAttributeList.add(key);
             }
         }
     }
 
     @Override
-    public List<Map<String, Object>> getMetrics()
-            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
-                    ReflectionException, IOException {
-
-        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>(
-                subAttributeList.entrySet().size());
-
-        for (Map.Entry<String, Map<String, Object>> pair : subAttributeList.entrySet()) {
-            String subAttribute = pair.getKey();
-            Map<String, Object> metric = pair.getValue();
-
-            if (metric.get(ALIAS) == null) {
-                metric.put(ALIAS, convertMetricName(getAlias(subAttribute)));
-            }
-
-            if (metric.get(METRIC_TYPE) == null) {
-                metric.put(METRIC_TYPE, getMetricType(subAttribute));
-            }
-
-            if (metric.get("tags") == null) {
-                metric.put("tags", getTags());
-            }
-
-            metric.put("value", castToDouble(getValue(subAttribute), subAttribute));
-            metrics.add(metric);
+    public List<Metric> getMetrics() throws AttributeNotFoundException, MBeanException,
+            ReflectionException, InstanceNotFoundException, IOException {
+        List<Metric> metrics = new ArrayList<Metric>(subAttributeList.size());
+        for (String subAttribute : subAttributeList) {
+            String alias = convertMetricName(getAlias(subAttribute));
+            String metricType = getMetricType(subAttribute);
+            String[] tags = getTags();
+            double value = castToDouble(getValue(subAttribute), subAttribute);
+            metrics.add(new Metric(alias, metricType, value, tags));
         }
         return metrics;
     }
@@ -102,7 +84,7 @@ public class JmxComplexAttribute extends JmxAttribute {
         throw new NumberFormatException();
     }
 
-    private Object getMetricType(String subAttribute) {
+    private String getMetricType(String subAttribute) {
         String subAttributeName = getAttribute().getName() + "." + subAttribute;
         String metricType = null;
 
@@ -161,7 +143,7 @@ public class JmxComplexAttribute extends JmxAttribute {
             return true;
         }
 
-        Iterator<String> it = subAttributeList.keySet().iterator();
+        Iterator<String> it = subAttributeList.iterator();
 
         while (it.hasNext()) {
             String subAttribute = it.next();
@@ -182,7 +164,7 @@ public class JmxComplexAttribute extends JmxAttribute {
             return true;
         }
 
-        Iterator<String> it = subAttributeList.keySet().iterator();
+        Iterator<String> it = subAttributeList.iterator();
         while (it.hasNext()) {
             String subAttribute = it.next();
             if (matchSubAttribute(exclude, getAttributeName() + "." + subAttribute, false)) {
