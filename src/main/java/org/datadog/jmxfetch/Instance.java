@@ -142,7 +142,7 @@ public class Instance {
         }
 
         this.service = (String) instanceMap.get("service");
-        if (this.service == null && initConfig != null) {
+        if ((this.service == null || this.service == "") && initConfig != null) {
             this.service = (String) initConfig.get("service");
         }
         if (this.service != null && this.service != "") {
