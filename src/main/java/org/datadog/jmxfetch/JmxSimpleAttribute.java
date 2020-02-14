@@ -1,7 +1,7 @@
 package org.datadog.jmxfetch;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
@@ -13,13 +13,14 @@ import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
 public class JmxSimpleAttribute extends JmxAttribute {
-    private String metricType;
+    private Metric cachedMetric;
 
     /** JmxSimpleAttribute constructor. */
     public JmxSimpleAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
             String instanceName,
+            String checkName,
             Connection connection,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
@@ -28,6 +29,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 attribute,
                 beanName,
                 instanceName,
+                checkName,
                 connection,
                 instanceTags,
                 cassandraAliasing,
@@ -38,14 +40,15 @@ public class JmxSimpleAttribute extends JmxAttribute {
     public List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        String alias = getAlias();
-        String metricType = getMetricType();
+        if (cachedMetric == null) {
+            String alias = getAlias(null);
+            String metricType = getMetricType(null);
+            String[] tags = getTags();
+            cachedMetric = new Metric(alias, metricType, tags, checkName);
+        }
         double value = castToDouble(getValue(), null);
-        String[] tags = getTags();
-        Metric metric = new Metric(alias, metricType, value, tags);
-        List<Metric> metrics = new ArrayList<Metric>(1);
-        metrics.add(metric);
-        return metrics;
+        cachedMetric.setValue(value);
+        return Collections.singletonList(cachedMetric);
     }
 
     /** Returns whether an attribute matches in a configuration spec. */
@@ -90,26 +93,6 @@ public class JmxSimpleAttribute extends JmxAttribute {
         }
 
         return false;
-    }
-
-    private String getMetricType() {
-        Filter include = getMatchingConf().getInclude();
-        if (metricType != null) {
-            return metricType;
-        } else if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
-            metricType = attribute.get(getAttributeName()).get(METRIC_TYPE);
-            if (metricType == null) {
-                metricType = attribute.get(getAttributeName()).get("type");
-            }
-        }
-
-        if (metricType == null) { // Default to gauge
-            metricType = "gauge";
-        }
-
-        return metricType;
     }
 
     private Object getValue()

@@ -55,15 +55,17 @@ public abstract class JmxAttribute {
     protected String[] tags;
     private Configuration matchingConf;
     private List<String> defaultTagsList;
-    private Boolean cassandraAliasing;
+    private boolean cassandraAliasing;
+    protected String checkName;
 
     JmxAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
             String instanceName,
+            String checkName,
             Connection connection,
             Map<String, String> instanceTags,
-            Boolean cassandraAliasing,
+            boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
@@ -72,6 +74,7 @@ public abstract class JmxAttribute {
         this.attributeName = attribute.getName();
         this.beanStringName = beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
+        this.checkName = checkName;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -282,15 +285,15 @@ public abstract class JmxAttribute {
 
     Object convertMetricValue(Object metricValue, String field) {
         Object converted = metricValue;
-
-        if (!getValueConversions(field).isEmpty()) {
-            converted = getValueConversions(field).get(metricValue);
-            if (converted == null && getValueConversions(field).get("default") != null) {
-                converted = getValueConversions(field).get("default");
-            }
+        Map<Object, Object> valueConversions = getValueConversions(field);
+        if (valueConversions == null || valueConversions.isEmpty()) {
+            return converted;
         }
-
-        return converted;
+        converted = valueConversions.get(metricValue);
+        if (converted != null) {
+            return converted;
+        }
+        return valueConversions.get("default");
     }
 
     double castToDouble(Object metricValue, String field) {
@@ -460,21 +463,17 @@ public abstract class JmxAttribute {
      */
     protected String getAlias(String field) {
         String alias = null;
-
         Filter include = getMatchingConf().getInclude();
         Map<String, Object> conf = getMatchingConf().getConf();
-
         String fullAttributeName =
                 (field != null)
                         ? (getAttribute().getName() + "." + field)
                         : (getAttribute().getName());
-
         if (include.getAttribute() instanceof Map<?, ?>) {
             Map<String, Map<String, String>> attribute =
                     (Map<String, Map<String, String>>) (include.getAttribute());
             alias = getUserAlias(attribute, fullAttributeName);
         }
-
         if (alias == null) {
             if (conf.get("metric_prefix") != null) {
                 alias = conf.get("metric_prefix") + "." + getDomain() + "." + fullAttributeName;
@@ -482,22 +481,12 @@ public abstract class JmxAttribute {
                 alias = getCassandraAlias();
             }
         }
-
         // If still null - generate generic alias
         if (alias == null) {
             alias = "jmx." + getDomain() + "." + fullAttributeName;
         }
         alias = convertMetricName(alias);
         return alias;
-    }
-
-    /**
-     * Overload `getAlias` method.
-     *
-     * <p>Note: used for `JmxSimpleAttribute` only, as `field` is null.
-     */
-    protected String getAlias() {
-        return getAlias(null);
     }
 
     /**
@@ -610,5 +599,26 @@ public abstract class JmxAttribute {
 
     protected Map<String, String> getBeanParameters() {
         return beanParameters;
+    }
+
+    protected String getMetricType(String subAttribute) {
+        String localMetricType = null;
+        String name = subAttribute != null
+                ? getAttribute().getName() + "." + subAttribute
+                : attributeName;
+        Filter include = getMatchingConf().getInclude();
+        if (include.getAttribute() instanceof Map<?, ?>) {
+            Map<String, Map<String, String>> attribute =
+                    (Map<String, Map<String, String>>) (include.getAttribute());
+            Map<String, String> attrInfo = attribute.get(name);
+            localMetricType = attrInfo.get(METRIC_TYPE);
+            if (localMetricType == null) {
+                localMetricType = attrInfo.get("type");
+            }
+        }
+        if (localMetricType == null) {
+            localMetricType = "gauge";
+        }
+        return localMetricType;
     }
 }

@@ -425,14 +425,8 @@ public class Instance {
             JmxAttribute jmxAttr = it.next();
             try {
                 List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
-                for (Metric m : jmxAttrMetrics) {
-                    m.setCheckName(this.checkName);
-                    metrics.add(m);
-                }
-
-                if (this.failingAttributes.contains(jmxAttr)) {
-                    this.failingAttributes.remove(jmxAttr);
-                }
+                metrics.addAll(jmxAttrMetrics);
+                this.failingAttributes.remove(jmxAttr);
             } catch (IOException e) {
                 throw e;
             } catch (Exception e) {
@@ -530,6 +524,7 @@ public class Instance {
                                     attributeInfo,
                                     beanName,
                                     instanceName,
+                                    checkName,
                                     connection,
                                     tags,
                                     cassandraAliasing,
@@ -546,6 +541,7 @@ public class Instance {
                                     attributeInfo,
                                     beanName,
                                     instanceName,
+                                    checkName,
                                     connection,
                                     tags,
                                     emptyDefaultHostname);
@@ -561,6 +557,7 @@ public class Instance {
                                     attributeInfo,
                                     beanName,
                                     instanceName,
+                                    checkName,
                                     connection,
                                     tags,
                                     emptyDefaultHostname);
