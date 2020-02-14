@@ -1,0 +1,29 @@
+init_config:
+  service: global
+
+instances:
+  -   process_name_regex: .*surefire.*
+      name: jmx_test_1
+      service: override
+      tags:
+        - jmx:fetch
+      conf:
+          - include:
+             domain: org.datadog.jmxfetch.test
+             attribute:
+                  ShouldBe100:
+                      metric_type: gauge
+                      alias: this.is.100.$foo.$qux
+
+  -   process_name_regex: .*surefire.*
+      name: jmx_test_2
+      service: override
+      tags:
+        - jmx:fetch
+      conf:
+          - include:
+             domain: org.datadog.jmxfetch.test
+             attribute:
+                  ShouldBe100:
+                      metric_type: gauge
+                      alias: this.is.100.$foo.$qux
