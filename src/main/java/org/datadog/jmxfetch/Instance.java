@@ -88,6 +88,7 @@ public class Instance {
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
     private String instanceName;
+    private String service;
     private Map<String, String> tags;
     private String checkName;
     private int maxReturnedMetrics;
@@ -138,6 +139,14 @@ public class Instance {
         } else {
             // Allow global overrides
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
+        }
+
+        this.service = (String) instanceMap.get("service");
+        if ((this.service == null || this.service.isEmpty()) && initConfig != null) {
+            this.service = (String) initConfig.get("service");
+        }
+        if (this.service != null && !this.service.isEmpty()) {
+            this.tags.put("service", this.service);
         }
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
@@ -666,6 +675,10 @@ public class Instance {
             }
         }
         tags.add("instance:" + this.instanceName);
+
+        if (this.service != null && !this.service.isEmpty()) {
+            tags.add("service:" + this.service);
+        }
 
         if (this.emptyDefaultHostname) {
             tags.add("host:");
