@@ -142,10 +142,10 @@ public class Instance {
         }
 
         this.service = (String) instanceMap.get("service");
-        if ((this.service == null || this.service == "") && initConfig != null) {
+        if ((this.service == null || this.service.isEmpty()) && initConfig != null) {
             this.service = (String) initConfig.get("service");
         }
-        if (this.service != null && this.service != "") {
+        if (this.service != null && !this.service.isEmpty()) {
             this.tags.put("service", this.service);
         }
 
@@ -676,7 +676,7 @@ public class Instance {
         }
         tags.add("instance:" + this.instanceName);
 
-        if (this.service != null && this.service != "") {
+        if (this.service != null && !this.service.isEmpty()) {
             tags.add("service:" + this.service);
         }
 
