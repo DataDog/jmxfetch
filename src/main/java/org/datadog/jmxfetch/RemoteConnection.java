@@ -92,9 +92,9 @@ public class RemoteConnection extends Connection {
         createConnection();
     }
 
-    private HashMap<String, Object> getEnv(Map<String, Object> connectionParams) {
+    private Map<String, Object> getEnv(Map<String, Object> connectionParams) {
 
-        HashMap<String, Object> environment = new HashMap<String, Object>();
+        Map<String, Object> environment = new HashMap<String, Object>();
 
         if (connectionParams.containsKey("rmi_registry_ssl")
                 && (Boolean) connectionParams.get("rmi_registry_ssl")) {

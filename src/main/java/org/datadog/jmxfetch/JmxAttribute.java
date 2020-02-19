@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,13 +48,13 @@ public abstract class JmxAttribute {
     private ObjectName beanName;
     private String domain;
     private String beanStringName;
-    private HashMap<String, String> beanParameters;
+    private Map<String, String> beanParameters;
     private String attributeName;
     private Map<String, Map<Object, Object>> valueConversions =
             new HashMap<String, Map<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
-    private LinkedList<String> defaultTagsList;
+    private List<String> defaultTagsList;
     private Boolean cassandraAliasing;
 
     JmxAttribute(
@@ -84,8 +83,8 @@ public abstract class JmxAttribute {
         String beanParameters = beanStringName.substring(splitPosition + 1);
         this.domain = domain;
 
-        HashMap<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
-        LinkedList<String> beanParametersList =
+        Map<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
+        List<String> beanParametersList =
                 getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
@@ -116,7 +115,7 @@ public abstract class JmxAttribute {
         if (include != null) {
             for (Map.Entry<String, String> tag : include.getAdditionalTags().entrySet()) {
                 String alias = this.replaceByAlias(tag.getValue());
-                if ((alias.trim().length() > 0) && alias != null) {
+                if (alias != null && alias.trim().length() > 0) {
                     this.defaultTagsList.add(tag.getKey() + ":" + alias);
                 } else {
                     log.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
@@ -126,9 +125,9 @@ public abstract class JmxAttribute {
     }
 
     /** Gets bean parameter hash map. */
-    public static HashMap<String, String> getBeanParametersHash(String beanParametersString) {
+    public static Map<String, String> getBeanParametersHash(String beanParametersString) {
         String[] beanParameters = beanParametersString.split(",");
-        HashMap<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
+        Map<String, String> beanParamsMap = new HashMap<String, String>(beanParameters.length);
         for (String param : beanParameters) {
             String[] paramSplit = param.split("=");
             if (paramSplit.length > 1) {
@@ -141,11 +140,11 @@ public abstract class JmxAttribute {
         return beanParamsMap;
     }
 
-    private LinkedList<String> getBeanParametersList(
+    private List<String> getBeanParametersList(
             String instanceName,
             Map<String, String> beanParameters,
             Map<String, String> instanceTags) {
-        LinkedList<String> beanTags = new LinkedList<String>();
+        List<String> beanTags = new ArrayList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
 
@@ -174,8 +173,8 @@ public abstract class JmxAttribute {
      * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
      * existing tags - Remove illegal characters
      */
-    private static LinkedList<String> sanitizeParameters(LinkedList<String> beanParametersList) {
-        LinkedList<String> defaultTagsList = new LinkedList<String>();
+    private static List<String> sanitizeParameters(List<String> beanParametersList) {
+        List<String> defaultTagsList = new ArrayList<String>(beanParametersList.size());
         for (String rawBeanParameter : beanParametersList) {
             // Remove `|` characters
             String beanParameter = rawBeanParameter.replace("|", "");
@@ -199,7 +198,7 @@ public abstract class JmxAttribute {
     }
 
     private static Collection<String> getCassandraBeanTags(Map<String, String> beanParameters) {
-        Collection<String> tags = new LinkedList<String>();
+        Collection<String> tags = new ArrayList<String>();
         for (Map.Entry<String, String> param : beanParameters.entrySet()) {
             if (param.getKey().equals("name")) {
                 // This is already in the alias
@@ -233,7 +232,7 @@ public abstract class JmxAttribute {
                 + attribute.getType();
     }
 
-    public abstract LinkedList<HashMap<String, Object>> getMetrics()
+    public abstract List<Map<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException;
 
@@ -325,7 +324,7 @@ public abstract class JmxAttribute {
     }
 
     private boolean matchBeanRegex(Filter filter, boolean matchIfNoRegex) {
-        ArrayList<Pattern> beanRegexes = filter.getBeanRegexes();
+        List<Pattern> beanRegexes = filter.getBeanRegexes();
         if (beanRegexes.isEmpty()) {
             return matchIfNoRegex;
         }
@@ -355,7 +354,7 @@ public abstract class JmxAttribute {
                 continue;
             }
 
-            ArrayList<String> beanValues = include.getParameterValues(beanAttr);
+            List<String> beanValues = include.getParameterValues(beanAttr);
 
             if (beanParameters.get(beanAttr) == null
                     || !(beanValues.contains(beanParameters.get(beanAttr)))) {
@@ -367,7 +366,7 @@ public abstract class JmxAttribute {
 
     private boolean excludeMatchBeanName(Configuration conf) {
         Filter exclude = conf.getExclude();
-        ArrayList<String> beanNames = exclude.getBeanNames();
+        List<String> beanNames = exclude.getBeanNames();
 
         if (beanNames.contains(beanStringName)) {
             return true;
@@ -382,7 +381,7 @@ public abstract class JmxAttribute {
                 continue;
             }
 
-            ArrayList<String> beanValues = exclude.getParameterValues(beanAttr);
+            List<String> beanValues = exclude.getParameterValues(beanAttr);
             for (String beanVal : beanValues) {
                 if (beanParameters.get(beanAttr).equals(beanVal)) {
                     return true;
@@ -576,12 +575,12 @@ public abstract class JmxAttribute {
         if (include != null) {
             Object includeAttribute = include.getAttribute();
             if (includeAttribute instanceof Map<?, ?>) {
-                Map<String, ArrayList<String>> attributeParams =
-                        ((Map<String, Map<String, ArrayList<String>>>)
+                Map<String, List<String>> attributeParams =
+                        ((Map<String, Map<String, List<String>>>)
                                         includeAttribute)
                                 .get(attributeName);
                 if (attributeParams != null) {
-                    ArrayList<String> yamlTags = attributeParams.get("tags");
+                    List<String> yamlTags = attributeParams.get("tags");
                     if (yamlTags != null) {
                         defaultTagsList.addAll(yamlTags);
                     }
@@ -609,7 +608,7 @@ public abstract class JmxAttribute {
         return domain;
     }
 
-    protected HashMap<String, String> getBeanParameters() {
+    protected Map<String, String> getBeanParameters() {
         return beanParameters;
     }
 }

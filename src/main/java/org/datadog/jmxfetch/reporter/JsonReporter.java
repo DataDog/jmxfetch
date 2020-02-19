@@ -11,23 +11,23 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class JsonReporter extends Reporter {
 
-    private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+    private List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>();
 
     protected void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags) {
         long currentTime = System.currentTimeMillis() / 1000L;
-        List<Object> point = new ArrayList<Object>();
+        List<Object> point = new ArrayList<Object>(2);
         point.add(currentTime);
         point.add(value);
-        List<Object> points = new ArrayList<Object>();
+        List<Object> points = new ArrayList<Object>(1);
         points.add(point);
-        HashMap<String, Object> metric = new HashMap<String, Object>();
+        Map<String, Object> metric = new HashMap<String, Object>();
         metric.put("host", "default");
         metric.put("interval", 0);
         metric.put("source_type_name", "JMX");
@@ -41,11 +41,11 @@ public class JsonReporter extends Reporter {
     /** Use the service check callback to display the JSON. */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         log.debug("Displaying JSON output");
-        HashMap<String, Object> aggregator = new HashMap<String, Object>();
+        Map<String, Object> aggregator = new HashMap<String, Object>();
         aggregator.put("metrics", metrics);
-        HashMap<String, Object> serie = new HashMap<String, Object>();
+        Map<String, Object> serie = new HashMap<String, Object>();
         serie.put("aggregator", aggregator);
-        List<Object> series = new ArrayList<Object>();
+        List<Map<String, Object>> series = new ArrayList<Map<String, Object>>(1);
         series.add(serie);
 
         System.out.println("=== JSON ===");

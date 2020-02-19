@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -77,9 +76,9 @@ public class Instance {
         };
 
     private Set<ObjectName> beans;
-    private LinkedList<String> beanScopes;
-    private LinkedList<Configuration> configurationList = new LinkedList<Configuration>();
-    private LinkedList<JmxAttribute> matchingAttributes;
+    private List<String> beanScopes;
+    private List<Configuration> configurationList = new ArrayList<Configuration>();
+    private List<JmxAttribute> matchingAttributes;
     private HashSet<JmxAttribute> failingAttributes;
     private Integer refreshBeansPeriod;
     private long lastCollectionTime;
@@ -88,6 +87,7 @@ public class Instance {
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
     private String instanceName;
+    private String service;
     private Map<String, String> tags;
     private String checkName;
     private int maxReturnedMetrics;
@@ -124,7 +124,7 @@ public class Instance {
         this.instanceName = (String) instanceMap.get("name");
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
-        this.matchingAttributes = new LinkedList<JmxAttribute>();
+        this.matchingAttributes = new ArrayList<JmxAttribute>();
         this.failingAttributes = new HashSet<JmxAttribute>();
         if (appConfig.getRefreshBeansPeriod() == null) {
             this.refreshBeansPeriod = (Integer) instanceMap.get("refresh_beans");
@@ -138,6 +138,14 @@ public class Instance {
         } else {
             // Allow global overrides
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
+        }
+
+        this.service = (String) instanceMap.get("service");
+        if ((this.service == null || this.service.isEmpty()) && initConfig != null) {
+            this.service = (String) initConfig.get("service");
+        }
+        if (this.service != null && !this.service.isEmpty()) {
+            this.tags.put("service", this.service);
         }
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
@@ -196,7 +204,7 @@ public class Instance {
             log.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
             for (Map<String, Object> conf :
-                    (ArrayList<Map<String, Object>>) (instanceConf)) {
+                    (List<Map<String, Object>>) (instanceConf)) {
                 configurationList.add(new Configuration(conf));
             }
         }
@@ -223,8 +231,8 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        ArrayList<Map<String, Object>> defaultConf =
-                (ArrayList<Map<String, Object>>)
+        List<Map<String, Object>> defaultConf =
+                (List<Map<String, Object>>)
                         YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
         for (Map<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
@@ -233,7 +241,7 @@ public class Instance {
 
     @VisibleForTesting
     static void loadMetricConfigFiles(
-            AppConfig appConfig, LinkedList<Configuration> configurationList) {
+            AppConfig appConfig, List<Configuration> configurationList) {
         List<String> metricConfigFiles = appConfig.getMetricConfigFiles();
         if (metricConfigFiles != null && !metricConfigFiles.isEmpty()) {
             log.warn("Loading files via metricConfigFiles setting is deprecated.  Please "
@@ -244,8 +252,8 @@ public class Instance {
                 log.info("Reading metric config file " + yamlPath);
                 try {
                     yamlInputStream = new FileInputStream(yamlPath);
-                    ArrayList<Map<String, Object>> confs =
-                            (ArrayList<Map<String, Object>>)
+                    List<Map<String, Object>> confs =
+                            (List<Map<String, Object>>)
                                     YAML.get().load(yamlInputStream);
                     for (Map<String, Object> conf : confs) {
                         configurationList.add(new Configuration(conf));
@@ -269,7 +277,7 @@ public class Instance {
 
     @VisibleForTesting
     static void loadMetricConfigResources(
-            AppConfig config, LinkedList<Configuration> configurationList) {
+            AppConfig config, List<Configuration> configurationList) {
         List<String> resourceConfigList = config.getMetricConfigResources();
         if (resourceConfigList != null) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -280,10 +288,10 @@ public class Instance {
                     log.warn("Cannot find metric config resource" + resourceName);
                 } else {
                     try {
-                        Map<String, ArrayList<Map<String, Object>>> topYaml =
-                                (Map<String, ArrayList<Map<String, Object>>>)
+                        Map<String, List<Map<String, Object>>> topYaml =
+                                (Map<String, List<Map<String, Object>>>)
                                         YAML.get().load(inputStream);
-                        ArrayList<Map<String, Object>> jmxConf =
+                        List<Map<String, Object>> jmxConf =
                                 topYaml.get("jmx_metrics");
                         if (jmxConf != null) {
                             for (Map<String, Object> conf : jmxConf) {
@@ -316,14 +324,14 @@ public class Instance {
             tags.putAll(appConfig.getGlobalTags());
         }
         if (tagsMap != null) {
-            try {
-                // Input has `Map` format
+            if (tagsMap instanceof Map) {
                 tags.putAll((Map<String, String>) tagsMap);
-            } catch (ClassCastException e) {
-                // Input has `List` format
+            } else if (tagsMap instanceof List) {
                 for (String tag : (List<String>) tagsMap) {
                     tags.put(tag, null);
                 }
+            } else {
+                log.warn("Unsupported type for tagsMap: " + tagsMap.getClass().getCanonicalName());
             }
         }
         return tags;
@@ -395,7 +403,7 @@ public class Instance {
     }
 
     /** Returns a map of metrics collected. */
-    public LinkedList<HashMap<String, Object>> getMetrics() throws IOException {
+    public List<Map<String, Object>> getMetrics() throws IOException {
 
         // We can force to refresh the bean list every x seconds in case of ephemeral beans
         // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
@@ -407,7 +415,7 @@ public class Instance {
             this.getMatchingAttributes();
         }
 
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>();
         Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
         // increment the lastCollectionTime
@@ -416,8 +424,8 @@ public class Instance {
         while (it.hasNext()) {
             JmxAttribute jmxAttr = it.next();
             try {
-                LinkedList<HashMap<String, Object>> jmxAttrMetrics = jmxAttr.getMetrics();
-                for (HashMap<String, Object> m : jmxAttrMetrics) {
+                List<Map<String, Object>> jmxAttrMetrics = jmxAttr.getMetrics();
+                for (Map<String, Object> m : jmxAttrMetrics) {
                     m.put("check_name", this.checkName);
                     metrics.add(m);
                 }
@@ -614,7 +622,7 @@ public class Instance {
     }
 
     /** Returns a list of strings listing the bean scopes. */
-    public LinkedList<String> getBeansScopes() {
+    public List<String> getBeansScopes() {
         if (this.beanScopes == null) {
             this.beanScopes = Configuration.getGreatestCommonScopes(configurationList);
         }
@@ -628,13 +636,13 @@ public class Instance {
     private void refreshBeansList() throws IOException {
         this.beans = new HashSet<ObjectName>();
         String action = appConfig.getAction();
-        Boolean limitQueryScopes =
+        boolean limitQueryScopes =
                 !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
         if (limitQueryScopes) {
             try {
-                LinkedList<String> beanScopes = getBeansScopes();
+                List<String> beanScopes = getBeansScopes();
                 for (String scope : beanScopes) {
                     ObjectName name = new ObjectName(scope);
                     this.beans.addAll(connection.queryNames(name));
@@ -666,6 +674,10 @@ public class Instance {
             }
         }
         tags.add("instance:" + this.instanceName);
+
+        if (this.service != null && !this.service.isEmpty()) {
+            tags.add("service:" + this.service);
+        }
 
         if (this.emptyDefaultHostname) {
             tags.add("host:");

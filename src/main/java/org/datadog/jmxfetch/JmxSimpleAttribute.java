@@ -3,7 +3,7 @@ package org.datadog.jmxfetch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -36,16 +36,16 @@ public class JmxSimpleAttribute extends JmxAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics()
+    public List<Map<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        HashMap<String, Object> metric = new HashMap<String, Object>();
+        Map<String, Object> metric = new HashMap<String, Object>();
 
         metric.put("alias", getAlias());
         metric.put("value", castToDouble(getValue(), null));
         metric.put("tags", getTags());
         metric.put("metric_type", getMetricType());
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
+        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>(1);
         metrics.add(metric);
         return metrics;
     }
@@ -69,8 +69,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
                         .containsKey(getAttributeName())) {
             return true;
 
-        } else if ((exclude.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (exclude.getAttribute())).contains(getAttributeName()))) {
+        } else if ((exclude.getAttribute() instanceof List<?>
+                && ((List<String>) (exclude.getAttribute())).contains(getAttributeName()))) {
             return true;
         }
         return false;
@@ -86,8 +86,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
                         .containsKey(getAttributeName())) {
             return true;
 
-        } else if ((include.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (include.getAttribute())).contains(getAttributeName()))) {
+        } else if ((include.getAttribute() instanceof List<?>
+                && ((List<String>) (include.getAttribute())).contains(getAttributeName()))) {
             return true;
         }
 

@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
@@ -26,7 +25,7 @@ import javax.management.openmbean.TabularData;
 @Slf4j
 public class JmxTabularAttribute extends JmxAttribute {
     private String instanceName;
-    private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;
+    private Map<String, Map<String, Map<String, Object>>> subAttributeList;
 
     /** Default constructor. */
     public JmxTabularAttribute(
@@ -44,7 +43,7 @@ public class JmxTabularAttribute extends JmxAttribute {
                 instanceTags,
                 false,
                 emptyDefaultHostname);
-        subAttributeList = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
+        subAttributeList = new HashMap<String, Map<String, Map<String, Object>>>();
     }
 
     private String getMultiKey(Collection keys) {
@@ -67,8 +66,8 @@ public class JmxTabularAttribute extends JmxAttribute {
             Collection keys = (Collection) rowKey;
             CompositeData compositeData = data.get(keys.toArray());
             String pathKey = getMultiKey(keys);
-            HashMap<String, HashMap<String, Object>> subAttributes =
-                    new HashMap<String, HashMap<String, Object>>();
+            Map<String, Map<String, Object>> subAttributes =
+                    new HashMap<String, Map<String, Object>>();
             for (String key : compositeData.getCompositeType().keySet()) {
                 if (compositeData.get(key) instanceof CompositeData) {
                     for (String subKey :
@@ -126,17 +125,16 @@ public class JmxTabularAttribute extends JmxAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics()
+    public List<Map<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-        HashMap<String, LinkedList<HashMap<String, Object>>> subMetrics =
-                new HashMap<String, LinkedList<HashMap<String, Object>>>();
+        Map<String, List<Map<String, Object>>> subMetrics =
+                new HashMap<String, List<Map<String, Object>>>();
 
         for (String dataKey : subAttributeList.keySet()) {
-            HashMap<String, HashMap<String, Object>> subSub = subAttributeList.get(dataKey);
+            Map<String, Map<String, Object>> subSub = subAttributeList.get(dataKey);
             for (String metricKey : subSub.keySet()) {
-                HashMap<String, Object> metric = subSub.get(metricKey);
+                Map<String, Object> metric = subSub.get(metricKey);
 
                 if (metric.get(ALIAS) == null) {
                     metric.put(ALIAS, convertMetricName(getAlias(metricKey)));
@@ -154,12 +152,14 @@ public class JmxTabularAttribute extends JmxAttribute {
 
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
-                    subMetrics.put(fullMetricKey, new LinkedList<HashMap<String, Object>>());
+                    subMetrics.put(fullMetricKey, new ArrayList<Map<String, Object>>());
                 }
                 subMetrics.get(fullMetricKey).add(metric);
             }
         }
 
+        List<Map<String, Object>> metrics =
+                new ArrayList<Map<String, Object>>(subMetrics.keySet().size());
         for (String key : subMetrics.keySet()) {
             // only add explicitly included metrics
             if (getAttributesFor(key) != null) {
@@ -170,8 +170,8 @@ public class JmxTabularAttribute extends JmxAttribute {
         return metrics;
     }
 
-    private List<HashMap<String, Object>> sortAndFilter(
-            String metricKey, LinkedList<HashMap<String, Object>> metrics) {
+    private List<Map<String, Object>> sortAndFilter(
+            String metricKey, List<Map<String, Object>> metrics) {
         Map<String, ?> attributes = getAttributesFor(metricKey);
         if (!attributes.containsKey("limit")) {
             return metrics;
@@ -191,8 +191,8 @@ public class JmxTabularAttribute extends JmxAttribute {
         return metrics;
     }
 
-    private class MetricComparator implements Comparator<HashMap<String, Object>> {
-        public int compare(HashMap<String, Object> o1, HashMap<String, Object> o2) {
+    private class MetricComparator implements Comparator<Map<String, Object>> {
+        public int compare(Map<String, Object> o1, Map<String, Object> o2) {
             Double v1 = (Double) o1.get("value");
             Double v2 = (Double) o2.get("value");
             return v1.compareTo(v2);
@@ -287,8 +287,8 @@ public class JmxTabularAttribute extends JmxAttribute {
                 && ((Map<String, Object>) (params.getAttribute()))
                         .containsKey(subAttributeName)) {
             return true;
-        } else if ((params.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {
+        } else if ((params.getAttribute() instanceof List<?>
+                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
             return true;
         } else if (params.getAttribute() == null) {
             return matchOnEmpty;
@@ -304,7 +304,7 @@ public class JmxTabularAttribute extends JmxAttribute {
         Iterator<String> it1 = subAttributeList.keySet().iterator();
         while (it1.hasNext()) {
             String key = it1.next();
-            HashMap<String, HashMap<String, Object>> subSub = subAttributeList.get(key);
+            Map<String, Map<String, Object>> subSub = subAttributeList.get(key);
             Iterator<String> it2 = subSub.keySet().iterator();
             while (it2.hasNext()) {
                 String subKey = it2.next();
