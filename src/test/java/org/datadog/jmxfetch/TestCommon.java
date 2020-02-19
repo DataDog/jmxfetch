@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import javax.management.InstanceAlreadyExistsException;
@@ -35,9 +34,9 @@ public class TestCommon {
     AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
     MBeanServer mbs;
-    ArrayList<ObjectName> objectNames = new ArrayList<ObjectName>();
-    LinkedList<HashMap<String, Object>> metrics;
-    LinkedList<HashMap<String, Object>> serviceChecks;
+    List<ObjectName> objectNames = new ArrayList<ObjectName>();
+    List<HashMap<String, Object>> metrics;
+    List<HashMap<String, Object>> serviceChecks;
 
     /** Setup logger. */
     @BeforeClass
@@ -143,7 +142,7 @@ public class TestCommon {
     }
 
     /** Return configured instances */
-    protected ArrayList<Instance> getInstances() {
+    protected List<Instance> getInstances() {
         return app.getInstances();
     }
 
@@ -153,12 +152,12 @@ public class TestCommon {
     }
 
     /** Return the metrics collected by JMXFetch. */
-    protected LinkedList<HashMap<String, Object>> getMetrics() {
+    protected List<HashMap<String, Object>> getMetrics() {
         return metrics;
     }
 
     /** Return the service checks collected by JMXFetch. */
-    protected LinkedList<HashMap<String, Object>> getServiceChecks() {
+    protected List<HashMap<String, Object>> getServiceChecks() {
         return ((ConsoleReporter) appConfig.getReporter()).getServiceChecks();
     }
 
@@ -330,8 +329,7 @@ public class TestCommon {
      */
     public void assertCoverage() {
         int totalMetrics = 0;
-        LinkedList<HashMap<String, Object>> untestedMetrics =
-                new LinkedList<HashMap<String, Object>>();
+        List<HashMap<String, Object>> untestedMetrics = new ArrayList<HashMap<String, Object>>();
 
         for (HashMap<String, Object> m : metrics) {
             String mName = (String) (m.get("name"));
@@ -361,7 +359,7 @@ public class TestCommon {
      * @return String report
      */
     private static String generateReport(
-            LinkedList<HashMap<String, Object>> untestedMetrics, int totalMetricsCount) {
+            List<HashMap<String, Object>> untestedMetrics, int totalMetricsCount) {
         StringBuilder sb = new StringBuilder();
 
         // Compute indicators

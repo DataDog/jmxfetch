@@ -9,7 +9,7 @@ import org.datadog.jmxfetch.JmxAttribute;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 
 @Slf4j
 public abstract class Reporter {
@@ -47,7 +47,7 @@ public abstract class Reporter {
 
     /** Submits the metrics in the implementing reporter. */
     public void sendMetrics(
-            LinkedList<HashMap<String, Object>> metrics,
+            List<HashMap<String, Object>> metrics,
             String instanceName,
             boolean canonicalRate) {
         HashMap<String, HashMap<String, Object>> instanceRatesAggregator;

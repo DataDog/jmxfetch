@@ -7,8 +7,9 @@ import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 
 @Slf4j
 public class Status {
@@ -81,15 +82,15 @@ public class Status {
             String message,
             String status,
             String key) {
-        LinkedList<HashMap<String, Object>> checkStats;
+        List<HashMap<String, Object>> checkStats;
         HashMap<String, Object> initializedChecks;
         initializedChecks = (HashMap<String, Object>) this.instanceStats.get(key);
         if (initializedChecks == null) {
             initializedChecks = new HashMap<String, Object>();
         }
-        checkStats = (LinkedList<HashMap<String, Object>>) initializedChecks.get(checkName);
+        checkStats = (List<HashMap<String, Object>>) initializedChecks.get(checkName);
         if (checkStats == null) {
-            checkStats = new LinkedList<HashMap<String, Object>>();
+            checkStats = new ArrayList<HashMap<String, Object>>();
         }
         HashMap<String, Object> instStats = new HashMap<String, Object>();
         if (instance != null) {

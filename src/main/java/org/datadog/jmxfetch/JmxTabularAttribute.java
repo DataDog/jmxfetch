@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
@@ -126,12 +125,11 @@ public class JmxTabularAttribute extends JmxAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics()
+    public List<HashMap<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-        HashMap<String, LinkedList<HashMap<String, Object>>> subMetrics =
-                new HashMap<String, LinkedList<HashMap<String, Object>>>();
+        HashMap<String, List<HashMap<String, Object>>> subMetrics =
+                new HashMap<String, List<HashMap<String, Object>>>();
 
         for (String dataKey : subAttributeList.keySet()) {
             HashMap<String, HashMap<String, Object>> subSub = subAttributeList.get(dataKey);
@@ -154,12 +152,14 @@ public class JmxTabularAttribute extends JmxAttribute {
 
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
-                    subMetrics.put(fullMetricKey, new LinkedList<HashMap<String, Object>>());
+                    subMetrics.put(fullMetricKey, new ArrayList<HashMap<String, Object>>());
                 }
                 subMetrics.get(fullMetricKey).add(metric);
             }
         }
 
+        List<HashMap<String, Object>> metrics =
+                new ArrayList<HashMap<String, Object>>(subMetrics.keySet().size());
         for (String key : subMetrics.keySet()) {
             // only add explicitly included metrics
             if (getAttributesFor(key) != null) {
@@ -171,7 +171,7 @@ public class JmxTabularAttribute extends JmxAttribute {
     }
 
     private List<HashMap<String, Object>> sortAndFilter(
-            String metricKey, LinkedList<HashMap<String, Object>> metrics) {
+            String metricKey, List<HashMap<String, Object>> metrics) {
         Map<String, ?> attributes = getAttributesFor(metricKey);
         if (!attributes.containsKey("limit")) {
             return metrics;
@@ -287,8 +287,8 @@ public class JmxTabularAttribute extends JmxAttribute {
                 && ((Map<String, Object>) (params.getAttribute()))
                         .containsKey(subAttributeName)) {
             return true;
-        } else if ((params.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {
+        } else if ((params.getAttribute() instanceof List<?>
+                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
             return true;
         } else if (params.getAttribute() == null) {
             return matchOnEmpty;

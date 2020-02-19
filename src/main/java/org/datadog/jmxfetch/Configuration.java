@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,10 +52,9 @@ public class Configuration {
      * @param configurationList the configuration list to filter
      * @return a configuration list
      */
-    private static LinkedList<Configuration> getIncludeConfigurationList(
-            LinkedList<Configuration> configurationList) {
-        LinkedList<Configuration> includeConfigList =
-                new LinkedList<Configuration>(configurationList);
+    private static List<Configuration> getIncludeConfigurationList(
+            List<Configuration> configurationList) {
+        List<Configuration> includeConfigList = new ArrayList<Configuration>(configurationList);
         Iterator<Configuration> confItr = includeConfigList.iterator();
 
         while (confItr.hasNext()) {
@@ -73,18 +72,18 @@ public class Configuration {
      * @param configurationList the configuration list to process
      * @return filters by domain name
      */
-    private static HashMap<String, LinkedList<Filter>> getIncludeFiltersByDomain(
-            LinkedList<Configuration> configurationList) {
-        HashMap<String, LinkedList<Filter>> includeFiltersByDomain =
-                new HashMap<String, LinkedList<Filter>>();
+    private static HashMap<String, List<Filter>> getIncludeFiltersByDomain(
+            List<Configuration> configurationList) {
+        HashMap<String, List<Filter>> includeFiltersByDomain =
+                new HashMap<String, List<Filter>>();
 
         for (Configuration conf : configurationList) {
             Filter filter = conf.getInclude();
-            LinkedList<Filter> filters = new LinkedList<Filter>();
+            List<Filter> filters = new ArrayList<Filter>();
 
             // Convert bean name, to a proper filter, i.e. a hash
             if (!filter.isEmptyBeanName()) {
-                ArrayList<String> beanNames = filter.getBeanNames();
+                List<String> beanNames = filter.getBeanNames();
 
                 for (String beanName : beanNames) {
                     String[] splitBeanName = beanName.split(":");
@@ -101,13 +100,13 @@ public class Configuration {
 
             for (Filter f : filters) {
                 //  Retrieve the existing filters for the domain, add the new filters
-                LinkedList<Filter> domainFilters;
+                List<Filter> domainFilters;
                 String domainName = f.getDomain();
 
                 if (includeFiltersByDomain.containsKey(domainName)) {
                     domainFilters = includeFiltersByDomain.get(domainName);
                 } else {
-                    domainFilters = new LinkedList<Filter>();
+                    domainFilters = new ArrayList<Filter>();
                 }
 
                 domainFilters.add(f);
@@ -124,16 +123,17 @@ public class Configuration {
      * @return common bean key parameters by domain name
      */
     private static Map<String, Set<String>> getCommonBeanKeysByDomain(
-            Map<String, LinkedList<Filter>> filtersByDomain) {
+            Map<String, List<Filter>> filtersByDomain) {
         Map<String, Set<String>> beanKeysIntersectionByDomain =
                 new HashMap<String, Set<String>>();
 
-        for (Entry<String, LinkedList<Filter>> filtersEntry : filtersByDomain.entrySet()) {
-            String domainName = filtersEntry.getKey();
-            LinkedList<Filter> filters = filtersEntry.getValue();
-
+        for (Entry<String, List<Filter>> filtersEntry : filtersByDomain.entrySet()) {
+            List<Filter> filters = filtersEntry.getValue();
+            if (filters == null || filters.isEmpty()) {
+                continue;
+            }
             // Compute keys intersection
-            Set<String> keysIntersection = new HashSet<String>(filters.getFirst().keySet());
+            Set<String> keysIntersection = new HashSet<String>(filters.get(0).keySet());
 
             for (Filter filter : filters) {
                 keysIntersection.retainAll(filter.keySet());
@@ -143,7 +143,7 @@ public class Configuration {
             for (String param : JmxAttribute.getExcludedBeanParams()) {
                 keysIntersection.remove(param);
             }
-
+            String domainName = filtersEntry.getKey();
             beanKeysIntersectionByDomain.put(domainName, keysIntersection);
         }
 
@@ -160,7 +160,7 @@ public class Configuration {
      */
     private static Map<String, Map<String, String>> getCommonScopeByDomain(
             Map<String, Set<String>> beanKeysByDomain,
-            Map<String, LinkedList<Filter>> filtersByDomain) {
+            Map<String, List<Filter>> filtersByDomain) {
         // Compute a common scope a among filters by domain name
         Map<String, Map<String, String>> commonScopeByDomain =
                 new HashMap<String, Map<String, String>>();
@@ -169,16 +169,16 @@ public class Configuration {
                 beanKeysByDomain.entrySet()) {
             String domainName = commonParametersByDomainEntry.getKey();
             Set<String> commonParameters = commonParametersByDomainEntry.getValue();
-            LinkedList<Filter> filters = filtersByDomain.get(domainName);
+            List<Filter> filters = filtersByDomain.get(domainName);
             Map<String, String> commonScope = new HashMap<String, String>();
 
             for (String parameter : commonParameters) {
                 // Check if all values associated with the parameters are the same
                 String commonValue = null;
-                Boolean hasCommonValue = true;
+                boolean hasCommonValue = true;
 
                 for (Filter f : filters) {
-                    ArrayList<String> parameterValues = f.getParameterValues(parameter);
+                    List<String> parameterValues = f.getParameterValues(parameter);
 
                     if (parameterValues.size() != 1
                             || (commonValue != null
@@ -231,18 +231,18 @@ public class Configuration {
      * @param configurationList the configuration list to process
      * @return common bean pattern strings
      */
-    public static LinkedList<String> getGreatestCommonScopes(
-            LinkedList<Configuration> configurationList) {
-        LinkedList<Configuration> includeConfigList =
+    public static List<String> getGreatestCommonScopes(
+            List<Configuration> configurationList) {
+        List<Configuration> includeConfigList =
                 getIncludeConfigurationList(configurationList);
-        Map<String, LinkedList<Filter>> includeFiltersByDomain =
+        Map<String, List<Filter>> includeFiltersByDomain =
                 getIncludeFiltersByDomain(includeConfigList);
         Map<String, Set<String>> parametersIntersectionByDomain =
                 getCommonBeanKeysByDomain(includeFiltersByDomain);
         Map<String, Map<String, String>> commonBeanScopeByDomain =
                 getCommonScopeByDomain(parametersIntersectionByDomain, includeFiltersByDomain);
 
-        LinkedList<String> result = new LinkedList<String>();
+        List<String> result = new ArrayList<String>(commonBeanScopeByDomain.entrySet().size());
 
         for (Entry<String, Map<String, String>> beanScopeEntry :
                 commonBeanScopeByDomain.entrySet()) {
