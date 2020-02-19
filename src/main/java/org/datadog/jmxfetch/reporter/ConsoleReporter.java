@@ -10,12 +10,13 @@ import org.datadog.jmxfetch.JmxAttribute;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class ConsoleReporter extends Reporter {
 
-    private List<HashMap<String, Object>> metrics = new ArrayList<HashMap<String, Object>>();
-    private List<HashMap<String, Object>> serviceChecks = new ArrayList<HashMap<String, Object>>();
+    private List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>();
+    private List<Map<String, Object>> serviceChecks = new ArrayList<Map<String, Object>>();
 
     @Override
     protected void sendMetricPoint(
@@ -24,7 +25,7 @@ public class ConsoleReporter extends Reporter {
         log.info(
                 metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
-        HashMap<String, Object> metric = new HashMap<String, Object>();
+        Map<String, Object> metric = new HashMap<String, Object>();
         metric.put("name", metricName);
         metric.put("value", value);
         metric.put("tags", tags);
@@ -33,10 +34,10 @@ public class ConsoleReporter extends Reporter {
     }
 
     /** Returns list of metrics to report and clears stored metric map. */
-    public List<HashMap<String, Object>> getMetrics() {
-        List<HashMap<String, Object>> returnedMetrics =
-                new ArrayList<HashMap<String, Object>>(metrics.size());
-        for (HashMap<String, Object> map : metrics) {
+    public List<Map<String, Object>> getMetrics() {
+        List<Map<String, Object>> returnedMetrics =
+                new ArrayList<Map<String, Object>>(metrics.size());
+        for (Map<String, Object> map : metrics) {
             returnedMetrics.add(new HashMap<String, Object>(map));
         }
         metrics.clear();
@@ -52,7 +53,7 @@ public class ConsoleReporter extends Reporter {
         log.info(
                 checkName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
 
-        HashMap<String, Object> sc = new HashMap<String, Object>();
+        Map<String, Object> sc = new HashMap<String, Object>();
         sc.put("name", checkName);
         sc.put("status", status);
         sc.put("message", message);
@@ -61,10 +62,10 @@ public class ConsoleReporter extends Reporter {
     }
 
     /** Returns list of service checks to report and clears stored service check map.. */
-    public List<HashMap<String, Object>> getServiceChecks() {
-        List<HashMap<String, Object>> returnedServiceChecks =
-                new ArrayList<HashMap<String, Object>>(serviceChecks.size());
-        for (HashMap<String, Object> map : serviceChecks) {
+    public List<Map<String, Object>> getServiceChecks() {
+        List<Map<String, Object>> returnedServiceChecks =
+                new ArrayList<Map<String, Object>>(serviceChecks.size());
+        for (Map<String, Object> map : serviceChecks) {
             returnedServiceChecks.add(new HashMap<String, Object>(map));
         }
         serviceChecks.clear();

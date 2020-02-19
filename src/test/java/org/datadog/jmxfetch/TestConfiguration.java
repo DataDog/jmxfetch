@@ -64,7 +64,7 @@ public class TestConfiguration {
     public void testAutoDiscoveryConfigs()
             throws NoSuchMethodException, SecurityException, IllegalAccessException,
                     IllegalArgumentException, InvocationTargetException {
-        HashMap<String, Object> configs = (HashMap<String, Object>) adConfigs.getJsonConfigs();
+        Map<String, Object> configs = (Map<String, Object>) adConfigs.getJsonConfigs();
 
         assertEquals(configurations.size(), 4);
         int nconfigs = 0;
@@ -104,8 +104,8 @@ public class TestConfiguration {
         getIncludeFiltersByDomain.setAccessible(true);
 
         // Assert
-        HashMap<String, List<Filter>> filtersByDomain =
-                (HashMap<String, List<Filter>>)
+        Map<String, List<Filter>> filtersByDomain =
+                (Map<String, List<Filter>>)
                         getIncludeFiltersByDomain.invoke(null, configurations);
 
         // Only contains 'org.datadog.jmxfetch.test' domain
@@ -141,11 +141,11 @@ public class TestConfiguration {
         getCommonBeanKeysByDomain.setAccessible(true);
 
         // Assert
-        HashMap<String, List<Filter>> filtersByDomain =
-                (HashMap<String, List<Filter>>)
+        Map<String, List<Filter>> filtersByDomain =
+                (Map<String, List<Filter>>)
                         getIncludeFiltersByDomain.invoke(null, configurations);
-        HashMap<String, Set<String>> parametersIntersectionByDomain =
-                (HashMap<String, Set<String>>)
+        Map<String, Set<String>> parametersIntersectionByDomain =
+                (Map<String, Set<String>>)
                         getCommonBeanKeysByDomain.invoke(null, filtersByDomain);
 
         // Only contains 'org.datadog.jmxfetch.test' domain

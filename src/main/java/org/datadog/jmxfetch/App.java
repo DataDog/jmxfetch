@@ -72,10 +72,9 @@ public class App {
 
     private static int loopCounter;
     private int lastJsonConfigTs;
-    private HashMap<String, Object> adJsonConfigs;
-    private ConcurrentHashMap<String, YamlParser> configs;
-    private ConcurrentHashMap<String, YamlParser> adPipeConfigs =
-            new ConcurrentHashMap<String, YamlParser>();
+    private Map<String, Object> adJsonConfigs;
+    private Map<String, YamlParser> configs;
+    private Map<String, YamlParser> adPipeConfigs = new ConcurrentHashMap<String, YamlParser>();
     private List<Instance> instances = new ArrayList<Instance>();
     private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<String, Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
@@ -490,8 +489,8 @@ public class App {
         loopCounter++;
 
         try {
-            List<InstanceTask<List<HashMap<String, Object>>>> getMetricsTasks =
-                    new ArrayList<InstanceTask<List<HashMap<String, Object>>>>(instances.size());
+            List<InstanceTask<List<Map<String, Object>>>> getMetricsTasks =
+                    new ArrayList<InstanceTask<List<Map<String, Object>>>>(instances.size());
 
             for (Instance instance : instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
@@ -511,11 +510,11 @@ public class App {
                             getMetricsTasks,
                             appConfig.getCollectionTimeout(),
                             TimeUnit.SECONDS,
-                            new TaskMethod<List<HashMap<String, Object>>>() {
+                            new TaskMethod<List<Map<String, Object>>>() {
                                 @Override
                                 public TaskStatusHandler invoke(
                                         Instance instance,
-                                        Future<List<HashMap<String, Object>>> future,
+                                        Future<List<Map<String, Object>>> future,
                                         Reporter reporter) {
                                     return App.processCollectionResults(instance, future, reporter);
                                 }
@@ -668,8 +667,8 @@ public class App {
         return false;
     }
 
-    private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
-        ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
+    private Map<String, YamlParser> getConfigs(AppConfig config) {
+        Map<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
 
         loadFileConfigs(config, configs);
         loadResourceConfigs(config, configs);
@@ -678,7 +677,7 @@ public class App {
         return configs;
     }
 
-    private void loadFileConfigs(AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
+    private void loadFileConfigs(AppConfig config, Map<String, YamlParser> configs) {
         List<String> fileList = config.getYamlFileList();
         if (fileList != null) {
             for (String fileName : fileList) {
@@ -708,7 +707,7 @@ public class App {
     }
 
     private void loadResourceConfigs(
-            AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
+            AppConfig config, Map<String, YamlParser> configs) {
         List<String> resourceConfigList = config.getInstanceConfigResources();
         if (resourceConfigList != null) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -762,7 +761,7 @@ public class App {
             JsonParser parser = new JsonParser(jsonInputStream);
             int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
             if (timestamp > lastJsonConfigTs) {
-                adJsonConfigs = (HashMap<String, Object>) parser.getJsonConfigs();
+                adJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
                 lastJsonConfigTs = timestamp;
                 update = true;
                 log.info("update is in order - updating timestamp: " + lastJsonConfigTs);
@@ -888,8 +887,8 @@ public class App {
         log.info("Dealing with Auto-Config instances collected...");
         if (adJsonConfigs != null) {
             for (String check : adJsonConfigs.keySet()) {
-                HashMap<String, Object> checkConfig =
-                        (HashMap<String, Object>) adJsonConfigs.get(check);
+                Map<String, Object> checkConfig =
+                        (Map<String, Object>) adJsonConfigs.get(check);
                 Map<String, Object> initConfig =
                         (Map<String, Object>) checkConfig.get("init_config");
                 List<Map<String, Object>> configInstances =
@@ -976,7 +975,7 @@ public class App {
 
     static TaskStatusHandler processCollectionResults(
             Instance instance,
-            Future<List<HashMap<String, Object>>> future,
+            Future<List<Map<String, Object>>> future,
             Reporter reporter) {
 
         TaskStatusHandler status = new TaskStatusHandler();
@@ -986,7 +985,7 @@ public class App {
             int numberOfMetrics = 0;
 
             if (future.isDone()) {
-                List<HashMap<String, Object>> metrics;
+                List<Map<String, Object>> metrics;
                 metrics = future.get();
                 numberOfMetrics = metrics.size();
 
@@ -1123,7 +1122,7 @@ public class App {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
             String scStatus = Status.STATUS_OK;
-            List<HashMap<String, Object>> metrics;
+            List<Map<String, Object>> metrics;
 
             int numberOfMetrics = 0;
 
@@ -1136,7 +1135,7 @@ public class App {
                 status.raiseForStatus();
 
                 // If we get here all was good - metric count  available
-                metrics = (List<HashMap<String, Object>>) status.getData();
+                metrics = (List<Map<String, Object>>) status.getData();
                 numberOfMetrics = metrics.size();
 
                 if (instance.isLimitReached()) {

@@ -5,15 +5,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 class Filter {
-    HashMap<String, Object> filter;
+    Map<String, Object> filter;
     Pattern domainRegex;
     List<Pattern> beanRegexes = null;
     List<String> excludeTags = null;
-    HashMap<String, String> additionalTags = null;
+    Map<String, String> additionalTags = null;
 
     /**
      * A simple class to manipulate include/exclude filter elements more easily A filter may
@@ -23,9 +24,9 @@ class Filter {
      */
     @SuppressWarnings("unchecked")
     public Filter(Object filter) {
-        HashMap<String, Object> castFilter;
+        Map<String, Object> castFilter;
         if (filter != null) {
-            castFilter = (HashMap<String, Object>) filter;
+            castFilter = (Map<String, Object>) filter;
         } else {
             castFilter = new HashMap<String, Object>();
         }
@@ -118,13 +119,13 @@ class Filter {
         return this.excludeTags;
     }
 
-    public HashMap<String, String> getAdditionalTags() {
+    public Map<String, String> getAdditionalTags() {
         // Return additional tags
         if (this.additionalTags == null) {
             if (filter.get("tags") == null) {
                 this.additionalTags = new HashMap<String, String>();
             } else {
-                this.additionalTags = (HashMap<String, String>) filter.get("tags");
+                this.additionalTags = (Map<String, String>) filter.get("tags");
             }
         }
 

@@ -17,7 +17,7 @@ import javax.management.openmbean.CompositeData;
 @SuppressWarnings("unchecked")
 public class JmxComplexAttribute extends JmxAttribute {
 
-    private HashMap<String, HashMap<String, Object>> subAttributeList;
+    private Map<String, Map<String, Object>> subAttributeList;
 
     /** JmxComplexAttribute constructor. */
     public JmxComplexAttribute(
@@ -35,7 +35,7 @@ public class JmxComplexAttribute extends JmxAttribute {
                 instanceTags,
                 false,
                 emptyDefaultHostname);
-        this.subAttributeList = new HashMap<String, HashMap<String, Object>>();
+        this.subAttributeList = new HashMap<String, Map<String, Object>>();
     }
 
     private void populateSubAttributeList(Object attributeValue) {
@@ -55,16 +55,16 @@ public class JmxComplexAttribute extends JmxAttribute {
     }
 
     @Override
-    public List<HashMap<String, Object>> getMetrics()
+    public List<Map<String, Object>> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
 
-        List<HashMap<String, Object>> metrics = new ArrayList<HashMap<String, Object>>(
+        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>(
                 subAttributeList.entrySet().size());
 
-        for (Map.Entry<String, HashMap<String, Object>> pair : subAttributeList.entrySet()) {
+        for (Map.Entry<String, Map<String, Object>> pair : subAttributeList.entrySet()) {
             String subAttribute = pair.getKey();
-            HashMap<String, Object> metric = pair.getValue();
+            Map<String, Object> metric = pair.getValue();
 
             if (metric.get(ALIAS) == null) {
                 metric.put(ALIAS, convertMetricName(getAlias(subAttribute)));
