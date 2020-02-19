@@ -35,6 +35,10 @@ public class StatsdReporter extends Reporter {
 
     private void init() {
         initializationTime = System.currentTimeMillis();
+
+        // Only set the entityID to "none" if UDS communication is activated
+        String entityID = this.statsdPort == 0 ? "none" : null;
+
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
@@ -46,7 +50,7 @@ public class StatsdReporter extends Reporter {
                         Integer.MAX_VALUE,
                         new String[] {},
                         new LoggingErrorHandler(),
-                        "none");
+                        entityID);
     }
 
     protected void sendMetricPoint(
