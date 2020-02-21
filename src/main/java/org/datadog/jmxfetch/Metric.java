@@ -10,6 +10,7 @@ public class Metric {
     private final String checkName;
     private double value;
 
+
     /**
      * Metric constructor.
      */
