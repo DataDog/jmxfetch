@@ -225,6 +225,9 @@ public class App {
         if (action.equals(AppConfig.ACTION_LIST_WITH_METRICS)) {
             app.displayMetrics();
         }
+        if (action.equals(AppConfig.ACTION_LIST_WITH_RATE_METRICS)) {
+            app.displayRateMetrics();
+        }
         return 0;
     }
 
@@ -376,6 +379,17 @@ public class App {
 
     /* Display metrics on the console report */
     void displayMetrics() {
+        doIteration();
+    }
+
+    /* Display metrics on the console report, including rate metrics */
+    void displayRateMetrics() {
+        doIteration();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            log.warn(e.getMessage(), e);
+        }
         doIteration();
     }
 
