@@ -2,7 +2,6 @@ package org.datadog.jmxfetch;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
@@ -36,16 +35,15 @@ public class JmxSimpleAttribute extends JmxAttribute {
     }
 
     @Override
-    public List<Map<String, Object>> getMetrics()
+    public List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        Map<String, Object> metric = new HashMap<String, Object>();
-
-        metric.put("alias", getAlias());
-        metric.put("value", castToDouble(getValue(), null));
-        metric.put("tags", getTags());
-        metric.put("metric_type", getMetricType());
-        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>(1);
+        String alias = getAlias();
+        String metricType = getMetricType();
+        double value = castToDouble(getValue(), null);
+        String[] tags = getTags();
+        Metric metric = new Metric(alias, metricType, value, tags);
+        List<Metric> metrics = new ArrayList<Metric>(1);
         metrics.add(metric);
         return metrics;
     }

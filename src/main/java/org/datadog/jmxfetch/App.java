@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -503,8 +502,8 @@ public class App {
         loopCounter++;
 
         try {
-            List<InstanceTask<List<Map<String, Object>>>> getMetricsTasks =
-                    new ArrayList<InstanceTask<List<Map<String, Object>>>>(instances.size());
+            List<InstanceTask<List<Metric>>> getMetricsTasks =
+                    new ArrayList<InstanceTask<List<Metric>>>(instances.size());
 
             for (Instance instance : instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
@@ -524,11 +523,11 @@ public class App {
                             getMetricsTasks,
                             appConfig.getCollectionTimeout(),
                             TimeUnit.SECONDS,
-                            new TaskMethod<List<Map<String, Object>>>() {
+                            new TaskMethod<List<Metric>>() {
                                 @Override
                                 public TaskStatusHandler invoke(
                                         Instance instance,
-                                        Future<List<Map<String, Object>>> future,
+                                        Future<List<Metric>> future,
                                         Reporter reporter) {
                                     return App.processCollectionResults(instance, future, reporter);
                                 }
@@ -989,7 +988,7 @@ public class App {
 
     static TaskStatusHandler processCollectionResults(
             Instance instance,
-            Future<List<Map<String, Object>>> future,
+            Future<List<Metric>> future,
             Reporter reporter) {
 
         TaskStatusHandler status = new TaskStatusHandler();
@@ -999,8 +998,7 @@ public class App {
             int numberOfMetrics = 0;
 
             if (future.isDone()) {
-                List<Map<String, Object>> metrics;
-                metrics = future.get();
+                List<Metric> metrics = future.get();
                 numberOfMetrics = metrics.size();
 
                 status.setData(metrics);
@@ -1136,7 +1134,7 @@ public class App {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
             String scStatus = Status.STATUS_OK;
-            List<Map<String, Object>> metrics;
+            List<Metric> metrics;
 
             int numberOfMetrics = 0;
 
@@ -1149,7 +1147,7 @@ public class App {
                 status.raiseForStatus();
 
                 // If we get here all was good - metric count  available
-                metrics = (List<Map<String, Object>>) status.getData();
+                metrics = (List<Metric>) status.getData();
                 numberOfMetrics = metrics.size();
 
                 if (instance.isLimitReached()) {

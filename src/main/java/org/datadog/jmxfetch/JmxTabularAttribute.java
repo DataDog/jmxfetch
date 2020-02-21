@@ -25,7 +25,7 @@ import javax.management.openmbean.TabularData;
 @Slf4j
 public class JmxTabularAttribute extends JmxAttribute {
     private String instanceName;
-    private Map<String, Map<String, Map<String, Object>>> subAttributeList;
+    private Map<String, List<String>> subAttributeList;
 
     /** Default constructor. */
     public JmxTabularAttribute(
@@ -43,7 +43,7 @@ public class JmxTabularAttribute extends JmxAttribute {
                 instanceTags,
                 false,
                 emptyDefaultHostname);
-        subAttributeList = new HashMap<String, Map<String, Map<String, Object>>>();
+        subAttributeList = new HashMap<String, List<String>>();
     }
 
     private String getMultiKey(Collection keys) {
@@ -66,16 +66,15 @@ public class JmxTabularAttribute extends JmxAttribute {
             Collection keys = (Collection) rowKey;
             CompositeData compositeData = data.get(keys.toArray());
             String pathKey = getMultiKey(keys);
-            Map<String, Map<String, Object>> subAttributes =
-                    new HashMap<String, Map<String, Object>>();
+            List<String> subAttributes = new ArrayList<String>();
             for (String key : compositeData.getCompositeType().keySet()) {
                 if (compositeData.get(key) instanceof CompositeData) {
                     for (String subKey :
                             ((CompositeData) compositeData.get(key)).getCompositeType().keySet()) {
-                        subAttributes.put(key + "." + subKey, new HashMap<String, Object>());
+                        subAttributes.add(key + "." + subKey);
                     }
                 } else {
-                    subAttributes.put(key, new HashMap<String, Object>());
+                    subAttributes.add(key);
                 }
             }
             subAttributeList.put(pathKey, subAttributes);
@@ -125,41 +124,29 @@ public class JmxTabularAttribute extends JmxAttribute {
     }
 
     @Override
-    public List<Map<String, Object>> getMetrics()
+    public List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        Map<String, List<Map<String, Object>>> subMetrics =
-                new HashMap<String, List<Map<String, Object>>>();
+        Map<String, List<Metric>> subMetrics = new HashMap<String, List<Metric>>();
 
-        for (String dataKey : subAttributeList.keySet()) {
-            Map<String, Map<String, Object>> subSub = subAttributeList.get(dataKey);
-            for (String metricKey : subSub.keySet()) {
-                Map<String, Object> metric = subSub.get(metricKey);
-
-                if (metric.get(ALIAS) == null) {
-                    metric.put(ALIAS, convertMetricName(getAlias(metricKey)));
-                }
-
-                if (metric.get(METRIC_TYPE) == null) {
-                    metric.put(METRIC_TYPE, getMetricType(metricKey));
-                }
-
-                if (metric.get("tags") == null) {
-                    metric.put("tags", getTags(dataKey, metricKey));
-                }
-
-                metric.put("value", castToDouble(getValue(dataKey, metricKey), null));
+        for (Map.Entry<String, List<String>> entry : subAttributeList.entrySet()) {
+            String dataKey = entry.getKey();
+            List<String> subSub = entry.getValue();
+            for (String metricKey : subSub) {
+                String alias = convertMetricName(getAlias(metricKey));
+                String metricType = getMetricType(metricKey);
+                String[] tags = getTags(dataKey, metricKey);
+                double value = castToDouble(getValue(dataKey, metricKey), null);
 
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
-                    subMetrics.put(fullMetricKey, new ArrayList<Map<String, Object>>());
+                    subMetrics.put(fullMetricKey, new ArrayList<Metric>());
                 }
-                subMetrics.get(fullMetricKey).add(metric);
+                subMetrics.get(fullMetricKey).add(new Metric(alias, metricType, value, tags));
             }
         }
 
-        List<Map<String, Object>> metrics =
-                new ArrayList<Map<String, Object>>(subMetrics.keySet().size());
+        List<Metric> metrics = new ArrayList<Metric>(subMetrics.keySet().size());
         for (String key : subMetrics.keySet()) {
             // only add explicitly included metrics
             if (getAttributesFor(key) != null) {
@@ -170,8 +157,7 @@ public class JmxTabularAttribute extends JmxAttribute {
         return metrics;
     }
 
-    private List<Map<String, Object>> sortAndFilter(
-            String metricKey, List<Map<String, Object>> metrics) {
+    private List<Metric> sortAndFilter(String metricKey, List<Metric> metrics) {
         Map<String, ?> attributes = getAttributesFor(metricKey);
         if (!attributes.containsKey("limit")) {
             return metrics;
@@ -191,11 +177,9 @@ public class JmxTabularAttribute extends JmxAttribute {
         return metrics;
     }
 
-    private class MetricComparator implements Comparator<Map<String, Object>> {
-        public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-            Double v1 = (Double) o1.get("value");
-            Double v2 = (Double) o2.get("value");
-            return v1.compareTo(v2);
+    private class MetricComparator implements Comparator<Metric> {
+        public int compare(Metric o1, Metric o2) {
+            return Double.compare(o1.getValue(), o2.getValue());
         }
     }
 
@@ -242,7 +226,7 @@ public class JmxTabularAttribute extends JmxAttribute {
         throw new NumberFormatException();
     }
 
-    private Object getMetricType(String subAttribute) {
+    private String getMetricType(String subAttribute) {
         String subAttributeName = getAttribute().getName() + "." + subAttribute;
         String metricType = null;
 
@@ -304,8 +288,8 @@ public class JmxTabularAttribute extends JmxAttribute {
         Iterator<String> it1 = subAttributeList.keySet().iterator();
         while (it1.hasNext()) {
             String key = it1.next();
-            Map<String, Map<String, Object>> subSub = subAttributeList.get(key);
-            Iterator<String> it2 = subSub.keySet().iterator();
+            List<String> subSub = subAttributeList.get(key);
+            Iterator<String> it2 = subSub.iterator();
             while (it2.hasNext()) {
                 String subKey = it2.next();
                 if (!matchSubAttribute(

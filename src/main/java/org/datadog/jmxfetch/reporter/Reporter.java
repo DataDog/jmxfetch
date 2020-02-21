@@ -6,8 +6,8 @@ import org.apache.commons.lang.StringUtils;
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.Metric;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +28,13 @@ public abstract class Reporter {
         this.serviceCheckCount = new HashMap<String, Integer>();
     }
 
-    String generateId(Map<String, Object> metric) {
-        String key = (String) metric.get("alias");
-        for (String tag : (String[]) metric.get("tags")) {
-            key += tag;
+    String generateId(Metric metric) {
+        String key = metric.getAlias();
+        StringBuilder sb = new StringBuilder(key);
+        for (String tag : metric.getTags()) {
+            sb.append(tag);
         }
-        return key;
+        return sb.toString();
     }
 
     /** Clears the rate aggregator for the provided instance name. */
@@ -47,10 +48,7 @@ public abstract class Reporter {
     }
 
     /** Submits the metrics in the implementing reporter. */
-    public void sendMetrics(
-            List<Map<String, Object>> metrics,
-            String instanceName,
-            boolean canonicalRate) {
+    public void sendMetrics(List<Metric> metrics, String instanceName, boolean canonicalRate) {
         Map<String, Map<String, Object>> instanceRatesAggregator;
         Map<String, Long> instanceCountersAggregator;
 
@@ -84,18 +82,20 @@ public abstract class Reporter {
             log.debug(sendingMessage);
         }
 
-        for (Map<String, Object> m : metrics) {
+        for (Metric m : metrics) {
             // We need to edit metrics for legacy reasons (rename metrics, etc)
-            Map<String, Object> metric = new HashMap<String, Object>(m);
+            // TODO: There is no obvious reason to duplicate this object here. should be removed.
+            Metric metric = new Metric(m.getAlias(), m.getMetricType(), m.getValue(), m.getTags());
+            metric.setCheckName(m.getCheckName());
 
-            Double currentValue = (Double) metric.get(VALUE);
+            Double currentValue = (Double) metric.getValue();
             if (currentValue.isNaN() || currentValue.isInfinite()) {
                 continue;
             }
 
-            String metricName = (String) metric.get("alias");
-            String metricType = (String) metric.get("metric_type");
-            String[] tags = Arrays.asList((String[]) metric.get("tags")).toArray(new String[0]);
+            String metricName = metric.getAlias();
+            String metricType = metric.getMetricType();
+            String[] tags = metric.getTags();
 
             // StatsD doesn't support rate metrics so we need to have our own aggregator to compute
             // rates
