@@ -146,7 +146,7 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 if (!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new ArrayList<Metric>());
                 }
-                subMetrics.get(fullMetricKey).add(new Metric(alias, metricType, value, tags));
+                subMetrics.get(fullMetricKey).add(metric);
             }
         }
 
