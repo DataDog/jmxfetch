@@ -41,8 +41,19 @@ public class JsonReporter extends Reporter {
     /** Use the service check callback to display the JSON. */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         log.debug("Displaying JSON output");
+        Map<String, Object> sc = new HashMap<String, Object>();
+        sc.put("check", checkName);
+        sc.put("host_name", "default");
+        sc.put("timestamp", System.currentTimeMillis() / 1000);
+        sc.put("status", status);
+        sc.put("message", message);
+        sc.put("tags", tags);
+      
         Map<String, Object> aggregator = new HashMap<String, Object>();
         aggregator.put("metrics", metrics);
+        List<Object> serviceChecks = new ArrayList<Object>();
+        serviceChecks.add(sc);
+        aggregator.put("service_checks", serviceChecks);
         Map<String, Object> serie = new HashMap<String, Object>();
         serie.put("aggregator", aggregator);
         List<Map<String, Object>> series = new ArrayList<Map<String, Object>>(1);
