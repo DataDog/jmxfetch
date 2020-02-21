@@ -6,18 +6,19 @@ package org.datadog.jmxfetch;
 public class Metric {
     private final String alias;
     private final String metricType;
-    private final double value;
     private final String[] tags;
-    private String checkName;
+    private final String checkName;
+    private double value;
+
 
     /**
      * Metric constructor.
      */
-    public Metric(String alias, String metricType, double value, String[] tags) {
+    public Metric(String alias, String metricType, String[] tags, String checkName) {
         this.alias = alias;
         this.metricType = metricType;
-        this.value = value;
         this.tags = tags;
+        this.checkName = checkName;
     }
 
     public String getAlias() {
@@ -40,7 +41,7 @@ public class Metric {
         return checkName;
     }
 
-    public void setCheckName(String checkName) {
-        this.checkName = checkName;
+    public void setValue(double value) {
+        this.value = value;
     }
 }

@@ -14,7 +14,7 @@ import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
 @SuppressWarnings("unchecked")
-public class JmxComplexAttribute extends JmxAttribute {
+public class JmxComplexAttribute extends JmxSubAttribute {
 
     private List<String> subAttributeList = new ArrayList<String>();
 
@@ -23,6 +23,7 @@ public class JmxComplexAttribute extends JmxAttribute {
             MBeanAttributeInfo attribute,
             ObjectName beanName,
             String instanceName,
+            String checkName,
             Connection connection,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
@@ -30,6 +31,7 @@ public class JmxComplexAttribute extends JmxAttribute {
                 attribute,
                 beanName,
                 instanceName,
+                checkName,
                 connection,
                 instanceTags,
                 false,
@@ -57,11 +59,10 @@ public class JmxComplexAttribute extends JmxAttribute {
             ReflectionException, InstanceNotFoundException, IOException {
         List<Metric> metrics = new ArrayList<Metric>(subAttributeList.size());
         for (String subAttribute : subAttributeList) {
-            String alias = convertMetricName(getAlias(subAttribute));
-            String metricType = getMetricType(subAttribute);
-            String[] tags = getTags();
+            Metric metric = getCachedMetric(subAttribute);
             double value = castToDouble(getValue(subAttribute), subAttribute);
-            metrics.add(new Metric(alias, metricType, value, tags));
+            metric.setValue(value);
+            metrics.add(metric);
         }
         return metrics;
     }
@@ -82,27 +83,6 @@ public class JmxComplexAttribute extends JmxAttribute {
             return data.get(subAttribute);
         }
         throw new NumberFormatException();
-    }
-
-    private String getMetricType(String subAttribute) {
-        String subAttributeName = getAttribute().getName() + "." + subAttribute;
-        String metricType = null;
-
-        Filter include = getMatchingConf().getInclude();
-        if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
-            metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
-            if (metricType == null) {
-                metricType = attribute.get(subAttributeName).get("type");
-            }
-        }
-
-        if (metricType == null) {
-            metricType = "gauge";
-        }
-
-        return metricType;
     }
 
     @Override

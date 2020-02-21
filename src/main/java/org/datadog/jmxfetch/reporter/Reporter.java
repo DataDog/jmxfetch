@@ -82,12 +82,7 @@ public abstract class Reporter {
             log.debug(sendingMessage);
         }
 
-        for (Metric m : metrics) {
-            // We need to edit metrics for legacy reasons (rename metrics, etc)
-            // TODO: There is no obvious reason to duplicate this object here. should be removed.
-            Metric metric = new Metric(m.getAlias(), m.getMetricType(), m.getValue(), m.getTags());
-            metric.setCheckName(m.getCheckName());
-
+        for (Metric metric : metrics) {
             Double currentValue = (Double) metric.getValue();
             if (currentValue.isNaN() || currentValue.isInfinite()) {
                 continue;

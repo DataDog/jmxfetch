@@ -23,7 +23,7 @@ import javax.management.openmbean.InvalidKeyException;
 import javax.management.openmbean.TabularData;
 
 @Slf4j
-public class JmxTabularAttribute extends JmxAttribute {
+public class JmxTabularAttribute extends JmxSubAttribute {
     private String instanceName;
     private Map<String, List<String>> subAttributeList;
 
@@ -32,6 +32,7 @@ public class JmxTabularAttribute extends JmxAttribute {
             MBeanAttributeInfo attribute,
             ObjectName beanName,
             String instanceName,
+            String checkName,
             Connection connection,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
@@ -39,6 +40,7 @@ public class JmxTabularAttribute extends JmxAttribute {
                 attribute,
                 beanName,
                 instanceName,
+                checkName,
                 connection,
                 instanceTags,
                 false,
@@ -133,16 +135,18 @@ public class JmxTabularAttribute extends JmxAttribute {
             String dataKey = entry.getKey();
             List<String> subSub = entry.getValue();
             for (String metricKey : subSub) {
-                String alias = convertMetricName(getAlias(metricKey));
+                String alias = getAlias(metricKey);
                 String metricType = getMetricType(metricKey);
-                String[] tags = getTags(dataKey, metricKey);
+                String[] tags = getTags(dataKey, metricKey); // /!| Cannot be cached as is
+                Metric metric = new Metric(alias, metricType, tags, checkName);
                 double value = castToDouble(getValue(dataKey, metricKey), null);
+                metric.setValue(value);
 
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new ArrayList<Metric>());
                 }
-                subMetrics.get(fullMetricKey).add(new Metric(alias, metricType, value, tags));
+                subMetrics.get(fullMetricKey).add(metric);
             }
         }
 
@@ -224,27 +228,6 @@ public class JmxTabularAttribute extends JmxAttribute {
         }
 
         throw new NumberFormatException();
-    }
-
-    private String getMetricType(String subAttribute) {
-        String subAttributeName = getAttribute().getName() + "." + subAttribute;
-        String metricType = null;
-
-        Filter include = getMatchingConf().getInclude();
-        if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
-            metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
-            if (metricType == null) {
-                metricType = attribute.get(subAttributeName).get("type");
-            }
-        }
-
-        if (metricType == null) {
-            metricType = "gauge";
-        }
-
-        return metricType;
     }
 
     @Override
