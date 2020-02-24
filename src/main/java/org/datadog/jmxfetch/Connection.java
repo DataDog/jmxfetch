@@ -50,6 +50,13 @@ public class Connection {
         return mbs.getMBeanInfo(beanName).getAttributes();
     }
 
+    /** Gets class for matching bean name. */
+    public String getClassForBean(ObjectName beanName)
+            throws InstanceNotFoundException, IntrospectionException, ReflectionException,
+            IOException {
+        return mbs.getMBeanInfo(beanName).getClassName();
+    }
+
     /** Queries beans on specific scope. Returns set of matching query names.. */
     public Set<ObjectName> queryNames(ObjectName name) throws IOException {
         String scope = (name != null) ? name.toString() : "*:*";

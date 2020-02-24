@@ -256,6 +256,20 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testClassInclude() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.includeme:type=AType");
+        initApplication("jmx_class_include.yaml");
+
+        // Collecting metrics
+        run();
+        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+
+        // First filter 29 = 13 metrics from java.lang + 16 metrics implicitly defined
+        assertEquals(29, metrics.size());
+    }
+
+    @Test
     public void testParameterMatch() throws Exception {
         // Do not match beans which do not contain types specified in the conf
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:param=AParameter");

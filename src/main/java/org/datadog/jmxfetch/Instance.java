@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.management.MBeanAttributeInfo;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.security.auth.login.FailedLoginException;
 
 @Slf4j
@@ -477,7 +476,6 @@ public class Instance {
                 }
             }
             MBeanAttributeInfo[] attributeInfos;
-
             try {
                 // Get all the attributes for bean_name
                 log.debug("Getting attributes for bean: " + beanName);
@@ -491,6 +489,16 @@ public class Instance {
                 continue;
             } catch (Exception e) {
                 log.warn("Cannot get bean attributes " + e.getMessage());
+                continue;
+            }
+
+            String className;
+
+            try {
+                className = connection.getClassForBean(beanName);
+                log.debug("ClassName: " + className);
+            } catch (Exception e) {
+                log.warn("Cannot get class name " + e.getMessage());
                 continue;
             }
 
@@ -521,6 +529,7 @@ public class Instance {
                             new JmxSimpleAttribute(
                                     attributeInfo,
                                     beanName,
+                                    className,
                                     instanceName,
                                     connection,
                                     tags,
@@ -537,6 +546,7 @@ public class Instance {
                             new JmxComplexAttribute(
                                     attributeInfo,
                                     beanName,
+                                    className,
                                     instanceName,
                                     connection,
                                     tags,
@@ -552,6 +562,7 @@ public class Instance {
                             new JmxTabularAttribute(
                                     attributeInfo,
                                     beanName,
+                                    className,
                                     instanceName,
                                     connection,
                                     tags,

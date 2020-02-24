@@ -32,6 +32,7 @@ public class JmxTabularAttribute extends JmxAttribute {
     public JmxTabularAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
+            String className,
             String instanceName,
             Connection connection,
             Map<String, String> instanceTags,
@@ -39,6 +40,7 @@ public class JmxTabularAttribute extends JmxAttribute {
         super(
                 attribute,
                 beanName,
+                className,
                 instanceName,
                 connection,
                 instanceTags,
@@ -266,8 +268,10 @@ public class JmxTabularAttribute extends JmxAttribute {
     @Override
     public boolean match(Configuration configuration) {
         if (!matchDomain(configuration)
+                || !matchClassName(configuration)
                 || !matchBean(configuration)
                 || excludeMatchDomain(configuration)
+                || excludeMatchClassName(configuration)
                 || excludeMatchBean(configuration)) {
             return false;
         }

@@ -20,6 +20,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
     public JmxSimpleAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
+            String className,
             String instanceName,
             Connection connection,
             Map<String, String> instanceTags,
@@ -28,6 +29,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
         super(
                 attribute,
                 beanName,
+                className,
                 instanceName,
                 connection,
                 instanceTags,
@@ -53,9 +55,11 @@ public class JmxSimpleAttribute extends JmxAttribute {
     /** Returns whether an attribute matches in a configuration spec. */
     public boolean match(Configuration configuration) {
         return matchDomain(configuration)
+                && matchClassName(configuration)
                 && matchBean(configuration)
                 && matchAttribute(configuration)
                 && !(excludeMatchDomain(configuration)
+                        || excludeMatchClassName(configuration)
                         || excludeMatchBean(configuration)
                         || excludeMatchAttribute(configuration));
     }

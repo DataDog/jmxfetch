@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 class Filter {
     HashMap<String, Object> filter;
     Pattern domainRegex;
+    Pattern classNameRegex;
     ArrayList<Pattern> beanRegexes = null;
     ArrayList<String> excludeTags = null;
     HashMap<String, String> additionalTags = null;
@@ -149,6 +150,23 @@ class Filter {
 
         return this.domainRegex;
     }
+
+    public String getClassName() {
+        return (String) filter.get("class");
+    }
+
+    public Pattern getClassNameRegex() {
+        if (this.filter.get("class_regex") == null) {
+            return null;
+        }
+
+        if (this.classNameRegex == null) {
+            this.classNameRegex = Pattern.compile((String) this.filter.get("class_regex"));
+        }
+
+        return this.classNameRegex;
+    }
+
 
     public Object getAttribute() {
         return filter.get("attribute");
