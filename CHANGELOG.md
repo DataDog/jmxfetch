@@ -1,6 +1,24 @@
 Changelog
 =========
 
+# 0.35.0 / 2020-02-24
+
+### Changes
+* [FEATURE] Add embedded mode. [#262][]
+* [FEATURE] Add none EntityId by default to UDS metrics. [#262][]
+* [FEATURE] Add new command to test rate metrics. See [#267][]
+* [FEATURE] Add support for a `service` tag. See [#269][]
+* [IMPROVEMENT] Fix NPE handling. [#260][]
+* [IMPROVEMENT] Fix ThreadPool creation: accurate thread naming. See [#261][]
+* [IMPROVEMENT] Fix getTagsMap generic parameter handling. See [#265][]
+* [IMPROVEMENT] Replace LinkedHashMap with HashMap or Map. See [#266][]
+* [IMPROVEMENT] Replace LinkedList with ArrayList or List. See [#268][]
+* [IMPROVEMENT] Replace HashMap concrete type with Map interface. See [#270][]
+* [IMPROVEMENT] Replace metric Map with a Metric class. See [#271][]
+* [IMPROVEMENT] Cache and reuse metric instances. See [#273][]
+* [IMPROVEMENT] Display service checks with JsonReporter. See [#272][]
+* [IMPROVEMENT] Bump java-dogstatsd-client to version 0.29.0. See [#275][]
+
 # 0.34.0 / 2020-01-13
 
 ### Changes
@@ -419,6 +437,19 @@ Changelog
 [#255]: https://github.com/DataDog/jmxfetch/issues/255
 [#257]: https://github.com/DataDog/jmxfetch/issues/257
 [#258]: https://github.com/DataDog/jmxfetch/issues/258
+[#260]: https://github.com/DataDog/jmxfetch/issues/260
+[#261]: https://github.com/DataDog/jmxfetch/issues/261
+[#262]: https://github.com/DataDog/jmxfetch/issues/262
+[#265]: https://github.com/DataDog/jmxfetch/issues/265
+[#266]: https://github.com/DataDog/jmxfetch/issues/266
+[#267]: https://github.com/DataDog/jmxfetch/issues/267
+[#268]: https://github.com/DataDog/jmxfetch/issues/268
+[#269]: https://github.com/DataDog/jmxfetch/issues/269
+[#270]: https://github.com/DataDog/jmxfetch/issues/270
+[#271]: https://github.com/DataDog/jmxfetch/issues/271
+[#272]: https://github.com/DataDog/jmxfetch/issues/272
+[#273]: https://github.com/DataDog/jmxfetch/issues/273
+[#275]: https://github.com/DataDog/jmxfetch/issues/275
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
