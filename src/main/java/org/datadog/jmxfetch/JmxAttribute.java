@@ -35,7 +35,8 @@ public abstract class JmxAttribute {
                     "bean_name",
                     "bean",
                     "bean_regex",
-                    "class_name",
+                    "class",
+                    "class_regex",
                     "attribute",
                     "exclude_tags",
                     "tags");
@@ -298,7 +299,6 @@ public abstract class JmxAttribute {
     boolean excludeMatchClassName(Configuration conf) {
         String excludeClassName = conf.getExclude().getClassName();
         Pattern excludeClassNameRegex = conf.getExclude().getClassNameRegex();
-
         return excludeClassName != null && excludeClassName.equals(className)
                 || excludeClassNameRegex != null && excludeClassNameRegex.matcher(className).matches();
     }

@@ -6,6 +6,3 @@ instances:
         conf:
             - include:
                 class: org.datadog.jmxfetch.SimpleTestJavaApp
-#                domain: org.datadog.jmxfetch.includeme
-
-
