@@ -8,9 +8,10 @@ import javax.management.ObjectName;
 abstract class JmxSubAttribute extends JmxAttribute {
     private Map<String, Metric> cachedMetrics = new HashMap<String, Metric>();
 
-    public JmxSubAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String className, String instanceName,
-            String checkName, Connection connection, Map<String, String> instanceTags,
-            boolean cassandraAliasing, boolean emptyDefaultHostname) {
+    public JmxSubAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String className,
+            String instanceName, String checkName, Connection connection,
+            Map<String, String> instanceTags, boolean cassandraAliasing,
+            boolean emptyDefaultHostname) {
         super(attribute, beanName, className, instanceName, checkName, connection, instanceTags,
                 cassandraAliasing, emptyDefaultHostname);
     }

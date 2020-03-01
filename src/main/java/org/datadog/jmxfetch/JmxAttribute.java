@@ -279,6 +279,7 @@ public abstract class JmxAttribute {
         return (includeDomain == null || includeDomain.equals(domain))
                 && (includeDomainRegex == null || includeDomainRegex.matcher(domain).matches());
     }
+
     boolean excludeMatchDomain(Configuration conf) {
         String excludeDomain = conf.getExclude().getDomain();
         Pattern excludeDomainRegex = conf.getExclude().getDomainRegex();
@@ -293,14 +294,16 @@ public abstract class JmxAttribute {
         Pattern includeClassNameRegex = conf.getInclude().getClassNameRegex();
 
         return (includeClassName == null || includeClassName.equals(className))
-                && (includeClassNameRegex == null || includeClassNameRegex.matcher(className).matches());
+                && (includeClassNameRegex == null
+                    || includeClassNameRegex.matcher(className).matches());
     }
 
     boolean excludeMatchClassName(Configuration conf) {
         String excludeClassName = conf.getExclude().getClassName();
         Pattern excludeClassNameRegex = conf.getExclude().getClassNameRegex();
         return excludeClassName != null && excludeClassName.equals(className)
-                || excludeClassNameRegex != null && excludeClassNameRegex.matcher(className).matches();
+                || excludeClassNameRegex != null
+                && excludeClassNameRegex.matcher(className).matches();
     }
 
     Object convertMetricValue(Object metricValue, String field) {
