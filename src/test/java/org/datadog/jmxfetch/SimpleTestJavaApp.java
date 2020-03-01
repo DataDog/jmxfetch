@@ -2,6 +2,7 @@ package org.datadog.jmxfetch;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.openmbean.CompositeData;
@@ -36,7 +37,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     // Others
     private final boolean shouldBeBoolean = true;
-    private final HashMap<String, Integer> hashmap = new HashMap<String, Integer>();
+    private final Map<String, Integer> hashmap = new HashMap<String, Integer>();
     private final Object object1337 = new Double(13.37);
     private final BigDecimal numberBig = new BigDecimal(123456788901234567890.0);
     private final TabularData tabulardata;
@@ -96,7 +97,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         }
     }
 
-    public HashMap<String, Integer> getHashmap() {
+    public Map<String, Integer> getHashmap() {
         return hashmap;
     }
 

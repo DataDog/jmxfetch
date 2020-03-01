@@ -6,38 +6,40 @@ import org.apache.commons.lang.StringUtils;
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.Metric;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public abstract class Reporter {
 
     public static final String VALUE = "value";
 
-    private HashMap<String, Integer> serviceCheckCount;
-    private HashMap<String, HashMap<String, HashMap<String, Object>>> ratesAggregator =
-            new HashMap<String, HashMap<String, HashMap<String, Object>>>();
-    private HashMap<String, HashMap<String, Long>> countersAggregator =
-            new HashMap<String, HashMap<String, Long>>();
+    private Map<String, Integer> serviceCheckCount;
+    private Map<String, Map<String, Map<String, Object>>> ratesAggregator =
+            new HashMap<String, Map<String, Map<String, Object>>>();
+    private Map<String, Map<String, Long>> countersAggregator =
+            new HashMap<String, Map<String, Long>>();
 
     /** Reporter constructor. */
     public Reporter() {
         this.serviceCheckCount = new HashMap<String, Integer>();
     }
 
-    String generateId(HashMap<String, Object> metric) {
-        String key = (String) metric.get("alias");
-        for (String tag : (String[]) metric.get("tags")) {
-            key += tag;
+    String generateId(Metric metric) {
+        String key = metric.getAlias();
+        StringBuilder sb = new StringBuilder(key);
+        for (String tag : metric.getTags()) {
+            sb.append(tag);
         }
-        return key;
+        return sb.toString();
     }
 
     /** Clears the rate aggregator for the provided instance name. */
     public void clearRatesAggregator(String instanceName) {
-        ratesAggregator.put(instanceName, new HashMap<String, HashMap<String, Object>>());
+        ratesAggregator.put(instanceName, new HashMap<String, Map<String, Object>>());
     }
 
     /** Clears the counter aggregator for the provided instance name.  */
@@ -46,17 +48,14 @@ public abstract class Reporter {
     }
 
     /** Submits the metrics in the implementing reporter. */
-    public void sendMetrics(
-            LinkedList<HashMap<String, Object>> metrics,
-            String instanceName,
-            boolean canonicalRate) {
-        HashMap<String, HashMap<String, Object>> instanceRatesAggregator;
-        HashMap<String, Long> instanceCountersAggregator;
+    public void sendMetrics(List<Metric> metrics, String instanceName, boolean canonicalRate) {
+        Map<String, Map<String, Object>> instanceRatesAggregator;
+        Map<String, Long> instanceCountersAggregator;
 
         if (ratesAggregator.containsKey(instanceName)) {
             instanceRatesAggregator = ratesAggregator.get(instanceName);
         } else {
-            instanceRatesAggregator = new HashMap<String, HashMap<String, Object>>();
+            instanceRatesAggregator = new HashMap<String, Map<String, Object>>();
         }
 
         if (countersAggregator.containsKey(instanceName)) {
@@ -83,18 +82,15 @@ public abstract class Reporter {
             log.debug(sendingMessage);
         }
 
-        for (HashMap<String, Object> m : metrics) {
-            // We need to edit metrics for legacy reasons (rename metrics, etc)
-            HashMap<String, Object> metric = new HashMap<String, Object>(m);
-
-            Double currentValue = (Double) metric.get(VALUE);
+        for (Metric metric : metrics) {
+            Double currentValue = (Double) metric.getValue();
             if (currentValue.isNaN() || currentValue.isInfinite()) {
                 continue;
             }
 
-            String metricName = (String) metric.get("alias");
-            String metricType = (String) metric.get("metric_type");
-            String[] tags = Arrays.asList((String[]) metric.get("tags")).toArray(new String[0]);
+            String metricName = metric.getAlias();
+            String metricType = metric.getMetricType();
+            String[] tags = metric.getTags();
 
             // StatsD doesn't support rate metrics so we need to have our own aggregator to compute
             // rates
@@ -125,7 +121,7 @@ public abstract class Reporter {
             } else { // The metric should be 'counter'
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
-                    HashMap<String, Object> rateInfo = new HashMap<String, Object>();
+                    Map<String, Object> rateInfo = new HashMap<String, Object>();
                     rateInfo.put("ts", System.currentTimeMillis());
                     rateInfo.put(VALUE, currentValue);
                     instanceRatesAggregator.put(key, rateInfo);
@@ -181,7 +177,7 @@ public abstract class Reporter {
         this.serviceCheckCount.put(checkName, new Integer(0));
     }
 
-    protected HashMap<String, Integer> getServiceCheckCountMap() {
+    protected Map<String, Integer> getServiceCheckCountMap() {
         return this.serviceCheckCount;
     }
 

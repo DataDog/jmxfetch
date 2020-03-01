@@ -4,18 +4,19 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 class YamlParser {
 
-    private HashMap<Object, Object> parsedYaml;
+    private Map<Object, Object> parsedYaml;
 
     public YamlParser(InputStream yamlInputStream) {
-        parsedYaml = (HashMap<Object, Object>) new Yaml().load(yamlInputStream);
+        parsedYaml = (Map<Object, Object>) new Yaml().load(yamlInputStream);
     }
 
     public YamlParser(YamlParser other) {
-        parsedYaml = new HashMap<Object, Object>((HashMap<Object, Object>) other.getParsedYaml());
+        parsedYaml = new HashMap<Object, Object>((Map<Object, Object>) other.getParsedYaml());
     }
 
     public Object getYamlInstances() {

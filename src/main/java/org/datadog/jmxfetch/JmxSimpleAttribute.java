@@ -1,9 +1,8 @@
 package org.datadog.jmxfetch;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -14,7 +13,7 @@ import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
 public class JmxSimpleAttribute extends JmxAttribute {
-    private String metricType;
+    private Metric cachedMetric;
 
     /** JmxSimpleAttribute constructor. */
     public JmxSimpleAttribute(
@@ -22,6 +21,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
+            String checkName,
             Connection connection,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
@@ -31,6 +31,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 beanName,
                 className,
                 instanceName,
+                checkName,
                 connection,
                 instanceTags,
                 cassandraAliasing,
@@ -38,18 +39,18 @@ public class JmxSimpleAttribute extends JmxAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics()
+    public List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        HashMap<String, Object> metric = new HashMap<String, Object>();
-
-        metric.put("alias", getAlias());
-        metric.put("value", castToDouble(getValue(), null));
-        metric.put("tags", getTags());
-        metric.put("metric_type", getMetricType());
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-        metrics.add(metric);
-        return metrics;
+        if (cachedMetric == null) {
+            String alias = getAlias(null);
+            String metricType = getMetricType(null);
+            String[] tags = getTags();
+            cachedMetric = new Metric(alias, metricType, tags, checkName);
+        }
+        double value = castToDouble(getValue(), null);
+        cachedMetric.setValue(value);
+        return Collections.singletonList(cachedMetric);
     }
 
     /** Returns whether an attribute matches in a configuration spec. */
@@ -73,8 +74,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
                         .containsKey(getAttributeName())) {
             return true;
 
-        } else if ((exclude.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (exclude.getAttribute())).contains(getAttributeName()))) {
+        } else if ((exclude.getAttribute() instanceof List<?>
+                && ((List<String>) (exclude.getAttribute())).contains(getAttributeName()))) {
             return true;
         }
         return false;
@@ -90,32 +91,12 @@ public class JmxSimpleAttribute extends JmxAttribute {
                         .containsKey(getAttributeName())) {
             return true;
 
-        } else if ((include.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (include.getAttribute())).contains(getAttributeName()))) {
+        } else if ((include.getAttribute() instanceof List<?>
+                && ((List<String>) (include.getAttribute())).contains(getAttributeName()))) {
             return true;
         }
 
         return false;
-    }
-
-    private String getMetricType() {
-        Filter include = getMatchingConf().getInclude();
-        if (metricType != null) {
-            return metricType;
-        } else if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
-            metricType = attribute.get(getAttributeName()).get(METRIC_TYPE);
-            if (metricType == null) {
-                metricType = attribute.get(getAttributeName()).get("type");
-            }
-        }
-
-        if (metricType == null) { // Default to gauge
-            metricType = "gauge";
-        }
-
-        return metricType;
     }
 
     private Object getValue()

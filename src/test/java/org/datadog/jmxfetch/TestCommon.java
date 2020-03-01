@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -35,9 +35,9 @@ public class TestCommon {
     AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
     MBeanServer mbs;
-    ArrayList<ObjectName> objectNames = new ArrayList<ObjectName>();
-    LinkedList<HashMap<String, Object>> metrics;
-    LinkedList<HashMap<String, Object>> serviceChecks;
+    List<ObjectName> objectNames = new ArrayList<ObjectName>();
+    List<Map<String, Object>> metrics;
+    List<Map<String, Object>> serviceChecks;
 
     /** Setup logger. */
     @BeforeClass
@@ -143,7 +143,7 @@ public class TestCommon {
     }
 
     /** Return configured instances */
-    protected ArrayList<Instance> getInstances() {
+    protected List<Instance> getInstances() {
         return app.getInstances();
     }
 
@@ -153,12 +153,12 @@ public class TestCommon {
     }
 
     /** Return the metrics collected by JMXFetch. */
-    protected LinkedList<HashMap<String, Object>> getMetrics() {
+    protected List<Map<String, Object>> getMetrics() {
         return metrics;
     }
 
     /** Return the service checks collected by JMXFetch. */
-    protected LinkedList<HashMap<String, Object>> getServiceChecks() {
+    protected List<Map<String, Object>> getServiceChecks() {
         return ((ConsoleReporter) appConfig.getReporter()).getServiceChecks();
     }
 
@@ -188,7 +188,7 @@ public class TestCommon {
         List<String> tags = new ArrayList<String>(commonTags);
         tags.addAll(additionalTags);
 
-        for (HashMap<String, Object> m : metrics) {
+        for (Map<String, Object> m : metrics) {
             String mName = (String) (m.get("name"));
             Double mValue = (Double) (m.get("value"));
             Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
@@ -330,10 +330,9 @@ public class TestCommon {
      */
     public void assertCoverage() {
         int totalMetrics = 0;
-        LinkedList<HashMap<String, Object>> untestedMetrics =
-                new LinkedList<HashMap<String, Object>>();
+        List<Map<String, Object>> untestedMetrics = new ArrayList<Map<String, Object>>();
 
-        for (HashMap<String, Object> m : metrics) {
+        for (Map<String, Object> m : metrics) {
             String mName = (String) (m.get("name"));
 
             // Exclusion logic
@@ -361,7 +360,7 @@ public class TestCommon {
      * @return String report
      */
     private static String generateReport(
-            LinkedList<HashMap<String, Object>> untestedMetrics, int totalMetricsCount) {
+            List<Map<String, Object>> untestedMetrics, int totalMetricsCount) {
         StringBuilder sb = new StringBuilder();
 
         // Compute indicators
@@ -379,7 +378,7 @@ public class TestCommon {
         sb.append(coverageMetrics);
         sb.append("%)\n");
         sb.append("\t\tUNTESTED: \n");
-        for (HashMap<String, Object> m : untestedMetrics) {
+        for (Map<String, Object> m : untestedMetrics) {
             sb.append(m);
             sb.append("\n");
         }

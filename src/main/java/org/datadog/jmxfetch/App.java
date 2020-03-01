@@ -33,9 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -73,11 +71,10 @@ public class App {
 
     private static int loopCounter;
     private int lastJsonConfigTs;
-    private HashMap<String, Object> adJsonConfigs;
-    private ConcurrentHashMap<String, YamlParser> configs;
-    private ConcurrentHashMap<String, YamlParser> adPipeConfigs =
-            new ConcurrentHashMap<String, YamlParser>();
-    private ArrayList<Instance> instances = new ArrayList<Instance>();
+    private Map<String, Object> adJsonConfigs;
+    private Map<String, YamlParser> configs;
+    private Map<String, YamlParser> adPipeConfigs = new ConcurrentHashMap<String, YamlParser>();
+    private List<Instance> instances = new ArrayList<Instance>();
     private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<String, Instance>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
 
@@ -227,6 +224,9 @@ public class App {
         if (action.equals(AppConfig.ACTION_LIST_WITH_METRICS)) {
             app.displayMetrics();
         }
+        if (action.equals(AppConfig.ACTION_LIST_WITH_RATE_METRICS)) {
+            app.displayRateMetrics();
+        }
         return 0;
     }
 
@@ -255,12 +255,9 @@ public class App {
     }
 
     private void clearInstances(Collection<Instance> instances) {
-        List<InstanceTask<Void>> cleanupInstanceTasks = new ArrayList<InstanceTask<Void>>();
-
-        Iterator<Instance> iterator = instances.iterator();
-        while (iterator.hasNext()) {
-            Instance instance = iterator.next();
-
+        List<InstanceTask<Void>> cleanupInstanceTasks =
+                new ArrayList<InstanceTask<Void>>(instances.size());
+        for (Instance instance : instances) {
             // create the cleanup task
             cleanupInstanceTasks.add(new InstanceCleanupTask(instance));
         }
@@ -375,12 +372,23 @@ public class App {
         return reinit;
     }
 
-    protected ArrayList<Instance> getInstances() {
+    protected List<Instance> getInstances() {
         return this.instances;
     }
 
     /* Display metrics on the console report */
     void displayMetrics() {
+        doIteration();
+    }
+
+    /* Display metrics on the console report, including rate metrics */
+    void displayRateMetrics() {
+        doIteration();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            log.warn(e.getMessage(), e);
+        }
         doIteration();
     }
 
@@ -494,8 +502,8 @@ public class App {
         loopCounter++;
 
         try {
-            List<InstanceTask<LinkedList<HashMap<String, Object>>>> getMetricsTasks =
-                    new ArrayList<InstanceTask<LinkedList<HashMap<String, Object>>>>();
+            List<InstanceTask<List<Metric>>> getMetricsTasks =
+                    new ArrayList<InstanceTask<List<Metric>>>(instances.size());
 
             for (Instance instance : instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
@@ -515,11 +523,11 @@ public class App {
                             getMetricsTasks,
                             appConfig.getCollectionTimeout(),
                             TimeUnit.SECONDS,
-                            new TaskMethod<LinkedList<HashMap<String, Object>>>() {
+                            new TaskMethod<List<Metric>>() {
                                 @Override
                                 public TaskStatusHandler invoke(
                                         Instance instance,
-                                        Future<LinkedList<HashMap<String, Object>>> future,
+                                        Future<List<Metric>> future,
                                         Reporter reporter) {
                                     return App.processCollectionResults(instance, future, reporter);
                                 }
@@ -560,7 +568,8 @@ public class App {
     }
 
     private void fixBrokenInstances(Reporter reporter) {
-        List<InstanceTask<Void>> fixInstanceTasks = new ArrayList<InstanceTask<Void>>();
+        List<InstanceTask<Void>> fixInstanceTasks =
+                new ArrayList<InstanceTask<Void>>(brokenInstanceMap.values().size());
 
         for (Instance instance : brokenInstanceMap.values()) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
@@ -671,8 +680,8 @@ public class App {
         return false;
     }
 
-    private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
-        ConcurrentHashMap<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
+    private Map<String, YamlParser> getConfigs(AppConfig config) {
+        Map<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
 
         loadFileConfigs(config, configs);
         loadResourceConfigs(config, configs);
@@ -681,7 +690,7 @@ public class App {
         return configs;
     }
 
-    private void loadFileConfigs(AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
+    private void loadFileConfigs(AppConfig config, Map<String, YamlParser> configs) {
         List<String> fileList = config.getYamlFileList();
         if (fileList != null) {
             for (String fileName : fileList) {
@@ -711,7 +720,7 @@ public class App {
     }
 
     private void loadResourceConfigs(
-            AppConfig config, ConcurrentHashMap<String, YamlParser> configs) {
+            AppConfig config, Map<String, YamlParser> configs) {
         List<String> resourceConfigList = config.getInstanceConfigResources();
         if (resourceConfigList != null) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -765,7 +774,7 @@ public class App {
             JsonParser parser = new JsonParser(jsonInputStream);
             int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
             if (timestamp > lastJsonConfigTs) {
-                adJsonConfigs = (HashMap<String, Object>) parser.getJsonConfigs();
+                adJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
                 lastJsonConfigTs = timestamp;
                 update = true;
                 log.info("update is in order - updating timestamp: " + lastJsonConfigTs);
@@ -835,7 +844,6 @@ public class App {
         clearInstances(brokenInstanceMap.values());
         brokenInstanceMap.clear();
 
-        List<InstanceTask<Void>> instanceInitTasks = new ArrayList<InstanceTask<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
 
         log.info("Dealing with YAML config instances...");
@@ -858,8 +866,8 @@ public class App {
                 it.remove();
             }
 
-            ArrayList<Map<String, Object>> configInstances =
-                    ((ArrayList<Map<String, Object>>) yamlConfig.getYamlInstances());
+            List<Map<String, Object>> configInstances =
+                    ((List<Map<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
                 log.warn(warning);
@@ -892,12 +900,12 @@ public class App {
         log.info("Dealing with Auto-Config instances collected...");
         if (adJsonConfigs != null) {
             for (String check : adJsonConfigs.keySet()) {
-                HashMap<String, Object> checkConfig =
-                        (HashMap<String, Object>) adJsonConfigs.get(check);
+                Map<String, Object> checkConfig =
+                        (Map<String, Object>) adJsonConfigs.get(check);
                 Map<String, Object> initConfig =
                         (Map<String, Object>) checkConfig.get("init_config");
-                ArrayList<Map<String, Object>> configInstances =
-                        (ArrayList<Map<String, Object>>) checkConfig.get("instances");
+                List<Map<String, Object>> configInstances =
+                        (List<Map<String, Object>>) checkConfig.get("instances");
                 String checkName = (String) checkConfig.get("check_name");
                 for (Map<String, Object> configInstance : configInstances) {
                     log.info("Instantiating instance for: " + checkName);
@@ -908,6 +916,8 @@ public class App {
             }
         }
 
+        List<InstanceTask<Void>> instanceInitTasks =
+                new ArrayList<InstanceTask<Void>>(newInstances.size());
         for (Instance instance : newInstances) {
             // create the initializing tasks
             instanceInitTasks.add(new InstanceInitializingTask(instance, forceNewConnection));
@@ -978,7 +988,7 @@ public class App {
 
     static TaskStatusHandler processCollectionResults(
             Instance instance,
-            Future<LinkedList<HashMap<String, Object>>> future,
+            Future<List<Metric>> future,
             Reporter reporter) {
 
         TaskStatusHandler status = new TaskStatusHandler();
@@ -988,8 +998,7 @@ public class App {
             int numberOfMetrics = 0;
 
             if (future.isDone()) {
-                LinkedList<HashMap<String, Object>> metrics;
-                metrics = future.get();
+                List<Metric> metrics = future.get();
                 numberOfMetrics = metrics.size();
 
                 status.setData(metrics);
@@ -1125,7 +1134,7 @@ public class App {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
             String scStatus = Status.STATUS_OK;
-            LinkedList<HashMap<String, Object>> metrics;
+            List<Metric> metrics;
 
             int numberOfMetrics = 0;
 
@@ -1138,7 +1147,7 @@ public class App {
                 status.raiseForStatus();
 
                 // If we get here all was good - metric count  available
-                metrics = (LinkedList<HashMap<String, Object>>) status.getData();
+                metrics = (List<Metric>) status.getData();
                 numberOfMetrics = metrics.size();
 
                 if (instance.isLimitReached()) {

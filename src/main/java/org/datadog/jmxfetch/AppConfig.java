@@ -29,6 +29,7 @@ public class AppConfig {
     public static final String ACTION_LIST_COLLECTED = "list_collected_attributes";
     public static final String ACTION_LIST_MATCHING = "list_matching_attributes";
     public static final String ACTION_LIST_WITH_METRICS = "list_with_metrics";
+    public static final String ACTION_LIST_WITH_RATE_METRICS = "list_with_rate_metrics";
     public static final String ACTION_LIST_NOT_MATCHING = "list_not_matching_attributes";
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
@@ -41,6 +42,7 @@ public class AppConfig {
                             ACTION_LIST_COLLECTED,
                             ACTION_LIST_MATCHING,
                             ACTION_LIST_WITH_METRICS,
+                            ACTION_LIST_WITH_RATE_METRICS,
                             ACTION_LIST_NOT_MATCHING,
                             ACTION_LIST_LIMITED,
                             ACTION_HELP,
@@ -186,7 +188,7 @@ public class AppConfig {
             description =
                     "Action to take, should be in [help, version, collect, "
                     + "list_everything, list_collected_attributes, list_matching_attributes, "
-                    + "list_with_metrics, list_not_matching_attributes, "
+                    + "list_with_metrics, list_with_rate_metrics, list_not_matching_attributes, "
                     + "list_limited_attributes, list_jvms]",
             required = true)
     private List<String> action;

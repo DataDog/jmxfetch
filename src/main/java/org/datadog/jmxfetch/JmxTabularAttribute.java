@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.management.AttributeNotFoundException;
@@ -24,9 +23,9 @@ import javax.management.openmbean.InvalidKeyException;
 import javax.management.openmbean.TabularData;
 
 @Slf4j
-public class JmxTabularAttribute extends JmxAttribute {
+public class JmxTabularAttribute extends JmxSubAttribute {
     private String instanceName;
-    private HashMap<String, HashMap<String, HashMap<String, Object>>> subAttributeList;
+    private Map<String, List<String>> subAttributeList;
 
     /** Default constructor. */
     public JmxTabularAttribute(
@@ -34,6 +33,7 @@ public class JmxTabularAttribute extends JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
+            String checkName,
             Connection connection,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
@@ -42,11 +42,12 @@ public class JmxTabularAttribute extends JmxAttribute {
                 beanName,
                 className,
                 instanceName,
+                checkName,
                 connection,
                 instanceTags,
                 false,
                 emptyDefaultHostname);
-        subAttributeList = new HashMap<String, HashMap<String, HashMap<String, Object>>>();
+        subAttributeList = new HashMap<String, List<String>>();
     }
 
     private String getMultiKey(Collection keys) {
@@ -69,16 +70,15 @@ public class JmxTabularAttribute extends JmxAttribute {
             Collection keys = (Collection) rowKey;
             CompositeData compositeData = data.get(keys.toArray());
             String pathKey = getMultiKey(keys);
-            HashMap<String, HashMap<String, Object>> subAttributes =
-                    new HashMap<String, HashMap<String, Object>>();
+            List<String> subAttributes = new ArrayList<String>();
             for (String key : compositeData.getCompositeType().keySet()) {
                 if (compositeData.get(key) instanceof CompositeData) {
                     for (String subKey :
                             ((CompositeData) compositeData.get(key)).getCompositeType().keySet()) {
-                        subAttributes.put(key + "." + subKey, new HashMap<String, Object>());
+                        subAttributes.add(key + "." + subKey);
                     }
                 } else {
-                    subAttributes.put(key, new HashMap<String, Object>());
+                    subAttributes.add(key);
                 }
             }
             subAttributeList.put(pathKey, subAttributes);
@@ -128,40 +128,31 @@ public class JmxTabularAttribute extends JmxAttribute {
     }
 
     @Override
-    public LinkedList<HashMap<String, Object>> getMetrics()
+    public List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
-        HashMap<String, LinkedList<HashMap<String, Object>>> subMetrics =
-                new HashMap<String, LinkedList<HashMap<String, Object>>>();
+        Map<String, List<Metric>> subMetrics = new HashMap<String, List<Metric>>();
 
-        for (String dataKey : subAttributeList.keySet()) {
-            HashMap<String, HashMap<String, Object>> subSub = subAttributeList.get(dataKey);
-            for (String metricKey : subSub.keySet()) {
-                HashMap<String, Object> metric = subSub.get(metricKey);
-
-                if (metric.get(ALIAS) == null) {
-                    metric.put(ALIAS, convertMetricName(getAlias(metricKey)));
-                }
-
-                if (metric.get(METRIC_TYPE) == null) {
-                    metric.put(METRIC_TYPE, getMetricType(metricKey));
-                }
-
-                if (metric.get("tags") == null) {
-                    metric.put("tags", getTags(dataKey, metricKey));
-                }
-
-                metric.put("value", castToDouble(getValue(dataKey, metricKey), null));
+        for (Map.Entry<String, List<String>> entry : subAttributeList.entrySet()) {
+            String dataKey = entry.getKey();
+            List<String> subSub = entry.getValue();
+            for (String metricKey : subSub) {
+                String alias = getAlias(metricKey);
+                String metricType = getMetricType(metricKey);
+                String[] tags = getTags(dataKey, metricKey); // /!| Cannot be cached as is
+                Metric metric = new Metric(alias, metricType, tags, checkName);
+                double value = castToDouble(getValue(dataKey, metricKey), null);
+                metric.setValue(value);
 
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
-                    subMetrics.put(fullMetricKey, new LinkedList<HashMap<String, Object>>());
+                    subMetrics.put(fullMetricKey, new ArrayList<Metric>());
                 }
                 subMetrics.get(fullMetricKey).add(metric);
             }
         }
 
+        List<Metric> metrics = new ArrayList<Metric>(subMetrics.keySet().size());
         for (String key : subMetrics.keySet()) {
             // only add explicitly included metrics
             if (getAttributesFor(key) != null) {
@@ -172,8 +163,7 @@ public class JmxTabularAttribute extends JmxAttribute {
         return metrics;
     }
 
-    private List<HashMap<String, Object>> sortAndFilter(
-            String metricKey, LinkedList<HashMap<String, Object>> metrics) {
+    private List<Metric> sortAndFilter(String metricKey, List<Metric> metrics) {
         Map<String, ?> attributes = getAttributesFor(metricKey);
         if (!attributes.containsKey("limit")) {
             return metrics;
@@ -193,11 +183,9 @@ public class JmxTabularAttribute extends JmxAttribute {
         return metrics;
     }
 
-    private class MetricComparator implements Comparator<HashMap<String, Object>> {
-        public int compare(HashMap<String, Object> o1, HashMap<String, Object> o2) {
-            Double v1 = (Double) o1.get("value");
-            Double v2 = (Double) o2.get("value");
-            return v1.compareTo(v2);
+    private class MetricComparator implements Comparator<Metric> {
+        public int compare(Metric o1, Metric o2) {
+            return Double.compare(o1.getValue(), o2.getValue());
         }
     }
 
@@ -244,27 +232,6 @@ public class JmxTabularAttribute extends JmxAttribute {
         throw new NumberFormatException();
     }
 
-    private Object getMetricType(String subAttribute) {
-        String subAttributeName = getAttribute().getName() + "." + subAttribute;
-        String metricType = null;
-
-        Filter include = getMatchingConf().getInclude();
-        if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
-            metricType = attribute.get(subAttributeName).get(METRIC_TYPE);
-            if (metricType == null) {
-                metricType = attribute.get(subAttributeName).get("type");
-            }
-        }
-
-        if (metricType == null) {
-            metricType = "gauge";
-        }
-
-        return metricType;
-    }
-
     @Override
     public boolean match(Configuration configuration) {
         if (!matchDomain(configuration)
@@ -291,8 +258,8 @@ public class JmxTabularAttribute extends JmxAttribute {
                 && ((Map<String, Object>) (params.getAttribute()))
                         .containsKey(subAttributeName)) {
             return true;
-        } else if ((params.getAttribute() instanceof ArrayList<?>
-                && ((ArrayList<String>) (params.getAttribute())).contains(subAttributeName))) {
+        } else if ((params.getAttribute() instanceof List<?>
+                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
             return true;
         } else if (params.getAttribute() == null) {
             return matchOnEmpty;
@@ -308,8 +275,8 @@ public class JmxTabularAttribute extends JmxAttribute {
         Iterator<String> it1 = subAttributeList.keySet().iterator();
         while (it1.hasNext()) {
             String key = it1.next();
-            HashMap<String, HashMap<String, Object>> subSub = subAttributeList.get(key);
-            Iterator<String> it2 = subSub.keySet().iterator();
+            List<String> subSub = subAttributeList.get(key);
+            Iterator<String> it2 = subSub.iterator();
             while (it2.hasNext()) {
                 String subKey = it2.next();
                 if (!matchSubAttribute(
