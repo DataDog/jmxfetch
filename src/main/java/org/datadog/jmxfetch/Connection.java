@@ -50,7 +50,7 @@ public class Connection {
         return mbs.getMBeanInfo(beanName).getAttributes();
     }
 
-    /** Gets class for matching bean name. */
+    /** Gets class name for matching bean name. */
     public String getClassNameForBean(ObjectName beanName)
             throws InstanceNotFoundException, IntrospectionException, ReflectionException,
             IOException {

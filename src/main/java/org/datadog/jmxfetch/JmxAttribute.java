@@ -291,8 +291,6 @@ public abstract class JmxAttribute {
     boolean matchClassName(Configuration conf) {
         String includeClassName = conf.getInclude().getClassName();
         Pattern includeClassNameRegex = conf.getInclude().getClassNameRegex();
-        log.debug("matchClassName className: " + className);
-        log.debug("matchClassName includeClassName: " + includeClassName);
 
         return (includeClassName == null || includeClassName.equals(className))
                 && (includeClassNameRegex == null || includeClassNameRegex.matcher(className).matches());
