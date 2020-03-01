@@ -477,30 +477,24 @@ public class Instance {
                     break;
                 }
             }
+            String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
+                log.debug("Getting class name for bean: " + beanName);
+                className = connection.getClassNameForBean(beanName);
+
                 // Get all the attributes for bean_name
                 log.debug("Getting attributes for bean: " + beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
                 // we should not continue
-                log.warn("Cannot get bean attributes " + e.getMessage());
+                log.warn("Cannot get bean attributes or class name: " + e.getMessage());
                 if (e.getMessage() == connection.CLOSED_CLIENT_CAUSE) {
                     throw e;
                 }
                 continue;
             } catch (Exception e) {
-                log.warn("Cannot get bean attributes " + e.getMessage());
-                continue;
-            }
-
-            String className;
-
-            try {
-                className = connection.getClassNameForBean(beanName);
-                log.debug("ClassName: " + className);
-            } catch (Exception e) {
-                log.warn("Cannot get class name " + e.getMessage());
+                log.warn("Cannot get bean attributes or class name: " + e.getMessage());
                 continue;
             }
 

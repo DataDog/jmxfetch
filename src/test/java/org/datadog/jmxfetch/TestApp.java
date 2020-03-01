@@ -264,7 +264,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 29 = 13 metrics from java.lang + 16 metrics implicitly defined
         assertEquals(29, metrics.size());
@@ -281,7 +281,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly
         // defined in the exclude section
@@ -304,7 +304,7 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        LinkedList<HashMap<String, Object>> metrics = getMetrics();
+        List<Map<String, Object>> metrics = getMetrics();
 
         // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly
         // defined in exclude section
