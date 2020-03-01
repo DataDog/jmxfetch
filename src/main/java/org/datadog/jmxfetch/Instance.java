@@ -495,7 +495,7 @@ public class Instance {
             String className;
 
             try {
-                className = connection.getClassForBean(beanName);
+                className = connection.getClassNameForBean(beanName);
                 log.debug("ClassName: " + className);
             } catch (Exception e) {
                 log.warn("Cannot get class name " + e.getMessage());
