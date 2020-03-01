@@ -273,37 +273,39 @@ public abstract class JmxAttribute {
     }
 
     boolean matchDomain(Configuration conf) {
-        String includeDomain = conf.getInclude().getDomain();
-        Pattern includeDomainRegex = conf.getInclude().getDomainRegex();
-
-        return (includeDomain == null || includeDomain.equals(domain))
-                && (includeDomainRegex == null || includeDomainRegex.matcher(domain).matches());
+        return includeMatchName(domain,
+                conf.getInclude().getDomain(),
+                conf.getInclude().getDomainRegex());
     }
 
     boolean excludeMatchDomain(Configuration conf) {
-        String excludeDomain = conf.getExclude().getDomain();
-        Pattern excludeDomainRegex = conf.getExclude().getDomainRegex();
-
-        return excludeDomain != null && excludeDomain.equals(domain)
-                || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
+        return excludeMatchName(domain,
+                conf.getExclude().getDomain(),
+                conf.getExclude().getDomainRegex());
     }
 
 
     boolean matchClassName(Configuration conf) {
-        String includeClassName = conf.getInclude().getClassName();
-        Pattern includeClassNameRegex = conf.getInclude().getClassNameRegex();
-
-        return (includeClassName == null || includeClassName.equals(className))
-                && (includeClassNameRegex == null
-                    || includeClassNameRegex.matcher(className).matches());
+        return includeMatchName(className,
+                conf.getInclude().getClassName(),
+                conf.getInclude().getClassNameRegex());
     }
 
+
     boolean excludeMatchClassName(Configuration conf) {
-        String excludeClassName = conf.getExclude().getClassName();
-        Pattern excludeClassNameRegex = conf.getExclude().getClassNameRegex();
-        return excludeClassName != null && excludeClassName.equals(className)
-                || excludeClassNameRegex != null
-                && excludeClassNameRegex.matcher(className).matches();
+        return excludeMatchName(className,
+                conf.getExclude().getClassName(),
+                conf.getExclude().getClassNameRegex());
+    }
+
+    private boolean includeMatchName(String name, String includeName, Pattern includeNameRegex) {
+        return (includeName == null || includeName.equals(name))
+                && (includeNameRegex == null || includeNameRegex.matcher(name).matches());
+    }
+
+    private boolean excludeMatchName(String name, String excludeName, Pattern excludeNameRegex) {
+        return (excludeName != null && excludeName.equals(name))
+                || (excludeNameRegex != null && excludeNameRegex.matcher(name).matches());
     }
 
     Object convertMetricValue(Object metricValue, String field) {
