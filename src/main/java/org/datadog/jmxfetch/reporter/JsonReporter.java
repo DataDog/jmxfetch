@@ -2,10 +2,12 @@ package org.datadog.jmxfetch.reporter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.timgroup.statsd.ServiceCheck;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.Status;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -38,14 +40,25 @@ public class JsonReporter extends Reporter {
         metrics.add(metric);
     }
 
+    private ServiceCheck.Status statusToServiceCheckStatus(String status) {
+        if (status == Status.STATUS_OK) {
+            return ServiceCheck.Status.OK;
+        } else if (status == Status.STATUS_WARNING) {
+            return ServiceCheck.Status.WARNING;
+        } else if (status == Status.STATUS_ERROR) {
+            return ServiceCheck.Status.CRITICAL;
+        }
+        return ServiceCheck.Status.UNKNOWN;
+    }
+
     /** Use the service check callback to display the JSON. */
     public void doSendServiceCheck(String checkName, String status, String message, String[] tags) {
         log.debug("Displaying JSON output");
         Map<String, Object> sc = new HashMap<String, Object>();
-        sc.put("check", checkName);
+        sc.put("check", String.format("%s.can_connect", checkName));
         sc.put("host_name", "default");
         sc.put("timestamp", System.currentTimeMillis() / 1000);
-        sc.put("status", status);
+        sc.put("status", this.statusToServiceCheckStatus(status));
         sc.put("message", message);
         sc.put("tags", tags);
       
