@@ -1,0 +1,8 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+                class: org.datadog.jmxfetch.SimpleTestJavaApp

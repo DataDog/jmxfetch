@@ -22,6 +22,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     public JmxComplexAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
+            String className,
             String instanceName,
             String checkName,
             Connection connection,
@@ -30,6 +31,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
         super(
                 attribute,
                 beanName,
+                className,
                 instanceName,
                 checkName,
                 connection,
@@ -88,8 +90,10 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     @Override
     public boolean match(Configuration configuration) {
         if (!matchDomain(configuration)
+                || !matchClassName(configuration)
                 || !matchBean(configuration)
                 || excludeMatchDomain(configuration)
+                || excludeMatchClassName(configuration)
                 || excludeMatchBean(configuration)) {
             return false;
         }

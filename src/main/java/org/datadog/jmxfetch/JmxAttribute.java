@@ -34,6 +34,8 @@ public abstract class JmxAttribute {
                     "bean_name",
                     "bean",
                     "bean_regex",
+                    "class",
+                    "class_regex",
                     "attribute",
                     "exclude_tags",
                     "tags");
@@ -47,6 +49,7 @@ public abstract class JmxAttribute {
     private Connection connection;
     private ObjectName beanName;
     private String domain;
+    private String className;
     private String beanStringName;
     private Map<String, String> beanParameters;
     private String attributeName;
@@ -61,6 +64,7 @@ public abstract class JmxAttribute {
     JmxAttribute(
             MBeanAttributeInfo attribute,
             ObjectName beanName,
+            String className,
             String instanceName,
             String checkName,
             Connection connection,
@@ -69,6 +73,7 @@ public abstract class JmxAttribute {
             boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
+        this.className = className;
         this.matchingConf = null;
         this.connection = connection;
         this.attributeName = attribute.getName();
@@ -268,19 +273,39 @@ public abstract class JmxAttribute {
     }
 
     boolean matchDomain(Configuration conf) {
-        String includeDomain = conf.getInclude().getDomain();
-        Pattern includeDomainRegex = conf.getInclude().getDomainRegex();
-
-        return (includeDomain == null || includeDomain.equals(domain))
-                && (includeDomainRegex == null || includeDomainRegex.matcher(domain).matches());
+        return includeMatchName(domain,
+                conf.getInclude().getDomain(),
+                conf.getInclude().getDomainRegex());
     }
 
     boolean excludeMatchDomain(Configuration conf) {
-        String excludeDomain = conf.getExclude().getDomain();
-        Pattern excludeDomainRegex = conf.getExclude().getDomainRegex();
+        return excludeMatchName(domain,
+                conf.getExclude().getDomain(),
+                conf.getExclude().getDomainRegex());
+    }
 
-        return excludeDomain != null && excludeDomain.equals(domain)
-                || excludeDomainRegex != null && excludeDomainRegex.matcher(domain).matches();
+
+    boolean matchClassName(Configuration conf) {
+        return includeMatchName(className,
+                conf.getInclude().getClassName(),
+                conf.getInclude().getClassNameRegex());
+    }
+
+
+    boolean excludeMatchClassName(Configuration conf) {
+        return excludeMatchName(className,
+                conf.getExclude().getClassName(),
+                conf.getExclude().getClassNameRegex());
+    }
+
+    private boolean includeMatchName(String name, String includeName, Pattern includeNameRegex) {
+        return (includeName == null || includeName.equals(name))
+                && (includeNameRegex == null || includeNameRegex.matcher(name).matches());
+    }
+
+    private boolean excludeMatchName(String name, String excludeName, Pattern excludeNameRegex) {
+        return (excludeName != null && excludeName.equals(name))
+                || (excludeNameRegex != null && excludeNameRegex.matcher(name).matches());
     }
 
     Object convertMetricValue(Object metricValue, String field) {

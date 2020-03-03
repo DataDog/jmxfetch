@@ -257,6 +257,65 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testClassInclude() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.includeme:type=AType");
+        initApplication("jmx_class_include.yaml");
+
+        // Collecting metrics
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // First filter 29 = 13 metrics from java.lang + 16 metrics implicitly defined
+        assertEquals(29, metrics.size());
+    }
+
+    @Test
+    public void testClassExclude() throws Exception {
+        class SimpleTestJavaAnotherApp extends SimpleTestJavaApp {
+
+        }
+
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.includeme:type=AType");
+        registerMBean(new SimpleTestJavaAnotherApp(), "org.datadog.jmxfetch.includeme2:type=AnotherType");
+
+        // Initializing application
+        initApplication("jmx_class_exclude.yaml");
+
+        // Collecting metrics
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly
+        // defined in the exclude section
+        assertEquals(14, metrics.size());
+    }
+
+    @Test
+    public void testClassRegex() throws Exception {
+        class SimpleTestJavaAppIncludeMe extends SimpleTestJavaApp { }
+        class SimpleTestJavaAppIncludeMeToo extends SimpleTestJavaApp { }
+        class SimpleTestJavaAppIncludeMeNotMeX extends SimpleTestJavaApp { }
+
+        // We expose a few metrics through JMX
+        registerMBean(new SimpleTestJavaAppIncludeMe(), "org.datadog.jmxfetch.includeme:type=AType");
+        registerMBean(new SimpleTestJavaAppIncludeMeToo(), "org.datadog.jmxfetch.includeme.too:type=AType");
+        registerMBean(new SimpleTestJavaAppIncludeMeNotMeX(), "org.datadog.jmxfetch.includeme.not.me:type=AType");
+
+        // Initializing application
+        initApplication("jmx_class_regex.yaml");
+
+        // Collecting metrics
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly
+        // defined in exclude section
+        assertEquals(15, metrics.size());
+    }
+
+    @Test
     public void testParameterMatch() throws Exception {
         // Do not match beans which do not contain types specified in the conf
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:param=AParameter");
