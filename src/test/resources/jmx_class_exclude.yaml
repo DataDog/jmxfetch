@@ -10,4 +10,4 @@ instances:
                           metric_type: gauge
                           alias: this.is.100
               exclude:
-                  class: org.datadog.jmxfetch.SimpleTestJavaApp2
+                  class: org.datadog.jmxfetch.TestApp$1SimpleTestJavaAnotherApp

@@ -272,9 +272,13 @@ public class TestApp extends TestCommon {
 
     @Test
     public void testClassExclude() throws Exception {
+        class SimpleTestJavaAnotherApp extends SimpleTestJavaApp {
+
+        }
+
         // We expose a few metrics through JMX
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.includeme:type=AType");
-        registerMBean(new SimpleTestJavaApp2(), "org.datadog.jmxfetch.includeme2:type=AnotherType");
+        registerMBean(new SimpleTestJavaAnotherApp(), "org.datadog.jmxfetch.includeme2:type=AnotherType");
 
         // Initializing application
         initApplication("jmx_class_exclude.yaml");
