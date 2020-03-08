@@ -42,7 +42,7 @@ public class TestServiceChecks extends TestCommon {
         String scStatus = (String) (sc.get("status"));
         String[] scTags = (String[]) (sc.get("tags"));
 
-        assertEquals(Reporter.formatServiceCheckPrefix("jmx"), scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("jmx") + ".can_connect", scName);
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 3);
         assertTrue(Arrays.asList(scTags).contains("instance:jmx_test_instance"));
@@ -83,7 +83,7 @@ public class TestServiceChecks extends TestCommon {
         String scStatus = (String) (sc.get("status"));
         String[] scTags = (String[]) (sc.get("tags"));
 
-        assertEquals(Reporter.formatServiceCheckPrefix("too_many_metrics"), scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("too_many_metrics") + ".can_connect", scName);
         // We should have an OK service check status when too many metrics are getting sent
         assertEquals(Status.STATUS_OK, scStatus);
         assertEquals(scTags.length, 3);
@@ -115,7 +115,7 @@ public class TestServiceChecks extends TestCommon {
         String scMessage = (String) (sc.get("message"));
         String[] scTags = (String[]) (sc.get("tags"));
 
-        assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("non_running_process") + ".can_connect", scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals(
                 "Unable to instantiate or initialize instance process_regex: `.*non_running_process_test.*`. "
@@ -142,7 +142,7 @@ public class TestServiceChecks extends TestCommon {
         scMessage = (String) (sc.get("message"));
         scTags = (String[]) (sc.get("tags"));
 
-        assertEquals(Reporter.formatServiceCheckPrefix("non_running_process"), scName);
+        assertEquals(Reporter.formatServiceCheckPrefix("non_running_process") + ".can_connect", scName);
         assertEquals(Status.STATUS_ERROR, scStatus);
         assertEquals(
                 "Unable to instantiate or initialize instance process_regex: `.*non_running_process_test.*`. "
