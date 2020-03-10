@@ -3,7 +3,11 @@ package org.datadog.jmxfetch;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.rmi.server.RMISocketFactory;
 import java.util.HashMap;
 import java.util.Map;
 import javax.management.remote.JMXConnector;
@@ -89,6 +93,8 @@ public class RemoteConnection extends Connection {
         // Set an RMI timeout so we don't get stuck waiting for a bean to report a value
         System.setProperty("sun.rmi.transport.tcp.responseTimeout", rmiTimeout);
 
+        RMISocketFactory.setSocketFactory(new SocketFactory(Integer.parseInt(rmiTimeout)));
+
         createConnection();
     }
 
@@ -115,4 +121,25 @@ public class RemoteConnection extends Connection {
         return new JMXServiceURL(
                 "service:jmx:rmi:///jndi/rmi://" + this.host + ":" + this.port + "/" + this.path);
     }
+
+    static class SocketFactory extends RMISocketFactory {
+        private final int timeout;
+
+        SocketFactory(int timeout) {
+            this.timeout = timeout;
+        }
+
+        @Override
+        public Socket createSocket(String host, int port) throws IOException {
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(host, port), timeout);
+            return socket;
+        }
+
+        @Override
+        public ServerSocket createServerSocket(int port) throws IOException {
+            return new ServerSocket(port);
+        }
+    }
+
 }
