@@ -45,13 +45,14 @@ public class ConsoleReporter extends Reporter {
     }
 
     /** Adds service check to report on. */
-    public void doSendServiceCheck(String serviceCheckName, String status, String message, String[] tags) {
+    public void doSendServiceCheck(
+            String serviceCheckName, String status, String message, String[] tags) {
         String tagString = "";
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";
         }
-        log.info(
-                serviceCheckName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
+        log.info(serviceCheckName + tagString + " - "
+                 + System.currentTimeMillis() / 1000 + " = " + status);
 
         Map<String, Object> sc = new HashMap<String, Object>();
         sc.put("name", serviceCheckName);

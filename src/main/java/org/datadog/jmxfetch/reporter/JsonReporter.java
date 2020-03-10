@@ -39,7 +39,8 @@ public class JsonReporter extends Reporter {
     }
 
     /** Use the service check callback to display the JSON. */
-    public void doSendServiceCheck(String serviceCheckName, String status, String message, String[] tags) {
+    public void doSendServiceCheck(
+            String serviceCheckName, String status, String message, String[] tags) {
         log.debug("Displaying JSON output");
         Map<String, Object> sc = new HashMap<String, Object>();
         sc.put("check", serviceCheckName);

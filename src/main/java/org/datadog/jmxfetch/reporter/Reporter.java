@@ -155,9 +155,11 @@ public abstract class Reporter {
     }
 
     /** Submits service check. */
-    public void sendServiceCheck(String checkName, String status, String message, String[] tags) {
+    public void sendServiceCheck(
+            String checkName, String status, String message, String[] tags) {
         this.incrementServiceCheckCount(checkName);
-        String serviceCheckName = String.format("%s.can_connect", Reporter.formatServiceCheckPrefix(checkName));
+        String serviceCheckName = String.format(
+                "%s.can_connect", Reporter.formatServiceCheckPrefix(checkName));
 
         this.doSendServiceCheck(serviceCheckName, status, message, tags);
     }

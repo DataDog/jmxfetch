@@ -80,7 +80,8 @@ public class StatsdReporter extends Reporter {
     }
 
     /** Submits service check. */
-    public void doSendServiceCheck(String serviceCheckName, String status, String message, String[] tags) {
+    public void doSendServiceCheck(
+            String serviceCheckName, String status, String message, String[] tags) {
         if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
             this.statsDClient.stop();
             init();
