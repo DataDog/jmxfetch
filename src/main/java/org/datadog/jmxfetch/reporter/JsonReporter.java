@@ -2,12 +2,10 @@ package org.datadog.jmxfetch.reporter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.timgroup.statsd.ServiceCheck;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
-import org.datadog.jmxfetch.Status;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -38,17 +36,6 @@ public class JsonReporter extends Reporter {
         metric.put("tags", tags);
         metric.put("type", metricType);
         metrics.add(metric);
-    }
-
-    private ServiceCheck.Status statusToServiceCheckStatus(String status) {
-        if (status == Status.STATUS_OK) {
-            return ServiceCheck.Status.OK;
-        } else if (status == Status.STATUS_WARNING) {
-            return ServiceCheck.Status.WARNING;
-        } else if (status == Status.STATUS_ERROR) {
-            return ServiceCheck.Status.CRITICAL;
-        }
-        return ServiceCheck.Status.UNKNOWN;
     }
 
     /** Use the service check callback to display the JSON. */

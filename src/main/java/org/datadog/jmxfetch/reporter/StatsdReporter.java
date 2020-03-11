@@ -7,7 +7,6 @@ import com.timgroup.statsd.StatsDClientErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
-import org.datadog.jmxfetch.Status;
 
 /** A reporter class to submit metrics via statsd. */
 @Slf4j
@@ -66,17 +65,6 @@ public class StatsdReporter extends Reporter {
         } else {
             statsDClient.gauge(metricName, value, tags);
         }
-    }
-
-    private ServiceCheck.Status statusToServiceCheckStatus(String status) {
-        if (status == Status.STATUS_OK) {
-            return ServiceCheck.Status.OK;
-        } else if (status == Status.STATUS_WARNING) {
-            return ServiceCheck.Status.WARNING;
-        } else if (status == Status.STATUS_ERROR) {
-            return ServiceCheck.Status.CRITICAL;
-        }
-        return ServiceCheck.Status.UNKNOWN;
     }
 
     /** Submits service check. */
