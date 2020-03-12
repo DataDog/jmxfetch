@@ -10,6 +10,7 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
+import java.rmi.server.RMISocketFactory;
 
 @Slf4j
 public class RemoteConnection extends Connection {
@@ -88,6 +89,8 @@ public class RemoteConnection extends Connection {
 
         // Set an RMI timeout so we don't get stuck waiting for a bean to report a value
         System.setProperty("sun.rmi.transport.tcp.responseTimeout", rmiTimeout);
+
+        RMISocketFactory.setSocketFactory(new SocketFactory(Integer.parseInt(rmiTimeout)));
 
         createConnection();
     }
