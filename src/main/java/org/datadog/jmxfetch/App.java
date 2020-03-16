@@ -19,6 +19,7 @@ import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
+import org.datadog.jmxfetch.util.ServiceCheckHelper;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -811,9 +812,20 @@ public class App {
     private void sendServiceCheck(
             Reporter reporter, Instance instance, String message, String status) {
         String checkName = instance.getCheckName();
+        String serviceCheckName = getServiceCheckName(instance);
 
-        reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
+        reporter.sendServiceCheck(checkName, serviceCheckName, status, message, instance.getServiceCheckTags());
         reporter.resetServiceCheckCount(checkName);
+    }
+
+    private String getServiceCheckName(Instance instance) {
+        String checkPrefix;
+        if (instance.getCheckPrefix() != null) {
+            checkPrefix = instance.getCheckPrefix();
+        } else {
+            checkPrefix = ServiceCheckHelper.formatServiceCheckPrefix(instance.getCheckName());
+        }
+        return String.format("%s.can_connect", checkPrefix);
     }
 
     private Instance instantiate(
