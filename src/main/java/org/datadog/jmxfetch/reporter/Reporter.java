@@ -156,7 +156,8 @@ public abstract class Reporter {
     }
 
     /** Submits service check. */
-    public void sendServiceCheck(String checkName, String serviceCheckName, String status, String message, String[] tags) {
+    public void sendServiceCheck(String checkName, String serviceCheckName,
+                                 String status, String message, String[] tags) {
         this.incrementServiceCheckCount(checkName);
         this.doSendServiceCheck(serviceCheckName, status, message, tags);
     }

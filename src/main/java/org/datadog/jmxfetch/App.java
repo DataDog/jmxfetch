@@ -814,7 +814,8 @@ public class App {
         String checkName = instance.getCheckName();
         String serviceCheckName = getServiceCheckName(instance);
 
-        reporter.sendServiceCheck(checkName, serviceCheckName, status, message, instance.getServiceCheckTags());
+        reporter.sendServiceCheck(
+                checkName, serviceCheckName, status, message, instance.getServiceCheckTags());
         reporter.resetServiceCheckCount(checkName);
     }
 
