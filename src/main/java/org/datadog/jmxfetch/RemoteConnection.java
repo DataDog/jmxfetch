@@ -97,7 +97,8 @@ public class RemoteConnection extends Connection {
         try {
             rmiConnectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
         } catch (final ClassCastException e) {
-            rmiConnectionTimeout = Integer.parseInt((String) connectionParams.get("rmi_connection_timeout"));
+            rmiConnectionTimeout = 
+                Integer.parseInt((String) connectionParams.get("rmi_connection_timeout"));
         }
         if (rmiConnectionTimeout == null) {
             rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
