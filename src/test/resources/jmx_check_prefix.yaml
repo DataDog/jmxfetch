@@ -1,5 +1,5 @@
 init_config:
-  check_prefix: myprefix
+  service_check_prefix: myprefix
 
 instances:
   -   jvm_direct: true

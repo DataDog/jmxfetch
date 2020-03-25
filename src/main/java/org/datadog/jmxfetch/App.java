@@ -820,13 +820,13 @@ public class App {
     }
 
     private String getServiceCheckName(Instance instance) {
-        String checkPrefix;
-        if (instance.getCheckPrefix() != null) {
-            checkPrefix = instance.getCheckPrefix();
+        String serviceCheckPrefix;
+        if (instance.getServiceCheckPrefix() != null) {
+            serviceCheckPrefix = instance.getServiceCheckPrefix();
         } else {
-            checkPrefix = ServiceCheckHelper.formatServiceCheckPrefix(instance.getCheckName());
+            serviceCheckPrefix = ServiceCheckHelper.formatServiceCheckPrefix(instance.getCheckName());
         }
-        return String.format("%s.can_connect", checkPrefix);
+        return String.format("%s.can_connect", serviceCheckPrefix);
     }
 
     private Instance instantiate(
