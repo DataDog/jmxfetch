@@ -72,7 +72,7 @@ public class TestInstance extends TestCommon {
         }
 
         List<Map<String, Object>> serviceChecks = getServiceChecks();
-        assertEquals(2, serviceChecks.size());
+        assertEquals(4, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertHostnameTags(Arrays.asList(tags));
@@ -98,7 +98,7 @@ public class TestInstance extends TestCommon {
         }
 
         List<Map<String, Object>> serviceChecks = getServiceChecks();
-        assertEquals(2, serviceChecks.size());
+        assertEquals(4, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertServiceTag(Arrays.asList(tags), "global");
@@ -119,7 +119,7 @@ public class TestInstance extends TestCommon {
         }
 
         List<Map<String, Object>> serviceChecks = getServiceChecks();
-        assertEquals(2, serviceChecks.size());
+        assertEquals(4, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertServiceTag(Arrays.asList(tags), "override");

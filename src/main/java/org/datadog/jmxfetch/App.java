@@ -812,21 +812,30 @@ public class App {
     private void sendServiceCheck(
             Reporter reporter, Instance instance, String message, String status) {
         String checkName = instance.getCheckName();
-        String serviceCheckName = getServiceCheckName(instance);
 
-        reporter.sendServiceCheck(
-                checkName, serviceCheckName, status, message, instance.getServiceCheckTags());
+        if (instance.getServiceCheckPrefix() != null) {
+            this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
+                    status, message, instance.getServiceCheckTags());
+        } else {
+            this.sendCanConnectServiceCheck(reporter, checkName, checkName,
+                    status, message, instance.getServiceCheckTags());
+
+            // Service check with formatted name is kept for backward compatibility
+            String formattedCheckName = ServiceCheckHelper.formatServiceCheckPrefix(checkName);
+            if (!formattedCheckName.equals(checkName)) {
+                this.sendCanConnectServiceCheck(reporter, checkName, formattedCheckName,
+                        status, message, instance.getServiceCheckTags());
+            }
+        }
+
         reporter.resetServiceCheckCount(checkName);
     }
 
-    private String getServiceCheckName(Instance instance) {
-        String serviceCheckPrefix;
-        if (instance.getServiceCheckPrefix() != null) {
-            serviceCheckPrefix = instance.getServiceCheckPrefix();
-        } else {
-            serviceCheckPrefix = ServiceCheckHelper.formatServiceCheckPrefix(instance.getCheckName());
-        }
-        return String.format("%s.can_connect", serviceCheckPrefix);
+    private void sendCanConnectServiceCheck(Reporter reporter, String checkName,
+        String serviceCheckPrefix, String status, String message, String[] tags) {
+        String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
+        reporter.sendServiceCheck(
+                checkName, serviceCheckName, status, message, tags);
     }
 
     private Instance instantiate(

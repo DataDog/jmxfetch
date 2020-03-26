@@ -8,12 +8,16 @@ public class ServiceCheckHelperTest {
 
     @Test
     public void testFormatServiceCheckPrefix() {
-        assertEquals("foo.my_check_name",
-                ServiceCheckHelper.formatServiceCheckPrefix("foo.my_check_name"));
-        assertEquals("foobar.my_check_name",
-                ServiceCheckHelper.formatServiceCheckPrefix("foo_bar.my_check_name"));
-        assertEquals("foobaz.my_check_name123ABC",
-                ServiceCheckHelper.formatServiceCheckPrefix("foo_123bazABC.my_check_name123ABC"));
-    }
+        // Let's get a list of Strings to test (add real versionned check names
+        // here when you add  new versionned check)
+        String[][] data = {
+                {"activemq_58.foo.bar12", "activemq.foo.bar12"},
+                {"test_package-X86_64-VER1:0.weird.metric_name", "testpackage.weird.metric_name"}
+        };
 
+        // Let's test them all
+        for (String[] datum : data) {
+            assertEquals(datum[1], ServiceCheckHelper.formatServiceCheckPrefix(datum[0]));
+        }
+    }
 }
