@@ -19,6 +19,7 @@ import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
+import org.datadog.jmxfetch.util.ServiceCheckHelper;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -812,8 +813,29 @@ public class App {
             Reporter reporter, Instance instance, String message, String status) {
         String checkName = instance.getCheckName();
 
-        reporter.sendServiceCheck(checkName, status, message, instance.getServiceCheckTags());
+        if (instance.getServiceCheckPrefix() != null) {
+            this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
+                    status, message, instance.getServiceCheckTags());
+        } else {
+            this.sendCanConnectServiceCheck(reporter, checkName, checkName,
+                    status, message, instance.getServiceCheckTags());
+
+            // Service check with formatted name is kept for backward compatibility
+            String formattedCheckName = ServiceCheckHelper.formatServiceCheckPrefix(checkName);
+            if (!formattedCheckName.equals(checkName)) {
+                this.sendCanConnectServiceCheck(reporter, checkName, formattedCheckName,
+                        status, message, instance.getServiceCheckTags());
+            }
+        }
+
         reporter.resetServiceCheckCount(checkName);
+    }
+
+    private void sendCanConnectServiceCheck(Reporter reporter, String checkName,
+        String serviceCheckPrefix, String status, String message, String[] tags) {
+        String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
+        reporter.sendServiceCheck(
+                checkName, serviceCheckName, status, message, tags);
     }
 
     private Instance instantiate(

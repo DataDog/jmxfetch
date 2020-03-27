@@ -1,0 +1,9 @@
+init_config:
+  service_check_prefix: null
+
+instances:
+  -   jvm_direct: true
+      name: jmx_test_instance
+      conf:
+        - include:
+            domain: org.datadog.jmxfetch.test

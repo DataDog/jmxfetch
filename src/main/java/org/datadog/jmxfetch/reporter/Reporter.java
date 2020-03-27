@@ -2,7 +2,6 @@ package org.datadog.jmxfetch.reporter;
 
 import com.timgroup.statsd.ServiceCheck;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
@@ -157,11 +156,9 @@ public abstract class Reporter {
     }
 
     /** Submits service check. */
-    public void sendServiceCheck(String checkName, String status, String message, String[] tags) {
+    public void sendServiceCheck(String checkName, String serviceCheckName,
+                                 String status, String message, String[] tags) {
         this.incrementServiceCheckCount(checkName);
-        String serviceCheckName = String.format(
-            "%s.can_connect", Reporter.formatServiceCheckPrefix(checkName));
-
         this.doSendServiceCheck(serviceCheckName, status, message, tags);
     }
 
@@ -182,13 +179,6 @@ public abstract class Reporter {
 
     protected Map<String, Integer> getServiceCheckCountMap() {
         return this.serviceCheckCount;
-    }
-
-    /** Formats the service check prefix. */
-    public static String formatServiceCheckPrefix(String fullname) {
-        String[] chunks = fullname.split("\\.");
-        chunks[0] = chunks[0].replaceAll("[A-Z0-9:_\\-]", "");
-        return StringUtils.join(chunks, ".");
     }
 
     protected ServiceCheck.Status statusToServiceCheckStatus(String status) {

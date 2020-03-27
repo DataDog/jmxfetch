@@ -90,6 +90,7 @@ public class Instance {
     private String service;
     private Map<String, String> tags;
     private String checkName;
+    private String serviceCheckPrefix;
     private int maxReturnedMetrics;
     private boolean limitReached;
     private Connection connection;
@@ -184,6 +185,10 @@ public class Instance {
                                 + "Please define a name in your instance configuration");
                 this.instanceName = this.checkName;
             }
+        }
+
+        if (initConfig != null) {
+            this.serviceCheckPrefix = (String) initConfig.get("service_check_prefix");
         }
 
         // Alternative aliasing for CASSANDRA-4009 metrics
@@ -704,6 +709,11 @@ public class Instance {
     /** Returns the check name. */
     public String getCheckName() {
         return this.checkName;
+    }
+
+    /** Returns the check prefix. */
+    public String getServiceCheckPrefix() {
+        return this.serviceCheckPrefix;
     }
 
     /** Returns the maximum number of metrics an instance may collect. */
