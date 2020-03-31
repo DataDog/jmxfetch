@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 0.36.0 / 2020-03-31
+
+### Changes
+* [FEATURE] Add class name and class regex filters [#277][]
+* [FEATURE] Add check prefix config [#284][]
+* [IMPROVEMENT] Fix service checks in the JSON reporter [#278][]
+* [IMPROVEMENT] Fix RMI socket connection timeout [#285][]
+
 # 0.35.0 / 2020-02-24
 
 ### Changes
@@ -450,6 +458,10 @@ Changelog
 [#272]: https://github.com/DataDog/jmxfetch/issues/272
 [#273]: https://github.com/DataDog/jmxfetch/issues/273
 [#275]: https://github.com/DataDog/jmxfetch/issues/275
+[#277]: https://github.com/DataDog/jmxfetch/issues/277
+[#278]: https://github.com/DataDog/jmxfetch/issues/278
+[#284]: https://github.com/DataDog/jmxfetch/issues/284
+[#285]: https://github.com/DataDog/jmxfetch/issues/285
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
