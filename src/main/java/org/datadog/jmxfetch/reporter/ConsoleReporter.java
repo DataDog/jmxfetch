@@ -56,7 +56,7 @@ public class ConsoleReporter extends Reporter {
 
         Map<String, Object> sc = new HashMap<String, Object>();
         sc.put("name", serviceCheckName);
-        sc.put("status", statusToInteger(status));
+        sc.put("status", status);
         sc.put("message", message);
         sc.put("tags", tags);
         serviceChecks.add(sc);
