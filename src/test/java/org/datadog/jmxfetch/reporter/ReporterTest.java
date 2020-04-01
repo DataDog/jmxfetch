@@ -3,7 +3,7 @@ package org.datadog.jmxfetch.reporter;
 import org.datadog.jmxfetch.Status;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ReporterTest {
 
