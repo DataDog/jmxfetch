@@ -30,13 +30,13 @@ import javax.management.remote.JMXServiceURL;
 @Slf4j
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
-    private static final long JMX_TIMEOUT = 20;
     public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
     private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
     protected Map<String, Object> env;
     protected JMXServiceURL address;
+    protected long jmxTimeout = 20;
 
     private static <T extends Throwable> T initCause(T wrapper, Throwable wrapped) {
         wrapper.initCause(wrapped);
@@ -108,7 +108,7 @@ public class Connection {
                 });
         Object result;
         try {
-            result = mailbox.poll(JMX_TIMEOUT, TimeUnit.SECONDS);
+            result = mailbox.poll(jmxTimeout, TimeUnit.SECONDS);
             if (result == null) {
                 if (!mailbox.offer("")) {
                     result = mailbox.take();
