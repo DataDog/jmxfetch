@@ -192,7 +192,7 @@ public abstract class Reporter {
         return ServiceCheck.Status.UNKNOWN;
     }
 
-    protected int statusToInteger(String status) {
+    protected int statusToServiceCheckStatusValue(String status) {
         ServiceCheck sc = ServiceCheck.builder()
                 .withStatus(this.statusToServiceCheckStatus(status))
                 .build();
