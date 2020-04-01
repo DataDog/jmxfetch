@@ -47,6 +47,17 @@ public class RemoteConnection extends Connection {
             rmiTimeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
         }
 
+        Integer connectionTimeout;
+        try {
+            connectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
+        } catch (final ClassCastException e) {
+            connectionTimeout =
+                Integer.parseInt((String) connectionParams.get("rmi_connection_timeout"));
+        }
+        if (connectionTimeout != null) {
+            jmxTimeout = connectionTimeout;
+        }
+
         user = (String) connectionParams.get("user");
         password = (String) connectionParams.get("password");
         jmxUrl = (String) connectionParams.get("jmx_url");
