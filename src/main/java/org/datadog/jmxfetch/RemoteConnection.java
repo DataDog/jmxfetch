@@ -1,7 +1,5 @@
 package org.datadog.jmxfetch;
 
-import static java.rmi.server.RMISocketFactory.setSocketFactory;
-
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -29,8 +27,6 @@ public class RemoteConnection extends Connection {
     private static final String KEY_STORE_PASSWORD_KEY = "key_store_password";
     private static final String DEFAULT_RMI_RESPONSE_TIMEOUT =
             "15000"; // Match the collection period default
-    // The default behaviour is to wait indefinitely, we change that and only wait for 15sec.
-    private static final Integer DEFAULT_RMI_CONNECTION_TIMEOUT = Integer.valueOf(15000);
 
     /** RemoteConnection constructor for specified remote connection parameters. */
     public RemoteConnection(Map<String, Object> connectionParams) throws IOException {
@@ -92,18 +88,6 @@ public class RemoteConnection extends Connection {
 
         // Set an RMI timeout so we don't get stuck waiting for a bean to report a value
         System.setProperty("sun.rmi.transport.tcp.responseTimeout", rmiTimeout);
-
-        Integer rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
-        try {
-            rmiConnectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
-        } catch (final ClassCastException e) {
-            rmiConnectionTimeout = 
-                Integer.parseInt((String) connectionParams.get("rmi_connection_timeout"));
-        }
-        if (rmiConnectionTimeout == null) {
-            rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
-        }
-        setSocketFactory(new SocketFactory(rmiConnectionTimeout));
 
         createConnection();
     }

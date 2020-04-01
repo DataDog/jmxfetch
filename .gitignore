@@ -18,4 +18,3 @@ target/*
 
 # jenv
 .java_version
-.factorypath
