@@ -46,7 +46,7 @@ public class JsonReporter extends Reporter {
         sc.put("check", serviceCheckName);
         sc.put("host_name", "default");
         sc.put("timestamp", System.currentTimeMillis() / 1000);
-        sc.put("status", this.statusToServiceCheckStatus(status));
+        sc.put("status", this.statusToInteger(status));
         sc.put("message", message);
         sc.put("tags", tags);
       
