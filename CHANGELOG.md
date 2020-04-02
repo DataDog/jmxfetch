@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.36.1 / 2020-04-02
+
+### Changes
+* [IMPROVEMENT] Fix json service check status [#287][]
+* [BUGFIX] Revert pull request [#285][] [#288][] and re-implement the ability to configure the RMI connection timeout [#289][]
+
 # 0.36.0 / 2020-03-31
 
 ### Changes
@@ -462,6 +468,9 @@ Changelog
 [#278]: https://github.com/DataDog/jmxfetch/issues/278
 [#284]: https://github.com/DataDog/jmxfetch/issues/284
 [#285]: https://github.com/DataDog/jmxfetch/issues/285
+[#287]: https://github.com/DataDog/jmxfetch/issues/287
+[#288]: https://github.com/DataDog/jmxfetch/issues/288
+[#289]: https://github.com/DataDog/jmxfetch/issues/289
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
