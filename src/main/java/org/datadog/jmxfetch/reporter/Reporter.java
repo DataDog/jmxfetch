@@ -192,6 +192,13 @@ public abstract class Reporter {
         return ServiceCheck.Status.UNKNOWN;
     }
 
+    protected int statusToServiceCheckStatusValue(String status) {
+        ServiceCheck sc = ServiceCheck.builder()
+                .withStatus(this.statusToServiceCheckStatus(status))
+                .build();
+        return sc.getStatus();
+    }
+
     protected abstract void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags);
 
