@@ -167,6 +167,8 @@ public class App {
      * System#exit}.
      */
     public static int run(AppConfig config) {
+        log.info("JMX RUN " + getVersion() + " has started");
+
         Marker fatal = MarkerFactory.getMarker("FATAL");
         String action = config.getAction();
 
@@ -176,15 +178,16 @@ public class App {
                     action + " is not in " + AppConfig.ACTIONS + ". Exiting.");
             return 1;
         }
+        log.info("JMX RUN with action " + action);
 
-        if (!action.equals(AppConfig.ACTION_COLLECT)
-            && !(config.isConsoleReporter() || config.isJsonReporter())) {
-            // The "list_*" actions can not be used with the statsd reporter
-            log.error(fatal,
-                      action
-                      + " argument can only be used with the console or json reporter. Exiting.");
-            return 1;
-        }
+        // if (!action.equals(AppConfig.ACTION_COLLECT)
+        //     && !(config.isConsoleReporter() || config.isJsonReporter())) {
+        //     // The "list_*" actions can not be used with the statsd reporter
+        //     log.error(fatal,
+        //               action
+        //               + " argument can only be used with the console or json reporter. Exiting.");
+        //     return 1;
+        // }
 
         if (action.equals(AppConfig.ACTION_LIST_JVMS)) {
             List<com.sun.tools.attach.VirtualMachineDescriptor> descriptors =
@@ -222,6 +225,7 @@ public class App {
             // Start the main loop
             app.start();
         }
+
         if (action.equals(AppConfig.ACTION_LIST_WITH_METRICS)) {
             app.displayMetrics();
         }
@@ -1073,6 +1077,7 @@ public class App {
                 log.info(
                     "Could not initialize instance: " + instance.getName()
                     + ": " + e.toString());
+                e.printStackTrace(System.out);
                 instance.cleanUpAsync();
                 brokenInstanceMap.put(instance.toString(), instance);
             }

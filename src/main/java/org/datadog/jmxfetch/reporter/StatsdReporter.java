@@ -90,16 +90,13 @@ public class StatsdReporter extends Reporter {
     }
 
     public void displayMatchingAttributeName(JmxAttribute jmxAttribute, int rank, int limit) {
-        throw new UnsupportedOperationException();
     }
 
     public void displayNonMatchingAttributeName(JmxAttribute jmxAttribute) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
     public void displayInstanceName(Instance instance) {
-        throw new UnsupportedOperationException();
     }
 
     public String getStatsdHost() {
