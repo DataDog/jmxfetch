@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.36.2 / 2020-05-15
+
+### Changes
+* [SECURITY] Bump snakeyaml dependency to 1.26. [#294][]
+* [IMPROVEMENT] Only log about broken instances when they exist. [#280][]
+
 # 0.36.1 / 2020-04-02
 
 ### Changes
@@ -466,11 +472,13 @@ Changelog
 [#275]: https://github.com/DataDog/jmxfetch/issues/275
 [#277]: https://github.com/DataDog/jmxfetch/issues/277
 [#278]: https://github.com/DataDog/jmxfetch/issues/278
+[#280]: https://github.com/DataDog/jmxfetch/issues/280
 [#284]: https://github.com/DataDog/jmxfetch/issues/284
 [#285]: https://github.com/DataDog/jmxfetch/issues/285
 [#287]: https://github.com/DataDog/jmxfetch/issues/287
 [#288]: https://github.com/DataDog/jmxfetch/issues/288
 [#289]: https://github.com/DataDog/jmxfetch/issues/289
+[#294]: https://github.com/DataDog/jmxfetch/issues/294
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
