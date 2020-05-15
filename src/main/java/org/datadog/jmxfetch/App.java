@@ -557,9 +557,7 @@ public class App {
         }
 
         // Attempt to fix broken instances
-        log.debug("Trying to recover broken instances...");
         fixBrokenInstances(reporter);
-        log.debug("Done trying to recover broken instances.");
 
         try {
             appConfig.getStatus().flush();
@@ -569,6 +567,11 @@ public class App {
     }
 
     private void fixBrokenInstances(Reporter reporter) {
+        if (brokenInstanceMap.isEmpty()) {
+            return;
+        }
+
+        log.debug("Trying to recover broken instances...");
         List<InstanceTask<Void>> fixInstanceTasks =
                 new ArrayList<InstanceTask<Void>>(brokenInstanceMap.values().size());
 
@@ -629,6 +632,8 @@ public class App {
         } catch (Exception e) {
             // NADA
         }
+
+        log.debug("Done trying to recover broken instances.");
     }
 
     /**
