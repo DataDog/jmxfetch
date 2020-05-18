@@ -56,8 +56,8 @@ public class AppConfig {
     private static final int DEFAULT_THREAD_POOL_SIZE = 3;
     private static final int DEFAULT_COLLECTION_TO_S = 60;
     private static final int DEFAULT_RECONNECTION_TO_S = 15;
-//    private static final int DEFAULT_LOG_FILE_MAX_SIZE= 10485760;
-//    private static final int DEFAULT_LOG_FILE_MAX_ROLLS= 1;
+    private static final int DEFAULT_LOG_FILE_MAX_SIZE= 10485760;
+    private static final int DEFAULT_LOG_FILE_MAX_ROLLS= 1;
 
     @Parameter(
             names = {"--help", "-h"},
@@ -90,14 +90,16 @@ public class AppConfig {
             description = " Maximum size of one log file. (default to 10MB )",
             validateWith = PositiveIntegerValidator.class,
             required = false)
-    private int logFileMaxSize;
+    @Builder.Default
+    private int logFileMaxSize=DEFAULT_LOG_FILE_MAX_SIZE;
     
     @Parameter(
             names = {"--log_file_max_rolls","-R"},
             description = " Maximum amount of \"old\" log files to keep. Set to 0 to not limit the number of files to create. (default to 1)",
             validateWith = PositiveIntegerValidator.class,
             required = false)
-    private int logFileMaxRolls;
+    @Builder.Default
+    private int logFileMaxRolls=DEFAULT_LOG_FILE_MAX_ROLLS;
     
 
     @Parameter(
