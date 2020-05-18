@@ -26,11 +26,13 @@ public class CustomLogger {
     private static final String SYSTEM_OUT_ALT = "STDOUT";
     private static final String SYSTEM_ERR_ALT = "STDERR";
 
-    /** Sets up the custom logger to the specified level and location. */
-    public static void setup(Level level, String logLocation) {
+    //Sets up the custom logger to the specified level and location. 
+    public static void setup(Level level, String logLocation, int logMaxFileSize, int logMaxFileRolls) {
         final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         final Configuration config = ctx.getConfiguration();
         String target = "CONSOLE";
+        String maxFileSize = Integer.toString(logMaxFileSize);
+        String maxFileRolls = Integer.toString(logMaxFileRolls);
 
         if (logLocation != null
                 && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
@@ -51,8 +53,8 @@ public class CustomLogger {
                 .withLayout(layout)
                 .withFileName(logLocation)
                 .withFilePattern(logLocation + ".%d")
-                .withPolicy(SizeBasedTriggeringPolicy.createPolicy("5MB"))
-                .withStrategy(DefaultRolloverStrategy.newBuilder().withMax("1").build())
+                .withPolicy(SizeBasedTriggeringPolicy.createPolicy(maxFileSize))
+                .withStrategy(DefaultRolloverStrategy.newBuilder().withMax(maxFileRolls).build())
                 .build();
 
             fa.start();
