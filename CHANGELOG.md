@@ -1,6 +1,10 @@
 Changes
 =======
 
+# 0.26.4 / 2020-05-21
+
+* [SECURITY] Bump FasterXML to 2.10.0. See [#296][] and [CVE-2019-14379](https://nvd.nist.gov/vuln/detail/CVE-2019-14379).
+
 # 0.26.3 / 2019-06-11
 
 * [IMPROVEMENT] Avoid logging config with Auto Discovery. See [#235][]
@@ -325,6 +329,7 @@ Changes
 [#227]: https://github.com/DataDog/jmxfetch/issues/227
 [#229]: https://github.com/DataDog/jmxfetch/issues/229
 [#235]: https://github.com/DataDog/jmxfetch/issues/235
+[#296]: https://github.com/DataDog/jmxfetch/issues/296
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
