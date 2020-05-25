@@ -31,17 +31,10 @@ import javax.management.remote.JMXServiceURL;
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
     public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
-    private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
     protected Map<String, Object> env;
     protected JMXServiceURL address;
-    protected long jmxTimeout = 20;
-
-    private static <T extends Throwable> T initCause(T wrapper, Throwable wrapped) {
-        wrapper.initCause(wrapped);
-        return wrapper;
-    }
 
     /** Gets attributes for matching bean name. */
     public MBeanAttributeInfo[] getAttributesForBean(ObjectName beanName)
@@ -68,7 +61,7 @@ public class Connection {
         this.env.put("attribute.remote.x.request.waiting.timeout", CONNECTION_TIMEOUT);
         closeConnector();
         log.info("Connecting to: " + this.address);
-        connector = connectWithTimeout(this.address, this.env);
+        connector = JMXConnectorFactory.connect(this.address, this.env);
         mbs = connector.getMBeanServerConnection();
     }
 
@@ -81,56 +74,6 @@ public class Connection {
             return ((Attribute) attr).getValue();
         }
         return attr;
-    }
-
-    /**
-     * Connect to a MBean Server with a timeout This code comes from this blog post:
-     * https://weblogs.java.net/blog/emcmanus/archive/2007/05/making_a_jmx_co.html.
-     */
-    JMXConnector connectWithTimeout(final JMXServiceURL url, final Map<String, Object> env)
-            throws IOException {
-
-        final BlockingQueue<Object> mailbox = new ArrayBlockingQueue<Object>(1);
-
-        ExecutorService executor = Executors.newSingleThreadExecutor(daemonThreadFactory);
-        executor.submit(
-                new Runnable() {
-                    public void run() {
-                        try {
-                            JMXConnector connector = JMXConnectorFactory.connect(url, env);
-                            if (!mailbox.offer(connector)) {
-                                connector.close();
-                            }
-                        } catch (Throwable t) {
-                            mailbox.offer(t);
-                        }
-                    }
-                });
-        Object result;
-        try {
-            result = mailbox.poll(jmxTimeout, TimeUnit.SECONDS);
-            if (result == null) {
-                if (!mailbox.offer("")) {
-                    result = mailbox.take();
-                }
-            }
-        } catch (InterruptedException e) {
-            throw initCause(new InterruptedIOException(e.getMessage()), e);
-        } finally {
-            executor.shutdown();
-        }
-        if (result == null) {
-            log.warn("Connection timed out: " + url);
-            throw new SocketTimeoutException("Connection timed out: " + url);
-        }
-        if (result instanceof JMXConnector) {
-            return (JMXConnector) result;
-        }
-        try {
-            throw (Throwable) result;
-        } catch (Throwable e) {
-            throw new IOException(e.toString(), e);
-        }
     }
 
     /** Closes the connector. */
@@ -155,13 +98,5 @@ public class Connection {
             return false;
         }
         return true;
-    }
-
-    private static class DaemonThreadFactory implements ThreadFactory {
-        public Thread newThread(Runnable run) {
-            Thread thread = Executors.defaultThreadFactory().newThread(run);
-            thread.setDaemon(true);
-            return thread;
-        }
     }
 }

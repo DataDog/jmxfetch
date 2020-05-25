@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import lombok.extern.slf4j.Slf4j;
+import org.datadog.jmxfetch.util.JmxfetchRmiClientSocketFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -20,13 +21,15 @@ public class RemoteConnection extends Connection {
     private String password;
     private String path = "jmxrmi";
     private String jmxUrl;
-    private String rmiTimeout;
+    private Integer rmiTimeout;
+    private Integer rmiConnectionTimeout;
     private static final String TRUST_STORE_PATH_KEY = "trust_store_path";
     private static final String TRUST_STORE_PASSWORD_KEY = "trust_store_password";
     private static final String KEY_STORE_PATH_KEY = "key_store_path";
     private static final String KEY_STORE_PASSWORD_KEY = "key_store_password";
-    private static final String DEFAULT_RMI_RESPONSE_TIMEOUT =
-            "15000"; // Match the collection period default
+    private static final int DEFAULT_RMI_CONNECTION_TIMEOUT = 20000;
+    private static final int DEFAULT_RMI_TIMEOUT =
+            15000; // Match the collection period default
 
     /** RemoteConnection constructor for specified remote connection parameters. */
     public RemoteConnection(Map<String, Object> connectionParams) throws IOException {
@@ -38,24 +41,22 @@ public class RemoteConnection extends Connection {
         }
 
         try {
-            rmiTimeout = (String) connectionParams.get("rmi_client_timeout");
-        } catch (ClassCastException e) {
-            rmiTimeout = Integer.toString((Integer) connectionParams.get("rmi_client_timeout"));
-        }
-
-        if (rmiTimeout == null) {
-            rmiTimeout = DEFAULT_RMI_RESPONSE_TIMEOUT;
-        }
-
-        Integer connectionTimeout;
-        try {
-            connectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
+            rmiTimeout = (Integer) connectionParams.get("rmi_client_timeout");
         } catch (final ClassCastException e) {
-            connectionTimeout =
+            rmiTimeout = Integer.parseInt((String) connectionParams.get("rmi_client_timeout"));
+        }
+        if (rmiTimeout == null) {
+            rmiTimeout = DEFAULT_RMI_TIMEOUT;
+        }
+
+        try {
+            rmiConnectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
+        } catch (final ClassCastException e) {
+            rmiConnectionTimeout = 
                 Integer.parseInt((String) connectionParams.get("rmi_connection_timeout"));
         }
-        if (connectionTimeout != null) {
-            jmxTimeout = connectionTimeout;
+        if (rmiConnectionTimeout == null) {
+            rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
         }
 
         user = (String) connectionParams.get("user");
@@ -65,6 +66,7 @@ public class RemoteConnection extends Connection {
         if (connectionParams.containsKey("path")) {
             path = (String) connectionParams.get("path");
         }
+
         env = getEnv(connectionParams);
         address = getAddress();
 
@@ -96,25 +98,18 @@ public class RemoteConnection extends Connection {
                 log.info("Setting keyStore path: " + keyStorePath + " and keyStorePassword");
             }
         }
-
-        // Set an RMI timeout so we don't get stuck waiting for a bean to report a value
-        System.setProperty("sun.rmi.transport.tcp.responseTimeout", rmiTimeout);
-
         createConnection();
     }
 
     private Map<String, Object> getEnv(Map<String, Object> connectionParams) {
-
         Map<String, Object> environment = new HashMap<String, Object>();
-
-        if (connectionParams.containsKey("rmi_registry_ssl")
-                && (Boolean) connectionParams.get("rmi_registry_ssl")) {
-            SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
-            environment.put("com.sun.jndi.rmi.factory.socket", csf);
-            environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
-        }
-
-        environment.put(JMXConnector.CREDENTIALS, new String[] {user, password});
+        boolean useSsl = (connectionParams.containsKey("rmi_registry_ssl")
+                && (Boolean) connectionParams.get("rmi_registry_ssl"));
+        JmxfetchRmiClientSocketFactory csf = 
+            new JmxfetchRmiClientSocketFactory(rmiTimeout, rmiConnectionTimeout, useSsl);
+        environment.put("com.sun.jndi.rmi.factory.socket", csf);
+        environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
+        environment.put(JMXConnector.CREDENTIALS, new String[] { user, password });
         return environment;
     }
 
