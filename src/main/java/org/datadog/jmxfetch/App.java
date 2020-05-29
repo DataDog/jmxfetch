@@ -141,7 +141,7 @@ public class App {
             // not needed in dd-java-agent, which calls run directly.
 
             // Set up the logger to add file handler
-            CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation(), config.getLogFileMaxSize(), config.getLogFileMaxRolls());
+            CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation(), config.getLogFileMaxSize(), config.getLogFileMaxRolls(),config.isLogFormatJson(),config.isLogToConsole(),config.isLogToSyslog(),config.getSyslogUri(),config.isSyslogRfc(),config.getSyslogPem(),config.getSyslogKey(),config.isSyslogTlsVerify());
 
             // Set up the shutdown hook to properly close resources
             attachShutdownHook();

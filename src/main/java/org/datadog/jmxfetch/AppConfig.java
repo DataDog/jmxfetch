@@ -101,12 +101,74 @@ public class AppConfig {
     @Builder.Default
     private int logFileMaxRolls=DEFAULT_LOG_FILE_MAX_ROLLS;
     
+    
+    @Parameter(
+    		 names = {"--log_format_json","-J"},
+             description = " Logging under json format",
+             required = false)
+    @Builder.Default
+    private boolean logFormatJson=false;
+    
+    
+    @Parameter(
+   		 names = {"--log_to_console","-C"},
+            description = "Send logs to console",
+            required = false)
+    @Builder.Default
+    private boolean logToConsole=true;
+    
+    
+    @Parameter(
+   		 names = {"--log_to_syslog","-J"},
+            description = "Send logs to syslog",
+            required = false)
+    @Builder.Default
+    private boolean logToSyslog=false;
+    
+    
+    @Parameter(
+      		 names = {"--syslog_uri",""},
+               description = "Define a custom remote syslog uri if needed. If 'syslog_uri' is left undefined/empty, a local domain socket connection is attempted.",
+               required = false)
+    private String syslogUri;
+    
+       
+   @Parameter(
+    		 names = {"--syslog_rfc",""},
+             description = "Set to 'true' to output in an RFC 5424-compliant format for Agent logs. Default: false",
+             required = false)
+     @Builder.Default
+     private boolean syslogRfc=false;
+   
+       
+     @Parameter(
+      		 names = {"--syslog_pem",""},
+               description = "If TLS enabled, you must specify a path to a PEM certificate here",
+               required = false)
+     private String syslogPem;
+     
+     
+     @Parameter(
+    		 names = {"--syslog_key",""},
+             description = "If TLS enabled, you must specify a path to a private key here",
+             required = false)
+     private String syslogKey;
+     
+             
+     @Parameter(
+      		 names = {"--syslog_tls_verify",""},
+             description = "If TLS enabled, you may enforce TLS verification here. Default: true",
+             required = false)
+     @Builder.Default
+     private boolean syslogTlsVerify=true;
+             
 
     @Parameter(
             names = {"--conf_directory", "-D"},
             description = "Absolute path to the conf.d directory",
             required = false)
     private String confdDirectory;
+    
 
     @Parameter(
             names = {"--tmp_directory", "-T"},
@@ -429,6 +491,70 @@ public class AppConfig {
 
 	public int getLogFileMaxRolls() {
 		return logFileMaxRolls;
+	}
+
+	public boolean isLogFormatJson() {
+		return logFormatJson;
+	}
+
+	public void setLogFormatJson(boolean logFormatJson) {
+		this.logFormatJson = logFormatJson;
+	}
+
+	public boolean isLogToConsole() {
+		return logToConsole;
+	}
+
+	public void setLogToConsole(boolean logToConsole) {
+		this.logToConsole = logToConsole;
+	}
+
+	public boolean isLogToSyslog() {
+		return logToSyslog;
+	}
+
+	public void setLogToSyslog(boolean logToSyslog) {
+		this.logToSyslog = logToSyslog;
+	}
+
+	public String getSyslogUri() {
+		return syslogUri;
+	}
+
+	public void setSyslogUri(String syslogUri) {
+		this.syslogUri = syslogUri;
+	}
+
+	public boolean isSyslogRfc() {
+		return syslogRfc;
+	}
+
+	public void setSyslogRfc(boolean syslogRfc) {
+		this.syslogRfc = syslogRfc;
+	}
+
+	public String getSyslogPem() {
+		return syslogPem;
+	}
+
+	public void setSyslogPem(String syslogPem) {
+		this.syslogPem = syslogPem;
+	}
+
+	public String getSyslogKey() {
+		return syslogKey;
+	}
+
+	public void setSyslogKey(String syslogKey) {
+		this.syslogKey = syslogKey;
+	}
+
+	public boolean isSyslogTlsVerify() {
+		return syslogTlsVerify;
+	}
+
+	public void setSyslogTlsVerify(boolean syslogTlsVerify) {
+		this.syslogTlsVerify = syslogTlsVerify;
 	}
 
 }

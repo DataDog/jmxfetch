@@ -27,7 +27,7 @@ public class CustomLogger {
     private static final String SYSTEM_ERR_ALT = "STDERR";
 
     //Sets up the custom logger to the specified level and location. 
-    public static void setup(Level level, String logLocation, int logMaxFileSize, int logMaxFileRolls) {
+    public static void setup(Level level, String logLocation, int logMaxFileSize, int logMaxFileRolls, boolean logFormatJson,boolean logToConsole, boolean logToSyslog, String syslogUri, boolean syslogRfc, String syslogPem, String syslogKey, boolean syslogTlsVerify ) {
         final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         final Configuration config = ctx.getConfiguration();
         String target = "CONSOLE";
