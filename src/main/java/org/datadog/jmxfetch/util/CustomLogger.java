@@ -21,7 +21,8 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 @Slf4j
 public class CustomLogger {
     private static final Multiset<String> messageCount = HashMultiset.create();
-    private static final String LOGGER_LAYOUT = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
+    private static final String layout = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
+    private static final String LOGGER_LAYOUT = layout;
     // log4j2 uses SYSTEM_OUT and SYSTEM_ERR - support both
     private static final String SYSTEM_OUT_ALT = "STDOUT";
     private static final String SYSTEM_ERR_ALT = "STDERR";
