@@ -42,7 +42,7 @@ public class TestCommon {
     /** Setup logger. */
     @BeforeClass
     public static void init() throws Exception {
-        CustomLogger.setup(Level.toLevel("ALL"), "/tmp/jmxfetch_test.log");
+        CustomLogger.setup(Level.toLevel("ALL"), "/tmp/jmxfetch_test.log", false);
     }
 
     /**

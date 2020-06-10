@@ -22,15 +22,21 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 public class CustomLogger {
     private static final Multiset<String> messageCount = HashMultiset.create();
     private static final String LAYOUT = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
+
+    private static final String LAYOUT_RFC3339 =
+        "%d{yyyy-MM-dd'T'HH:mm:ss'Z'} | JMX | %-5p | %c{1} | %m%n";
+
     // log4j2 uses SYSTEM_OUT and SYSTEM_ERR - support both
     private static final String SYSTEM_OUT_ALT = "STDOUT";
     private static final String SYSTEM_ERR_ALT = "STDERR";
 
     /** Sets up the custom logger to the specified level and location. */
-    public static void setup(Level level, String logLocation) {
+    public static void setup(Level level, String logLocation, boolean logFormatRfc3339) {
         final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         final Configuration config = ctx.getConfiguration();
         String target = "CONSOLE";
+
+        String logPattern = logFormatRfc3339 ? LAYOUT : LAYOUT_RFC3339;
 
         if (logLocation != null
                 && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
@@ -42,7 +48,7 @@ public class CustomLogger {
 
             PatternLayout layout = PatternLayout.newBuilder()
                 .withConfiguration(config)
-                .withPattern(LAYOUT)
+                .withPattern(logPattern)
                 .build();
 
             RollingFileAppender fa = RollingFileAppender.newBuilder()
@@ -73,7 +79,7 @@ public class CustomLogger {
 
                 PatternLayout layout = PatternLayout.newBuilder()
                     .withConfiguration(config)
-                    .withPattern(LAYOUT)
+                     .withPattern(logPattern)
                     .build();
 
                 ConsoleAppender ca = ConsoleAppender.newBuilder()

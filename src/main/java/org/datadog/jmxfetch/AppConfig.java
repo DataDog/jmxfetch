@@ -84,6 +84,13 @@ public class AppConfig {
     private String logLocation;
 
     @Parameter(
+            names = {"--log_format_rfc3339"},
+            description = "Logs using the RFC3339 format for dates",
+            required = false)
+    @Builder.Default
+    private boolean logFormatRfc3339 = false;
+
+    @Parameter(
             names = {"--conf_directory", "-D"},
             description = "Absolute path to the conf.d directory",
             required = false)
@@ -351,6 +358,10 @@ public class AppConfig {
 
     public String getLogLocation() {
         return logLocation;
+    }
+
+    public boolean isLogFormatRfc3339() {
+        return logFormatRfc3339;
     }
 
     /** Returns path to auto-discovery pipe. Deprecated.. */
