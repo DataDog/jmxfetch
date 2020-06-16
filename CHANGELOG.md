@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 0.37.0 / 2020-06-16
+
+### Changes
+* [IMPROVEMENT] Update logs format to match the Datadog Agent format. [#300][]
+* [IMPROVEMENT] Add the option '--log_format_rfc3339' to use  RFC3339 for dates in the logs. [#300][]
+[IMPROVEMENT] Better handling of timeouts for both SSL and non-SSL RMI/JMX connections. [#298][]
+
 # 0.36.2 / 2020-05-15
 
 ### Changes
@@ -479,6 +486,8 @@ Changelog
 [#288]: https://github.com/DataDog/jmxfetch/issues/288
 [#289]: https://github.com/DataDog/jmxfetch/issues/289
 [#294]: https://github.com/DataDog/jmxfetch/issues/294
+[#298]: https://github.com/DataDog/jmxfetch/issues/298
+[#300]: https://github.com/DataDog/jmxfetch/issues/300
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
