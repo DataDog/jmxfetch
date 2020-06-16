@@ -6,7 +6,7 @@ Changelog
 ### Changes
 * [IMPROVEMENT] Update logs format to match the Datadog Agent format. [#300][]
 * [IMPROVEMENT] Add the option '--log_format_rfc3339' to use  RFC3339 for dates in the logs. [#300][]
-[IMPROVEMENT] Better handling of timeouts for both SSL and non-SSL RMI/JMX connections. [#298][]
+* [IMPROVEMENT] Better handling of timeouts for both SSL and non-SSL RMI/JMX connections. [#298][]
 
 # 0.36.2 / 2020-05-15
 
