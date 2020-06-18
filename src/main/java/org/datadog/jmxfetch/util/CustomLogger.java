@@ -36,7 +36,7 @@ public class CustomLogger {
         final Configuration config = ctx.getConfiguration();
         String target = "CONSOLE";
 
-        String logPattern = logFormatRfc3339 ? LAYOUT : LAYOUT_RFC3339;
+        String logPattern = logFormatRfc3339 ? LAYOUT_RFC3339 : LAYOUT;
 
         if (logLocation != null
                 && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
