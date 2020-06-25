@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 0.38.0 / 2020-06-25
+
+### Changes
+* [IMPROVEMENT] Collect Shenandoah GC collection count and time. [#306][]
+* [IMPROVEMENT] Collect ZGC collection count and time. [#303][]
+* [BUGFIX] Fix the '--log_format_rfc3339' option. [#302][]
+
 # 0.37.0 / 2020-06-16
 
 ### Changes
@@ -488,6 +495,9 @@ Changelog
 [#294]: https://github.com/DataDog/jmxfetch/issues/294
 [#298]: https://github.com/DataDog/jmxfetch/issues/298
 [#300]: https://github.com/DataDog/jmxfetch/issues/300
+[#302]: https://github.com/DataDog/jmxfetch/issues/302
+[#303]: https://github.com/DataDog/jmxfetch/issues/303
+[#306]: https://github.com/DataDog/jmxfetch/issues/306
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
