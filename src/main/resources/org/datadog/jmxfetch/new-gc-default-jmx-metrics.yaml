@@ -101,3 +101,14 @@
       CollectionTime:
         alias: jvm.gc.major_collection_time
         metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: ZGC
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.major_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.major_collection_time
+        metric_type: counter
