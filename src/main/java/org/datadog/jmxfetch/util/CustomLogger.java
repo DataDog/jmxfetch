@@ -6,6 +6,7 @@ import com.google.common.collect.Multiset;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter.Result;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
@@ -17,6 +18,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.ThresholdFilter;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+
+
 
 @Slf4j
 public class CustomLogger {
@@ -38,6 +41,11 @@ public class CustomLogger {
 
         String logPattern = logFormatRfc3339 ? LAYOUT_RFC3339 : LAYOUT;
 
+        PatternLayout layout = PatternLayout.newBuilder()
+            .withConfiguration(config)
+            .withPattern(logPattern)
+            .build();
+
         if (logLocation != null
                 && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
                 && !SYSTEM_ERR_ALT.equals(logLocation)
@@ -45,11 +53,6 @@ public class CustomLogger {
                 && !SYSTEM_OUT_ALT.equals(logLocation)) {
 
             target = "FileLogger";
-
-            PatternLayout layout = PatternLayout.newBuilder()
-                .withConfiguration(config)
-                .withPattern(logPattern)
-                .build();
 
             RollingFileAppender fa = RollingFileAppender.newBuilder()
                 .setConfiguration(config)
@@ -77,11 +80,6 @@ public class CustomLogger {
                 config.getRootLogger().removeAppender("CONSOLE");
                 ctx.updateLoggers();
 
-                PatternLayout layout = PatternLayout.newBuilder()
-                    .withConfiguration(config)
-                     .withPattern(logPattern)
-                    .build();
-
                 ConsoleAppender ca = ConsoleAppender.newBuilder()
                     .setConfiguration(config)
                     .withName(logLocation)
@@ -95,8 +93,20 @@ public class CustomLogger {
             }
         }
 
+        // replace default appender with the correct layout
         LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        loggerConfig.removeAppender(target);
+
+        Appender appender = ConsoleAppender.newBuilder()
+                    .setConfiguration(config)
+                    .withName(target)
+                    .withLayout(layout)
+                    .build();
+        appender.start();
+
+        loggerConfig.addAppender(appender,null,null);
         loggerConfig.setLevel(level);
+
         ctx.updateLoggers();
     }
 
