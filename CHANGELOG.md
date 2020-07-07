@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.38.1 / 2020-07-07
+
+### Changes
+* [BUGFIX] Apply the '--log_format_rfc3339' option to the console logger. [#308][]
+
 # 0.38.0 / 2020-06-25
 
 ### Changes
@@ -498,6 +503,7 @@ Changelog
 [#302]: https://github.com/DataDog/jmxfetch/issues/302
 [#303]: https://github.com/DataDog/jmxfetch/issues/303
 [#306]: https://github.com/DataDog/jmxfetch/issues/306
+[#308]: https://github.com/DataDog/jmxfetch/issues/308
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
