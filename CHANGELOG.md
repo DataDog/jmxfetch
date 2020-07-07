@@ -1,6 +1,11 @@
 Changes
 =======
 
+# 0.26.5 / 2020-07-07
+
+* [SECURITY] Bump Guava to 27.1. See [#304][] and [CVE-2018-10237](https://nvd.nist.gov/vuln/detail/CVE-2018-10237).
+* [SECURITY] Bump Log4j to 2.13.2. See [#258][], [#305][], [#309][] and [CVE-2017-5645](https://nvd.nist.gov/vuln/detail/CVE-2017-5645).
+
 # 0.26.4 / 2020-05-21
 
 * [SECURITY] Bump FasterXML to 2.10.0. See [#296][] and [CVE-2019-14379](https://nvd.nist.gov/vuln/detail/CVE-2019-14379).
@@ -329,7 +334,11 @@ Changes
 [#227]: https://github.com/DataDog/jmxfetch/issues/227
 [#229]: https://github.com/DataDog/jmxfetch/issues/229
 [#235]: https://github.com/DataDog/jmxfetch/issues/235
+[#258]: https://github.com/DataDog/jmxfetch/issues/258
 [#296]: https://github.com/DataDog/jmxfetch/issues/296
+[#304]: https://github.com/DataDog/jmxfetch/issues/304
+[#305]: https://github.com/DataDog/jmxfetch/issues/305
+[#309]: https://github.com/DataDog/jmxfetch/issues/309
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
