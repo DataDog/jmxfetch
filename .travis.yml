@@ -11,24 +11,26 @@ matrix:
   fast_finish: true
   include:
     - jdk: oraclejdk8
-      env: 
+      env:
        - DESC="Oracle JDK8 linting"
-       - CMD="mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j2.travis.properties"
 
     - jdk: oraclejdk8
-      env: 
+      env:
        - DESC="Oracle JDK8 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configurationFile=log4j2.travis.properties"
 
     - jdk: oraclejdk7
-      env: 
+      env:
        - DESC="Oracle JDK7 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configurationFile=log4j2.travis.properties"
 
     - jdk: openjdk7
-      env: 
+      env:
        - DESC="OpenJDK7 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configurationFile=log4j2.travis.properties"
 
-script: echo "Running $DESC..." && (eval $CMD) 
+script: echo "Running $DESC..." && (eval $CMD)
 
+after_failure:
+  - for log in target/surefire-reports/*.txt; do  echo "$log ========================" ; cat $log ; done

@@ -1,7 +1,7 @@
 package org.datadog.jmxfetch.reporter;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
@@ -11,9 +11,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+@Slf4j
 public abstract class Reporter {
 
-    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     public static final String VALUE = "value";
 
     private HashMap<String, Integer> serviceCheckCount;
@@ -75,12 +75,12 @@ public abstract class Reporter {
                         + " metrics to the metrics reporter during collection #"
                         + loopCounter;
         if (loopCounter <= 5 || loopCounter % 10 == 0) {
-            LOGGER.info(sendingMessage);
+            log.info(sendingMessage);
             if (loopCounter == 5) {
-                LOGGER.info("Next collections will be logged only every 10 collections.");
+                log.info("Next collections will be logged only every 10 collections.");
             }
         } else {
-            LOGGER.debug(sendingMessage);
+            log.debug(sendingMessage);
         }
 
         for (HashMap<String, Object> m : metrics) {
@@ -117,7 +117,7 @@ public abstract class Reporter {
                 instanceCountersAggregator.put(key, currentValue.longValue());
 
                 if (delta < 0) {
-                    LOGGER.info("Counter " + metricName + " has been reset - not submitting.");
+                    log.info("Counter " + metricName + " has been reset - not submitting.");
                     continue;
                 }
                 sendMetricPoint(metricType, metricName, delta, tags);
@@ -144,7 +144,7 @@ public abstract class Reporter {
                 if (sane && submit) {
                     sendMetricPoint(metricType, metricName, rate, tags);
                 } else if (sane) {
-                    LOGGER.info(
+                    log.info(
                             "Canonical rate option set, and negative rate (counter reset)"
                                     + "not submitting.");
                 }

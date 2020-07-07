@@ -2,7 +2,7 @@ package org.datadog.jmxfetch;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.yaml.snakeyaml.Yaml;
@@ -27,8 +27,8 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
+@Slf4j
 public class Instance {
-    private static final Logger LOGGER = Logger.getLogger(Instance.class.getName());
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
                     "long",
@@ -163,7 +163,7 @@ public class Instance {
                                 + "-"
                                 + this.instanceMap.get("port");
             } else {
-                LOGGER.warn(
+                log.warn(
                         "Cannot determine a unique instance name. "
                                 + "Please define a name in your instance configuration");
                 this.instanceName = this.checkName;
@@ -185,7 +185,7 @@ public class Instance {
         }
 
         if (instanceConf == null) {
-            LOGGER.warn("Cannot find a \"conf\" section in " + this.instanceName);
+            log.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
             for (LinkedHashMap<String, Object> conf :
                     (ArrayList<LinkedHashMap<String, Object>>) (instanceConf)) {
@@ -225,7 +225,7 @@ public class Instance {
             for (String fileName : appConfig.getMetricConfigFiles()) {
                 String yamlPath = new File(fileName).getAbsolutePath();
                 FileInputStream yamlInputStream = null;
-                LOGGER.info("Reading metric config file " + yamlPath);
+                log.info("Reading metric config file " + yamlPath);
                 try {
                     yamlInputStream = new FileInputStream(yamlPath);
                     ArrayList<LinkedHashMap<String, Object>> confs =
@@ -235,9 +235,9 @@ public class Instance {
                         configurationList.add(new Configuration(conf));
                     }
                 } catch (FileNotFoundException e) {
-                    LOGGER.warn("Cannot find metric config file " + yamlPath);
+                    log.warn("Cannot find metric config file " + yamlPath);
                 } catch (Exception e) {
-                    LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
+                    log.warn("Cannot parse yaml file " + yamlPath, e);
                 } finally {
                     if (yamlInputStream != null) {
                         try {
@@ -258,10 +258,10 @@ public class Instance {
         if (resourceConfigList != null) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (String resourceName : resourceConfigList) {
-                LOGGER.info("Reading metric config resource " + resourceName);
+                log.info("Reading metric config resource " + resourceName);
                 InputStream inputStream = classLoader.getResourceAsStream(resourceName);
                 if (inputStream == null) {
-                    LOGGER.warn("Cannot find metric config resource" + resourceName);
+                    log.warn("Cannot find metric config resource" + resourceName);
                 } else {
                     try {
                         LinkedHashMap<String, ArrayList<LinkedHashMap<String, Object>>> topYaml =
@@ -274,10 +274,10 @@ public class Instance {
                                 configurationList.add(new Configuration(conf));
                             }
                         } else {
-                            LOGGER.warn("jmx_metrics block not found in resource " + resourceName);
+                            log.warn("jmx_metrics block not found in resource " + resourceName);
                         }
                     } catch (Exception e) {
-                        LOGGER.warn("Cannot parse yaml resource " + resourceName, e);
+                        log.warn("Cannot parse yaml resource " + resourceName, e);
                     } finally {
                         try {
                             inputStream.close();
@@ -336,12 +336,12 @@ public class Instance {
             LinkedHashMap<String, Object> connectionParams, boolean forceNewConnection)
             throws IOException {
         if (connection == null || !connection.isAlive()) {
-            LOGGER.info(
+            log.info(
                     "Connection closed or does not exist. "
                     + "Attempting to create a new connection...");
             return ConnectionFactory.createConnection(connectionParams);
         } else if (forceNewConnection) {
-            LOGGER.info("Forcing a new connection, attempting to create...");
+            log.info("Forcing a new connection, attempting to create...");
             connection.closeConnector();
             return ConnectionFactory.createConnection(connectionParams);
         }
@@ -351,15 +351,15 @@ public class Instance {
     /** Initializes the instance. May force a new connection.. */
     public void init(boolean forceNewConnection)
             throws IOException, FailedLoginException, SecurityException {
-        LOGGER.info("Trying to connect to JMX Server at " + this.toString());
+        log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
-        LOGGER.info(
+        log.info(
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
         this.refreshBeansList();
-        LOGGER.info("Connected to JMX Server at " + this.toString());
+        log.info("Connected to JMX Server at " + this.toString());
         this.getMatchingAttributes();
-        LOGGER.info("Done initializing JMX Server at " + this.toString());
+        log.info("Done initializing JMX Server at " + this.toString());
     }
 
     /** Returns a string representation for the instance. */
@@ -382,7 +382,7 @@ public class Instance {
         if (this.refreshBeansPeriod != null
                 && (System.currentTimeMillis() - this.lastRefreshTime) / 1000
                         > this.refreshBeansPeriod) {
-            LOGGER.info("Refreshing bean list");
+            log.info("Refreshing bean list");
             this.refreshBeansList();
             this.getMatchingAttributes();
         }
@@ -408,9 +408,9 @@ public class Instance {
             } catch (IOException e) {
                 throw e;
             } catch (Exception e) {
-                LOGGER.debug("Cannot get metrics for attribute: " + jmxAttr, e);
+                log.debug("Cannot get metrics for attribute: " + jmxAttr, e);
                 if (this.failingAttributes.contains(jmxAttr)) {
-                    LOGGER.debug(
+                    log.debug(
                             "Cannot generate metrics for attribute: "
                                     + jmxAttr
                                     + " twice in a row. Removing it from the attribute list");
@@ -451,7 +451,7 @@ public class Instance {
 
         for (ObjectName beanName : beans) {
             if (limitReached) {
-                LOGGER.debug("Limit reached");
+                log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
                     break;
                 }
@@ -460,17 +460,17 @@ public class Instance {
 
             try {
                 // Get all the attributes for bean_name
-                LOGGER.debug("Getting attributes for bean: " + beanName);
+                log.debug("Getting attributes for bean: " + beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
                 // we should not continue
-                LOGGER.warn("Cannot get bean attributes " + e.getMessage());
+                log.warn("Cannot get bean attributes " + e.getMessage());
                 if (e.getMessage() == connection.CLOSED_CLIENT_CAUSE) {
                     throw e;
                 }
                 continue;
             } catch (Exception e) {
-                LOGGER.warn("Cannot get bean attributes " + e.getMessage());
+                log.warn("Cannot get bean attributes " + e.getMessage());
                 continue;
             }
 
@@ -479,7 +479,7 @@ public class Instance {
                 if (metricsCount >= maxReturnedMetrics) {
                     limitReached = true;
                     if (action.equals(AppConfig.ACTION_COLLECT)) {
-                        LOGGER.warn("Maximum number of metrics reached.");
+                        log.warn("Maximum number of metrics reached.");
                         break;
                     } else if (!metricReachedDisplayed
                             && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
@@ -491,7 +491,7 @@ public class Instance {
                 JmxAttribute jmxAttribute;
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
-                    LOGGER.debug(
+                    log.debug(
                             ATTRIBUTE
                                     + beanName
                                     + " : "
@@ -507,7 +507,7 @@ public class Instance {
                                     cassandraAliasing,
                                     emptyDefaultHostname);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    LOGGER.debug(
+                    log.debug(
                             ATTRIBUTE
                                     + beanName
                                     + " : "
@@ -522,7 +522,7 @@ public class Instance {
                                     tags,
                                     emptyDefaultHostname);
                 } else if (MULTI_TYPES.contains(attributeType)) {
-                    LOGGER.debug(
+                    log.debug(
                             ATTRIBUTE
                                     + beanName
                                     + " : "
@@ -538,7 +538,7 @@ public class Instance {
                                     emptyDefaultHostname);
                 } else {
                     try {
-                        LOGGER.debug(
+                        log.debug(
                                 ATTRIBUTE
                                         + beanName
                                         + " : "
@@ -546,7 +546,7 @@ public class Instance {
                                         + " has an unsupported type: "
                                         + attributeType);
                     } catch (NullPointerException e) {
-                        LOGGER.warn("Caught unexpected NullPointerException");
+                        log.warn("Caught unexpected NullPointerException");
                     }
                     continue;
                 }
@@ -574,7 +574,7 @@ public class Instance {
                             break;
                         }
                     } catch (Exception e) {
-                        LOGGER.error(
+                        log.error(
                                 "Error while trying to match attributeInfo configuration "
                                         + "with the Attribute: "
                                         + beanName
@@ -590,7 +590,7 @@ public class Instance {
                 }
             }
         }
-        LOGGER.info("Found " + matchingAttributes.size() + " matching attributes");
+        log.info("Found " + matchingAttributes.size() + " matching attributes");
     }
 
     /** Returns a list of strings listing the bean scopes. */
@@ -620,7 +620,7 @@ public class Instance {
                     this.beans.addAll(connection.queryNames(name));
                 }
             } catch (Exception e) {
-                LOGGER.error(
+                log.error(
                         "Unable to compute a common bean scope, querying all beans as a fallback",
                         e);
             }

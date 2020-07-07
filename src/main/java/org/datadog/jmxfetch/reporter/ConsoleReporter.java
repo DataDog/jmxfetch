@@ -2,7 +2,7 @@ package org.datadog.jmxfetch.reporter;
 
 import com.google.common.base.Joiner;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
@@ -10,9 +10,8 @@ import org.datadog.jmxfetch.JmxAttribute;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+@Slf4j
 public class ConsoleReporter extends Reporter {
-
-    private static final Logger LOGGER = Logger.getLogger(ConsoleReporter.class.getName());
 
     private LinkedList<HashMap<String, Object>> metrics = new LinkedList<HashMap<String, Object>>();
     private LinkedList<HashMap<String, Object>> serviceChecks =
@@ -22,7 +21,7 @@ public class ConsoleReporter extends Reporter {
     protected void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags) {
         String tagString = "[" + Joiner.on(",").join(tags) + "]";
-        LOGGER.info(
+        log.info(
                 metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
         HashMap<String, Object> metric = new HashMap<String, Object>();
@@ -50,7 +49,7 @@ public class ConsoleReporter extends Reporter {
         if (tags != null && tags.length > 0) {
             tagString = "[" + Joiner.on(",").join(tags) + "]";
         }
-        LOGGER.info(
+        log.info(
                 checkName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + status);
 
         HashMap<String, Object> sc = new HashMap<String, Object>();
@@ -74,24 +73,24 @@ public class ConsoleReporter extends Reporter {
 
     @Override
     public void displayMetricReached() {
-        LOGGER.info(
+        log.info(
                 "       ------- METRIC LIMIT REACHED: ATTRIBUTES BELOW WON'T BE COLLECTED -------");
     }
 
     @Override
     public void displayMatchingAttributeName(JmxAttribute jmxAttribute, int rank, int limit) {
-        LOGGER.info("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
+        log.info("       Matching: " + rank + "/" + limit + ". " + jmxAttribute);
     }
 
     @Override
     public void displayNonMatchingAttributeName(JmxAttribute jmxAttribute) {
-        LOGGER.info("       Not Matching: " + jmxAttribute);
+        log.info("       Not Matching: " + jmxAttribute);
     }
 
     @Override
     public void displayInstanceName(Instance instance) {
-        LOGGER.info("#####################################");
-        LOGGER.info("Instance: " + instance);
-        LOGGER.info("#####################################");
+        log.info("#####################################");
+        log.info("Instance: " + instance);
+        log.info("#####################################");
     }
 }
