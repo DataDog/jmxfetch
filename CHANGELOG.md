@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.38.2 / 2020-07-17
+
+### Changes
+* [BUGFIX] Re-introduce support of Java 7, broken in `0.38.1` because of a dependency upgrade. [#311][]
+
 # 0.38.1 / 2020-07-07
 
 ### Changes
@@ -504,6 +509,7 @@ Changelog
 [#303]: https://github.com/DataDog/jmxfetch/issues/303
 [#306]: https://github.com/DataDog/jmxfetch/issues/306
 [#308]: https://github.com/DataDog/jmxfetch/issues/308
+[#311]: https://github.com/DataDog/jmxfetch/issues/311
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
