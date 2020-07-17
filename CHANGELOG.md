@@ -1,20 +1,34 @@
 Changes
 =======
 
+# 0.26.6 / 2020-07-17
+
+### Changes
+
+* [BUGFIX] Re-introduce support of Java 7, broken in `0.26.5` because of a dependency upgrade. [#311][]
+
 # 0.26.5 / 2020-07-07
+
+### Changes
 
 * [SECURITY] Bump Guava to 27.1. See [#304][] and [CVE-2018-10237](https://nvd.nist.gov/vuln/detail/CVE-2018-10237).
 * [SECURITY] Bump Log4j to 2.13.2. See [#258][], [#305][], [#309][] and [CVE-2017-5645](https://nvd.nist.gov/vuln/detail/CVE-2017-5645).
 
 # 0.26.4 / 2020-05-21
 
+### Changes
+
 * [SECURITY] Bump FasterXML to 2.10.0. See [#296][] and [CVE-2019-14379](https://nvd.nist.gov/vuln/detail/CVE-2019-14379).
 
 # 0.26.3 / 2019-06-11
 
+### Changes
+
 * [IMPROVEMENT] Avoid logging config with Auto Discovery. See [#235][]
 
 # 0.26.2 / 2019-05-27
+
+### Changes
 
 * [IMPROVEMENT] Bump jackson dependency versions to 2.9.9. See [#227][]
 * [IMPROVEMENT] Only log check names instead of their config. See [#229][]
@@ -335,10 +349,42 @@ Changes
 [#229]: https://github.com/DataDog/jmxfetch/issues/229
 [#235]: https://github.com/DataDog/jmxfetch/issues/235
 [#258]: https://github.com/DataDog/jmxfetch/issues/258
+<<<<<<< HEAD
 [#296]: https://github.com/DataDog/jmxfetch/issues/296
 [#304]: https://github.com/DataDog/jmxfetch/issues/304
 [#305]: https://github.com/DataDog/jmxfetch/issues/305
 [#309]: https://github.com/DataDog/jmxfetch/issues/309
+=======
+[#260]: https://github.com/DataDog/jmxfetch/issues/260
+[#261]: https://github.com/DataDog/jmxfetch/issues/261
+[#262]: https://github.com/DataDog/jmxfetch/issues/262
+[#265]: https://github.com/DataDog/jmxfetch/issues/265
+[#266]: https://github.com/DataDog/jmxfetch/issues/266
+[#267]: https://github.com/DataDog/jmxfetch/issues/267
+[#268]: https://github.com/DataDog/jmxfetch/issues/268
+[#269]: https://github.com/DataDog/jmxfetch/issues/269
+[#270]: https://github.com/DataDog/jmxfetch/issues/270
+[#271]: https://github.com/DataDog/jmxfetch/issues/271
+[#272]: https://github.com/DataDog/jmxfetch/issues/272
+[#273]: https://github.com/DataDog/jmxfetch/issues/273
+[#275]: https://github.com/DataDog/jmxfetch/issues/275
+[#277]: https://github.com/DataDog/jmxfetch/issues/277
+[#278]: https://github.com/DataDog/jmxfetch/issues/278
+[#280]: https://github.com/DataDog/jmxfetch/issues/280
+[#284]: https://github.com/DataDog/jmxfetch/issues/284
+[#285]: https://github.com/DataDog/jmxfetch/issues/285
+[#287]: https://github.com/DataDog/jmxfetch/issues/287
+[#288]: https://github.com/DataDog/jmxfetch/issues/288
+[#289]: https://github.com/DataDog/jmxfetch/issues/289
+[#294]: https://github.com/DataDog/jmxfetch/issues/294
+[#298]: https://github.com/DataDog/jmxfetch/issues/298
+[#300]: https://github.com/DataDog/jmxfetch/issues/300
+[#302]: https://github.com/DataDog/jmxfetch/issues/302
+[#303]: https://github.com/DataDog/jmxfetch/issues/303
+[#306]: https://github.com/DataDog/jmxfetch/issues/306
+[#308]: https://github.com/DataDog/jmxfetch/issues/308
+[#311]: https://github.com/DataDog/jmxfetch/issues/311
+>>>>>>> b65da31... 0.38.2 release (#312)
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
@@ -346,4 +392,8 @@ Changes
 [@brothhaar]: https://github.com/brothhaar
 [@coupacooke]: https://github.com/coupacooke
 [@cslee00]: https://github.com/cslee00
+<<<<<<< HEAD
+=======
+[@mattdrees]: https://github.com/mattdrees
+>>>>>>> b65da31... 0.38.2 release (#312)
 [@nwillems]: https://github.com/nwillems
