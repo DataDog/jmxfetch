@@ -41,7 +41,8 @@
         <guava.version>27.1-android</guava.version> <!-- From the docs: If you need support for JDK 1.7 or Android, use the Android flavor. -->
         <java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
         <jcommander.version>1.35</jcommander.version>
-        <log4j.version>2.13.2</log4j.version>
+        <!-- log4j 2.13+ drops support for Java 7, so stick to 2.12 -->
+        <log4j.version>2.12.1</log4j.version>
         <slf4j.version>1.7.26</slf4j.version>
         <jackson.version>2.10.0</jackson.version>
         <snakeyaml.version>1.13</snakeyaml.version>
