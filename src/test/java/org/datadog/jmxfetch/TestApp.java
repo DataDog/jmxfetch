@@ -811,6 +811,41 @@ public class TestApp extends TestCommon {
         assertCoverage();
     }
 
+    /**
+     * Test counter and rate.
+     */
+    @Test
+    public void testAppCounterRate() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean( testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        initApplication("jmx_counter_rate.yaml");
+
+        // First collection should not contain our count
+        run();
+        metrics = getMetrics();
+        assertEquals(26, metrics.size());
+
+        // Since our count is still equal to 0, we should report a delta equal to 0
+        run();
+        metrics = getMetrics();
+        assertEquals(28, metrics.size());
+        assertMetric("test.counter", 0, Collections.<String>emptyList(), 3);
+        assertMetric("test.rate", 0, Collections.<String>emptyList(), 3);
+
+        Thread.sleep(5000);
+        // For the 3rd collection we increment the count to 5 so we should get a +5 delta
+        testApp.incrementCounter(5);
+        run();
+        metrics = getMetrics();
+        assertEquals(28, metrics.size());
+        assertMetric("test.counter", 0.95, 1, Collections.<String>emptyList(), 3);
+        assertMetric("test.rate", 0.95, 1, Collections.<String>emptyList(), 3);
+
+        assertCoverage();
+    }
+
     /** 
      * Test JMX Service Discovery.
      * */

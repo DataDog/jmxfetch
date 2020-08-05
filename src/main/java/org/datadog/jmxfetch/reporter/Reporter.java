@@ -119,7 +119,15 @@ public abstract class Reporter {
                 }
                 sendMetricPoint(metricType, metricName, delta, tags);
 
-            } else { // The metric should be 'counter'
+            } else {
+                // `counter` and `rate` are equivalent and both accepted as valid.
+                // We continue accepting other cases for backward compatibility.
+                if (!"counter".equals(metricType) && !"rate".equals(metricType)) {
+                    log.warn("Invalid metric type " + metricType + " for metric " + metricName
+                            + ". The metric will be processed as rate"
+                            + " (this is a DEPRECATED behaviour, use a valid type instead).");
+                }
+
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
                     Map<String, Object> rateInfo = new HashMap<String, Object>();
