@@ -5,10 +5,10 @@ import com.google.common.primitives.Bytes;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
+import org.apache.log4j.Appender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.tasks.TaskMethod;
@@ -17,8 +17,6 @@ import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -31,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,8 +52,8 @@ import javax.security.auth.login.FailedLoginException;
 
 
 @SuppressWarnings("unchecked")
-@Slf4j
 public class App {
+    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private static final String AUTO_DISCOVERY_PREFIX = "AD-";
     private static final String AD_CONFIG_SEP = "#### AUTO-DISCOVERY ####";
     private static final String AD_LEGACY_CONFIG_SEP = "#### SERVICE-DISCOVERY ####";
@@ -125,16 +124,6 @@ public class App {
             System.exit(0);
         }
 
-        {
-            // Running these commands here because they are logging specific,
-            // not needed in dd-java-agent, which calls run directly.
-
-            // Set up the logger to add file handler
-            CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
-
-            // Set up the shutdown hook to properly close resources
-            attachShutdownHook();
-        }
         System.exit(run(config));
     }
 
@@ -143,18 +132,18 @@ public class App {
      * System#exit}.
      */
     public static int run(AppConfig config) {
-        Marker fatal = MarkerFactory.getMarker("FATAL");
+        // Set up the logger to add file handler
+        CustomLogger.setup(Level.toLevel(config.getLogLevel()), config.getLogLocation());
 
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(config.getAction())) {
-            log.error(fatal,
-                    config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
+            LOGGER.fatal(config.getAction() + " is not in " + AppConfig.ACTIONS + ". Exiting.");
             return 1;
         }
 
         // The "list_*" actions can only be used with the reporter
         if (!config.getAction().equals(AppConfig.ACTION_COLLECT) && !config.isConsoleReporter()) {
-            log.error(fatal,
+            LOGGER.fatal(
                     config.getAction()
                             + " argument can only be used with the console reporter. Exiting.");
             return 1;
@@ -175,7 +164,7 @@ public class App {
         // Set up the shutdown hook to properly close resources
         attachShutdownHook();
 
-        log.info("JMX Fetch has started");
+        LOGGER.info("JMX Fetch has started");
 
         // set up the config status
         config.updateStatus();
@@ -204,16 +193,27 @@ public class App {
 
     /** Attach a Shutdown Hook that will be called when SIGTERM is sent to JMXFetch. */
     private static void attachShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(
-            new Thread() {
-                @Override
-                public void run() {
-                    log.info("JMXFetch is closing");
-                    // Properly close log handlers
-                    LogManager.shutdown();
-                }
+        class ShutdownHook {
+            public void attachShutDownHook() {
+                Runtime.getRuntime()
+                        .addShutdownHook(
+                                new Thread() {
+                                    @Override
+                                    public void run() {
+                                        LOGGER.info("JMXFetch is closing");
+                                        // Properly close log handlers
+                                        Enumeration<Appender> enume =
+                                                (Enumeration<Appender>) LOGGER.getAllAppenders();
+                                        while (enume.hasMoreElements()) {
+                                            Appender appender = enume.nextElement();
+                                            appender.close();
+                                        }
+                                    }
+                                });
             }
-        );
+        }
+
+        new ShutdownHook().attachShutDownHook();
     }
 
     /** Sets reinitialization flag. */
@@ -239,7 +239,7 @@ public class App {
 
         try {
             if (!recoveryProcessor.ready()) {
-                log.warn(
+                LOGGER.warn(
                         "Executor has to be replaced for recovery processor, "
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
@@ -261,7 +261,7 @@ public class App {
                             });
 
         } catch (Exception e) {
-            log.warn(
+            LOGGER.warn(
                     "Unable to terminate all connections gracefully "
                     + "- possible network connectivity issues.");
         } finally {
@@ -282,9 +282,9 @@ public class App {
         String pipeName = appConfig.getAutoDiscoveryPipe();
         try {
             adPipe = new FileInputStream(pipeName);
-            log.info("Named pipe for Auto-Discovery opened: " + pipeName);
+            LOGGER.info("Named pipe for Auto-Discovery opened: " + pipeName);
         } catch (FileNotFoundException e) {
-            log.info("Unable to open named pipe for Auto-Discovery: " + pipeName);
+            LOGGER.info("Unable to open named pipe for Auto-Discovery: " + pipeName);
         }
 
         return adPipe;
@@ -309,15 +309,15 @@ public class App {
             }
 
             String name = getAutoDiscoveryName(config);
-            log.debug("Attempting to apply config. Name: " + name + "\nconfig: \n" + config);
+            LOGGER.debug("Attempting to apply config. Name: " + name);
             InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
             YamlParser yaml = new YamlParser(stream);
 
             if (this.addConfig(name, yaml)) {
                 reinit = true;
-                log.debug("Configuration added succesfully reinit in order");
+                LOGGER.debug("Configuration added succesfully reinit in order");
             } else {
-                log.debug("Unable to apply configuration.");
+                LOGGER.debug("Unable to apply configuration.");
             }
         }
 
@@ -333,12 +333,12 @@ public class App {
         FileInputStream adPipe = null;
 
         if (appConfig.getAutoDiscoveryPipeEnabled()) {
-            log.info("Auto Discovery enabled");
+            LOGGER.info("Auto Discovery enabled");
             adPipe = newAutoDiscoveryPipe();
             try {
                 FileHelper.touch(new File(appConfig.getJmxLaunchFile()));
             } catch (IOException e) {
-                log.warn(
+                LOGGER.warn(
                         "Unable to create launch file"
                         + " - Auto-Discovery configs will not be automatically resubmitted.");
             }
@@ -347,7 +347,7 @@ public class App {
         while (true) {
             // Exit on exit file trigger...
             if (appConfig.getExitWatcher().shouldExit()) {
-                log.info("Exit file detected: stopping JMXFetch.");
+                LOGGER.info("Exit file detected: stopping JMXFetch.");
                 return;
             }
 
@@ -388,38 +388,38 @@ public class App {
                     setReinit(getJsonConfigs());
                 }
             } catch (IOException e) {
-                log.warn(
+                LOGGER.warn(
                         "Unable to read from pipe"
                                 + "- Service Discovery configuration may have been skipped.");
             } catch (Exception e) {
-                log.warn("Problem parsing auto-discovery configuration: " + e);
+                LOGGER.warn("Problem parsing auto-discovery configuration: " + e);
             }
 
             long start = System.currentTimeMillis();
             if (this.reinit.get()) {
-                log.info("Reinitializing...");
+                LOGGER.info("Reinitializing...");
                 init(true);
             }
 
             if (instances.size() > 0) {
                 doIteration();
             } else {
-                log.warn("No instance could be initiated. Retrying initialization.");
+                LOGGER.warn("No instance could be initiated. Retrying initialization.");
                 lastJsonConfigTs = 0; // reset TS to get AC instances
                 appConfig.getStatus().flush();
                 configs = getConfigs(appConfig);
                 init(true);
             }
             long duration = System.currentTimeMillis() - start;
-            log.debug("Iteration ran in " + duration + " ms");
+            LOGGER.debug("Iteration ran in " + duration + " ms");
             // Sleep until next collection
             try {
                 long loopPeriod = appConfig.getCheckPeriod();
                 long sleepPeriod = (duration > loopPeriod) ? loopPeriod : loopPeriod - duration;
-                log.debug("Sleeping for " + loopPeriod + " ms.");
+                LOGGER.debug("Sleeping for " + loopPeriod + " ms.");
                 Thread.sleep(loopPeriod);
             } catch (InterruptedException e) {
-                log.warn(e.getMessage(), e);
+                LOGGER.warn(e.getMessage(), e);
             }
         }
     }
@@ -446,7 +446,7 @@ public class App {
             }
 
             if (!collectionProcessor.ready()) {
-                log.warn(
+                LOGGER.warn(
                         "Executor has to be replaced for collection processor, "
                         + "previous one hogging threads");
                 collectionProcessor.stop();
@@ -479,7 +479,7 @@ public class App {
             String instanceStatus = Status.STATUS_ERROR;
             String scStatus = Status.STATUS_ERROR;
 
-            log.warn("JMXFetch internal error invoking concurrent tasks: ", e);
+            LOGGER.warn("JMXFetch internal error invoking concurrent tasks: ", e);
 
             for (Instance instance : instances) {
                 // don't add instances to broken instances, issue was internal
@@ -492,14 +492,14 @@ public class App {
         }
 
         // Attempt to fix broken instances
-        log.debug("Trying to recover broken instances...");
+        LOGGER.debug("Trying to recover broken instances...");
         fixBrokenInstances(reporter);
-        log.debug("Done trying to recover broken instances.");
+        LOGGER.debug("Done trying to recover broken instances.");
 
         try {
             appConfig.getStatus().flush();
         } catch (Exception e) {
-            log.error("Unable to flush stats.", e);
+            LOGGER.error("Unable to flush stats.", e);
         }
     }
 
@@ -511,7 +511,7 @@ public class App {
             reporter.clearRatesAggregator(instance.getName());
             reporter.clearCountersAggregator(instance.getName());
 
-            log.warn(
+            LOGGER.warn(
                     "Instance "
                             + instance
                             + " didn't return any metrics. "
@@ -532,7 +532,7 @@ public class App {
 
         try {
             if (!recoveryProcessor.ready()) {
-                log.warn(
+                LOGGER.warn(
                         "Executor has to be replaced for recovery processor, "
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
@@ -575,7 +575,7 @@ public class App {
         // + 2 cause of underscores.
         if (name.length()
                 > AUTO_DISCOVERY_PREFIX.length() + AD_MAX_NAME_LEN + AD_MAX_MAG_INSTANCES + 2) {
-            log.debug("Name too long - skipping: " + name);
+            LOGGER.debug("Name too long - skipping: " + name);
             return false;
         }
         String patternText =
@@ -591,7 +591,7 @@ public class App {
         Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
             // bad name.
-            log.debug("Cannot match instance name: " + name);
+            LOGGER.debug("Cannot match instance name: " + name);
             return false;
         }
 
@@ -599,7 +599,7 @@ public class App {
         String check = matcher.group(1);
         if (this.configs.containsKey(check)) {
             // there was already a file config for the check.
-            log.debug("Key already present - skipping: " + name);
+            LOGGER.debug("Key already present - skipping: " + name);
             return false;
         }
 
@@ -620,7 +620,7 @@ public class App {
         loadFileConfigs(config, configs);
         loadResourceConfigs(config, configs);
 
-        log.info("Found " + configs.size() + " config files");
+        LOGGER.info("Found " + configs.size() + " config files");
         return configs;
     }
 
@@ -632,14 +632,14 @@ public class App {
                 String name = file.getName().replace(".yaml", "");
                 String yamlPath = file.getAbsolutePath();
                 FileInputStream yamlInputStream = null;
-                log.info("Reading " + yamlPath);
+                LOGGER.info("Reading " + yamlPath);
                 try {
                     yamlInputStream = new FileInputStream(yamlPath);
                     configs.put(name, new YamlParser(yamlInputStream));
                 } catch (FileNotFoundException e) {
-                    log.warn("Cannot find " + yamlPath);
+                    LOGGER.warn("Cannot find " + yamlPath);
                 } catch (Exception e) {
-                    log.warn("Cannot parse yaml file " + yamlPath, e);
+                    LOGGER.warn("Cannot parse yaml file " + yamlPath, e);
                 } finally {
                     if (yamlInputStream != null) {
                         try {
@@ -660,15 +660,15 @@ public class App {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (String resourceName : resourceConfigList) {
                 String name = resourceName.replace(".yaml", "");
-                log.info("Reading " + resourceName);
+                LOGGER.info("Reading " + resourceName);
                 InputStream inputStream = classLoader.getResourceAsStream(resourceName);
                 if (inputStream == null) {
-                    log.warn("Cannot find " + resourceName);
+                    LOGGER.warn("Cannot find " + resourceName);
                 } else {
                     try {
                         configs.put(name, new YamlParser(inputStream));
                     } catch (Exception e) {
-                        log.warn("Cannot parse yaml file " + resourceName, e);
+                        LOGGER.warn("Cannot parse yaml file " + resourceName, e);
                     } finally {
                         try {
                             inputStream.close();
@@ -693,18 +693,16 @@ public class App {
             String uripath = "agent/jmx/configs?timestamp=" + lastJsonConfigTs;
             response = client.request("GET", "", uripath);
             if (!response.isResponse2xx()) {
-                log.warn(
+                LOGGER.warn(
                         "Failed collecting JSON configs: ["
                                 + response.getResponseCode()
                                 + "] "
                                 + response.getResponseBody());
                 return update;
             } else if (response.getResponseCode() == 204) {
-                log.debug("No configuration changes...");
+                LOGGER.debug("No configuration changes...");
                 return update;
             }
-
-            log.debug("Received the following JSON configs: " + response.getResponseBody());
 
             InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
             JsonParser parser = new JsonParser(jsonInputStream);
@@ -713,12 +711,15 @@ public class App {
                 adJsonConfigs = (HashMap<String, Object>) parser.getJsonConfigs();
                 lastJsonConfigTs = timestamp;
                 update = true;
-                log.info("update is in order - updating timestamp: " + lastJsonConfigTs);
+                LOGGER.info("update is in order - updating timestamp: " + lastJsonConfigTs);
+                for (String checkName : adJsonConfigs.keySet()) {
+                    LOGGER.debug("received config for check '" + checkName + "'");
+                }
             }
         } catch (JsonProcessingException e) {
-            log.error("error processing JSON response: " + e);
+            LOGGER.error("error processing JSON response: " + e);
         } catch (IOException e) {
-            log.error("unable to collect remote JMX configs: " + e);
+            LOGGER.error("unable to collect remote JMX configs: " + e);
         }
 
         return update;
@@ -763,7 +764,7 @@ public class App {
         } catch (Exception e) {
             String warning = "Unable to create instance. Please check your yaml file";
             appConfig.getStatus().addInitFailedCheck(checkName, warning, Status.STATUS_ERROR);
-            log.error(warning, e);
+            LOGGER.error(warning, e);
             return null;
         }
 
@@ -772,7 +773,7 @@ public class App {
 
     /** Initializes instances and metric collection. */
     public void init(boolean forceNewConnection) {
-        log.info("Cleaning up instances...");
+        LOGGER.info("Cleaning up instances...");
         clearInstances(instances);
         clearInstances(brokenInstanceMap.values());
         brokenInstanceMap.clear();
@@ -780,7 +781,7 @@ public class App {
         List<InstanceTask<Void>> instanceInitTasks = new ArrayList<InstanceTask<Void>>();
         List<Instance> newInstances = new ArrayList<Instance>();
 
-        log.info("Dealing with YAML config instances...");
+        LOGGER.info("Dealing with YAML config instances...");
         Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
         Iterator<Entry<String, YamlParser>> itPipeConfigs = adPipeConfigs.entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
@@ -804,14 +805,14 @@ public class App {
                     ((ArrayList<LinkedHashMap<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
                 String warning = "No instance found in :" + name;
-                log.warn(warning);
+                LOGGER.warn(warning);
                 appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
                 continue;
             }
 
             for (LinkedHashMap<String, Object> configInstance : configInstances) {
                 // Create a new Instance object
-                log.info("Instantiating instance for: " + name);
+                LOGGER.info("Instantiating instance for: " + name);
                 Instance instance =
                         instantiate(
                                 configInstance,
@@ -823,7 +824,7 @@ public class App {
         }
 
         // Process JSON configurations
-        log.info("Dealing with Auto-Config instances collected...");
+        LOGGER.info("Dealing with Auto-Config instances collected...");
         if (adJsonConfigs != null) {
             for (String check : adJsonConfigs.keySet()) {
                 HashMap<String, Object> checkConfig =
@@ -834,7 +835,7 @@ public class App {
                         (ArrayList<LinkedHashMap<String, Object>>) checkConfig.get("instances");
                 String checkName = (String) checkConfig.get("check_name");
                 for (LinkedHashMap<String, Object> configInstance : configInstances) {
-                    log.info("Instantiating instance for: " + checkName);
+                    LOGGER.info("Instantiating instance for: " + checkName);
                     Instance instance =
                             instantiate(configInstance, initConfig, checkName, appConfig);
                     newInstances.add(instance);
@@ -848,11 +849,11 @@ public class App {
         }
 
         // Initialize the instances
-        log.info("Started instance initialization...");
+        LOGGER.info("Started instance initialization...");
 
         try {
             if (!recoveryProcessor.ready()) {
-                log.warn(
+                LOGGER.warn(
                         "Executor has to be replaced for recovery processor, "
                         + "previous one hogging threads");
                 recoveryProcessor.stop();
@@ -873,7 +874,7 @@ public class App {
                                 }
                             });
 
-            log.info("Completed instance initialization...");
+            LOGGER.info("Completed instance initialization...");
 
             processInstantiationStatus(instanceInitTasks, statuses);
 
@@ -881,7 +882,7 @@ public class App {
             processStatus(instanceInitTasks, statuses);
         } catch (Exception e) {
             // NADA
-            log.warn("Critical issue initializing instances: " + e);
+            LOGGER.warn("Critical issue initializing instances: " + e);
         }
     }
 
@@ -970,9 +971,9 @@ public class App {
 
                 // All was good, add instance
                 instances.add(instance);
-                log.info("Successfully initialized instance: " + instance.getName());
+                LOGGER.info("Successfully initialized instance: " + instance.getName());
             } catch (Throwable e) {
-                log.info(
+                LOGGER.info(
                     "Could not initialize instance: " + instance.getName()
                     + ": " + e.toString());
                 instance.cleanUpAsync();
@@ -1042,7 +1043,7 @@ public class App {
                 warning += " There was an unexpected exception: " + e.getMessage();
             } finally {
                 if (warning != null) {
-                    log.warn(warning);
+                    LOGGER.warn(warning);
 
                     this.reportStatus(
                             appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
@@ -1084,7 +1085,7 @@ public class App {
                                     + " metrics.";
 
                     instanceStatus = Status.STATUS_WARNING;
-                    CustomLogger.laconic(log, Level.WARN, instanceMessage, 0);
+                    CustomLogger.laconic(LOGGER, Level.WARN, instanceMessage, 0);
                 }
 
                 if (numberOfMetrics > 0) {
@@ -1099,24 +1100,24 @@ public class App {
 
                 instanceMessage = te.toString();
 
-                log.warn(instanceMessage);
+                LOGGER.warn(instanceMessage);
             } catch (ExecutionException ee) {
                 instanceMessage = task.getWarning();
                 instanceStatus = Status.STATUS_ERROR;
 
                 brokenInstanceMap.put(instance.toString(), instance);
-                log.debug("Adding broken instance to list: " + instance.getName());
+                LOGGER.debug("Adding broken instance to list: " + instance.getName());
 
-                log.warn(instanceMessage, ee.getCause());
+                LOGGER.warn(instanceMessage, ee.getCause());
             } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
-                log.debug("Adding broken instance to list: " + instance.getName());
+                LOGGER.debug("Adding broken instance to list: " + instance.getName());
                 brokenInstanceMap.put(instance.toString(), instance);
 
                 instanceStatus = Status.STATUS_ERROR;
                 instanceMessage = task.getWarning() + ": " + t.toString();
 
-                log.warn(instanceMessage);
+                LOGGER.warn(instanceMessage);
 
             } finally {
 

@@ -1,7 +1,8 @@
 package org.datadog.jmxfetch.tasks;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.log4j.Logger;
 
+import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.InstanceTask;
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -14,8 +15,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
 public class TaskProcessor {
+    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private Reporter reporter;
     private ExecutorService threadPoolExecutor;
 
@@ -65,7 +66,7 @@ public class TaskProcessor {
                     statuses.add(processor.invoke(instance, future, reporter));
 
                 } catch (Exception e) {
-                    log.warn(
+                    LOGGER.warn(
                             "There was an error processing concurrent instance: " + instance, e);
 
                     statuses.add(new TaskStatusHandler(e));
@@ -73,7 +74,7 @@ public class TaskProcessor {
             }
         } catch (Exception e) {
             // Should we do anything else here?
-            log.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
+            LOGGER.warn("JMXFetch internal TaskProcessor error invoking concurrent tasks: ", e);
             throw e;
         }
 

@@ -41,11 +41,6 @@ mvn checkstyle::check
 
 `Checkstyle` analysis is automatically executed prior to compiling the code, testing.
 
-# Generated code
-
-JMXFetch uses [Lombok](https://projectlombok.org/) to modify classes and generate additional code at runtime.
-You may need to [enable annotation processors](https://projectlombok.org/setup/overview) to compile in your IDE.
-
 # Testing
 
 To run unit test, issue the following command:
