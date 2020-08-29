@@ -1,5 +1,6 @@
 package org.datadog.jmxfetch.tasks;
 
+import  org.mockito.Spy;
 import static org.mockito.Mockito.*;
 
 import org.datadog.jmxfetch.Instance;
@@ -7,16 +8,20 @@ import org.datadog.jmxfetch.InstanceTask;
 import org.datadog.jmxfetch.reporter.Reporter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.ArrayList;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
@@ -24,7 +29,9 @@ import org.junit.BeforeClass;
 public class TestTaskProcessor {
     private static List<Instance> instances = null;
 
-	class TestSimpleTask extends InstanceTask<Boolean> {
+	private final static Logger LOGGER = Logger.getLogger("Test Task Processor");
+
+    class TestSimpleTask extends InstanceTask<Boolean> {
          TestSimpleTask(Instance instance) {
              super(instance);
         }

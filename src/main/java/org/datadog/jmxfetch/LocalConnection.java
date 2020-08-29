@@ -1,12 +1,12 @@
 package org.datadog.jmxfetch;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 
-@Slf4j
 public class LocalConnection extends Connection {
+    private static final Logger LOGGER = Logger.getLogger(LocalConnection.class.getName());
 
     public LocalConnection() throws IOException {
         createConnection();

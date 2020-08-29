@@ -1,11 +1,11 @@
 package org.datadog.jmxfetch;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.log4j.Logger;
 
 import java.util.concurrent.Callable;
 
-@Slf4j
 public abstract class InstanceTask<T> implements Callable<T> {
+    protected static final Logger LOGGER = Logger.getLogger(InstanceTask.class.getName());
     protected Instance instance;
     protected String warning;
 

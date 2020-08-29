@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import javax.management.remote.JMXServiceURL;
 
-@Slf4j
 public class AttachApiConnection extends Connection {
     private static final String CONNECTOR_ADDRESS =
             "com.sun.management.jmxremote.localConnectorAddress";
+    private static final Logger LOGGER = Logger.getLogger(Connection.class.getName());
     private String processRegex;
 
     /** AttachApiConnection constructor for specified connection parameters. */
@@ -67,7 +67,7 @@ public class AttachApiConnection extends Connection {
         try {
             vm.loadAgent(agent);
         } catch (Exception e) {
-            log.warn("Error initializing JMX agent", e);
+            LOGGER.warn("Error initializing JMX agent", e);
         }
     }
 }
