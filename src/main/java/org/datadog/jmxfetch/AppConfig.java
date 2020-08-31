@@ -55,7 +55,7 @@ public class AppConfig {
 
     private static final int DEFAULT_THREAD_POOL_SIZE = 3;
     private static final int DEFAULT_COLLECTION_TO_S = 60;
-    private static final int DEFAULT_RECONNECTION_TO_S = 15;
+    private static final int DEFAULT_RECONNECTION_TO_S = 60;
 
     @Parameter(
             names = {"--help", "-h"},
