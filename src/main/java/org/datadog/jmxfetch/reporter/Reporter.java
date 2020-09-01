@@ -121,7 +121,8 @@ public abstract class Reporter {
 
             } else {
                 // `counter` and `rate` are equivalent and both accepted as valid.
-                // Other types, deprecated or wrong, will default to a counter/rate type and a warning will be logged.
+                // Other types, deprecated or wrong, will default to a counter/rate
+                // type and a warning will be logged.
                 if (!metricType.equals("counter") && !metricType.equals("rate")) {
                     log.warn("Invalid metric type " + metricType + " for metric " + metricName
                             + ". The metric will be processed as rate"
