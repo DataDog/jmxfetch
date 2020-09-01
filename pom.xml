@@ -31,9 +31,42 @@
         </developer>
     </developers>
 
+    <profiles>
+      <profile>
+        <id>default</id>
+        <activation>
+          <jdk>[1.7,9)</jdk>
+        </activation>
+
+        <dependencies>
+           <dependency>
+               <groupId>com.sun</groupId>
+               <artifactId>tools</artifactId>
+               <version>1.4.2</version>
+               <scope>system</scope>
+               <systemPath>${java.home}/../lib/tools.jar</systemPath>
+           </dependency>
+        </dependencies>
+        <properties>
+          <maven.compiler.source>1.6</maven.compiler.source>
+          <maven.compiler.target>1.6</maven.compiler.target>
+        </properties>
+      </profile>
+
+      <profile>
+        <id>new-jdks</id>
+        <activation>
+          <jdk>9.0</jdk>
+        </activation>
+
+        <properties>
+          <maven.compiler.source>1.7</maven.compiler.source>
+          <maven.compiler.target>1.7</maven.compiler.target>
+        </properties>
+      </profile>
+    </profiles>
+
     <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
 
         <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
@@ -77,13 +110,6 @@
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>${jcommander.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun</groupId>
-            <artifactId>tools</artifactId>
-            <version>1.4.2</version>
-            <scope>system</scope>
-            <systemPath>${java.home}/../lib/tools.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
