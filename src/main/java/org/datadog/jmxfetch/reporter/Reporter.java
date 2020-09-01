@@ -95,9 +95,9 @@ public abstract class Reporter {
 
             // StatsD doesn't support rate metrics so we need to have our own aggregator to compute
             // rates
-            if ("gauge".equals(metricType) || "histogram".equals(metricType)) {
+            if (metricType.equals("gauge") || metricType.equals("histogram")) {
                 sendMetricPoint(metricType, metricName, currentValue, tags);
-            } else if ("monotonic_count".equals(metricType)) {
+            } else if (metricType.equals("monotonic_count")) {
                 String key = generateId(metric);
                 if (!instanceCountersAggregator.containsKey(key)) {
                     instanceCountersAggregator.put(key,  currentValue.longValue());
@@ -121,8 +121,8 @@ public abstract class Reporter {
 
             } else {
                 // `counter` and `rate` are equivalent and both accepted as valid.
-                // We continue accepting other cases for backward compatibility.
-                if (!"counter".equals(metricType) && !"rate".equals(metricType)) {
+                // Other types, deprecated or wrong, will default to a counter/rate type and a warning will be logged.
+                if (!metricType.equals("counter") && !metricType.equals("rate")) {
                     log.warn("Invalid metric type " + metricType + " for metric " + metricName
                             + ". The metric will be processed as rate"
                             + " (this is a DEPRECATED behaviour, use a valid type instead).");
