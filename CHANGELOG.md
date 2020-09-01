@@ -1,6 +1,12 @@
 Changes
 =======
 
+# 0.26.6 / 2020-09-01
+
+### Changes
+
+* [BUGFIX] Re-introduce support of Java 6, broken in `0.26.5` due to upgrade to log4j2 - reverted. [#315][]
+
 # 0.26.6 / 2020-07-17
 
 ### Changes
@@ -349,12 +355,6 @@ Changes
 [#229]: https://github.com/DataDog/jmxfetch/issues/229
 [#235]: https://github.com/DataDog/jmxfetch/issues/235
 [#258]: https://github.com/DataDog/jmxfetch/issues/258
-<<<<<<< HEAD
-[#296]: https://github.com/DataDog/jmxfetch/issues/296
-[#304]: https://github.com/DataDog/jmxfetch/issues/304
-[#305]: https://github.com/DataDog/jmxfetch/issues/305
-[#309]: https://github.com/DataDog/jmxfetch/issues/309
-=======
 [#260]: https://github.com/DataDog/jmxfetch/issues/260
 [#261]: https://github.com/DataDog/jmxfetch/issues/261
 [#262]: https://github.com/DataDog/jmxfetch/issues/262
@@ -377,14 +377,19 @@ Changes
 [#288]: https://github.com/DataDog/jmxfetch/issues/288
 [#289]: https://github.com/DataDog/jmxfetch/issues/289
 [#294]: https://github.com/DataDog/jmxfetch/issues/294
+[#296]: https://github.com/DataDog/jmxfetch/issues/296
 [#298]: https://github.com/DataDog/jmxfetch/issues/298
 [#300]: https://github.com/DataDog/jmxfetch/issues/300
 [#302]: https://github.com/DataDog/jmxfetch/issues/302
 [#303]: https://github.com/DataDog/jmxfetch/issues/303
+[#304]: https://github.com/DataDog/jmxfetch/issues/304
+[#305]: https://github.com/DataDog/jmxfetch/issues/305
 [#306]: https://github.com/DataDog/jmxfetch/issues/306
 [#308]: https://github.com/DataDog/jmxfetch/issues/308
+[#309]: https://github.com/DataDog/jmxfetch/issues/309
 [#311]: https://github.com/DataDog/jmxfetch/issues/311
->>>>>>> b65da31... 0.38.2 release (#312)
+[#312]: https://github.com/DataDog/jmxfetch/issues/312
+[#315]: https://github.com/DataDog/jmxfetch/issues/315
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
@@ -392,8 +397,5 @@ Changes
 [@brothhaar]: https://github.com/brothhaar
 [@coupacooke]: https://github.com/coupacooke
 [@cslee00]: https://github.com/cslee00
-<<<<<<< HEAD
-=======
 [@mattdrees]: https://github.com/mattdrees
->>>>>>> b65da31... 0.38.2 release (#312)
 [@nwillems]: https://github.com/nwillems
