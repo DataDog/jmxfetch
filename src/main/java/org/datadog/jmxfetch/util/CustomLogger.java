@@ -110,8 +110,7 @@ public class CustomLogger {
 
     /** Laconic logging for reduced verbosity. */
     public static void laconic(org.slf4j.Logger logger, Level level, String message, int max) {
-        int messageCount = getAndIncrementMessageCount(message);
-        if (messageCount <= max) {
+        if (shouldLog(message, max)) {
             if (level.isInRange(Level.ERROR, Level.ALL)) {
                 logger.error(message);
             } else if (level == Level.WARN) {
@@ -124,7 +123,7 @@ public class CustomLogger {
         }
     }
 
-    private static int getAndIncrementMessageCount(String message) {
+    private static boolean shouldLog(String message, int max) {
         AtomicInteger count = messageCount.get(message);
         if (null == count) {
             count = new AtomicInteger();
@@ -133,7 +132,12 @@ public class CustomLogger {
                 count = winner;
             }
         }
-        return count.getAndIncrement();
+        if (count.get() <= max) {
+            // may log a little too often if there are races
+            count.getAndIncrement();
+            return true;
+        }
+        return false;
     }
 
     private CustomLogger() {}
