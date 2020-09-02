@@ -38,7 +38,6 @@
         <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <apache-commons-lang3.version>3.5</apache-commons-lang3.version>
-        <guava.version>27.1-android</guava.version> <!-- From the docs: If you need support for JDK 1.7 or Android, use the Android flavor. -->
         <java-dogstatsd-client.version>2.9.0</java-dogstatsd-client.version>
         <jcommander.version>1.35</jcommander.version>
         <!-- log4j 2.13+ drops support for Java 7, so stick to 2.12 -->
@@ -84,11 +83,6 @@
             <version>1.4.2</version>
             <scope>system</scope>
             <systemPath>${java.home}/../lib/tools.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
