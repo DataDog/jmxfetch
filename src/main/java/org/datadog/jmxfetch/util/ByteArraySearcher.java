@@ -1,5 +1,12 @@
 package org.datadog.jmxfetch.util;
 
+/**
+ * Employs the literal version of the Bitap/shift-and algorithm
+ * to match short search terms in worst-case linear time.
+ *
+ * <p>The masks are bit-sliced to reduce spatial requirement from ~2KB
+ * per matcher to ~256 bytes.
+ */
 public final class ByteArraySearcher {
 
     private final long[] high;
@@ -33,8 +40,7 @@ public final class ByteArraySearcher {
      */
     public boolean matches(byte[] array) {
         long state = 0;
-        for (int i = 0; i < array.length; ++i) {
-            byte symbol = array[i];
+        for (byte symbol : array) {
             long highMask = high[symbol >>> 4];
             long lowMask = low[symbol & 0xF];
             state = ((state << 1) | 1) & highMask & lowMask;
