@@ -67,7 +67,7 @@ public class TestServiceChecks extends TestCommon {
         // Test that an WARNING service check status is sent
         List<Map<String, Object>> serviceChecks = getServiceChecks();
         List<Map<String, Object>> metrics = getMetrics();
-        assertTrue(metrics.size() >= 350);
+        assertTrue("metricsSize=" + metrics.size(), metrics.size() >= 350);
 
         assertEquals(2, serviceChecks.size());
         Map<String, Object> sc = serviceChecks.get(0);
