@@ -1,14 +1,12 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,15 +59,11 @@ public class JsonReporter extends Reporter {
         series.add(serie);
 
         System.out.println("=== JSON ===");
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        StringWriter writer = new StringWriter();
         try {
-            mapper.writeValue(writer, series);
+            System.out.println(JSON.std.with(JSON.Feature.PRETTY_PRINT_OUTPUT).asString(series));
         } catch (IOException e) {
             log.error("Couln't produce JSON output");
         }
-        System.out.println(writer.toString());
         metrics.clear();
     }
 

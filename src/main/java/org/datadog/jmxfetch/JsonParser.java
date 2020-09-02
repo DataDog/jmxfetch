@@ -1,7 +1,6 @@
 package org.datadog.jmxfetch;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jr.ob.JSON;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,9 +14,7 @@ class JsonParser {
     private Map<String, Object> parsedJson;
 
     public JsonParser(InputStream jsonInputStream) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        InputStreamReader jsonInputStreamReader = new InputStreamReader(jsonInputStream);
-        parsedJson = mapper.readValue(jsonInputStreamReader, new TypeReference<Map>() {});
+        parsedJson = JSON.std.mapFrom(new InputStreamReader(jsonInputStream));
     }
 
     public JsonParser(JsonParser other) {
