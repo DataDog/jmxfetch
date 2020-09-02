@@ -69,6 +69,11 @@ public class App {
     private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
     private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
 
+    private static final ByteArraySearcher CONFIG_TERM_SEARCHER
+            = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
+    private static final ByteArraySearcher LEGACY_CONFIG_TERM_SEARCHER
+            = new ByteArraySearcher(App.AD_LEGACY_CONFIG_TERM.getBytes());
+
     private static int loopCounter;
     private int lastJsonConfigTs;
     private Map<String, Object> adJsonConfigs;
@@ -426,10 +431,6 @@ public class App {
                 if (adPipe != null && adPipe.available() > 0) {
                     byte[] buffer = new byte[0];
                     boolean terminated = false;
-                    ByteArraySearcher configTermSearcher
-                            = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
-                    ByteArraySearcher legacyConfigTermSearcher
-                            = new ByteArraySearcher(App.AD_LEGACY_CONFIG_TERM.getBytes());
                     while (!terminated) {
                         int len = adPipe.available();
                         if (len > 0) {
@@ -439,8 +440,8 @@ public class App {
                             // The separator always comes in its own atomic write() from the agent
                             // side -
                             // so it will never be chopped.
-                            if (configTermSearcher.matches(minibuff)
-                                    || legacyConfigTermSearcher.matches(minibuff)) {
+                            if (CONFIG_TERM_SEARCHER.matches(minibuff)
+                                    || LEGACY_CONFIG_TERM_SEARCHER.matches(minibuff)) {
                                 terminated = true;
                             }
 
