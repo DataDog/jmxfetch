@@ -6,7 +6,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
@@ -780,8 +779,8 @@ public class App {
                 log.debug("No configuration changes...");
                 return update;
             }
-
-            InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
+            byte[] utf8 = response.getResponseBody().getBytes(UTF_8);
+            InputStream jsonInputStream = new ByteArrayInputStream(utf8);
             JsonParser parser = new JsonParser(jsonInputStream);
             int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
             if (timestamp > lastJsonConfigTs) {
