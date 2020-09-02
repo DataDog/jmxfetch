@@ -1,7 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import org.apache.log4j.Logger;
 
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -218,7 +216,10 @@ public class Instance {
         }
     }
 
-    @VisibleForTesting
+    /**
+     * Note that this method is only visible for testing and should not be used
+     * from outside of this class.
+     */
     static void loadMetricConfigFiles(
             AppConfig appConfig, LinkedList<Configuration> configurationList) {
         if (appConfig.getMetricConfigFiles() != null) {
@@ -251,7 +252,10 @@ public class Instance {
         }
     }
 
-    @VisibleForTesting
+    /**
+     * Note that this method is only visible for testing and should not be used
+     * from outside of this class.
+     */
     static void loadMetricConfigResources(
             AppConfig config, LinkedList<Configuration> configurationList) {
         List<String> resourceConfigList = config.getMetricConfigResources();
