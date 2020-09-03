@@ -2,11 +2,13 @@ package org.datadog.jmxfetch;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -147,7 +149,7 @@ public class Status {
                     File statusFile = new File(this.statusFileLocation);
                     log.debug(
                             "Writing status to temp yaml file: " + statusFile.getAbsolutePath());
-                    FileUtils.writeStringToFile(statusFile, yaml);
+                    writeStringToFile(statusFile, yaml);
                 } catch (Exception e) {
                     log.warn("Cannot write status to temp file: " + e.getMessage());
                 }
@@ -163,5 +165,16 @@ public class Status {
     /** Described if the status is actually configured and enabled. */
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    private static void writeStringToFile(File file, String string) throws IOException {
+        FileOutputStream out = new FileOutputStream(file);
+        BufferedOutputStream bos = new BufferedOutputStream(out);
+        try {
+            bos.write(string.getBytes(Charset.forName("UTF-8")));
+        } finally {
+            bos.close();
+            out.close();
+        }
     }
 }
