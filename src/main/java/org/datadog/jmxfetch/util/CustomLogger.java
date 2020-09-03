@@ -1,8 +1,5 @@
 package org.datadog.jmxfetch.util;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -17,11 +14,14 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Slf4j
 public class CustomLogger {
-    private static final Multiset<String> messageCount = HashMultiset.create();
+    private static final ConcurrentHashMap<String, AtomicInteger> messageCount
+            = new ConcurrentHashMap<String, AtomicInteger>();
     private static final String LAYOUT = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
 
     private static final String LAYOUT_RFC3339 =
@@ -110,7 +110,7 @@ public class CustomLogger {
 
     /** Laconic logging for reduced verbosity. */
     public static void laconic(org.slf4j.Logger logger, Level level, String message, int max) {
-        if (messageCount.count(message) <= max) {
+        if (shouldLog(message, max)) {
             if (level.isInRange(Level.ERROR, Level.ALL)) {
                 logger.error(message);
             } else if (level == Level.WARN) {
@@ -120,9 +120,24 @@ public class CustomLogger {
             } else if (level == Level.DEBUG) {
                 logger.debug(message);
             }
-
-            messageCount.add(message);
         }
+    }
+
+    private static boolean shouldLog(String message, int max) {
+        AtomicInteger count = messageCount.get(message);
+        if (null == count) {
+            count = new AtomicInteger();
+            AtomicInteger winner = messageCount.putIfAbsent(message, count);
+            if (winner != null) {
+                count = winner;
+            }
+        }
+        if (count.get() <= max) {
+            // may log a little too often if there are races
+            count.getAndIncrement();
+            return true;
+        }
+        return false;
     }
 
     private CustomLogger() {}

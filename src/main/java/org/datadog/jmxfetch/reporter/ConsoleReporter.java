@@ -1,11 +1,10 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.google.common.base.Joiner;
-
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +20,7 @@ public class ConsoleReporter extends Reporter {
     @Override
     protected void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags) {
-        String tagString = "[" + Joiner.on(",").join(tags) + "]";
+        String tagString = "[" + StringUtils.join(",", tags) + "]";
         log.info(
                 metricName + tagString + " - " + System.currentTimeMillis() / 1000 + " = " + value);
 
@@ -49,7 +48,7 @@ public class ConsoleReporter extends Reporter {
             String serviceCheckName, String status, String message, String[] tags) {
         String tagString = "";
         if (tags != null && tags.length > 0) {
-            tagString = "[" + Joiner.on(",").join(tags) + "]";
+            tagString = "[" + StringUtils.join(",", tags) + "]";
         }
         log.info(serviceCheckName + tagString + " - " + System.currentTimeMillis() / 1000
                  + " = " + status);

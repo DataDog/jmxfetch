@@ -2,8 +2,6 @@ package org.datadog.jmxfetch;
 
 import static org.datadog.jmxfetch.Instance.isDirectInstance;
 
-import com.google.common.primitives.Bytes;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +15,7 @@ import org.datadog.jmxfetch.tasks.TaskMethod;
 import org.datadog.jmxfetch.tasks.TaskProcessException;
 import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
+import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
@@ -69,6 +68,11 @@ public class App {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
     private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
+
+    private static final ByteArraySearcher CONFIG_TERM_SEARCHER
+            = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
+    private static final ByteArraySearcher LEGACY_CONFIG_TERM_SEARCHER
+            = new ByteArraySearcher(App.AD_LEGACY_CONFIG_TERM.getBytes());
 
     private static int loopCounter;
     private int lastJsonConfigTs;
@@ -436,9 +440,8 @@ public class App {
                             // The separator always comes in its own atomic write() from the agent
                             // side -
                             // so it will never be chopped.
-                            if (Bytes.indexOf(minibuff, App.AD_LEGACY_CONFIG_TERM.getBytes()) > -1
-                                    || Bytes.indexOf(minibuff, App.AD_CONFIG_TERM.getBytes())
-                                            > -1) {
+                            if (CONFIG_TERM_SEARCHER.matches(minibuff)
+                                    || LEGACY_CONFIG_TERM_SEARCHER.matches(minibuff)) {
                                 terminated = true;
                             }
 

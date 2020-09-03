@@ -1,7 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.yaml.snakeyaml.Yaml;
@@ -244,7 +242,10 @@ public class Instance {
         }
     }
 
-    @VisibleForTesting
+    /**
+     * Note that this method is only visible for testing and should not be used
+     * from outside of this class.
+     */
     static void loadMetricConfigFiles(
             AppConfig appConfig, List<Configuration> configurationList) {
         List<String> metricConfigFiles = appConfig.getMetricConfigFiles();
@@ -280,7 +281,10 @@ public class Instance {
         }
     }
 
-    @VisibleForTesting
+    /**
+     * Note that this method is only visible for testing and should not be used
+     * from outside of this class.
+     */
     static void loadMetricConfigResources(
             AppConfig config, List<Configuration> configurationList) {
         List<String> resourceConfigList = config.getMetricConfigResources();

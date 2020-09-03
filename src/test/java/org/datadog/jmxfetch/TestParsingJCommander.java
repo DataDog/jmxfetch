@@ -7,11 +7,11 @@ import static org.junit.Assert.assertTrue;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.google.common.base.Joiner;
 import java.util.Arrays;
 import java.util.List;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.StatsdReporter;
+import org.datadog.jmxfetch.util.StringUtils;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.junit.Test;
 
@@ -256,7 +256,7 @@ public class TestParsingJCommander {
                     "--reporter",
                     REPORTER_CONSOLE,
                     "-c",
-                    Joiner.on(",").join(MULTI_CHECK),
+                    StringUtils.join(",", MULTI_CHECK),
                     "--conf_directory",
                     CONF_DIR,
                     AppConfig.ACTION_COLLECT
