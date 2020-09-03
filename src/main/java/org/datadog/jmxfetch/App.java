@@ -485,8 +485,8 @@ public class App {
             try {
                 long loopPeriod = appConfig.getCheckPeriod();
                 long sleepPeriod = (duration > loopPeriod) ? loopPeriod : loopPeriod - duration;
-                log.debug("Sleeping for " + loopPeriod + " ms.");
-                Thread.sleep(loopPeriod);
+                log.debug("Sleeping for " + sleepPeriod + " ms.");
+                Thread.sleep(sleepPeriod);
             } catch (InterruptedException e) {
                 log.warn(e.getMessage(), e);
             }
