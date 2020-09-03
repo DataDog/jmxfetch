@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.39.0 / 2020-09-03
+
+### Changes
+* [IMPROVEMENT] Remove 3rd-party deps: guava, commons-io, commons-lang, jackson-databind (replaced with jackson-jr-objects). #319, #320, #321, #322
+* [IMPROVEMENT] Make default reconnection timeout consistent with other default timeouts. #317
+
 # 0.38.2 / 2020-07-17
 
 ### Changes
