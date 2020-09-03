@@ -1,12 +1,12 @@
 package org.datadog.jmxfetch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +22,6 @@ public class Status {
     private static final String FAILED_CHECKS = "failed_checks";
     private static final String API_STATUS_PATH = "agent/jmx/status";
     private Map<String, Object> instanceStats;
-    private ObjectMapper mapper;
     private String statusFileLocation;
     private HttpClient client;
     private boolean isEnabled;
@@ -34,7 +33,6 @@ public class Status {
 
     /** Status constructor for remote configuration host. */
     public Status(String host, int port) {
-        mapper = new ObjectMapper();
         client = new HttpClient(host, port, false);
         configure(null, host, port);
     }
@@ -122,11 +120,11 @@ public class Status {
         return yaml.dump(status);
     }
 
-    private String generateJson() throws JsonProcessingException {
+    private String generateJson() throws IOException {
         Map<String, Object> status = new HashMap<String, Object>();
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
-        return mapper.writeValueAsString(status);
+        return JSON.std.asString(status);
     }
 
     /** Flushes current status. */
