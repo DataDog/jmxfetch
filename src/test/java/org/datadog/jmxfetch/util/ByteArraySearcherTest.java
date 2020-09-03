@@ -3,11 +3,9 @@ package org.datadog.jmxfetch.util;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import sun.nio.cs.StandardCharsets;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;

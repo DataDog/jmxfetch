@@ -1,13 +1,13 @@
 package org.datadog.jmxfetch.tasks;
 
-import static org.mockito.Mockito.*;
-
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.InstanceTask;
 import org.datadog.jmxfetch.reporter.Reporter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.ArrayList;
