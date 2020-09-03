@@ -486,9 +486,10 @@ public class App {
                 long loopPeriod = appConfig.getCheckPeriod();
                 long sleepPeriod = loopPeriod - duration;
                 if (sleepPeriod <= 0) {
-                    log.debug("The collection cycle took longer that the configured check period, the next cycle will start immediatly");
-                }
-                else {
+                    log.debug(
+                        "The collection cycle took longer that the configured check period,"
+                        + " the next cycle will start immediatly");
+                } else {
                     log.debug("Sleeping for " + sleepPeriod + " ms.");
                     Thread.sleep(sleepPeriod);    
                 }
