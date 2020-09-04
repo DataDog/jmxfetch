@@ -4,8 +4,8 @@ Changelog
 # 0.39.0 / 2020-09-03
 
 ### Changes
-* [IMPROVEMENT] Remove 3rd-party deps: guava, commons-io, commons-lang, jackson-databind (replaced with jackson-jr-objects). #319, #320, #321, #322
-* [IMPROVEMENT] Make default reconnection timeout consistent with other default timeouts. #317
+* [IMPROVEMENT] Remove 3rd-party deps: guava, commons-io, commons-lang, jackson-databind (replaced with jackson-jr-objects). [#319][], [#320][], [#321][], [#322][]
+* [IMPROVEMENT] Make default reconnection timeout consistent with other default timeouts. [#317][]
 
 # 0.38.2 / 2020-07-17
 
@@ -516,6 +516,11 @@ Changelog
 [#306]: https://github.com/DataDog/jmxfetch/issues/306
 [#308]: https://github.com/DataDog/jmxfetch/issues/308
 [#311]: https://github.com/DataDog/jmxfetch/issues/311
+[#317]: https://github.com/DataDog/jmxfetch/issues/317
+[#319]: https://github.com/DataDog/jmxfetch/issues/319
+[#320]: https://github.com/DataDog/jmxfetch/issues/320
+[#321]: https://github.com/DataDog/jmxfetch/issues/321
+[#322]: https://github.com/DataDog/jmxfetch/issues/322
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
