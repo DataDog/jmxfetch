@@ -95,9 +95,9 @@ public abstract class Reporter {
 
             // StatsD doesn't support rate metrics so we need to have our own aggregator to compute
             // rates
-            if ("gauge".equals(metricType) || "histogram".equals(metricType)) {
+            if (metricType.equals("gauge") || metricType.equals("histogram")) {
                 sendMetricPoint(metricType, metricName, currentValue, tags);
-            } else if ("monotonic_count".equals(metricType)) {
+            } else if (metricType.equals("monotonic_count")) {
                 String key = generateId(metric);
                 if (!instanceCountersAggregator.containsKey(key)) {
                     instanceCountersAggregator.put(key,  currentValue.longValue());
@@ -119,7 +119,16 @@ public abstract class Reporter {
                 }
                 sendMetricPoint(metricType, metricName, delta, tags);
 
-            } else { // The metric should be 'counter'
+            } else {
+                // `counter` and `rate` are equivalent and both accepted as valid.
+                // Other types, deprecated or wrong, will default to a counter/rate
+                // type and a warning will be logged.
+                if (!metricType.equals("counter") && !metricType.equals("rate")) {
+                    log.debug("Invalid metric type " + metricType + " for metric " + metricName
+                            + ". The metric will be processed as rate"
+                            + " (this is a DEPRECATED behaviour, use a valid type instead).");
+                }
+
                 String key = generateId(metric);
                 if (!instanceRatesAggregator.containsKey(key)) {
                     Map<String, Object> rateInfo = new HashMap<String, Object>();
