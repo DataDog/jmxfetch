@@ -14,11 +14,11 @@ import org.datadog.jmxfetch.validator.ReporterValidator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 
 @Parameters(separators = "=")
 public class AppConfig {
@@ -341,16 +341,19 @@ public class AppConfig {
             String logLevel) {
         AppConfig config = new AppConfig();
         config.action = Collections.unmodifiableList(Arrays.asList(ACTION_COLLECT));
-        config.instanceConfigResources = Collections.unmodifiableList(new ArrayList<String>(instanceConfigResources));
-        config.metricConfigResources = Collections.unmodifiableList(new ArrayList<String>(metricConfigResources));
-        config.metricConfigFiles = Collections.unmodifiableList(new ArrayList<String>(metricConfigFiles));
+        config.instanceConfigResources = Collections.unmodifiableList(
+                new ArrayList<String>(instanceConfigResources));
+        config.metricConfigResources = Collections.unmodifiableList(
+                new ArrayList<String>(metricConfigResources));
+        config.metricConfigFiles = Collections.unmodifiableList(
+                new ArrayList<String>(metricConfigFiles));
         if (checkPeriod != null) {
             config.checkPeriod = checkPeriod;
         }
         config.refreshBeansPeriod = refreshBeansPeriod;
         // deep copy globalTags
         Map<String, String> globalTagsCopy = new HashMap<String, String>();
-        for(Map.Entry<String, String> entry : globalTags.entrySet()) {
+        for (Map.Entry<String, String> entry : globalTags.entrySet()) {
             globalTagsCopy.put(entry.getKey(), new String(entry.getValue()));
         }
         config.globalTags = Collections.unmodifiableMap(globalTagsCopy);
