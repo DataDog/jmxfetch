@@ -1,6 +1,5 @@
 package org.datadog.jmxfetch.util;
 
-<<<<<<< HEAD
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -44,10 +43,9 @@ public class CustomLogger {
 
     /** Laconic logging for reduced verbosity. */
     public static void laconic(Logger logger, Level level, String message, int max) {
-        int messageCount = getAndIncrementMessageCount(message);
-        if (messageCount.count(message) <= max) {
+        int count = getAndIncrementMessageCount(message);
+        if (count <= max) {
             logger.log(level, message);
-            messageCount.add(message);
         }
     }
 

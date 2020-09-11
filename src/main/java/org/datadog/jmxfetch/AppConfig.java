@@ -1,8 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
@@ -15,10 +12,13 @@ import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 @Parameters(separators = "=")
 public class AppConfig {
@@ -340,15 +340,20 @@ public class AppConfig {
             String logLocation,
             String logLevel) {
         AppConfig config = new AppConfig();
-        config.action = ImmutableList.of(ACTION_COLLECT);
-        config.instanceConfigResources = ImmutableList.copyOf(instanceConfigResources);
-        config.metricConfigResources = ImmutableList.copyOf(metricConfigResources);
-        config.metricConfigFiles = ImmutableList.copyOf(metricConfigFiles);
+        config.action = Collections.unmodifiableList(Arrays.asList(ACTION_COLLECT));
+        config.instanceConfigResources = Collections.unmodifiableList(new ArrayList<String>(instanceConfigResources));
+        config.metricConfigResources = Collections.unmodifiableList(new ArrayList<String>(metricConfigResources));
+        config.metricConfigFiles = Collections.unmodifiableList(new ArrayList<String>(metricConfigFiles));
         if (checkPeriod != null) {
             config.checkPeriod = checkPeriod;
         }
         config.refreshBeansPeriod = refreshBeansPeriod;
-        config.globalTags = ImmutableMap.copyOf(globalTags);
+        // deep copy globalTags
+        Map<String, String> globalTagsCopy = new HashMap<String, String>();
+        for(Map.Entry<String, String> entry : globalTags.entrySet()) {
+            globalTagsCopy.put(entry.getKey(), new String(entry.getValue()));
+        }
+        config.globalTags = Collections.unmodifiableMap(globalTagsCopy);
         config.reporter = ReporterFactory.getReporter(reporter);
         config.logLocation = logLocation;
         config.logLevel = logLevel;
