@@ -221,7 +221,7 @@ public class Instance {
      * from outside of this class.
      */
     static void loadMetricConfigFiles(
-            AppConfig appConfig, LinkedList<Configuration> configurationList) {
+            AppConfig appConfig, List<Configuration> configurationList) {
         if (appConfig.getMetricConfigFiles() != null) {
             for (String fileName : appConfig.getMetricConfigFiles()) {
                 String yamlPath = new File(fileName).getAbsolutePath();
@@ -257,7 +257,7 @@ public class Instance {
      * from outside of this class.
      */
     static void loadMetricConfigResources(
-            AppConfig config, LinkedList<Configuration> configurationList) {
+            AppConfig config, List<Configuration> configurationList) {
         List<String> resourceConfigList = config.getMetricConfigResources();
         if (resourceConfigList != null) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();

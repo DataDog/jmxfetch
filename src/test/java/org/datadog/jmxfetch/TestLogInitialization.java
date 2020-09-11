@@ -1,14 +1,9 @@
 package org.datadog.jmxfetch;
 
-import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
-import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -16,9 +11,13 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,11 +27,14 @@ import org.junit.After;
 import org.junit.Test;
 
 public class TestLogInitialization {
+    public static final String JAVA_CLASS_PATH = System.getProperty("java.class.path");
+    public static final String PATH_SEPARATOR = File.pathSeparator;
+
     public static final Callable<AppConfig> LOCAL_CONFIG =
             new Callable<AppConfig>() {
                 public AppConfig call() throws Exception {
                     return AppConfig.create(
-                            ImmutableList.of("org/datadog/jmxfetch/dd-java-agent-jmx.yaml"),
+                            Collections.unmodifiableList(Arrays.asList("org/datadog/jmxfetch/dd-java-agent-jmx.yaml")),
                             Collections.<String>emptyList(),
                             Collections.<String>emptyList(),
                             (int) TimeUnit.SECONDS.toMillis(30),
@@ -48,7 +50,7 @@ public class TestLogInitialization {
             new Callable<AppConfig>() {
                 public AppConfig call() throws Exception {
                     return AppConfig.create(
-                            ImmutableList.of("org/datadog/jmxfetch/remote-jmx.yaml"),
+                            Collections.unmodifiableList(Arrays.asList("org/datadog/jmxfetch/remote-jmx.yaml")),
                             Collections.<String>emptyList(),
                             Collections.<String>emptyList(),
                             (int) TimeUnit.SECONDS.toMillis(30),
@@ -165,7 +167,7 @@ public class TestLogInitialization {
     }
 
     static class TrackingClassLoader extends URLClassLoader {
-        private final Set<String> loadedClasses = Sets.newConcurrentHashSet();
+        private final Set<String> loadedClasses = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
         TrackingClassLoader() throws MalformedURLException {
             // Don't delegate to the parent as that already has the classes loaded.
@@ -186,9 +188,10 @@ public class TestLogInitialization {
 
         private static URL[] getClasspathUrls() throws MalformedURLException {
 
-            ImmutableList.Builder<URL> urls = ImmutableList.builder();
+            List<URL> urls = new ArrayList<URL>();
+
             for (String entry :
-                    Splitter.on(PATH_SEPARATOR.value()).split(JAVA_CLASS_PATH.value())) {
+                    JAVA_CLASS_PATH.split(PATH_SEPARATOR)) {
                 try {
                     urls.add(new File(entry).toURI().toURL());
                 } catch (
@@ -197,7 +200,8 @@ public class TestLogInitialization {
                     urls.add(new URL("file", null, new File(entry).getAbsolutePath()));
                 }
             }
-            return urls.build().toArray(new URL[0]);
+
+            return Collections.unmodifiableList(urls).toArray(new URL[0]);
         }
     }
 }
