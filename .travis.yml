@@ -36,7 +36,8 @@ matrix:
     - jdk: openjdk6
       env:
        - DESC="OpenJDK6 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       # TLSv1.2 fails
+       - CMD="mvn test -B -Dhttps.protocols=TLSv1,TLSv1.1 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
 
 script: echo "Running $DESC..." && (eval $CMD)
 
