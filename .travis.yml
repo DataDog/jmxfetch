@@ -2,6 +2,8 @@ dist: precise
 
 language: java
 
+install: echo "do nada"
+
 addons:
   hostname: dd-jmxfetch-testhost
   apt:
@@ -39,11 +41,11 @@ matrix:
        - DESC="OpenJDK6 testing"
        # TLSv1.2 fails
        #
-       - BUILDCMD="mvn install -Dhttps.protocols=TLSv1,TLSv1.1 -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+       # - BUILDCMD="mvn install -Dhttps.protocols=TLSv1,TLSv1.1 -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
        - TESTCMD="mvn test -B -Dhttps.protocols=TLSv1,TLSv1.1 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
 
 script:
   - echo "Running $DESC..."
-  - if [[ -z "${BUILDCMD}" ]]; then (eval $BUILDCMD); fi
-  - if [[ -z "${TESTCMD}" ]]; then (eval $TESTCMD); fi
+  - if [[ ! -z "${BUILDCMD}" ]]; then (eval $BUILDCMD); fi
+  - if [[ ! -z "${TESTCMD}" ]]; then (eval $TESTCMD); fi
 
