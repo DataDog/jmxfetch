@@ -5,6 +5,7 @@ import com.beust.jcommander.Parameters;
 
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
 import org.datadog.jmxfetch.converter.ReporterConverter;
+import org.datadog.jmxfetch.converter.StatusConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.reporter.ReporterFactory;
@@ -150,7 +151,7 @@ public class AppConfig {
             description =
                     "Absolute path of the status file. (default to null = no status file written)",
             required = false)
-    private String statusLocation;
+    private Status status = new Status();
 
     @Parameter(
             names = {"--exit_file_location", "-e"},
@@ -168,12 +169,6 @@ public class AppConfig {
                     + "list_not_matching_attributes, list_limited_attributes, list_jvms]",
             required = true)
     private List<String> action = null;
-
-    @Parameter(
-            names = {"--ipc_host", "-H"},
-            description = "IPC host",
-            required = false)
-    private String ipcHost;
 
     @Parameter(
             names = {"--ipc_port", "-I"},
@@ -200,16 +195,9 @@ public class AppConfig {
         if (statusLocation != null) {
             status = new Status(statusLocation);
             return true;
-        } else if (ipcHost != null && ipcPort > 0) {
-            status = new Status(ipcHost, ipcPort);
-            return true;
         }
 
         return false;
-    }
-
-    public boolean remoteEnabled() {
-        return (ipcHost != null && ipcPort > 0);
     }
 
     public String getStatusLocation() {
@@ -264,7 +252,7 @@ public class AppConfig {
         return ipcPort;
     }
 
-    public boolean getAutoDiscoveryPipeEnabled() {
+    public boolean getAutoDiscoveryEnabled() {
         return adEnabled;
     }
 

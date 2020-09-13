@@ -24,8 +24,6 @@ public class TestParsingJCommander {
     private static final List<String> MULTI_CHECK = Arrays.asList("jmx.yaml", "jmx-2.yaml");
     private static final String STATUS_LOCATION = "/status/status_location";
     private static final String EXIT_FILE_LOCATION = "/status/exit_locationt";
-    private static final String IPC_HOSTNAME = "localhost";
-    private static final String IPC_PORT = "5001";
 
     private static AppConfig testCommand(String[] params) throws ParameterException {
         AppConfig appConfig = new AppConfig();
@@ -346,32 +344,8 @@ public class TestParsingJCommander {
                     AppConfig.ACTION_COLLECT
                 };
         AppConfig appConfig = testCommand(params);
-        assertTrue(appConfig.updateStatus());
         assertNotNull(appConfig.getStatus());
         assertEquals(STATUS_LOCATION, appConfig.getStatus().getStatusFileLocation());
-        assertTrue(appConfig.getStatus().isEnabled());
-    }
-
-    @Test
-    public void testParsingStatusIPC() {
-        String[] params =
-                new String[] {
-                    "--reporter",
-                    REPORTER_CONSOLE,
-                    "--check",
-                    SINGLE_CHECK,
-                    "--conf_directory",
-                    CONF_DIR,
-                    "--ipc_host",
-                    IPC_HOSTNAME,
-                    "--ipc_port",
-                    IPC_PORT,
-                    AppConfig.ACTION_COLLECT
-                };
-        AppConfig appConfig = testCommand(params);
-        assertTrue(appConfig.updateStatus());
-
-        assertNotNull(appConfig.getStatus());
         assertTrue(appConfig.getStatus().isEnabled());
     }
 

@@ -3,7 +3,6 @@ package org.datadog.jmxfetch;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
@@ -65,7 +64,6 @@ public class App {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private static int loopCounter;
-    private int lastJsonConfigTs;
     private HashMap<String, Object> adJsonConfigs;
     private ConcurrentHashMap<String, YamlParser> configs;
     private ConcurrentHashMap<String, YamlParser> adPipeConfigs =
@@ -78,7 +76,6 @@ public class App {
     private TaskProcessor recoveryProcessor;
 
     private AppConfig appConfig;
-    private HttpClient client;
 
     /** Application constructor. */
     public App(AppConfig appConfig) {
@@ -332,7 +329,7 @@ public class App {
         // Main Loop that will periodically collect metrics from the JMX Server
         FileInputStream adPipe = null;
 
-        if (appConfig.getAutoDiscoveryPipeEnabled()) {
+        if (appConfig.getAutoDiscoveryEnabled()) {
             LOGGER.info("Auto Discovery enabled");
             adPipe = newAutoDiscoveryPipe();
             try {
@@ -351,11 +348,11 @@ public class App {
                 return;
             }
 
-            if (adPipe == null && appConfig.getAutoDiscoveryPipeEnabled()) {
+            // any SD configs waiting in pipe?
+            if (adPipe == null && appConfig.getAutoDiscoveryEnabled()) {
                 // If SD is enabled and the pipe is not open, retry opening pipe
                 adPipe = newAutoDiscoveryPipe();
             }
-            // any AutoDiscovery configs waiting?
             try {
                 if (adPipe != null && adPipe.available() > 0) {
                     byte[] buffer = new byte[0];
@@ -386,10 +383,6 @@ public class App {
                     }
                     setReinit(processAutoDiscovery(buffer));
                 }
-
-                if (appConfig.remoteEnabled()) {
-                    setReinit(getJsonConfigs());
-                }
             } catch (IOException e) {
                 LOGGER.warn(
                         "Unable to read from pipe"
@@ -408,8 +401,7 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
-                lastJsonConfigTs = 0; // reset TS to get AC instances
-                appConfig.getStatus().flush();
+                appConfig.getStatus().flush(appConfig.getIPCPort());
                 configs = getConfigs(appConfig);
                 init(true);
             }
@@ -560,8 +552,10 @@ public class App {
             processFixedStatus(fixInstanceTasks, statuses);
 
             // update with statuses
-            processStatus(fixInstanceTasks, statuses);
+            // REVERT: open question???
+            // processStatus(fixInstanceTasks, statuses);
 
+            appConfig.getStatus().flush(appConfig.getIPCPort());
         } catch (Exception e) {
             // NADA
         }
@@ -610,11 +604,6 @@ public class App {
         this.setReinit(true);
 
         return true;
-    }
-
-    /** Adds a configuration to the auto-discovery HTTP collected configuration list (JSON). */
-    public boolean addJsonConfig(String name, String json) {
-        return false;
     }
 
     private ConcurrentHashMap<String, YamlParser> getConfigs(AppConfig config) {
@@ -682,50 +671,6 @@ public class App {
                 }
             }
         }
-    }
-
-    private boolean getJsonConfigs() {
-        HttpClient.HttpResponse response;
-        boolean update = false;
-
-        if (this.client == null) {
-            return update;
-        }
-
-        try {
-            String uripath = "agent/jmx/configs?timestamp=" + lastJsonConfigTs;
-            response = client.request("GET", "", uripath);
-            if (!response.isResponse2xx()) {
-                LOGGER.warn(
-                        "Failed collecting JSON configs: ["
-                                + response.getResponseCode()
-                                + "] "
-                                + response.getResponseBody());
-                return update;
-            } else if (response.getResponseCode() == 204) {
-                LOGGER.debug("No configuration changes...");
-                return update;
-            }
-
-            InputStream jsonInputStream = IOUtils.toInputStream(response.getResponseBody(), UTF_8);
-            JsonParser parser = new JsonParser(jsonInputStream);
-            int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
-            if (timestamp > lastJsonConfigTs) {
-                adJsonConfigs = (HashMap<String, Object>) parser.getJsonConfigs();
-                lastJsonConfigTs = timestamp;
-                update = true;
-                LOGGER.info("update is in order - updating timestamp: " + lastJsonConfigTs);
-                for (String checkName : adJsonConfigs.keySet()) {
-                    LOGGER.debug("received config for check '" + checkName + "'");
-                }
-            }
-        } catch (JsonProcessingException e) {
-            LOGGER.error("error processing JSON response: " + e);
-        } catch (IOException e) {
-            LOGGER.error("unable to collect remote JMX configs: " + e);
-        }
-
-        return update;
     }
 
     private void reportStatus(

@@ -41,7 +41,7 @@
         <java-dogstatsd-client.version>2.1.0</java-dogstatsd-client.version>
         <jcommander.version>1.35</jcommander.version>
         <log4j.version>1.2.17</log4j.version>
-        <jackson.version>2.10.0</jackson.version>
+        <gson.version>1.4</gson.version>
         <snakeyaml.version>1.13</snakeyaml.version>
         <!-- Note: using project checkstyle with AOSP style
         find the default google java checkstyle config here -
@@ -92,27 +92,15 @@
             <artifactId>commons-lang</artifactId>
             <version>${commons-lang.version}</version>
         </dependency>
+		<dependency>
+			<groupId>com.datadoghq</groupId>
+			<artifactId>java-dogstatsd-client</artifactId>
+			<version>${java-dogstatsd-client.version}</version>
+		</dependency>
         <dependency>
-            <groupId>com.datadoghq</groupId>
-            <artifactId>java-dogstatsd-client</artifactId>
-            <version>${java-dogstatsd-client.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <!-- Note: core-annotations version x.y.0 is generally compatible with
-                 (identical to) version x.y.1, x.y.2, etc. -->
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
