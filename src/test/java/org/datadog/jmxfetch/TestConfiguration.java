@@ -118,7 +118,7 @@ public class TestConfiguration {
                         getCommonBeanKeysByDomain.invoke(null, filtersByDomain);
 
         // Only contains 'org.datadog.jmxfetch.test' domain
-        assertEquals(parametersIntersectionByDomain.size(), 2);
+        assertEquals(1, parametersIntersectionByDomain.size());
         assertTrue(parametersIntersectionByDomain.containsKey("org.datadog.jmxfetch.test"));
 
         // Parameters intersection should match: 'param', 'scope' and 'type'
@@ -171,7 +171,7 @@ public class TestConfiguration {
                                 null, parametersIntersectionByDomain, filtersByDomain);
 
         // Only contains 'org.datadog.jmxfetch.test' domain
-        assertEquals(commonBeanScopeByDomain.size(), 2);
+        assertEquals(1, commonBeanScopeByDomain.size());
         assertTrue(commonBeanScopeByDomain.containsKey("org.datadog.jmxfetch.test"));
         LinkedHashMap<String, String> beanScope =
                 commonBeanScopeByDomain.get("org.datadog.jmxfetch.test");
