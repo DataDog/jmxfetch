@@ -51,37 +51,6 @@ public class TestConfiguration {
         adConfigs = new JsonParser(jsonInputStream);
     }
 
-    /**
-     * Stringify a bean pattern to comply with the representation of a MBean
-     *
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws InvocationTargetException
-     * @throws IllegalArgumentException
-     * @throws IllegalAccessException
-     */
-    @Test
-    public void testAutoDiscoveryConfigs()
-            throws NoSuchMethodException, SecurityException, IllegalAccessException,
-                    IllegalArgumentException, InvocationTargetException {
-        HashMap<String, Object> configs = (HashMap<String, Object>) adConfigs.getJsonConfigs();
-
-        assertEquals(configurations.size(), 4);
-        int nconfigs = 0;
-        for (String check : configs.keySet()) {
-            ArrayList<LinkedHashMap<String, Object>> configInstances =
-                    ((ArrayList<LinkedHashMap<String, Object>>) adConfigs.getJsonInstances(check));
-            for (LinkedHashMap<String, Object> config : configInstances) {
-                Object jsonConf = config.get("conf");
-                for (LinkedHashMap<String, Object> conf :
-                        (ArrayList<LinkedHashMap<String, Object>>) (jsonConf)) {
-                    configurations.add(new Configuration(conf));
-                    nconfigs++;
-                }
-            }
-        }
-        assertEquals(configurations.size(), 4 + nconfigs);
-    }
 
     /**
      * Extract filters from the configuration list and index by domain name
