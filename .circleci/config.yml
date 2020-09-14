@@ -60,7 +60,7 @@ jobs:
           at: .
 
       - run: mvn validate jar:jar source:jar javadoc:jar assembly:single deploy:deploy -e --settings ./settings.xml
-        
+
 workflows:
   version: 2
   build_test_deploy:

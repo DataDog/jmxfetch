@@ -1,27 +1,30 @@
 package org.datadog.jmxfetch;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.lang.System;
+
+import com.google.gson.Gson;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-import com.google.gson.Gson;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.lang.System;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedList;
+
 
 public class Status {
 
-    public final static String STATUS_WARNING = "WARNING";
-    public final static String STATUS_OK = "OK";
-    public final static String STATUS_ERROR = "ERROR";
-    private final static Logger LOGGER = Logger.getLogger(Status.class.getName());
-    private final static String INITIALIZED_CHECKS = "initialized_checks";
-    private final static String FAILED_CHECKS = "failed_checks";
+    public static final String STATUS_WARNING = "WARNING";
+    public static final String STATUS_OK = "OK";
+    public static final String STATUS_ERROR = "ERROR";
+    private static final Logger LOGGER = Logger.getLogger(Status.class.getName());
+    private static final String INITIALIZED_CHECKS = "initialized_checks";
+    private static final String FAILED_CHECKS = "failed_checks";
     private HashMap<String, Object> instanceStats;
     private String statusFileLocation;
     private boolean isEnabled;
@@ -121,6 +124,7 @@ public class Status {
         return gson.toJson(status);
     }
 
+    /** flush the status. */
     public void flush() {
         if (isEnabled()) {
             String yaml = generateYaml();
