@@ -353,29 +353,6 @@ public class TestParsingJCommander {
     }
 
     @Test
-    public void testParsingStatusIPC() {
-        String[] params =
-                new String[] {
-                    "--reporter",
-                    REPORTER_CONSOLE,
-                    "--check",
-                    SINGLE_CHECK,
-                    "--conf_directory",
-                    CONF_DIR,
-                    "--ipc_host",
-                    IPC_HOSTNAME,
-                    "--ipc_port",
-                    IPC_PORT,
-                    AppConfig.ACTION_COLLECT
-                };
-        AppConfig appConfig = testCommand(params);
-        assertTrue(appConfig.updateStatus());
-
-        assertNotNull(appConfig.getStatus());
-        assertTrue(appConfig.getStatus().isEnabled());
-    }
-
-    @Test
     public void testParsingExitWatcher() {
         String[] params =
                 new String[] {
