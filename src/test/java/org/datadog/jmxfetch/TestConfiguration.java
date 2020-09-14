@@ -43,12 +43,6 @@ public class TestConfiguration {
                 configurations.add(new Configuration(conf));
             }
         }
-
-        // lets also collect auto-discovery configs
-        f = new File("src/test/resources/", "auto_discovery_configs.json");
-        String jsonPath = f.getAbsolutePath();
-        FileInputStream jsonInputStream = new FileInputStream(jsonPath);
-        adConfigs = new JsonParser(jsonInputStream);
     }
 
 
