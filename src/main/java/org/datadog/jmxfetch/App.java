@@ -1,6 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.google.common.primitives.Bytes;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -15,6 +14,7 @@ import org.datadog.jmxfetch.tasks.TaskMethod;
 import org.datadog.jmxfetch.tasks.TaskProcessException;
 import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
+import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
 
@@ -360,6 +360,10 @@ public class App {
                 if (adPipe != null && adPipe.available() > 0) {
                     byte[] buffer = new byte[0];
                     boolean terminated = false;
+                    ByteArraySearcher configTermSearcher
+                            = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
+                    ByteArraySearcher legacyConfigTermSearcher
+                            = new ByteArraySearcher(App.AD_LEGACY_CONFIG_TERM.getBytes());
                     while (!terminated) {
                         int len = adPipe.available();
                         if (len > 0) {
@@ -369,9 +373,8 @@ public class App {
                             // The separator always comes in its own atomic write() from the agent
                             // side -
                             // so it will never be chopped.
-                            if (Bytes.indexOf(minibuff, App.AD_LEGACY_CONFIG_TERM.getBytes()) > -1
-                                    || Bytes.indexOf(minibuff, App.AD_CONFIG_TERM.getBytes())
-                                            > -1) {
+                            if (configTermSearcher.matches(minibuff)
+                                    || legacyConfigTermSearcher.matches(minibuff)) {
                                 terminated = true;
                             }
 

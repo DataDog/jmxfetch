@@ -1,17 +1,18 @@
 package org.datadog.jmxfetch.util;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class CustomLogger {
     private static final Logger LOGGER = Logger.getLogger(CustomLogger.class.getName());
-    private static final Multiset<String> messageCount = HashMultiset.create();
+    private static final ConcurrentHashMap<String, AtomicInteger> messageCount
+            = new ConcurrentHashMap<String, AtomicInteger>();
     private static final String LOGGER_LAYOUT = "%d | %-5p| %c{1} | %m%n";
 
     /** Sets up the custom logger to the specified level and location. */
@@ -42,10 +43,22 @@ public class CustomLogger {
 
     /** Laconic logging for reduced verbosity. */
     public static void laconic(Logger logger, Level level, String message, int max) {
-        if (messageCount.count(message) <= max) {
+        int count = getAndIncrementMessageCount(message);
+        if (count <= max) {
             logger.log(level, message);
-            messageCount.add(message);
         }
+    }
+
+    private static int getAndIncrementMessageCount(String message) {
+        AtomicInteger count = messageCount.get(message);
+        if (null == count) {
+            count = new AtomicInteger();
+            AtomicInteger winner = messageCount.putIfAbsent(message, count);
+            if (winner != null) {
+                count = winner;
+            }
+        }
+        return count.getAndIncrement();
     }
 
     private CustomLogger() {}
