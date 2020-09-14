@@ -75,6 +75,8 @@
             <artifactId>jcommander</artifactId>
             <version>${jcommander.version}</version>
         </dependency>
+
+        <!-- Note: disable unrequired dependency (?) -->
         <dependency>
             <groupId>com.sun</groupId>
             <artifactId>tools</artifactId>

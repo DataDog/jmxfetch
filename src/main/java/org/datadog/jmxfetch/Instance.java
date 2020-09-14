@@ -73,7 +73,7 @@ public class Instance {
     private long lastCollectionTime;
     private Integer minCollectionPeriod;
     private long lastRefreshTime;
-    private LinkedHashMap<String, Object> yaml;
+    private LinkedHashMap<String, Object> instanceMap;
     private LinkedHashMap<String, Object> initConfig;
     private String instanceName;
     private LinkedHashMap<String, String> tags;
@@ -87,8 +87,8 @@ public class Instance {
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
-        this(instance.getYaml() != null
-                ? new LinkedHashMap<String, Object>(instance.getYaml())
+        this(instance.getInstanceMap() != null
+                ? new LinkedHashMap<String, Object>(instance.getInstanceMap())
                         : null,
                 instance.getInitConfig() != null
                         ? new LinkedHashMap<String, Object>(instance.getInitConfig())
@@ -127,7 +127,7 @@ public class Instance {
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
         }
 
-        this.minCollectionPeriod = (Integer) yaml.get("min_collection_interval");
+        this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
             this.minCollectionPeriod = (Integer) initConfig.get("min_collection_interval");
         }
@@ -141,7 +141,7 @@ public class Instance {
         this.lastCollectionTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
-        Object maxReturnedMetrics = this.yaml.get("max_returned_metrics");
+        Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
         if (maxReturnedMetrics == null) {
             this.maxReturnedMetrics = MAX_RETURNED_METRICS;
         } else {
@@ -181,7 +181,7 @@ public class Instance {
             instanceConf = this.initConfig.get("conf");
         }
 
-        if (yamlConf == null) {
+        if (instanceConf == null) {
             LOGGER.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
             for (LinkedHashMap<String, Object> conf :
@@ -368,12 +368,12 @@ public class Instance {
     /** Returns a string representation for the instance. */
     @Override
     public String toString() {
-        if (this.yaml.get(PROCESS_NAME_REGEX) != null) {
-            return "process_regex: `" + this.yaml.get(PROCESS_NAME_REGEX) + "`";
-        } else if (this.yaml.get("jmx_url") != null) {
-            return (String) this.yaml.get("jmx_url");
+        if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
+            return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
+        } else if (this.instanceMap.get("jmx_url") != null) {
+            return (String) this.instanceMap.get("jmx_url");
         } else {
-            return this.yaml.get("host") + ":" + this.yaml.get("port");
+            return this.instanceMap.get("host") + ":" + this.instanceMap.get("port");
         }
     }
 
@@ -636,8 +636,8 @@ public class Instance {
     /** Returns a string array listing the service check tags. */
     public String[] getServiceCheckTags() {
         List<String> tags = new ArrayList<String>();
-        if (this.yaml.get("host") != null) {
-            tags.add("jmx_server:" + this.yaml.get("host"));
+        if (this.instanceMap.get("host") != null) {
+            tags.add("jmx_server:" + this.instanceMap.get("host"));
         }
         if (this.tags != null) {
             for (Entry<String, String> e : this.tags.entrySet()) {
@@ -661,8 +661,8 @@ public class Instance {
         return this.instanceName;
     }
 
-    LinkedHashMap<String, Object> getYaml() {
-        return this.yaml;
+    LinkedHashMap<String, Object> getInstanceMap() {
+        return this.instanceMap;
     }
 
     LinkedHashMap<String, Object> getInitConfig() {

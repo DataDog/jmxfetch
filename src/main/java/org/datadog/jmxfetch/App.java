@@ -90,10 +90,6 @@ public class App {
                 Executors.newFixedThreadPool(appConfig.getReconnectionThreadPoolSize());
         recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
 
-        // setup client
-        if (appConfig.remoteEnabled()) {
-            client = new HttpClient(appConfig.getIpcHost(), appConfig.getIpcPort(), false);
-        }
         this.configs = getConfigs(appConfig);
     }
 
@@ -163,18 +159,10 @@ public class App {
 
         LOGGER.info("JMX Fetch has started");
 
-        // set up the config status
-        config.updateStatus();
-
         App app = new App(config);
 
         // Adding another shutdown hook for App related tasks
         Runtime.getRuntime().addShutdownHook(new AppShutdownHook(app));
-
-        // Get config from the ipc endpoint for "list_*" actions
-        if (!config.getAction().equals(AppConfig.ACTION_COLLECT)) {
-            app.getJsonConfigs();
-        }
 
         // Initiate JMX Connections, get attributes that match the yaml configuration
         app.init(false);
@@ -401,7 +389,7 @@ public class App {
                 doIteration();
             } else {
                 LOGGER.warn("No instance could be initiated. Retrying initialization.");
-                appConfig.getStatus().flush(appConfig.getIPCPort());
+                appConfig.getStatus().flush();
                 configs = getConfigs(appConfig);
                 init(true);
             }
@@ -552,10 +540,9 @@ public class App {
             processFixedStatus(fixInstanceTasks, statuses);
 
             // update with statuses
-            // REVERT: open question???
-            // processStatus(fixInstanceTasks, statuses);
+            processStatus(fixInstanceTasks, statuses);
 
-            appConfig.getStatus().flush(appConfig.getIPCPort());
+            appConfig.getStatus().flush();
         } catch (Exception e) {
             // NADA
         }

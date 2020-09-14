@@ -150,6 +150,7 @@ public class AppConfig {
             names = {"--status_location", "-s"},
             description =
                     "Absolute path of the status file. (default to null = no status file written)",
+            converter = StatusConverter.class,
             required = false)
     private Status status = new Status();
 
@@ -187,22 +188,6 @@ public class AppConfig {
     private Integer refreshBeansPeriod;
     // This is used by things like APM agent to provide tags that should be set with all metrics
     private Map<String, String> globalTags;
-
-    private Status status = new Status();
-
-    /** Updates the status and returns a boolean describing if the status was indeed updated.. */
-    public boolean updateStatus() {
-        if (statusLocation != null) {
-            status = new Status(statusLocation);
-            return true;
-        }
-
-        return false;
-    }
-
-    public String getStatusLocation() {
-        return this.statusLocation;
-    }
 
     public String getAction() {
         return this.action.get(0);
@@ -242,10 +227,6 @@ public class AppConfig {
 
     public int getReconnectionTimeout() {
         return reconnectionTimeout;
-    }
-
-    public String getIpcHost() {
-        return ipcHost;
     }
 
     public int getIpcPort() {
