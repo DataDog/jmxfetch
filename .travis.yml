@@ -2,7 +2,7 @@ dist: precise
 
 language: java
 
-install: echo "do nada"
+install: echo "nothing to install, just test."
 
 addons:
   hostname: dd-jmxfetch-testhost
