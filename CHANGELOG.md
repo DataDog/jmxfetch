@@ -1,7 +1,13 @@
 Changes
 =======
 
-# 0.26.6 / 2020-09-01
+# 0.26.8 / 2020-09-15
+
+### Changes
+
+* [BUGFIX] Fix another Java 6 incompatibility; removal of guava with equivalent JDK or custom functionalities. [#325][]
+
+# 0.26.7 / 2020-09-01
 
 ### Changes
 
@@ -390,6 +396,7 @@ Changes
 [#311]: https://github.com/DataDog/jmxfetch/issues/311
 [#312]: https://github.com/DataDog/jmxfetch/issues/312
 [#315]: https://github.com/DataDog/jmxfetch/issues/315
+[#325]: https://github.com/DataDog/jmxfetch/issues/325
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
