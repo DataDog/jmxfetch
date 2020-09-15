@@ -2,33 +2,50 @@ dist: precise
 
 language: java
 
-install: mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+install: echo "nothing to install, just test."
 
 addons:
   hostname: dd-jmxfetch-testhost
+  apt:
+    packages:
+      - openjdk-6-jdk
 
 matrix:
   fast_finish: true
   include:
     - jdk: oraclejdk8
-      env: 
+      env:
        - DESC="Oracle JDK8 linting"
-       - CMD="mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j.travis.properties"
+       - TESTCMD="mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j.travis.properties"
 
     - jdk: oraclejdk8
-      env: 
+      env:
        - DESC="Oracle JDK8 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - BUILDCMD="mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+       - TESTCMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
 
     - jdk: oraclejdk7
-      env: 
+      env:
        - DESC="Oracle JDK7 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - BUILDCMD="mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+       - TESTCMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
 
     - jdk: openjdk7
-      env: 
+      env:
        - DESC="OpenJDK7 testing"
-       - CMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+       - BUILDCMD="mvn install -Dhttps.protocols=TLSv1.2 -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+       - TESTCMD="mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
 
-script: echo "Running $DESC..." && (eval $CMD) 
+    - jdk: openjdk6
+      env:
+       - DESC="OpenJDK6 testing"
+       # TLSv1.2 fails
+       #
+       # - BUILDCMD="mvn install -Dhttps.protocols=TLSv1,TLSv1.1 -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+       - TESTCMD="mvn test -B -Dhttps.protocols=TLSv1,TLSv1.1 -Dcheckstyle.skip=true -Dlog4j.configuration=log4j.travis.properties"
+
+script:
+  - echo "Running $DESC..."
+  - if [[ ! -z "${BUILDCMD}" ]]; then (eval $BUILDCMD); fi
+  - if [[ ! -z "${TESTCMD}" ]]; then (eval $TESTCMD); fi
 
