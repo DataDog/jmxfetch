@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.39.1 / 2020-09-18
+
+### Changes
+* [BUGFIX] Correct collection loop period [#323][]
+* [IMPROVEMENT] Issue debug message for invalid types [#314][]
+
 # 0.39.0 / 2020-09-03
 
 ### Changes
@@ -521,6 +527,8 @@ Changelog
 [#320]: https://github.com/DataDog/jmxfetch/issues/320
 [#321]: https://github.com/DataDog/jmxfetch/issues/321
 [#322]: https://github.com/DataDog/jmxfetch/issues/322
+[#323]: https://github.com/DataDog/jmxfetch/issues/323
+[#314]: https://github.com/DataDog/jmxfetch/issues/314
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
