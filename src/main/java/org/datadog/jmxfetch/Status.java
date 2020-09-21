@@ -4,6 +4,8 @@ import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
+import org.datadog.jmxfetch.util.MetadataHelper;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,6 +26,7 @@ public class Status {
     private static final String FAILED_CHECKS = "failed_checks";
     private static final String API_STATUS_PATH = "agent/jmx/status";
     private Map<String, Object> instanceStats;
+    private Map<String, Object> info;
     private String statusFileLocation;
     private HttpClient client;
     private boolean isEnabled;
@@ -47,13 +50,20 @@ public class Status {
     void configure(String statusFileLocation, String host, int port) {
         this.statusFileLocation = statusFileLocation;
         this.instanceStats = new HashMap<String, Object>();
+        this.info = new HashMap<String, Object>();
         this.isEnabled = (this.statusFileLocation != null || this.client != null);
         this.clearStats();
+        this.addInfo();
     }
 
     private void clearStats() {
         instanceStats.put(INITIALIZED_CHECKS, new HashMap<String, Object>());
         instanceStats.put(FAILED_CHECKS, new HashMap<String, Object>());
+    }
+
+    private void addInfo() {
+        this.info.put("version", MetadataHelper.getVersion());
+        this.info.put("runtime_version", System.getProperty("java.version"));
     }
 
     /** Adds instance stats to the status. */
@@ -105,7 +115,6 @@ public class Status {
         }
         instStats.put("message", message);
         instStats.put("status", status);
-        instStats.put("runtime_version", System.getProperty("java.version"));
         checkStats.add(instStats);
         initializedChecks.put(checkName, checkStats);
         this.instanceStats.put(key, initializedChecks);
@@ -118,6 +127,7 @@ public class Status {
     private String generateYaml() {
         Yaml yaml = new Yaml();
         Map<String, Object> status = new HashMap<String, Object>();
+        status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         return yaml.dump(status);
@@ -125,6 +135,7 @@ public class Status {
 
     private String generateJson() throws IOException {
         Map<String, Object> status = new HashMap<String, Object>();
+        status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         return JSON.std.asString(status);
