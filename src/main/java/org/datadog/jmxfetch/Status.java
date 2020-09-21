@@ -105,6 +105,7 @@ public class Status {
         }
         instStats.put("message", message);
         instStats.put("status", status);
+        instStats.put("runtime_version", System.getProperty("java.version"));
         checkStats.add(instStats);
         initializedChecks.put(checkName, checkStats);
         this.instanceStats.put(key, initializedChecks);
