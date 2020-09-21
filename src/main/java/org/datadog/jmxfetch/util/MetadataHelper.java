@@ -1,7 +1,7 @@
 package org.datadog.jmxfetch.util;
 
-import java.util.Properties;
 import java.io.IOException;
+import java.util.Properties;
 
 public class MetadataHelper {
     /**  Returns our own version number. */

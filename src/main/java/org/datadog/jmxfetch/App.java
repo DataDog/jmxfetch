@@ -17,8 +17,8 @@ import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
-import org.datadog.jmxfetch.util.ServiceCheckHelper;
 import org.datadog.jmxfetch.util.MetadataHelper;
+import org.datadog.jmxfetch.util.ServiceCheckHelper;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 

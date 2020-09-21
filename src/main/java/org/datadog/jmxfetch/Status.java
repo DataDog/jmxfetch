@@ -2,9 +2,8 @@ package org.datadog.jmxfetch;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
-import org.yaml.snakeyaml.Yaml;
-
 import org.datadog.jmxfetch.util.MetadataHelper;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -125,12 +124,11 @@ public class Status {
     }
 
     private String generateYaml() {
-        Yaml yaml = new Yaml();
         Map<String, Object> status = new HashMap<String, Object>();
         status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
-        return yaml.dump(status);
+        return new Yaml().dump(status);
     }
 
     private String generateJson() throws IOException {
