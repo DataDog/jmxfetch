@@ -126,7 +126,7 @@ public class Status {
         Map<String, Object> status = new HashMap<String, Object>();
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
-        return JSON.std.asString(status);
+        return JSON.std.with(JSON.Feature.WRITE_NULL_PROPERTIES).asString(status);
     }
 
     /** Flushes current status. */
