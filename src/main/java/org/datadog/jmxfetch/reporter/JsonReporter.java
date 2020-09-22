@@ -47,7 +47,7 @@ public class JsonReporter extends Reporter {
         sc.put("status", this.statusToServiceCheckStatusValue(status));
         sc.put("message", message);
         sc.put("tags", tags);
-      
+
         Map<String, Object> aggregator = new HashMap<String, Object>();
         aggregator.put("metrics", metrics);
         List<Object> serviceChecks = new ArrayList<Object>();
@@ -60,7 +60,12 @@ public class JsonReporter extends Reporter {
 
         System.out.println("=== JSON ===");
         try {
-            System.out.println(JSON.std.with(JSON.Feature.PRETTY_PRINT_OUTPUT).asString(series));
+            System.out.println(
+                JSON.std.with(
+                    JSON.Feature.PRETTY_PRINT_OUTPUT,
+                    JSON.Feature.WRITE_NULL_PROPERTIES
+                ).asString(series)
+            );
         } catch (IOException e) {
             log.error("Couln't produce JSON output");
         }
