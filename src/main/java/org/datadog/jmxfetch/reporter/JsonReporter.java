@@ -60,7 +60,12 @@ public class JsonReporter extends Reporter {
 
         System.out.println("=== JSON ===");
         try {
-            System.out.println(JSON.std.with(JSON.Feature.PRETTY_PRINT_OUTPUT, JSON.Feature.WRITE_NULL_PROPERTIES).asString(series));
+            System.out.println(
+                JSON.std.with(
+                    JSON.Feature.PRETTY_PRINT_OUTPUT,
+                    JSON.Feature.WRITE_NULL_PROPERTIES
+                ).asString(series)
+            );
         } catch (IOException e) {
             log.error("Couln't produce JSON output");
         }
