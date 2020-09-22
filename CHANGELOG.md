@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.39.2 / 2020-09-22
+
+### Changes
+* [BUGFIX] JSON: serialization of status and reporter should include null fields. [#331][]
+
 # 0.39.1 / 2020-09-18
 
 ### Changes
@@ -522,13 +527,14 @@ Changelog
 [#306]: https://github.com/DataDog/jmxfetch/issues/306
 [#308]: https://github.com/DataDog/jmxfetch/issues/308
 [#311]: https://github.com/DataDog/jmxfetch/issues/311
+[#314]: https://github.com/DataDog/jmxfetch/issues/314
 [#317]: https://github.com/DataDog/jmxfetch/issues/317
 [#319]: https://github.com/DataDog/jmxfetch/issues/319
 [#320]: https://github.com/DataDog/jmxfetch/issues/320
 [#321]: https://github.com/DataDog/jmxfetch/issues/321
 [#322]: https://github.com/DataDog/jmxfetch/issues/322
 [#323]: https://github.com/DataDog/jmxfetch/issues/323
-[#314]: https://github.com/DataDog/jmxfetch/issues/314
+[#331]: https://github.com/DataDog/jmxfetch/issues/331
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
