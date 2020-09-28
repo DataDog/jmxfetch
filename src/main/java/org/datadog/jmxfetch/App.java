@@ -17,6 +17,7 @@ import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
+import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
@@ -37,7 +38,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -129,7 +129,7 @@ public class App {
 
         // Display the version and quit
         if (config.isVersion() || AppConfig.ACTION_VERSION.equals(config.getAction())) {
-            JCommander.getConsole().println("JMX Fetch " + getVersion());
+            JCommander.getConsole().println("JMX Fetch " + MetadataHelper.getVersion());
             System.exit(0);
         }
 
@@ -152,19 +152,6 @@ public class App {
             attachShutdownHook();
         }
         System.exit(run(config));
-    }
-
-    /**  Returns our own version number. */
-    public static String getVersion() {
-        try {
-            final Properties properties = new Properties();
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            properties.load(classLoader.getResourceAsStream("project.properties"));
-            return properties.getProperty("version");
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "?.?.?";
-        }
     }
 
     /**
@@ -203,7 +190,7 @@ public class App {
             return 0;
         }
 
-        log.info("JMX Fetch " + getVersion() + " has started");
+        log.info("JMX Fetch " + MetadataHelper.getVersion() + " has started");
 
         // set up the config status
         config.updateStatus();
