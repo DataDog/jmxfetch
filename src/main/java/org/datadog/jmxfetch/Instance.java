@@ -73,7 +73,6 @@ public class Instance {
             }
         };
 
-    private Set<ObjectName> beans;
     private List<String> beanScopes;
     private List<Configuration> configurationList = new ArrayList<Configuration>();
     private List<JmxAttribute> matchingAttributes;
@@ -89,12 +88,14 @@ public class Instance {
     private Map<String, String> tags;
     private String checkName;
     private String serviceCheckPrefix;
-    private int maxReturnedMetrics;
-    private boolean limitReached;
+    private volatile int maxReturnedMetrics;
+    private volatile boolean limitReached;
     private Connection connection;
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
+    private UpdateAttributesTask updateAttributesTask;
+    private Integer throttleUpdateAttributesTime;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -203,6 +204,11 @@ public class Instance {
             instanceConf = this.initConfig.get("conf");
         }
 
+        throttleUpdateAttributesTime = (Integer) instanceMap.get("throttle_bean_refresh_interval");
+        if (throttleUpdateAttributesTime != null) {
+            log.debug("throttleUpdateAttributesTime set");
+        }
+
         if (instanceConf == null) {
             log.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
@@ -226,6 +232,8 @@ public class Instance {
 
         loadDefaultConfig("default-jmx-metrics.yaml");
         loadDefaultConfig(gcMetricConfig);
+
+        updateAttributesTask = new UpdateAttributesTask(this);
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -389,10 +397,20 @@ public class Instance {
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
-        this.refreshBeansList();
+        Set<ObjectName> beans = getRefreshedBeansList();
         log.info("Connected to JMX Server at " + this.toString());
-        this.getMatchingAttributes();
-        log.info("Done initializing JMX Server at " + this.toString());
+
+        if (throttleUpdateAttributesTime != null) {
+            if (this.updateAttributesTask.isRunning) {
+                log.warn("Cannot start updateMatchingAttributes task because it is already running");
+            } else {
+                this.updateAttributesTask.runAsync(beans);
+                log.info("Updating attributes async - Done initializing JMX Server at " + this.toString());
+            }
+        } else {
+            this.updateMatchingAttributes(beans);
+            log.info("Done initializing JMX Server at " + this.toString());
+        }
     }
 
     /** Returns a string representation for the instance. */
@@ -420,34 +438,46 @@ public class Instance {
                 && (System.currentTimeMillis() - this.lastRefreshTime) / 1000
                         > this.refreshBeansPeriod) {
             log.info("Refreshing bean list");
-            this.refreshBeansList();
-            this.getMatchingAttributes();
+            Set<ObjectName> beans = getRefreshedBeansList();
+
+            if (throttleUpdateAttributesTime != null) {
+                if (this.updateAttributesTask.isRunning) {
+                    log.warn("Cannot start updateMatchingAttributes task because it is already running");
+                } else {
+                    this.updateAttributesTask.runAsync(beans);
+                }
+            } else {
+                this.updateMatchingAttributes(beans);
+            }
         }
 
         List<Metric> metrics = new ArrayList<Metric>();
-        Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
-        // increment the lastCollectionTime
-        this.lastCollectionTime = System.currentTimeMillis();
+        synchronized (this) {
+            Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
-        while (it.hasNext()) {
-            JmxAttribute jmxAttr = it.next();
-            try {
-                List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
-                metrics.addAll(jmxAttrMetrics);
-                this.failingAttributes.remove(jmxAttr);
-            } catch (IOException e) {
-                throw e;
-            } catch (Exception e) {
-                log.debug("Cannot get metrics for attribute: " + jmxAttr, e);
-                if (this.failingAttributes.contains(jmxAttr)) {
-                    log.debug(
-                            "Cannot generate metrics for attribute: "
-                                    + jmxAttr
-                                    + " twice in a row. Removing it from the attribute list");
-                    it.remove();
-                } else {
-                    this.failingAttributes.add(jmxAttr);
+            // increment the lastCollectionTime
+            this.lastCollectionTime = System.currentTimeMillis();
+
+            while (it.hasNext()) {
+                JmxAttribute jmxAttr = it.next();
+                try {
+                    List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
+                    metrics.addAll(jmxAttrMetrics);
+                    this.failingAttributes.remove(jmxAttr);
+                } catch (IOException e) {
+                    throw e;
+                } catch (Exception e) {
+                    log.debug("Cannot get metrics for attribute: " + jmxAttr, e);
+                    if (this.failingAttributes.contains(jmxAttr)) {
+                        log.debug(
+                                "Cannot generate metrics for attribute: "
+                                        + jmxAttr
+                                        + " twice in a row. Removing it from the attribute list");
+                        it.remove();
+                    } else {
+                        this.failingAttributes.add(jmxAttr);
+                    }
                 }
             }
         }
@@ -466,21 +496,34 @@ public class Instance {
         }
     }
 
-    private void getMatchingAttributes() throws IOException {
+    private void updateMatchingAttributes(Set<ObjectName> beans) throws IOException {
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
         boolean metricReachedDisplayed = false;
 
-        this.matchingAttributes.clear();
-        this.failingAttributes.clear();
+        ArrayList<JmxAttribute> freshMatchingAttributes = new ArrayList();
         int metricsCount = 0;
 
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
         }
 
+        int sleepTime = throttleUpdateAttributesTime == null
+                ? 0
+                : 1000 * throttleUpdateAttributesTime / beans.size();
+
         for (ObjectName beanName : beans) {
+
+            if (throttleUpdateAttributesTime != null) {
+                try {
+                    log.debug("throttleUpdateAttributesTime is set - Sleeping for " + sleepTime);
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    log.warn(e.getMessage(), e);
+                }
+            }
+
             if (limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -600,7 +643,7 @@ public class Instance {
                         if (jmxAttribute.match(conf)) {
                             jmxAttribute.setMatchingConf(conf);
                             metricsCount += jmxAttribute.getMetricsCount();
-                            this.matchingAttributes.add(jmxAttribute);
+                            freshMatchingAttributes.add(jmxAttribute);
 
                             if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                                     || action.equals(AppConfig.ACTION_LIST_MATCHING)
@@ -630,7 +673,13 @@ public class Instance {
                 }
             }
         }
-        log.info("Found " + matchingAttributes.size() + " matching attributes");
+        log.info("Found " + freshMatchingAttributes.size() + " matching attributes");
+
+        synchronized (this) {
+            this.matchingAttributes.clear();
+            this.failingAttributes.clear();
+            this.matchingAttributes = freshMatchingAttributes;
+        }
     }
 
     /** Returns a list of strings listing the bean scopes. */
@@ -645,8 +694,8 @@ public class Instance {
      * Query and refresh the instance's list of beans. Limit the query scope when possible on
      * certain actions, and fallback if necessary.
      */
-    private void refreshBeansList() throws IOException {
-        this.beans = new HashSet<ObjectName>();
+    private Set<ObjectName> getRefreshedBeansList() throws IOException {
+        HashSet<ObjectName> beans = new HashSet();
         String action = appConfig.getAction();
         boolean limitQueryScopes =
                 !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
@@ -657,7 +706,7 @@ public class Instance {
                 List<String> beanScopes = getBeansScopes();
                 for (String scope : beanScopes) {
                     ObjectName name = new ObjectName(scope);
-                    this.beans.addAll(connection.queryNames(name));
+                    beans.addAll(connection.queryNames(name));
                 }
             } catch (Exception e) {
                 log.error(
@@ -666,8 +715,8 @@ public class Instance {
             }
         }
 
-        this.beans = (this.beans.isEmpty()) ? connection.queryNames(null) : this.beans;
         this.lastRefreshTime = System.currentTimeMillis();
+        return (beans.isEmpty()) ? connection.queryNames(null) : beans;
     }
 
     /** Returns a string array listing the service check tags. */
@@ -759,5 +808,36 @@ public class Instance {
         }
 
         new Thread(new AsyncCleaner(this)).start();
+    }
+
+    class UpdateAttributesTask implements Runnable {
+        private final Instance instance;
+        private volatile Set<ObjectName> beans;
+        public volatile boolean isRunning = false;
+        public volatile IOException previousException;
+
+        public UpdateAttributesTask(Instance instance) {
+            this.instance = instance;
+        }
+
+        @Override
+        public void run() {
+            isRunning = true;
+            try {
+                instance.updateMatchingAttributes(beans);
+            } catch (IOException e) {
+                // Capture and store the exception so the caller can deal with it later.
+                previousException = e;
+            }
+            isRunning = false;
+        }
+
+        public void runAsync(Set<ObjectName> beans) throws IOException {
+            if (previousException != null) {
+                throw previousException;
+            }
+            this.beans = beans;
+            new Thread(this).start();
+        }
     }
 }
