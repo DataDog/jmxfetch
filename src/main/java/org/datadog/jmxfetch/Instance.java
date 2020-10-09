@@ -402,10 +402,12 @@ public class Instance {
 
         if (throttleUpdateAttributesTime != null) {
             if (this.updateAttributesTask.isRunning) {
-                log.warn("Cannot start updateMatchingAttributes task because it is already running");
+                log.warn("Cannot start updateMatchingAttributes"
+                        + " task because it is already running");
             } else {
                 this.updateAttributesTask.runAsync(beans);
-                log.info("Updating attributes async - Done initializing JMX Server at " + this.toString());
+                log.info("Updating attributes async - Done initializing JMX Server at "
+                        + this.toString());
             }
         } else {
             this.updateMatchingAttributes(beans);
@@ -442,7 +444,8 @@ public class Instance {
 
             if (throttleUpdateAttributesTime != null) {
                 if (this.updateAttributesTask.isRunning) {
-                    log.warn("Cannot start updateMatchingAttributes task because it is already running");
+                    log.warn("Cannot start updateMatchingAttributes"
+                            + " task because it is already running");
                 } else {
                     this.updateAttributesTask.runAsync(beans);
                 }
