@@ -516,11 +516,13 @@ public class Instance {
                 ? 0
                 : 1000 * throttleUpdateAttributesTime / beans.size();
 
-        for (ObjectName beanName : beans) {
+        if (sleepTime > 0) {
+            log.debug("throttleUpdateAttributesTime is set - Sleeping for " + sleepTime + "ms between updates");
+        }
 
+        for (ObjectName beanName : beans) {
             if (throttleUpdateAttributesTime != null) {
                 try {
-                    log.debug("throttleUpdateAttributesTime is set - Sleeping for " + sleepTime);
                     Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
                     log.warn(e.getMessage(), e);
