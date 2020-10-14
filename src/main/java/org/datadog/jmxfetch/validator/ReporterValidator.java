@@ -11,17 +11,8 @@ public class ReporterValidator implements IParameterValidator {
 
     /** Validates a reporter configurations (console, statsd). */
     public void validate(String name, String value) throws ParameterException {
-        if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) {
-            String[] splitValue = value.split(":");
-            String port = splitValue[splitValue.length - 1];
-            try {
-                positiveIntegerValidator.validate(name, port);
-            } catch (ParameterException pe) {
-                throw new ParameterException(
-                        "Statsd Port should be a positive integer (found " + port + ")");
-            }
-            return;
-        }
+        if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) return;
+
         if (!value.equals("console") && !value.equals("json")) {
             throw new ParameterException(
                     "Parameter "
