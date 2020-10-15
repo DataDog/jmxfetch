@@ -11,7 +11,9 @@ public class ReporterValidator implements IParameterValidator {
 
     /** Validates a reporter configurations (console, statsd). */
     public void validate(String name, String value) throws ParameterException {
-        if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) return;
+        if (value.startsWith(STATSD_PREFIX) && value.length() > STATSD_PREFIX.length()) {
+            return;
+        }
 
         if (!value.equals("console") && !value.equals("json")) {
             throw new ParameterException(
