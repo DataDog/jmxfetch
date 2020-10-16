@@ -19,16 +19,16 @@ public class ReporterFactory {
             return new JsonReporter();
         } else if (type.startsWith("statsd:")) {
 
-            Matcher m = Pattern.compile("^statsd:(.*):(\\d+)$").matcher(type);
-            if (m.find() && m.groupCount() == 2) {
-                String host = m.group(1);
-                Integer port = Integer.valueOf(m.group(2));
+            Matcher matcher = Pattern.compile("^statsd:(.*):(\\d+)$").matcher(type);
+            if (matcher.find() && matcher.groupCount() == 2) {
+                String host = matcher.group(1);
+                Integer port = Integer.valueOf(matcher.group(2));
                 return new StatsdReporter(host, port);
             }
 
-            m = Pattern.compile("^statsd:(.*)$").matcher(type);
-            if (m.find() && m.groupCount() == 1) {
-                String socketPath = m.group(1);
+            matcher = Pattern.compile("^statsd:(.*)$").matcher(type);
+            if (matcher.find() && matcher.groupCount() == 1) {
+                String socketPath = matcher.group(1);
                 return new StatsdReporter(socketPath, 0);
             }
         }

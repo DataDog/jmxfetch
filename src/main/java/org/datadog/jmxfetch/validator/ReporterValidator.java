@@ -11,7 +11,8 @@ public class ReporterValidator implements IParameterValidator {
             throw new ParameterException(
                     "Parameter "
                             + name
-                            + " should be either 'console', 'json', 'statsd:[STATSD_HOST]:[STATSD_PORT]'"
+                            + " should be either 'console', 'json',"
+                            + " 'statsd:[STATSD_HOST]:[STATSD_PORT]'"
                             + " or 'statsd:[STATSD_SOCKET_PATH]'");
         }
     }
