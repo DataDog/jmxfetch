@@ -28,8 +28,8 @@ public class ReporterFactory {
 
             m = Pattern.compile("^statsd:(.*)$").matcher(type);
             if (m.find() && m.groupCount() == 1) {
-                String host = m.group(1);
-                return new StatsdReporter(host, 0);
+                String socketPath = m.group(1);
+                return new StatsdReporter(socketPath, 0);
             }
         }
         throw new IllegalArgumentException("Invalid reporter type: " + type);
