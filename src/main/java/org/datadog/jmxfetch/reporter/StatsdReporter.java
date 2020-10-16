@@ -1,9 +1,6 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.ServiceCheck;
-import com.timgroup.statsd.StatsDClient;
-import com.timgroup.statsd.StatsDClientErrorHandler;
+import com.timgroup.statsd.*;
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
@@ -41,15 +38,14 @@ public class StatsdReporter extends Reporter {
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
-        statsDClient =
-                new NonBlockingStatsDClient(
-                        null,
-                        this.statsdHost,
-                        this.statsdPort,
-                        Integer.MAX_VALUE,
-                        new String[] {},
-                        new LoggingErrorHandler(),
-                        entityId);
+        statsDClient = new NonBlockingStatsDClientBuilder()
+                .enableTelemetry(false)
+                .hostname(this.statsdHost)
+                .port(this.statsdPort)
+                .queueSize(Integer.MAX_VALUE)
+                .errorHandler(new LoggingErrorHandler())
+                .entityID(entityId)
+                .build();
     }
 
     protected void sendMetricPoint(
