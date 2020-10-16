@@ -3,10 +3,12 @@ package org.datadog.jmxfetch.reporter;
 import org.datadog.jmxfetch.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ReporterFactory {
 
-    /** Gets the reporter for the correspndonding type string (console, statsd). */
+    /** Gets the reporter for the corresponding type string (console, statsd). */
     public static Reporter getReporter(String type) {
         if (type == null || type.length() <= 0) {
             throw new IllegalArgumentException("Null or empty reporter type");
@@ -16,17 +18,21 @@ public class ReporterFactory {
         } else if ("json".equals(type)) {
             return new JsonReporter();
         } else if (type.startsWith("statsd:")) {
-            String[] typeElements = type.split(":");
-            String host = "localhost";
-            Integer port = Integer.valueOf(typeElements[typeElements.length - 1]);
-            if (typeElements.length > 2) {
-                host = StringUtils.join(":",
-                        Arrays.copyOfRange(typeElements, 1, typeElements.length - 1));
+
+            Matcher m = Pattern.compile("^statsd:(.*):(\\d+)$").matcher(type);
+            if (m.find() && m.groupCount() == 2) {
+                String host = m.group(1);
+                Integer port = Integer.valueOf(m.group(2));
+                return new StatsdReporter(host, port);
             }
-            return new StatsdReporter(host, port);
-        } else {
-            throw new IllegalArgumentException("Invalid reporter type: " + type);
+
+            m = Pattern.compile("^statsd:(.*)$").matcher(type);
+            if (m.find() && m.groupCount() == 1) {
+                String host = m.group(1);
+                return new StatsdReporter(host, 0);
+            }
         }
+        throw new IllegalArgumentException("Invalid reporter type: " + type);
     }
 
     private ReporterFactory() {}
