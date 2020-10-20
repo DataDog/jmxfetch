@@ -26,7 +26,7 @@ public class ReporterFactory {
                 return new StatsdReporter(host, port);
             }
 
-            matcher = Pattern.compile("^statsd:(.*)$").matcher(type);
+            matcher = Pattern.compile("^statsd:unix://(.*)$").matcher(type);
             if (matcher.find() && matcher.groupCount() == 1) {
                 String socketPath = matcher.group(1);
                 return new StatsdReporter(socketPath, 0);

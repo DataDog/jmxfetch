@@ -212,7 +212,7 @@ public class TestParsingJCommander {
             fail("Should have failed because reporter is invalid");
         } catch (ParameterException pe) {
             assertEquals(
-                    "Parameter --reporter should be either 'console', 'json', 'statsd:[STATSD_HOST]:[STATSD_PORT]' or 'statsd:[STATSD_UNIX_SOCKET_PATH]'",
+                    "Parameter --reporter should be either 'console', 'json', 'statsd:[STATSD_HOST]:[STATSD_PORT]' or 'statsd:unix://[STATSD_UNIX_SOCKET_PATH]'",
                     pe.getMessage());
         }
 
@@ -220,7 +220,7 @@ public class TestParsingJCommander {
         params =
                 new String[] {
                     "-r",
-                    "statsd:/path/to/dsd.socket",
+                    "statsd:unix:///path/to/dsd.socket",
                     "--check",
                     SINGLE_CHECK,
                     "--conf_directory",

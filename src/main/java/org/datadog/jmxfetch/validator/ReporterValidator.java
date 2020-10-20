@@ -13,7 +13,7 @@ public class ReporterValidator implements IParameterValidator {
                             + name
                             + " should be either 'console', 'json',"
                             + " 'statsd:[STATSD_HOST]:[STATSD_PORT]'"
-                            + " or 'statsd:[STATSD_SOCKET_PATH]'");
+                            + " or 'statsd:unix://[STATSD_UNIX_SOCKET_PATH]'");
         }
     }
 }
