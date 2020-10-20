@@ -1,6 +1,9 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.timgroup.statsd.*;
+import com.timgroup.statsd.NonBlockingStatsDClientBuilder;
+import com.timgroup.statsd.ServiceCheck;
+import com.timgroup.statsd.StatsDClient;
+import com.timgroup.statsd.StatsDClientErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
