@@ -41,14 +41,19 @@ public class StatsdReporter extends Reporter {
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
-        statsDClient = new NonBlockingStatsDClientBuilder()
+        NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder()
                 .enableTelemetry(false)
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
                 .queueSize(Integer.MAX_VALUE)
                 .errorHandler(new LoggingErrorHandler())
-                .entityID(entityId)
-                .build();
+                .entityID(entityId);
+
+        // When using UDS set the datagram size to 8k
+        if (this.statsdPort == 0) {
+            builder.maxPacketSizeBytes(8192);
+        }
+        statsDClient = builder.build();
     }
 
     protected void sendMetricPoint(
