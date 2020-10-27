@@ -45,7 +45,6 @@ public class StatsdReporter extends Reporter {
                 .enableTelemetry(false)
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
-                .queueSize(Integer.MAX_VALUE)
                 .errorHandler(new LoggingErrorHandler())
                 .entityID(entityId);
 
