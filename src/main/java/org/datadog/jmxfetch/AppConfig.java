@@ -106,7 +106,8 @@ public class AppConfig {
     @Parameter(
             names = {"--reporter", "-r"},
             description =
-                    "Reporter to use: should be either \"statsd:[STATSD_PORT]\", "
+                    "Reporter to use: should be either \"statsd:[STATSD_HOST][STATSD_PORT]\", "
+                     + "\"statsd:unix://[STATSD_UNIX_SOCKET_PATH]\", "
                      + "\"console\" or \"json\"",
             validateWith = ReporterValidator.class,
             converter = ReporterConverter.class,

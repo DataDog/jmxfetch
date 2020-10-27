@@ -37,7 +37,7 @@
 
         <commons-io.version>2.4</commons-io.version>
         <apache-commons-lang3.version>3.5</apache-commons-lang3.version>
-        <java-dogstatsd-client.version>2.9.0</java-dogstatsd-client.version>
+        <java-dogstatsd-client.version>2.10.3</java-dogstatsd-client.version>
         <jcommander.version>1.35</jcommander.version>
         <!-- log4j 2.13+ drops support for Java 7, so stick to 2.12 -->
         <log4j.version>2.12.1</log4j.version>

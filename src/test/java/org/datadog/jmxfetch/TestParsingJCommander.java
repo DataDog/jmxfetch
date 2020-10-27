@@ -149,7 +149,7 @@ public class TestParsingJCommander {
         params =
                 new String[] {
                     "--reporter",
-                    "statsd:10",
+                    "statsd:localhost:10",
                     "--check",
                     SINGLE_CHECK,
                     "--conf_directory",
@@ -212,27 +212,26 @@ public class TestParsingJCommander {
             fail("Should have failed because reporter is invalid");
         } catch (ParameterException pe) {
             assertEquals(
-                    "Parameter --reporter should be either 'console', 'json', 'statsd:[STATSD_PORT]' or 'statsd:[STATSD_HOST]:[STATSD_PORT]'",
+                    "Parameter --reporter should be either 'console', 'json', 'statsd:[STATSD_HOST]:[STATSD_PORT]' or 'statsd:unix://[STATSD_UNIX_SOCKET_PATH]'",
                     pe.getMessage());
         }
 
-        // invalid port
+        // UDS
         params =
                 new String[] {
                     "-r",
-                    "statsd:-1",
+                    "statsd:unix:///path/to/dsd.socket",
                     "--check",
                     SINGLE_CHECK,
                     "--conf_directory",
                     CONF_DIR,
                     AppConfig.ACTION_COLLECT
                 };
-        try {
-            testCommand(params);
-            fail("Should have failed because statsd reporter port is invalid");
-        } catch (ParameterException pe) {
-            assertEquals("Statsd Port should be a positive integer (found -1)", pe.getMessage());
-        }
+        appConfig = testCommand(params);
+        assertNotNull(appConfig.getReporter());
+        assertTrue(appConfig.getReporter() instanceof StatsdReporter);
+        assertEquals("/path/to/dsd.socket", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
+        assertEquals(0, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
     }
 
     @Test
