@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.40.0 / 2020-10-28
+
+### Changes
+* [IMPROVEMENT] Statsd reporter to require host name and optional port to support UDS [#335][]
+* [IMPROVEMENT] Added runtime info to stats [#330][]
+
 # 0.39.2 / 2020-09-22
 
 ### Changes
@@ -534,7 +540,9 @@ Changelog
 [#321]: https://github.com/DataDog/jmxfetch/issues/321
 [#322]: https://github.com/DataDog/jmxfetch/issues/322
 [#323]: https://github.com/DataDog/jmxfetch/issues/323
+[#330]: https://github.com/DataDog/jmxfetch/issues/330
 [#331]: https://github.com/DataDog/jmxfetch/issues/331
+[#335]: https://github.com/DataDog/jmxfetch/issues/335
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
