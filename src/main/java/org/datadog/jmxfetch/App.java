@@ -809,7 +809,7 @@ public class App {
                 metricCount, reporter.getServiceCheckCount(checkName),
                 message, status);
         if (reporter.getHandler() != null) {
-           stats.addErrorStats(reporter.getHandler().getErrors());
+            stats.addErrorStats(reporter.getHandler().getErrors());
         }
     }
 
