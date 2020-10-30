@@ -23,6 +23,7 @@ public abstract class Reporter {
             new HashMap<String, Map<String, Map<String, Object>>>();
     private Map<String, Map<String, Long>> countersAggregator =
             new HashMap<String, Map<String, Long>>();
+    protected LoggingErrorHandler handler;
 
     /** Reporter constructor. */
     public Reporter() {
@@ -188,6 +189,10 @@ public abstract class Reporter {
 
     protected Map<String, Integer> getServiceCheckCountMap() {
         return this.serviceCheckCount;
+    }
+
+    public LoggingErrorHandler getHandler() {
+        return this.handler;
     }
 
     protected ServiceCheck.Status statusToServiceCheckStatus(String status) {

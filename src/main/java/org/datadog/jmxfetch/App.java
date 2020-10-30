@@ -803,12 +803,14 @@ public class App {
             String status) {
         String checkName = instance.getCheckName();
 
-        appConfig
-                .getStatus()
-                .addInstanceStats(
-                        checkName, instance.getName(),
-                        metricCount, reporter.getServiceCheckCount(checkName),
-                        message, status);
+        Status stats = appConfig.getStatus();
+        stats.addInstanceStats(
+                checkName, instance.getName(),
+                metricCount, reporter.getServiceCheckCount(checkName),
+                message, status);
+        if (reporter.getHandler() != null) {
+            stats.addErrorStats(reporter.getHandler().getErrors());
+        }
     }
 
     private void sendServiceCheck(
