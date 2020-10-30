@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 
 /** A reporter class to submit metrics via statsd. */
 @Slf4j
