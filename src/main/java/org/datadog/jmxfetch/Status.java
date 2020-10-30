@@ -26,6 +26,7 @@ public class Status {
     private static final String API_STATUS_PATH = "agent/jmx/status";
     private Map<String, Object> instanceStats;
     private Map<String, Object> info;
+    private int errors;
     private String statusFileLocation;
     private HttpClient client;
     private boolean isEnabled;
@@ -83,6 +84,10 @@ public class Status {
                 INITIALIZED_CHECKS);
     }
 
+    public void addErrorStats(int errors) {
+        this.errors = errors;
+    }
+
     @SuppressWarnings("unchecked")
     private void addStats(
             String checkName,
@@ -128,6 +133,7 @@ public class Status {
         status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
+        status.put("errors", this.errors);
         return new Yaml().dump(status);
     }
 
@@ -136,6 +142,7 @@ public class Status {
         status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
+        status.put("errors", this.errors);
         return JSON.std.with(JSON.Feature.WRITE_NULL_PROPERTIES).asString(status);
     }
 

@@ -3,10 +3,12 @@ package org.datadog.jmxfetch.reporter;
 import com.timgroup.statsd.NonBlockingStatsDClientBuilder;
 import com.timgroup.statsd.ServiceCheck;
 import com.timgroup.statsd.StatsDClient;
-import com.timgroup.statsd.StatsDClientErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 /** A reporter class to submit metrics via statsd. */
 @Slf4j
@@ -16,14 +18,6 @@ public class StatsdReporter extends Reporter {
     private String statsdHost;
     private int statsdPort;
     private long initializationTime;
-
-    private class LoggingErrorHandler implements StatsDClientErrorHandler {
-
-        @Override
-        public void handle(Exception exception) {
-            log.error("statsd client error:", exception);
-        }
-    }
 
     /** Constructor, instantiates statsd reported to provided host and port. */
     public StatsdReporter(String statsdHost, int statsdPort) {
@@ -38,6 +32,7 @@ public class StatsdReporter extends Reporter {
         // Only set the entityId to "none" if UDS communication is activated
         String entityId = this.statsdPort == 0 ? "none" : null;
 
+        handler = new LoggingErrorHandler();
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
@@ -45,7 +40,7 @@ public class StatsdReporter extends Reporter {
                 .enableTelemetry(false)
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
-                .errorHandler(new LoggingErrorHandler())
+                .errorHandler(handler)
                 .entityID(entityId);
 
         // When using UDS set the datagram size to 8k
