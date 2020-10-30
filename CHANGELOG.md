@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.40.1 / 2020-10-30
+
+### Changes
+* [IMPROVEMENT] Status tracks java-dogstarsd-client errors [#336][]
+
 # 0.40.0 / 2020-10-28
 
 ### Changes
@@ -543,6 +548,7 @@ Changelog
 [#330]: https://github.com/DataDog/jmxfetch/issues/330
 [#331]: https://github.com/DataDog/jmxfetch/issues/331
 [#335]: https://github.com/DataDog/jmxfetch/issues/335
+[#336]: https://github.com/DataDog/jmxfetch/issues/336
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
