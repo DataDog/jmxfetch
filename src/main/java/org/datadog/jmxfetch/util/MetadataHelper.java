@@ -9,17 +9,10 @@ public class MetadataHelper {
     public static String getVersion() {
         final Properties properties = new Properties();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        InputStream stream = classLoader.getResourceAsStream("project.properties");
-        try {
+        try (InputStream stream = classLoader.getResourceAsStream("project.properties")) {
             properties.load(stream);
-            stream.close();
             return properties.getProperty("version");
         } catch (IOException e) {
-            try {
-                stream.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
             e.printStackTrace();
             return "?.?.?";
         }
