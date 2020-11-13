@@ -1,7 +1,7 @@
 Changelog
 =========
 
-# 0.40.1 / 2020-10-30
+# 0.40.2 / 2020-11-13
 
 ### Changes
 * [BUGFIX] Bump java-dogstatsd-client to version 2.10.4: fixes thread leak [java-dogstatsd-client-issue-126][]. [#340][]
