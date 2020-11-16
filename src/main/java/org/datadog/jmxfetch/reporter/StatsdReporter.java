@@ -50,10 +50,6 @@ public class StatsdReporter extends Reporter {
 
     protected void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags) {
-        if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
-            this.statsDClient.stop();
-            init();
-        }
         if (metricType.equals("monotonic_count")) {
             statsDClient.count(metricName, (long) value, tags);
         } else if (metricType.equals("histogram")) {
@@ -66,10 +62,6 @@ public class StatsdReporter extends Reporter {
     /** Submits service check. */
     public void doSendServiceCheck(
             String serviceCheckName, String status, String message, String[] tags) {
-        if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
-            this.statsDClient.stop();
-            init();
-        }
 
         ServiceCheck sc = ServiceCheck.builder()
                 .withName(serviceCheckName)
