@@ -4,7 +4,7 @@ Changelog
 # 0.40.3 / 2020-11-19
 
 ### Changes
-* [BUGFIX] Bump java-dogstatsd-client to version 2.10.5: fixes thread leak [java-dogstatsd-client-issue-128][]. #342
+* [BUGFIX] Bump java-dogstatsd-client to version 2.10.5: fixes thread leak [java-dogstatsd-client-issue-128][]. [#344][]
 
 # 0.40.2 / 2020-11-13
 
@@ -563,6 +563,7 @@ Changelog
 [#335]: https://github.com/DataDog/jmxfetch/issues/335
 [#336]: https://github.com/DataDog/jmxfetch/issues/336
 [#340]: https://github.com/DataDog/jmxfetch/issues/340
+[#344]: https://github.com/DataDog/jmxfetch/issues/344
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
