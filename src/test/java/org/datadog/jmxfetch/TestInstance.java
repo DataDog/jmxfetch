@@ -147,4 +147,19 @@ public class TestInstance extends TestCommon {
 
         assertEquals(2, configurationList.size());
     }
+
+    @Test
+    public void testThrottleUpdateBeanAttributes() throws Exception {
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        initApplication("jmx_instance_throttle_bean_refresh.yaml");
+
+        run();
+        // Since attributes are refreshed async - expect 0 the first time
+        assertEquals(0, getMetrics().size());
+
+        Thread.sleep(2500);
+        run();
+        // BG task should have finished by now
+        assertEquals(15, getMetrics().size());
+    }
 }
