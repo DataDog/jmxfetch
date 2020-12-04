@@ -224,8 +224,12 @@ public class Instance {
             }
         }
 
-        loadDefaultConfig("default-jmx-metrics.yaml");
-        loadDefaultConfig(gcMetricConfig);
+        Boolean collectDefaultJvmMetrics = (Boolean) instanceMap.get("collect_default_jvm_metrics");
+        if (collectDefaultJvmMetrics == null || collectDefaultJvmMetrics) {
+            log.info("collect_default_jvm_metrics is true - not collecting default JVM metrics");
+            loadDefaultConfig("default-jmx-metrics.yaml");
+            loadDefaultConfig(gcMetricConfig);
+        }
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
