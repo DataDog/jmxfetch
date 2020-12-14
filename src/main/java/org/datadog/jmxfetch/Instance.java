@@ -192,8 +192,12 @@ public class Instance {
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
         this.cassandraAliasing = (Boolean) instanceMap.get("cassandra_aliasing");
-        if (this.cassandraAliasing == null) {
-            this.cassandraAliasing = false;
+        if ( this.cassandraAliasing == null) {
+            if ( this.checkName == "cassandra") {
+                this.cassandraAliasing = true;
+            } else {
+                this.cassandraAliasing = false;
+            }
         }
 
         // In case the configuration to match beans is not specified in the "instance" parameter but
