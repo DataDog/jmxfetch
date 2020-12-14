@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.41.0 / 2020-12-14
+
+### Changes
+* [FEATURE] Make collection of default JVM metrics optional [#345][]
+
 # 0.40.3 / 2020-11-19
 
 ### Changes
@@ -564,6 +569,7 @@ Changelog
 [#336]: https://github.com/DataDog/jmxfetch/issues/336
 [#340]: https://github.com/DataDog/jmxfetch/issues/340
 [#344]: https://github.com/DataDog/jmxfetch/issues/344
+[#345]: https://github.com/DataDog/jmxfetch/issues/345
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
