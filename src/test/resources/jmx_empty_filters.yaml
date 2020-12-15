@@ -1,0 +1,6 @@
+init_config:
+
+instances:
+  - name: jmx_test_default_hostname
+    conf:
+        - include:

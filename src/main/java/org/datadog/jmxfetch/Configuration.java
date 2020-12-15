@@ -43,7 +43,7 @@ public class Configuration {
     }
 
     private Boolean hasInclude() {
-        return getInclude() != null;
+        return getInclude() != null && !getInclude().isEmptyFilter();
     }
 
     /**
