@@ -188,4 +188,8 @@ class Filter {
     public boolean isEmptyBeanName() {
         return (filter.get("bean") == null && filter.get("bean_name") == null);
     }
+
+    public boolean isEmptyFilter() {
+        return filter.isEmpty();
+    }
 }

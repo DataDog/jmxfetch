@@ -84,11 +84,46 @@ public class TestConfiguration {
     }
 
     /**
+     * Check that an empty include doesn't return a '*:*' filters
+     *
+     * @throws FileNotFoundException
+     * @throws SecurityException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    @Test
+    public void testEmptyInclude()
+            throws FileNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException,
+                    IllegalArgumentException, InvocationTargetException {
+        File f = new File("src/test/resources/", "jmx_empty_filters.yaml");
+        String yamlPath = f.getAbsolutePath();
+        FileInputStream yamlInputStream = new FileInputStream(yamlPath);
+        YamlParser fileConfig = new YamlParser(yamlInputStream);
+        List<Map<String, Object>> configInstances =
+                ((List<Map<String, Object>>) fileConfig.getYamlInstances());
+
+        List<Configuration> confs = new ArrayList<Configuration>();
+        for (Map<String, Object> config : configInstances) {
+            Object yamlConf = config.get("conf");
+            for (Map<String, Object> conf :
+                    (List<Map<String, Object>>) (yamlConf)) {
+                confs.add(new Configuration(conf));
+            }
+        }
+
+        assertEquals(confs.size(), 1);
+        List<String> res = Configuration.getGreatestCommonScopes(confs);
+        assertEquals(res, new ArrayList<String>());
+    }
+
+    /**
      * Extract filters from the configuration list and index by domain name
      *
      * @throws SecurityException
      * @throws NoSuchMethodException
-     * @throws InvocationTargetException
+     * @throws InvocationTargetExceptionConfiguration
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
      */
