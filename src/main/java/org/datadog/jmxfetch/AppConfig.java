@@ -244,7 +244,7 @@ public class AppConfig {
     private List<String> metricConfigResources;
     // This is used by things like APM agent to provide metric configuration from files
     private List<String> metricConfigFiles;
-    // This is used by things like APM agent to provide global override for initial bean refresh period
+    // This is used by things like APM agent to provide global override for 1st bean refresh period
     private Integer initialRefreshBeansPeriod;
     // This is used by things like APM agent to provide global override for bean refresh period
     private Integer refreshBeansPeriod;
