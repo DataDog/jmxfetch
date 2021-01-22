@@ -441,8 +441,7 @@ public class Instance {
 
         if (this.initialRefreshBeansPeriod != null
                 && (this.initialRefreshTime != 0)
-                && (System.currentTimeMillis() - this.initialRefreshTime) / 1000
-                        > this.initialRefreshBeansPeriod) {
+                && isPeriodDue(this.initialRefreshTime, this.initialRefreshBeansPeriod)) {
             log.info("Refreshing bean list - Initial");
             // We can force the first bean refresh post initialization earlier than the refreshBeansPeriod
             // To enable this, a "refresh_beans_initial" parameter must be specified in the yaml/json config
@@ -453,8 +452,7 @@ public class Instance {
             // We can force to refresh the bean list every x seconds in case of ephemeral beans
             // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
             if (this.refreshBeansPeriod != null
-                    && (System.currentTimeMillis() - this.lastRefreshTime) / 1000
-                            > this.refreshBeansPeriod) {
+                    && isPeriodDue(this.lastRefreshTime, this.refreshBeansPeriod)) {
                 log.info("Refreshing bean list");
                 this.refreshBeansList();
                 this.getMatchingAttributes();
@@ -491,15 +489,21 @@ public class Instance {
         return metrics;
     }
 
+    /** Returns whather or not the given period has elapsed since reference time. */
+    public boolean isPeriodDue(long refTime, Integer refPeriod) {
+        if ((System.currentTimeMillis() - refTime) / 1000 > refPeriod) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /** Returns whather or not its time to collect metrics for the instance. */
     public boolean timeToCollect() {
         if (this.minCollectionPeriod == null) {
             return true;
-        } else if ((System.currentTimeMillis() - this.lastCollectionTime) / 1000
-                < this.minCollectionPeriod) {
-            return false;
         } else {
-            return true;
+            return isPeriodDue(this.lastCollectionTime, this.minCollectionPeriod);
         }
     }
 
