@@ -244,6 +244,8 @@ public class AppConfig {
     private List<String> metricConfigResources;
     // This is used by things like APM agent to provide metric configuration from files
     private List<String> metricConfigFiles;
+    // This is used by things like APM agent to provide global override for initial bean refresh period
+    private Integer initialRefreshBeansPeriod;
     // This is used by things like APM agent to provide global override for bean refresh period
     private Integer refreshBeansPeriod;
     // This is used by things like APM agent to provide tags that should be set with all metrics
@@ -399,6 +401,10 @@ public class AppConfig {
 
     public Integer getRefreshBeansPeriod() {
         return refreshBeansPeriod;
+    }
+
+    public Integer getInitialRefreshBeansPeriod() {
+        return initialRefreshBeansPeriod;
     }
 
     public Map<String, String> getGlobalTags() {

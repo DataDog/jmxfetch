@@ -60,6 +60,7 @@ public class Instance {
     private static final List<String> MULTI_TYPES =
             Arrays.asList("javax.management.openmbean.TabularData");
     private static final int MAX_RETURNED_METRICS = 350;
+    private static final int DEFAULT_INITIAL_REFRESH_BEANS_PERIOD = 150;
     private static final int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
@@ -78,9 +79,11 @@ public class Instance {
     private List<Configuration> configurationList = new ArrayList<Configuration>();
     private List<JmxAttribute> matchingAttributes;
     private HashSet<JmxAttribute> failingAttributes;
+    private Integer initialRefreshBeansPeriod;
     private Integer refreshBeansPeriod;
     private long lastCollectionTime;
     private Integer minCollectionPeriod;
+    private long initialRefreshTime;
     private long lastRefreshTime;
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
@@ -128,15 +131,30 @@ public class Instance {
         if (appConfig.getRefreshBeansPeriod() == null) {
             this.refreshBeansPeriod = (Integer) instanceMap.get("refresh_beans");
             if (this.refreshBeansPeriod == null) {
-                this.refreshBeansPeriod =
-                        DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every
-                // 10 minutes
+                // Make sure to refresh the beans list every 10 minutes
                 // Useful because sometimes if the application restarts, jmxfetch might read
                 // a jmxtree that is not completely initialized and would be missing some attributes
+                this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; 
             }
         } else {
             // Allow global overrides
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
+        }
+        if (appConfig.getInitialRefreshBeansPeriod() == null) {
+            this.initialRefreshBeansPeriod = (Integer) instanceMap.get("refresh_beans_initial");
+            if (this.initialRefreshBeansPeriod == null) {
+                // First bean refresh after initialization. Succeeding refresh controlled by refresh_beans
+                // Useful for Java applications that are lazy loaded and may take some time after
+                // application startup before actually being exposed
+                this.initialRefreshBeansPeriod = DEFAULT_INITIAL_REFRESH_BEANS_PERIOD; 
+            }
+        } else {
+            // Allow global overrides
+            this.initialRefreshBeansPeriod = appConfig.getInitialRefreshBeansPeriod();
+        }
+        if (this.initialRefreshBeansPeriod > this.refreshBeansPeriod) {
+            // Set maximum equal to refresh_beans
+            this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
         this.service = (String) instanceMap.get("service");
@@ -157,6 +175,7 @@ public class Instance {
                 emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
 
         this.lastCollectionTime = 0;
+        this.initialRefreshTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
         Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
@@ -395,6 +414,7 @@ public class Instance {
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
         this.refreshBeansList();
+        this.initialRefreshTime = System.currentTimeMillis();
         log.info("Connected to JMX Server at " + this.toString());
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at " + this.toString());
@@ -419,14 +439,27 @@ public class Instance {
     /** Returns a map of metrics collected. */
     public List<Metric> getMetrics() throws IOException {
 
-        // We can force to refresh the bean list every x seconds in case of ephemeral beans
-        // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
-        if (this.refreshBeansPeriod != null
-                && (System.currentTimeMillis() - this.lastRefreshTime) / 1000
-                        > this.refreshBeansPeriod) {
-            log.info("Refreshing bean list");
+        if (this.initialRefreshBeansPeriod != null
+                && (this.initialRefreshTime != 0)
+                && (System.currentTimeMillis() - this.initialRefreshTime) / 1000
+                        > this.initialRefreshBeansPeriod) {
+            log.info("Refreshing bean list - Initial");
+            // We can force the first bean refresh post initialization earlier than the
+            // configured "refresh_beans"
+            // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
             this.refreshBeansList();
             this.getMatchingAttributes();
+            this.initialRefreshTime = 0;
+        } else {
+            // We can force to refresh the bean list every x seconds in case of ephemeral beans
+            // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
+            if (this.refreshBeansPeriod != null
+                    && (System.currentTimeMillis() - this.lastRefreshTime) / 1000
+                            > this.refreshBeansPeriod) {
+                log.info("Refreshing bean list");
+                this.refreshBeansList();
+                this.getMatchingAttributes();
+            }
         }
 
         List<Metric> metrics = new ArrayList<Metric>();
