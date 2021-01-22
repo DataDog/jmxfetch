@@ -444,9 +444,8 @@ public class Instance {
                 && (System.currentTimeMillis() - this.initialRefreshTime) / 1000
                         > this.initialRefreshBeansPeriod) {
             log.info("Refreshing bean list - Initial");
-            // We can force the first bean refresh post initialization earlier than the
-            // configured "refresh_beans"
-            // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
+            // We can force the first bean refresh post initialization earlier than the refreshBeansPeriod
+            // To enable this, a "refresh_beans_initial" parameter must be specified in the yaml/json config
             this.refreshBeansList();
             this.getMatchingAttributes();
             this.initialRefreshTime = 0;
