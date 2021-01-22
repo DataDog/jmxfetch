@@ -491,10 +491,10 @@ public class Instance {
 
     /** Returns whather or not the given period has elapsed since reference time. */
     public boolean isPeriodDue(long refTime, Integer refPeriod) {
-        if ((System.currentTimeMillis() - refTime) / 1000 > refPeriod) {
-            return true;
-        } else {
+        if ((System.currentTimeMillis() - refTime) / 1000 < refPeriod) {
             return false;
+        } else {
+            return true;
         }
     }
 
