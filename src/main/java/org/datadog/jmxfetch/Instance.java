@@ -60,7 +60,6 @@ public class Instance {
     private static final List<String> MULTI_TYPES =
             Arrays.asList("javax.management.openmbean.TabularData");
     private static final int MAX_RETURNED_METRICS = 350;
-    private static final int DEFAULT_INITIAL_REFRESH_BEANS_PERIOD = 150;
     private static final int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
@@ -146,7 +145,7 @@ public class Instance {
                 // First bean refresh after initialization. Succeeding refresh controlled by refresh_beans
                 // Useful for Java applications that are lazy loaded and may take some time after
                 // application startup before actually being exposed
-                this.initialRefreshBeansPeriod = DEFAULT_INITIAL_REFRESH_BEANS_PERIOD; 
+                this.initialRefreshBeansPeriod = this.refreshBeansPeriod; 
             }
         } else {
             // Allow global overrides
