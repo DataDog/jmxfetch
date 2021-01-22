@@ -443,8 +443,8 @@ public class Instance {
         // post initialization and every x seconds thereafter.
         // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
         // specified in the yaml/json config
-        Integer period = (this.initialRefreshTime==this.lastRefreshTime) ? 
-            this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
+        Integer period = (this.initialRefreshTime == this.lastRefreshTime)
+            ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
 
         if (isPeriodDue(this.lastRefreshTime, period)) {
             log.info("Refreshing bean list");
