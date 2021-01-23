@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.42.0 / Unreleased
+
+### Changes
+* [FEATURE] Adds a configurable period for the initial bean refresh [#349][]
+* [BUGFIX] Fix empty include in configuration [#348][]
+
 # 0.41.0 / 2020-12-14
 
 ### Changes
@@ -570,6 +576,8 @@ Changelog
 [#340]: https://github.com/DataDog/jmxfetch/issues/340
 [#344]: https://github.com/DataDog/jmxfetch/issues/344
 [#345]: https://github.com/DataDog/jmxfetch/issues/345
+[#348]: https://github.com/DataDog/jmxfetch/issues/348
+[#349]: https://github.com/DataDog/jmxfetch/issues/349
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
