@@ -78,9 +78,11 @@ public class Instance {
     private List<Configuration> configurationList = new ArrayList<Configuration>();
     private List<JmxAttribute> matchingAttributes;
     private HashSet<JmxAttribute> failingAttributes;
+    private Integer initialRefreshBeansPeriod;
     private Integer refreshBeansPeriod;
     private long lastCollectionTime;
     private Integer minCollectionPeriod;
+    private long initialRefreshTime;
     private long lastRefreshTime;
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
@@ -128,15 +130,31 @@ public class Instance {
         if (appConfig.getRefreshBeansPeriod() == null) {
             this.refreshBeansPeriod = (Integer) instanceMap.get("refresh_beans");
             if (this.refreshBeansPeriod == null) {
-                this.refreshBeansPeriod =
-                        DEFAULT_REFRESH_BEANS_PERIOD; // Make sure to refresh the beans list every
-                // 10 minutes
+                // Make sure to refresh the beans list every 10 minutes
                 // Useful because sometimes if the application restarts, jmxfetch might read
                 // a jmxtree that is not completely initialized and would be missing some attributes
+                this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; 
             }
         } else {
             // Allow global overrides
             this.refreshBeansPeriod = appConfig.getRefreshBeansPeriod();
+        }
+        if (appConfig.getInitialRefreshBeansPeriod() == null) {
+            this.initialRefreshBeansPeriod = (Integer) instanceMap.get("refresh_beans_initial");
+            if (this.initialRefreshBeansPeriod == null) {
+                // First bean refresh after initialization. Succeeding refresh controlled
+                // by refresh_beans
+                // Useful for Java applications that are lazy loaded and may take some time after
+                // application startup before actually being exposed
+                this.initialRefreshBeansPeriod = this.refreshBeansPeriod; 
+            }
+        } else {
+            // Allow global overrides
+            this.initialRefreshBeansPeriod = appConfig.getInitialRefreshBeansPeriod();
+        }
+        if (this.initialRefreshBeansPeriod > this.refreshBeansPeriod) {
+            // Set maximum equal to refresh_beans
+            this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
         this.service = (String) instanceMap.get("service");
@@ -157,6 +175,7 @@ public class Instance {
                 emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
 
         this.lastCollectionTime = 0;
+        this.initialRefreshTime = 0;
         this.lastRefreshTime = 0;
         this.limitReached = false;
         Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
@@ -399,6 +418,7 @@ public class Instance {
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
         this.refreshBeansList();
+        this.initialRefreshTime = this.lastRefreshTime;
         log.info("Connected to JMX Server at " + this.toString());
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at " + this.toString());
@@ -423,11 +443,14 @@ public class Instance {
     /** Returns a map of metrics collected. */
     public List<Metric> getMetrics() throws IOException {
 
-        // We can force to refresh the bean list every x seconds in case of ephemeral beans
-        // To enable this, a "refresh_beans" parameter must be specified in the yaml/json config
-        if (this.refreshBeansPeriod != null
-                && (System.currentTimeMillis() - this.lastRefreshTime) / 1000
-                        > this.refreshBeansPeriod) {
+        // In case of ephemeral beans, we can force to refresh the bean list x seconds
+        // post initialization and every x seconds thereafter.
+        // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
+        // specified in the yaml/json config
+        Integer period = (this.initialRefreshTime == this.lastRefreshTime)
+            ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
+
+        if (isPeriodDue(this.lastRefreshTime, period)) {
             log.info("Refreshing bean list");
             this.refreshBeansList();
             this.getMatchingAttributes();
@@ -463,15 +486,21 @@ public class Instance {
         return metrics;
     }
 
+    /** Returns whather or not the given period has elapsed since reference time. */
+    public boolean isPeriodDue(long refTime, Integer refPeriod) {
+        if ((System.currentTimeMillis() - refTime) / 1000 < refPeriod) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     /** Returns whather or not its time to collect metrics for the instance. */
     public boolean timeToCollect() {
         if (this.minCollectionPeriod == null) {
             return true;
-        } else if ((System.currentTimeMillis() - this.lastCollectionTime) / 1000
-                < this.minCollectionPeriod) {
-            return false;
         } else {
-            return true;
+            return isPeriodDue(this.lastCollectionTime, this.minCollectionPeriod);
         }
     }
 
