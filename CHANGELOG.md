@@ -1,7 +1,7 @@
 Changelog
 =========
 
-# 0.42.0 / Unreleased
+# 0.42.0 / 2020-01-25 
 
 ### Changes
 * [FEATURE] Adds a configurable period for the initial bean refresh [#349][]
