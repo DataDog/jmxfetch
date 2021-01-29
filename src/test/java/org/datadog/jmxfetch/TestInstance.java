@@ -147,4 +147,52 @@ public class TestInstance extends TestCommon {
 
         assertEquals(2, configurationList.size());
     }
+
+    /** Tests refresh_beans_initial and the following refresh_beans */
+    @Test
+    public void testRefreshBeans() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        initApplication("jmx_refresh_beans.yaml");
+
+        // We do a first collection
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang
+        assertEquals(13, metrics.size());
+
+        // We register an additional mbean
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
+        log.info("sleeping before the next collection");
+        Thread.sleep(5000);
+
+        // We run a second collection. refresh_beans_initial should be due.
+        run();
+        metrics = getMetrics();
+
+        // 15 = 13 metrics from java.lang + 2 iteration=one
+        assertEquals(15, metrics.size());
+
+        // We register additional mbean
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=two");
+        log.info("sleeping before the next collection");
+        Thread.sleep(5000);
+
+        // We run a third collection. No change expected; refresh_beans not due.
+        run();
+        metrics = getMetrics();
+
+        // 15 = 13 metrics from java.lang + 2 iteration=one
+        assertEquals(15, metrics.size());
+
+        log.info("sleeping before the next collection");
+        Thread.sleep(5000);
+
+        // We run the last collection. refresh_beans should be due.
+        run();
+        metrics = getMetrics();
+
+        // 17 = 13 metrics from java.lang + 2 iteration=one + 2 iteration=two
+        assertEquals(17, metrics.size());
+    }
 }

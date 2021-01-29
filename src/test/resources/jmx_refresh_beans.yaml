@@ -1,0 +1,14 @@
+init_config:
+
+instances:
+  -   process_name_regex: .*surefire.*
+      min_collection_interval: 5
+      refresh_beans_initial: 5
+      refresh_beans: 10
+      name: jmx_test_instance
+      conf:
+          - include:
+             domain: org.datadog.jmxfetch.test
+             attribute: 
+                 - ShouldBe100
+                 - ShouldBe1000
