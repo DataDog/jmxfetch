@@ -2,9 +2,9 @@ init_config:
 
 instances:
   -   process_name_regex: .*surefire.*
-      min_collection_interval: 5
-      refresh_beans_initial: 5
-      refresh_beans: 10
+      min_collection_interval: 1
+      refresh_beans_initial: 1
+      refresh_beans: 3
       name: jmx_test_instance
       conf:
           - include:

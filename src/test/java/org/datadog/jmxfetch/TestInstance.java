@@ -164,7 +164,7 @@ public class TestInstance extends TestCommon {
         // We register an additional mbean
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
         log.info("sleeping before the next collection");
-        Thread.sleep(5000);
+        Thread.sleep(1500);
 
         // We run a second collection. refresh_beans_initial should be due.
         run();
@@ -176,7 +176,7 @@ public class TestInstance extends TestCommon {
         // We register additional mbean
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=two");
         log.info("sleeping before the next collection");
-        Thread.sleep(5000);
+        Thread.sleep(1500);
 
         // We run a third collection. No change expected; refresh_beans not due.
         run();
@@ -186,7 +186,7 @@ public class TestInstance extends TestCommon {
         assertEquals(15, metrics.size());
 
         log.info("sleeping before the next collection");
-        Thread.sleep(5000);
+        Thread.sleep(1500);
 
         // We run the last collection. refresh_beans should be due.
         run();
