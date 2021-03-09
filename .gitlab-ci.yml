@@ -1,0 +1,50 @@
+stages:
+  - deploy
+  - create_key
+
+# From the tagged repo, stage the final artifact
+# We've already run tests through the CI when creating the changelog and tag, skip them here
+deploy:
+  stage: deploy
+
+  when: manual
+  # TODO Remove "when: manual" and make this trigger on tags once its been tested
+  #rules:
+  #  - if: $CI_COMMIT_TAG
+
+  tags:
+    - "runner:docker"
+    - "size:large"
+
+  image: maven:3.6.3-jdk-8-slim
+
+  script:
+    - export SONATYPE_PASS=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.sonatype_password --with-decryption --query "Parameter.Value" --out text)
+
+    # TODO Set SONATYPE_USER
+    # - export SONATYPE_USER=
+    - export GPG_PASSPHRASE=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.gpg_passphrase --with-decryption --query "Parameter.Value" --out text)
+
+    # Import GPG Key
+    - GPG_KEY=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.gpg_private_key --with-decryption --query "Parameter.Value" --out text)
+    - printf -- "$GPG_KEY" | gpg --import --batch
+
+    # Perform the release
+    - mvn -DskipTests -Darguments=-DskipTests -DdryRun=true --settings settings.xml clean deploy
+
+# This job creates the GPG key used to sign the above release
+create_key:
+  stage: create_key
+  when: manual
+
+  tags:
+    - "runner:docker"
+    - "size:large"
+
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/agent-key-management-tools/create-gpg-key:1
+
+  variables:
+    PROJECT_NAME: "jmxfetch"
+
+  script:
+    - ash create_gpg_key.sh

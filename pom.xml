@@ -46,9 +46,9 @@
         <snakeyaml.version>1.26</snakeyaml.version>
         <!-- Note: using project checkstyle with AOSP style
         find the default google java checkstyle config here -
-		<checkstyle.config.location>google_checks.xml</checkstyle.config.location>
+        <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
          -->
-		<checkstyle.config.location>style.xml</checkstyle.config.location>
+        <checkstyle.config.location>style.xml</checkstyle.config.location>
 
         <junit.version>4.13.1</junit.version>
         <mockito.version>2.2.27</mockito.version>
@@ -60,14 +60,21 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <bintray.repo>datadog/datadog-maven</bintray.repo>
-        <bintray.package>jmxfetch</bintray.package>
+        <project.scm.id>github</project.scm.id>
     </properties>
 
     <distributionManagement>
+        <snapshotRepository>
+          <id>nexus</id>
+          <!-- TODO Replace with real snapshot repository-->
+          <!-- <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url> -->
+          <url>http://localhost:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
         <repository>
-            <id>bintray-jmxfetch</id>
-            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
+            <id>nexus</id>
+            <!-- TODO Replace with real repository-->
+            <!-- <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url> -->
+            <url>http://localhost:8081/repository/maven-releases/</url>
         </repository>
     </distributionManagement>
     <dependencies>
@@ -148,9 +155,8 @@
     </dependencies>
     <scm>
         <connection>scm:git:git@github.com:Datadog/jmxfetch.git</connection>
-        <developerConnection>scm:git:git@github.com:Datadog/jmxfetch.git
-        </developerConnection>
-        <url>git@github.com:Datadog/jmxfetch.git</url>
+        <developerConnection>scm:git:git@github.com:Datadog/jmxfetch.git</developerConnection>
+        <url>https://github.com/DataDog/jmxfetch</url>
     </scm>
     <build>
         <resources>
@@ -160,6 +166,14 @@
             </resource>
         </resources>
         <plugins>
+            <!-- Skip the maven release default deploy, we use the nexus staging plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -244,6 +258,39 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.6</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>nexus</serverId>
+                    <!-- TODO Replace with real sonatype URL-->
+                    <!-- <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl> -->
+                    <nexusUrl>http://localhost:8081/repository/maven-releases/</nexusUrl>
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                </configuration>
             </plugin>
         </plugins>
     </build>
