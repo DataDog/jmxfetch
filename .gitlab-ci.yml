@@ -19,18 +19,22 @@ deploy:
   image: maven:3.6.3-jdk-8-slim
 
   script:
-    - export SONATYPE_PASS=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.sonatype_password --with-decryption --query "Parameter.Value" --out text)
-
     # TODO Set SONATYPE_USER
     # - export SONATYPE_USER=
+
+    - export SONATYPE_PASS=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.sonatype_password --with-decryption --query "Parameter.Value" --out text)
+
     - export GPG_PASSPHRASE=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.gpg_passphrase --with-decryption --query "Parameter.Value" --out text)
 
     # Import GPG Key
     - GPG_KEY=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.gpg_private_key --with-decryption --query "Parameter.Value" --out text)
     - printf -- "$GPG_KEY" | gpg --import --batch
 
+    # Assemble the artifacts
+    - mvn --settings ./settings.xml clean validate jar:jar source:jar javadoc:jar assembly:single
+
     # Perform the release
-    - mvn -DskipTests -Darguments=-DskipTests -DdryRun=true --settings settings.xml clean deploy
+    - mvn -DperformRelease=true --settings ./settings.xml deploy
 
 # This job creates the GPG key used to sign the above release
 create_key:

@@ -109,7 +109,7 @@ export SONATYPE_PASS="<Password for Nexus admin from previous step>"
 ```
 - Run the deploy with the appropriate `skipStaging` flag:
 ```sh
-mvn -DskipTests -DskipStaging=true --settings settings.xml clean deploy
+mvn -DskipTests -DskipStaging=true -DperformRelease=true --settings settings.xml clean deploy
 ```
 
 If you do this correctly, the artifact will be available in the Nexus container at

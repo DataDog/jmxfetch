@@ -63,20 +63,73 @@
         <project.scm.id>github</project.scm.id>
     </properties>
 
-    <distributionManagement>
-        <snapshotRepository>
-          <id>nexus</id>
-          <!-- TODO Replace with real snapshot repository-->
-          <!-- <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url> -->
-          <url>http://localhost:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>nexus</id>
-            <!-- TODO Replace with real repository-->
-            <!-- <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url> -->
-            <url>http://localhost:8081/repository/maven-releases/</url>
-        </repository>
-    </distributionManagement>
+    <profiles>
+        <!-- Performing a release deployment requires setting of performRelease property -->
+        <profile>
+            <id>deploy-artifacts</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+
+            <distributionManagement>
+                <snapshotRepository>
+                  <id>nexus</id>
+                  <!-- TODO Replace with real snapshot repository-->
+                  <!-- <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url> -->
+                  <url>http://localhost:8081/repository/maven-snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>nexus</id>
+                    <!-- TODO Replace with real repository-->
+                    <!-- <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url> -->
+                    <url>http://localhost:8081/repository/maven-releases/</url>
+                </repository>
+            </distributionManagement>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.6</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>nexus</serverId>
+                            <!-- TODO Replace with real sonatype URL-->
+                            <!-- <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl> -->
+                            <nexusUrl>http://localhost:8081/repository/maven-releases/</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <dependencies>
         <dependency>
             <groupId>com.beust</groupId>
@@ -166,14 +219,6 @@
             </resource>
         </resources>
         <plugins>
-            <!-- Skip the maven release default deploy, we use the nexus staging plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -259,37 +304,12 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Skip the maven release default deploy, we use the Nexus staging plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                        <configuration>
-                            <gpgArguments>
-                                <arg>--pinentry-mode</arg>
-                                <arg>loopback</arg>
-                            </gpgArguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.6</version>
-                <extensions>true</extensions>
+                <artifactId>maven-deploy-plugin</artifactId>
                 <configuration>
-                    <serverId>nexus</serverId>
-                    <!-- TODO Replace with real sonatype URL-->
-                    <!-- <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl> -->
-                    <nexusUrl>http://localhost:8081/repository/maven-releases/</nexusUrl>
-                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
