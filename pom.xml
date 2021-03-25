@@ -78,15 +78,15 @@
             <distributionManagement>
                 <snapshotRepository>
                   <id>nexus</id>
-                  <!-- TODO Replace with real snapshot repository-->
-                  <!-- <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url> -->
-                  <url>http://localhost:8081/repository/maven-snapshots/</url>
+                  <!-- Use the localhost endpoint for testing -->
+                  <!-- <url>http://localhost:8081/repository/maven-snapshots/</url> -->
+                  <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </snapshotRepository>
                 <repository>
                     <id>nexus</id>
-                    <!-- TODO Replace with real repository-->
-                    <!-- <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url> -->
-                    <url>http://localhost:8081/repository/maven-releases/</url>
+                    <!-- Use the localhost endpoint for testing -->
+                    <!-- <url>http://localhost:8081/repository/maven-releases/</url> -->
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
                 </repository>
             </distributionManagement>
 
@@ -99,9 +99,9 @@
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>nexus</serverId>
-                            <!-- TODO Replace with real sonatype URL-->
-                            <!-- <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl> -->
-                            <nexusUrl>http://localhost:8081/repository/maven-releases/</nexusUrl>
+                            <!-- Use the localhost endpoint for testing -->
+                            <!-- <nexusUrl>http://localhost:8081/repository/maven-releases/</nexusUrl> -->
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>false</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
