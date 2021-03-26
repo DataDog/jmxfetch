@@ -45,13 +45,18 @@ deploy_to_sonatype:
     - set -x
 
     - echo "Building release..."
-    # - mvn -DperformRelease=true --settings ./settings.xml clean validate jar:jar source:jar javadoc:jar assembly:single package deploy
-    - mvn -DperformRelease=true --settings ./settings.xml clean validate jar:jar source:jar javadoc:jar package
+    - mvn -DperformRelease=true --settings ./settings.xml clean verify deploy
 
   artifacts:
     expire_in: 12 mos
     paths:
-      - ./target/
+      - ./target/*.jar
+      - ./target/*.pom
+      - ./target/*.asc
+      - ./target/*.md5
+      - ./target/*.sha1
+      - ./target/*.sha256
+      - ./target/*.sha512
 
 # This job creates the GPG key used to sign the releases
 create_key:
