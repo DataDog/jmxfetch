@@ -3,9 +3,18 @@
           xmlns='http://maven.apache.org/SETTINGS/1.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
     <servers>
         <server>
-	    <id>bintray-jmxfetch</id>
-            <username>${env.BINTRAY_USER}</username>
-            <password>${env.BINTRAY_API_KEY}</password>
+            <id>nexus</id>
+            <username>${env.SONATYPE_USER}</username>
+            <password>${env.SONATYPE_PASS}</password>
+        </server>
+        <server>
+            <id>github</id>
+            <username>datadog</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+        <server>
+            <id>gpg.passphrase</id>
+            <passphrase>${env.GPG_PASSPHRASE}</passphrase>
         </server>
     </servers>
 </settings>
