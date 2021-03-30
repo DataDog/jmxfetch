@@ -1,7 +1,14 @@
 Changelog
 =========
 
-# 0.42.0 / 2020-01-25 
+# 0.42.1 / 2020-03-30
+
+### Changes
+* [IMPROVEMENT] Move publishing pipeline from Bintray to Sonatype. See
+  [here](https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/)
+  for more info.
+
+# 0.42.0 / 2020-01-25
 
 ### Changes
 * [FEATURE] Adds a configurable period for the initial bean refresh [#349][]
