@@ -25,6 +25,11 @@ deploy_to_sonatype:
     # operations
     - set +x
 
+    - echo "Installing AWSCLI..."
+    - apt update
+    - apt install -y python3 python3-pip
+    - python3 -m pip install awscli
+
     - echo "Fetching Sonatype user..."
     - export SONATYPE_USER=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.publishing.sonatype_username --with-decryption --query "Parameter.Value" --out text)
     - echo "Fetching Sonatype password..."
@@ -40,7 +45,18 @@ deploy_to_sonatype:
     - set -x
 
     - echo "Building release..."
-    - mvn -DperformRelease=true --settings ./settings.xml clean validate jar:jar source:jar javadoc:jar assembly:single deploy
+    - mvn -DperformRelease=true --settings ./settings.xml clean verify deploy
+
+  artifacts:
+    expire_in: 12 mos
+    paths:
+      - ./target/*.jar
+      - ./target/*.pom
+      - ./target/*.asc
+      - ./target/*.md5
+      - ./target/*.sha1
+      - ./target/*.sha256
+      - ./target/*.sha512
 
 # This job creates the GPG key used to sign the releases
 create_key:
@@ -58,3 +74,8 @@ create_key:
 
   script:
     - /create.sh
+
+  artifacts:
+    expire_in: 13 mos
+    paths:
+      - ./pubkeys/
