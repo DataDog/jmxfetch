@@ -189,6 +189,14 @@
 - include:
     domain: java.lang
     type: MemoryPool
+    name: Tenured Gen
+    attribute:
+      Usage.used:
+        alias: jvm.gc.old_gen_size
+        metric_type: gauge
+- include:
+    domain: java.lang
+    type: MemoryPool
     name: Metaspace
     attribute:
       Usage.used:
