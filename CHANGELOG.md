@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.43.0 / 2020-04-16
+
+### Changes
+* [FEATURE] Add `jvm.gc.old_gen_size` as an alias for `Tenured Gen` [#358][]
+* [BUGFIX] Prevent double signing of release artifacts [#357][]
+
 # 0.42.1 / 2020-03-30
 
 ### Changes
@@ -585,6 +591,8 @@ Changelog
 [#345]: https://github.com/DataDog/jmxfetch/issues/345
 [#348]: https://github.com/DataDog/jmxfetch/issues/348
 [#349]: https://github.com/DataDog/jmxfetch/issues/349
+[#357]: https://github.com/DataDog/jmxfetch/issues/357
+[#358]: https://github.com/DataDog/jmxfetch/issues/358
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
