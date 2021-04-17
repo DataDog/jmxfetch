@@ -510,6 +510,31 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testExcludeServiceTagsAndOverride() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,service=foo");
+
+        // We do a first collection
+        initApplication("jmx_exclude_tags_override_service.yml");
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // We test for the presence and the value of the metrics we want to collect.
+        // Tags "type", "newTag" and "env" should be excluded
+        List<String> commonTags =
+                Arrays.asList("instance:jmx_test_service_override_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test","service:test");
+
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        assertEquals(15, metrics.size());
+
+        // There should only left 2 tags per metric
+        assertMetric("test1.gauge", 1000.0, commonTags, 3, "gauge");
+        assertMetric("test1.histogram", 424242, commonTags, 3, "histogram");
+    }
+
+    @Test
     public void testAdditionalTags() throws Exception {
         // We expose a few metrics through JMX
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
@@ -844,7 +869,7 @@ public class TestApp extends TestCommon {
         assertCoverage();
     }
 
-    /** 
+    /**
      * Test JMX Service Discovery.
      * */
     @Test

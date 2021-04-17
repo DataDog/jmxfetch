@@ -133,7 +133,7 @@ public class Instance {
                 // Make sure to refresh the beans list every 10 minutes
                 // Useful because sometimes if the application restarts, jmxfetch might read
                 // a jmxtree that is not completely initialized and would be missing some attributes
-                this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD; 
+                this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD;
             }
         } else {
             // Allow global overrides
@@ -146,7 +146,7 @@ public class Instance {
                 // by refresh_beans
                 // Useful for Java applications that are lazy loaded and may take some time after
                 // application startup before actually being exposed
-                this.initialRefreshBeansPeriod = this.refreshBeansPeriod; 
+                this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
             }
         } else {
             // Allow global overrides
