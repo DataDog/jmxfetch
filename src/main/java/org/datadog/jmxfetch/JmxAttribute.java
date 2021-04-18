@@ -114,7 +114,7 @@ public abstract class JmxAttribute {
                     String tag = it.next();
                     if (tag.startsWith("service:")) {
                         if (instanceTags.containsKey("service")) {
-                           String serviceTag = "service:" + instanceTags.get("service");
+                            String serviceTag = "service:" + instanceTags.get("service");
                             if (serviceTag.equals(tag)) {
                                 continue;
                             } else {
