@@ -50,8 +50,8 @@ public abstract class JmxAttribute {
     private ObjectName beanName;
     private String domain;
     private String className;
+    private String serviceName;
     private String beanStringName;
-    private Map<String, String> instanceTags;
     private Map<String, String> beanParameters;
     private String attributeName;
     private Map<String, Map<Object, Object>> valueConversions =
@@ -67,6 +67,7 @@ public abstract class JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
+            String serviceName,
             String checkName,
             Connection connection,
             Map<String, String> instanceTags,
@@ -81,7 +82,7 @@ public abstract class JmxAttribute {
         this.beanStringName = beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
-        this.instanceTags = instanceTags;
+        this.serviceName = serviceName;  // alternatively store this as "service:" + serviceName
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -113,13 +114,10 @@ public abstract class JmxAttribute {
                 for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext(); ) {
                     String tag = it.next();
                     if (tag.startsWith("service:")) {
-                        if (instanceTags.containsKey("service")) {
-                            String serviceTag = "service:" + instanceTags.get("service");
-                            if (serviceTag.equals(tag)) {
-                                continue;
-                            } else {
-                                it.remove();
-                            }
+                        if (tag.equals("service:" + this.serviceName)) {
+                            continue;
+                        } else {
+                            it.remove();
                         }
                     } else if (tag.startsWith(excludedTagName + ":")) {
                         it.remove();
