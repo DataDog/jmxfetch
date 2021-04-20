@@ -728,10 +728,6 @@ public class Instance {
         }
         tags.add("instance:" + this.instanceName);
 
-        if (this.service != null && !this.service.isEmpty()) {
-            tags.add("service:" + this.service);
-        }
-
         if (this.emptyDefaultHostname) {
             tags.add("host:");
         }
