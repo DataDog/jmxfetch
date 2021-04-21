@@ -50,6 +50,7 @@ public abstract class JmxAttribute {
     private ObjectName beanName;
     private String domain;
     private String className;
+    private String serviceName;
     private String beanStringName;
     private Map<String, String> beanParameters;
     private String attributeName;
@@ -66,6 +67,7 @@ public abstract class JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
+            String serviceName,
             String checkName,
             Connection connection,
             Map<String, String> instanceTags,
@@ -80,6 +82,7 @@ public abstract class JmxAttribute {
         this.beanStringName = beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
+        this.serviceName = serviceName;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -109,7 +112,8 @@ public abstract class JmxAttribute {
 
             for (String excludedTagName : include.getExcludeTags()) {
                 for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext(); ) {
-                    if (it.next().startsWith(excludedTagName + ":")) {
+                    String tag = it.next();
+                    if (tag.startsWith(excludedTagName + ":")) {
                         it.remove();
                     }
                 }
@@ -129,6 +133,12 @@ public abstract class JmxAttribute {
                     log.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
                 }
             }
+        }
+    }
+
+    private void addServiceTag() {
+        if (serviceName != null && !serviceName.isEmpty()) {
+            this.defaultTagsList.add("service:" + serviceName);
         }
     }
 
@@ -467,6 +477,9 @@ public abstract class JmxAttribute {
         this.addAdditionalTags();
         // - filter out excluded tags
         this.applyTagsBlackList();
+        // Add the service tag - comes last because if the service tag is blacklisted as
+        // a JmxAttribute tag, we still want to include the service specified in the config.
+        this.addServiceTag();
     }
 
     MBeanAttributeInfo getAttribute() {
