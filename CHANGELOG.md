@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.43.1 / 2020-04-27
+
+### Changes
+* [BUGFIX] Service tag should not be excluded if specified [#360][]
+
 # 0.43.0 / 2020-04-16
 
 ### Changes
@@ -593,6 +598,7 @@ Changelog
 [#349]: https://github.com/DataDog/jmxfetch/issues/349
 [#357]: https://github.com/DataDog/jmxfetch/issues/357
 [#358]: https://github.com/DataDog/jmxfetch/issues/358
+[#360]: https://github.com/DataDog/jmxfetch/issues/360
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
