@@ -1074,9 +1074,9 @@ public class App {
                 instances.add(instance);
                 log.info("Successfully initialized instance: " + instance.getName());
             } catch (Throwable e) {
-                log.info(
+                log.warn(
                     "Could not initialize instance: " + instance.getName()
-                    + ": " + e.toString());
+                    + ": ", e);
                 instance.cleanUpAsync();
                 brokenInstanceMap.put(instance.toString(), instance);
             }
