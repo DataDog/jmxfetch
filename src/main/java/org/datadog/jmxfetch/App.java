@@ -1066,7 +1066,7 @@ public class App {
 
             Instance instance = tasks.get(idx).getInstance();
 
-            try {
+            try {                
                 TaskStatusHandler status = sit.previous();
                 status.raiseForStatus();
 
@@ -1074,11 +1074,11 @@ public class App {
                 instances.add(instance);
                 log.info("Successfully initialized instance: " + instance.getName());
             } catch (Throwable e) {
-                log.info(
+                log.warn(
                     "Could not initialize instance: " + instance.getName()
-                    + ": " + e.toString());
-                instance.cleanUpAsync();
-                brokenInstanceMap.put(instance.toString(), instance);
+                    + ": ", e);
+               instance.cleanUpAsync();
+               brokenInstanceMap.put(instance.toString(), instance);
             }
         }
     }
