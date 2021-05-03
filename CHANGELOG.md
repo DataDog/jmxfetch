@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.44.0 / 2020-05-03
+
+### Changes
+* [IMPROVEMENT] Display more information when the error `Could not initialize instance` happens [#362][]
+
 # 0.43.1 / 2020-04-27
 
 ### Changes
@@ -599,6 +604,7 @@ Changelog
 [#357]: https://github.com/DataDog/jmxfetch/issues/357
 [#358]: https://github.com/DataDog/jmxfetch/issues/358
 [#360]: https://github.com/DataDog/jmxfetch/issues/360
+[#362]: https://github.com/DataDog/jmxfetch/issues/362
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
