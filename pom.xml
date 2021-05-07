@@ -42,7 +42,7 @@
         <!-- log4j 2.13+ drops support for Java 7, so stick to 2.12 -->
         <log4j.version>2.12.1</log4j.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <jackson.version>2.10.0</jackson.version>
+        <jackson.version>2.12.3</jackson.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <!-- Note: using project checkstyle with AOSP style
         find the default google java checkstyle config here -
