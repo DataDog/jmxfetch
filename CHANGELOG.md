@@ -1,35 +1,35 @@
 Changelog
 =========
 
-# 0.44.1 / 2020-05-31
+# 0.44.1 / 2021-05-31
 
 ### Changes
 * [OTHER] Bump `jackson-jr-objects` dependency to version `2.12.3` [#364][]
 
-# 0.44.0 / 2020-05-03
+# 0.44.0 / 2021-05-03
 
 ### Changes
 * [IMPROVEMENT] Display more information when the error `Could not initialize instance` happens [#362][]
 
-# 0.43.1 / 2020-04-27
+# 0.43.1 / 2021-04-27
 
 ### Changes
 * [BUGFIX] Service tag should not be excluded if specified [#360][]
 
-# 0.43.0 / 2020-04-16
+# 0.43.0 / 2021-04-16
 
 ### Changes
 * [FEATURE] Add `jvm.gc.old_gen_size` as an alias for `Tenured Gen` [#358][]
 * [BUGFIX] Prevent double signing of release artifacts [#357][]
 
-# 0.42.1 / 2020-03-30
+# 0.42.1 / 2021-03-30
 
 ### Changes
 * [IMPROVEMENT] Move publishing pipeline from Bintray to Sonatype. See
   [here](https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/)
   for more info.
 
-# 0.42.0 / 2020-01-25
+# 0.42.0 / 2021-01-25
 
 ### Changes
 * [FEATURE] Adds a configurable period for the initial bean refresh [#349][]
