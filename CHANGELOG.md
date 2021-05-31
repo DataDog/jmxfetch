@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.44.1 / 2020-05-31
+
+### Changes
+* [OTHER] Bump `jackson-jr-objects` dependency to version `2.12.3` [#364][]
+
 # 0.44.0 / 2020-05-03
 
 ### Changes
@@ -605,6 +610,7 @@ Changelog
 [#358]: https://github.com/DataDog/jmxfetch/issues/358
 [#360]: https://github.com/DataDog/jmxfetch/issues/360
 [#362]: https://github.com/DataDog/jmxfetch/issues/362
+[#364]: https://github.com/DataDog/jmxfetch/issues/364
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
