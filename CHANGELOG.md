@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.44.2 / 2021-07-08
+
+### Changes
+* [BUGFIX] Sleep after over-long iteration [#365][]
+
 # 0.44.1 / 2021-05-31
 
 ### Changes
@@ -611,6 +616,7 @@ Changelog
 [#360]: https://github.com/DataDog/jmxfetch/issues/360
 [#362]: https://github.com/DataDog/jmxfetch/issues/362
 [#364]: https://github.com/DataDog/jmxfetch/issues/364
+[#365]: https://github.com/DataDog/jmxfetch/issues/365
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
