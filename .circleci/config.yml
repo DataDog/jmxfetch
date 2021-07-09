@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  lint_openjdk8:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+      - run: mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j2.travis.properties
+  test_openjdk8:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+      - run: mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configurationFile=log4j2.travis.properties -Dtests.log_level=info
+      - run:
+          when: on_fail
+          command: for log in target/surefire-reports/*.txt; do  echo "$log ========================" ; cat $log ; done
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - lint_openjdk8
+      - test_openjdk8
