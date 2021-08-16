@@ -839,6 +839,11 @@ public class App {
     private void sendCanConnectServiceCheck(Reporter reporter, String checkName,
         String serviceCheckPrefix, String status, String message, String[] tags) {
         String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
+
+        if (status != Status.STATUS_ERROR) {
+            message = null;
+        }
+
         reporter.sendServiceCheck(
                 checkName, serviceCheckName, status, message, tags);
     }

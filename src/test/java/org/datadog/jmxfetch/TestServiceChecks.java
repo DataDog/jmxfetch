@@ -74,8 +74,9 @@ public class TestServiceChecks extends TestCommon {
         assertNotNull(sc.get("name"));
         assertNotNull(sc.get("status"));
 
-        // Message should not be null anymore and reports a high number of metrics warning
-        assertNotNull(sc.get("message"));
+        // Despite there being a high number of metrics warning, message should be null.
+        // Non-ERROR statuses are set to OK, and OK statuses should have null messages.
+        assertNull(sc.get("message"));
         assertNotNull(sc.get("tags"));
 
         String scName = (String) (sc.get("name"));
