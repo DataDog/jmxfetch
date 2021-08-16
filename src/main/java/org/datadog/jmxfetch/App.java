@@ -840,7 +840,7 @@ public class App {
         String serviceCheckPrefix, String status, String message, String[] tags) {
         String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
 
-        if (status != Status.STATUS_ERROR) {
+        if (status == Status.STATUS_OK) {
             message = null;
         }
 
@@ -1191,7 +1191,7 @@ public class App {
                                     + instance.getMaxNumberOfMetrics()
                                     + " metrics.";
 
-                    instanceStatus = Status.STATUS_WARNING;
+                    instanceStatus = Status.STATUS_OK;
                     CustomLogger.laconic(log, Level.WARN, instanceMessage, 0);
                 }
 
