@@ -1191,7 +1191,6 @@ public class App {
                                     + instance.getMaxNumberOfMetrics()
                                     + " metrics.";
 
-                    instanceStatus = Status.STATUS_OK;
                     CustomLogger.laconic(log, Level.WARN, instanceMessage, 0);
                 }
 
