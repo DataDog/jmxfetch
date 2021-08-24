@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.44.3 / 2021-08-24 
+
+### Changes
+* [BUGFIX] Remove messages for non-error can_connect service checks [#369][]
+
 # 0.44.2 / 2021-07-08
 
 ### Changes
@@ -617,6 +622,7 @@ Changelog
 [#362]: https://github.com/DataDog/jmxfetch/issues/362
 [#364]: https://github.com/DataDog/jmxfetch/issues/364
 [#365]: https://github.com/DataDog/jmxfetch/issues/365
+[#369]: https://github.com/DataDog/jmxfetch/issues/369
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
