@@ -535,13 +535,47 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testMultiServiceTags() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,name=testName");
+
+        // We do a first collection
+        initApplication("jmx_multiservice_tags.yaml");
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // We test for the presence and the value of the metrics we want to collect.
+        // Tags "type", "newTag" and "env" should be excluded
+        List<String> commonTags =
+                Arrays.asList(
+                        "instance:jmx_test_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test",
+                        "type:SimpleTestJavaApp",
+                        "name:testName",
+                        "simple:SimpleTestJavaApp",
+                        "raw_value:value",
+                        "unknown_tag:$does-not-exist",
+                        "multiple:SimpleTestJavaApp-testName");
+
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        // 3 services total defined in the YAML so 15 * 3
+        assertEquals(15*3, metrics.size());
+
+        // There should only left 2 tags per metric
+        // 8 tags + 1 service tag
+        assertMetric("test1.gauge", 1000.0, commonTags, 8+1, "gauge");
+        assertMetric("test1.histogram", 424242, commonTags, 8+1, "histogram");
+    }
+
+    @Test
     public void testAdditionalTags() throws Exception {
         // We expose a few metrics through JMX
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,name=testName");
 
         // We do a first collection
-        initApplication("jmx_additional_tags.yml");
+        initApplication("jmx_additional_tags.yaml");
         run();
         List<Map<String, Object>> metrics = getMetrics();
 

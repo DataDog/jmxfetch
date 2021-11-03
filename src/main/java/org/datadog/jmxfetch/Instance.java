@@ -159,26 +159,13 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        List<String> services = new ArrayList<>();
-        String svc = (String) instanceMap.get("service");
-        if ((svc == null || svc.isEmpty()) && initConfig != null) {
-            // init_config service can be a String or a List<String>
-            try {
-                svc = (String) initConfig.get("service");
-                if (svc != null && !svc.isEmpty()) {
-                    services.add(svc);
-                }
-            } catch (ClassCastException e) {
-                // must be a list then...
-                services = (List<String>) initConfig.get("service");
-
-            }
-        } else {
-            services.add(svc);
+        List<String> services = compileServiceList(instanceMap);
+        if (services.size() == 0) {
+            services = compileServiceList(initConfig);
         }
 
-        // if no services were added of any kind, we still need the tags
-        // we can use the empty string as a key for no service.
+        // if we still have no services, we still need the tags for the instance
+        // so we can use the empty string as a key for no service.
         if (services.size() == 0) {
             services.add(null); // EMPTY SERVICE
         }
@@ -274,6 +261,26 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> compileServiceList(Map<String, Object> config) {
+        List<String> services = new ArrayList<>();
+        if (config == null || !config.containsKey("service")) {
+            return services;
+        }
+
+        try {
+            String svc = (String) config.get("service");
+            if (svc != null && !svc.isEmpty()) {
+                services.add(svc);
+            }
+        } catch (ClassCastException e) {
+            // must be a list then...
+            services = (List<String>) config.get("service");
+        }
+
+        return services;
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
