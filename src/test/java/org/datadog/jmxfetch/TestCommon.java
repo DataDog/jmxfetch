@@ -25,6 +25,8 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
@@ -38,6 +40,8 @@ public class TestCommon {
     List<ObjectName> objectNames = new ArrayList<ObjectName>();
     List<Map<String, Object>> metrics;
     List<Map<String, Object>> serviceChecks;
+
+    private static final Logger log = LogManager.getLogger("Test Common");
 
     /** Setup logger. */
     @BeforeClass
@@ -207,6 +211,9 @@ public class TestCommon {
                 }
 
                 if (countTags != -1) {
+                    for(String tag : mTags) {
+                        log.info("Metric " + mName + " has tag: " + tag);
+                    }
                     assertEquals(countTags, mTags.size());
                 }
                 for (String t : tags) {

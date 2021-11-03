@@ -818,18 +818,30 @@ public class App {
             Reporter reporter, Instance instance, String message, String status) {
         String checkName = instance.getCheckName();
 
-        if (instance.getServiceCheckPrefix() != null) {
-            this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
-                    status, message, instance.getServiceCheckTags());
-        } else {
-            this.sendCanConnectServiceCheck(reporter, checkName, checkName,
-                    status, message, instance.getServiceCheckTags());
+        List<String[]> tagSets = new ArrayList<>();
+        for(String service : instance.getServices()) {
+            tagSets.add(instance.getServiceCheckTags(service));
+        }
 
-            // Service check with formatted name is kept for backward compatibility
-            String formattedCheckName = ServiceCheckHelper.formatServiceCheckPrefix(checkName);
-            if (!formattedCheckName.equals(checkName)) {
-                this.sendCanConnectServiceCheck(reporter, checkName, formattedCheckName,
-                        status, message, instance.getServiceCheckTags());
+        // if still empty, populate with standard tags
+        if (tagSets.size() == 0) {
+            tagSets.add(instance.getServiceCheckTags(null));
+        }
+
+        for (String[] tagSet : tagSets) {
+            if (instance.getServiceCheckPrefix() != null) {
+                this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
+                        status, message, tagSet);
+            } else {
+                this.sendCanConnectServiceCheck(reporter, checkName, checkName,
+                        status, message, tagSet);
+
+                // Service check with formatted name is kept for backward compatibility
+                String formattedCheckName = ServiceCheckHelper.formatServiceCheckPrefix(checkName);
+                if (!formattedCheckName.equals(checkName)) {
+                    this.sendCanConnectServiceCheck(reporter, checkName, formattedCheckName,
+                            status, message, tagSet);
+                }
             }
         }
 

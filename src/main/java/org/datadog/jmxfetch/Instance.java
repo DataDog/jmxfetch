@@ -87,8 +87,8 @@ public class Instance {
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
     private String instanceName;
-    private String service;
     private Map<String, String> tags;
+    private Map<String, Map<String, String>> tagsByService;
     private String checkName;
     private String serviceCheckPrefix;
     private int maxReturnedMetrics;
@@ -124,6 +124,7 @@ public class Instance {
         this.initConfig = initConfig != null ? new HashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
+        this.tagsByService = new HashMap<>();
         this.checkName = checkName;
         this.matchingAttributes = new ArrayList<JmxAttribute>();
         this.failingAttributes = new HashSet<JmxAttribute>();
@@ -157,13 +158,31 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        this.service = (String) instanceMap.get("service");
-        if ((this.service == null || this.service.isEmpty()) && initConfig != null) {
-            this.service = (String) initConfig.get("service");
+        List<String> services = new ArrayList<>();
+        String svc = (String) instanceMap.get("service");
+        if ((svc == null || svc.isEmpty()) && initConfig != null) {
+            // init_config service can be a String or a List<String>
+            try {
+                svc = (String) initConfig.get("service");
+                if (svc != null && !svc.isEmpty()) {
+                    services.add(svc);
+                }
+            } catch (ClassCastException e) {
+                // must be a list then...
+                services = (List<String>) initConfig.get("service");
+
+            }
+        } else {
+            services.add(svc);
         }
-        if (this.service != null && !this.service.isEmpty()) {
-            this.tags.put("service", this.service);
+
+        // if no services were added of any kind, we still need the tags
+        // we can use the empty string as a key for no service.
+        if (services.size() == 0) {
+            services.add(null); // EMPTY SERVICE
         }
+
+        computeTagsForServices(services);
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
@@ -374,6 +393,18 @@ public class Instance {
         return tags;
     }
 
+    private void computeTagsForServices(List<String> services) {
+
+        for (String service : services) {
+            Map<String, String> tagsForService = new HashMap<String, String>();
+            tagsForService.putAll(tags);
+            if (service != null && !service.equals("")) {
+                tagsForService.put("service", service);
+            }
+            this.tagsByService.put(service, tagsForService);
+        }
+    }
+
     /** Returns a boolean describing if the canonical rate config is enabled. */
     public boolean getCanonicalRateConfig() {
         Object canonical = null;
@@ -546,132 +577,140 @@ public class Instance {
                 continue;
             }
 
-            for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+            for (Map.Entry<String, Map<String, String>> svc : tagsByService.entrySet()) {
+                for (MBeanAttributeInfo attributeInfo : attributeInfos) {
 
-                if (metricsCount >= maxReturnedMetrics) {
-                    limitReached = true;
-                    if (action.equals(AppConfig.ACTION_COLLECT)) {
-                        log.warn("Maximum number of metrics reached.");
-                        break;
-                    } else if (!metricReachedDisplayed
-                            && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                            && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
-                        reporter.displayMetricReached();
-                        metricReachedDisplayed = true;
+                    if (metricsCount >= maxReturnedMetrics) {
+                        limitReached = true;
+                        if (action.equals(AppConfig.ACTION_COLLECT)) {
+                            log.warn("Maximum number of metrics reached.");
+                            break;
+                        } else if (!metricReachedDisplayed
+                                && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                                && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
+                            reporter.displayMetricReached();
+                            metricReachedDisplayed = true;
+                        }
                     }
-                }
-                JmxAttribute jmxAttribute;
-                String attributeType = attributeInfo.getType();
-                if (SIMPLE_TYPES.contains(attributeType)) {
-                    log.debug(
-                            ATTRIBUTE
-                                    + beanName
-                                    + " : "
-                                    + attributeInfo
-                                    + " has attributeInfo simple type");
-                    jmxAttribute =
-                            new JmxSimpleAttribute(
-                                    attributeInfo,
-                                    beanName,
-                                    className,
-                                    instanceName,
-                                    service,
-                                    checkName,
-                                    connection,
-                                    tags,
-                                    cassandraAliasing,
-                                    emptyDefaultHostname);
-                } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    log.debug(
-                            ATTRIBUTE
-                                    + beanName
-                                    + " : "
-                                    + attributeInfo
-                                    + " has attributeInfo composite type");
-                    jmxAttribute =
-                            new JmxComplexAttribute(
-                                    attributeInfo,
-                                    beanName,
-                                    className,
-                                    instanceName,
-                                    service,
-                                    checkName,
-                                    connection,
-                                    tags,
-                                    emptyDefaultHostname);
-                } else if (MULTI_TYPES.contains(attributeType)) {
-                    log.debug(
-                            ATTRIBUTE
-                                    + beanName
-                                    + " : "
-                                    + attributeInfo
-                                    + " has attributeInfo tabular type");
-                    jmxAttribute =
-                            new JmxTabularAttribute(
-                                    attributeInfo,
-                                    beanName,
-                                    className,
-                                    instanceName,
-                                    service,
-                                    checkName,
-                                    connection,
-                                    tags,
-                                    emptyDefaultHostname);
-                } else {
-                    try {
+                    JmxAttribute jmxAttribute;
+                    String attributeType = attributeInfo.getType();
+                    if (SIMPLE_TYPES.contains(attributeType)) {
                         log.debug(
                                 ATTRIBUTE
                                         + beanName
                                         + " : "
                                         + attributeInfo
-                                        + " has an unsupported type: "
-                                        + attributeType);
-                    } catch (NullPointerException e) {
-                        log.warn("Caught unexpected NullPointerException");
-                    }
-                    continue;
-                }
-
-                // For each attribute we try it with each configuration to see if there is one that
-                // matches
-                // If so, we store the attribute so metrics will be collected from it. Otherwise we
-                // discard it.
-                for (Configuration conf : configurationList) {
-                    try {
-                        if (jmxAttribute.match(conf)) {
-                            jmxAttribute.setMatchingConf(conf);
-                            metricsCount += jmxAttribute.getMetricsCount();
-                            this.matchingAttributes.add(jmxAttribute);
-
-                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                                    || action.equals(AppConfig.ACTION_LIST_MATCHING)
-                                    || action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                                            && !limitReached
-                                    || action.equals(AppConfig.ACTION_LIST_LIMITED)
-                                            && limitReached) {
-                                reporter.displayMatchingAttributeName(
-                                        jmxAttribute, metricsCount, maxReturnedMetrics);
-                            }
-                            break;
-                        }
-                    } catch (Exception e) {
-                        log.error(
-                                "Error while trying to match attributeInfo configuration "
-                                        + "with the Attribute: "
+                                        + " has attributeInfo simple type");
+                        jmxAttribute =
+                                new JmxSimpleAttribute(
+                                        attributeInfo,
+                                        beanName,
+                                        className,
+                                        instanceName,
+                                        svc.getKey(),
+                                        checkName,
+                                        connection,
+                                        svc.getValue(),
+                                        cassandraAliasing,
+                                        emptyDefaultHostname);
+                    } else if (COMPOSED_TYPES.contains(attributeType)) {
+                        log.debug(
+                                ATTRIBUTE
                                         + beanName
                                         + " : "
-                                        + attributeInfo,
-                                e);
+                                        + attributeInfo
+                                        + " has attributeInfo composite type");
+                        jmxAttribute =
+                                new JmxComplexAttribute(
+                                        attributeInfo,
+                                        beanName,
+                                        className,
+                                        instanceName,
+                                        svc.getKey(),
+                                        checkName,
+                                        connection,
+                                        svc.getValue(),
+                                        emptyDefaultHostname);
+                    } else if (MULTI_TYPES.contains(attributeType)) {
+                        log.debug(
+                                ATTRIBUTE
+                                        + beanName
+                                        + " : "
+                                        + attributeInfo
+                                        + " has attributeInfo tabular type");
+                        jmxAttribute =
+                                new JmxTabularAttribute(
+                                        attributeInfo,
+                                        beanName,
+                                        className,
+                                        instanceName,
+                                        svc.getKey(),
+                                        checkName,
+                                        connection,
+                                        svc.getValue(),
+                                        emptyDefaultHostname);
+                    } else {
+                        try {
+                            log.debug(
+                                    ATTRIBUTE
+                                            + beanName
+                                            + " : "
+                                            + attributeInfo
+                                            + " has an unsupported type: "
+                                            + attributeType);
+                        } catch (NullPointerException e) {
+                            log.warn("Caught unexpected NullPointerException");
+                        }
+                        continue;
                     }
-                }
-                if (jmxAttribute.getMatchingConf() == null
-                        && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                                || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
-                    reporter.displayNonMatchingAttributeName(jmxAttribute);
+
+                    // For each attribute we try it with each configuration to see if there is one that
+                    // matches
+                    // If so, we store the attribute so metrics will be collected from it. Otherwise we
+                    // discard it.
+                    for (Configuration conf : configurationList) {
+                        try {
+                            if (jmxAttribute.match(conf)) {
+                                jmxAttribute.setMatchingConf(conf);
+                                metricsCount += jmxAttribute.getMetricsCount();
+                                this.matchingAttributes.add(jmxAttribute);
+
+                                if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                                        || action.equals(AppConfig.ACTION_LIST_MATCHING)
+                                        || action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                                                && !limitReached
+                                        || action.equals(AppConfig.ACTION_LIST_LIMITED)
+                                                && limitReached) {
+                                    reporter.displayMatchingAttributeName(
+                                            jmxAttribute, metricsCount, maxReturnedMetrics);
+                                }
+                                break;
+                            }
+                        } catch (Exception e) {
+                            log.error(
+                                    "Error while trying to match attributeInfo configuration "
+                                            + "with the Attribute: "
+                                            + beanName
+                                            + " : "
+                                            + attributeInfo,
+                                    e);
+                        }
+                    }
+                    if (jmxAttribute.getMatchingConf() == null
+                            && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                                    || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                        reporter.displayNonMatchingAttributeName(jmxAttribute);
+                    }
                 }
             }
         }
-        log.info("Found " + matchingAttributes.size() + " matching attributes");
+        log.info("Found " + matchingAttributes.size() / tagsByService.size() +
+                " matching attributes for " + tagsByService.size() + " services");
+    }
+
+    /** Returns a list of strings listing the bean scopes. */
+    public Set<String> getServices() {
+        return this.tagsByService.keySet();
     }
 
     /** Returns a list of strings listing the bean scopes. */
@@ -712,13 +751,21 @@ public class Instance {
     }
 
     /** Returns a string array listing the service check tags. */
-    public String[] getServiceCheckTags() {
+    public String[] getServiceCheckTags(String service) {
         List<String> tags = new ArrayList<String>();
         if (this.instanceMap.get("host") != null) {
             tags.add("jmx_server:" + this.instanceMap.get("host"));
         }
-        if (this.tags != null) {
+        if (this.tags != null && service == null) {
             for (Entry<String, String> e : this.tags.entrySet()) {
+                if (e.getValue() != null) {
+                    tags.add(e.getKey() + ":" + e.getValue());
+                } else {
+                    tags.add(e.getKey());
+                }
+            }
+        } else if (service != null) {
+            for (Entry<String, String> e : this.tagsByService.get(service).entrySet()) {
                 if (e.getValue() != null) {
                     tags.add(e.getKey() + ":" + e.getValue());
                 } else {
