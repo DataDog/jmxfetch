@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
@@ -124,7 +125,7 @@ public class Instance {
         this.initConfig = initConfig != null ? new HashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
-        this.tagsByService = new HashMap<>();
+        this.tagsByService = new ConcurrentHashMap<>();
         this.checkName = checkName;
         this.matchingAttributes = new ArrayList<JmxAttribute>();
         this.failingAttributes = new HashSet<JmxAttribute>();
@@ -393,6 +394,12 @@ public class Instance {
         return tags;
     }
 
+    /** Recomputes the tag maps for the supplied service list. */
+    public void updateTagsForServices(List<String> services) {
+        this.tagsByService.clear();
+        computeTagsForServices(services);
+    }
+
     private void computeTagsForServices(List<String> services) {
 
         for (String service : services) {
@@ -401,7 +408,7 @@ public class Instance {
             if (service != null && !service.equals("")) {
                 tagsForService.put("service", service);
             }
-            this.tagsByService.put(service, tagsForService);
+            this.tagsByService.put(service == null ? "" : service, tagsForService);
         }
     }
 
