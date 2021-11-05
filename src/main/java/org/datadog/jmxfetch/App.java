@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -819,12 +820,12 @@ public class App {
         String checkName = instance.getCheckName();
 
         List<String[]> tagSets = new ArrayList<>();
-        for(String service : instance.getServices()) {
-            tagSets.add(instance.getServiceCheckTags(service));
-        }
-
-        // if still empty, populate with standard tags
-        if (tagSets.size() == 0) {
+        Set<String> services = instance.getServices();
+        if (services.size() > 0) {
+            for(String service : services) {
+                tagSets.add(instance.getServiceCheckTags(service));
+            }
+        } else {
             tagSets.add(instance.getServiceCheckTags(null));
         }
 
