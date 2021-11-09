@@ -5,6 +5,7 @@ target/*
 .euml2
 .umlproject
 .classpath
+.factorypath
 .project
 .settings/
 /target
@@ -18,3 +19,4 @@ target/*
 
 # jenv
 .java_version
+.java-version

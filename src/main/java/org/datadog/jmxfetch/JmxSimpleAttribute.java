@@ -21,9 +21,9 @@ public class JmxSimpleAttribute extends JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
-            String serviceName,
             String checkName,
             Connection connection,
+            List<String> serviceNames,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             Boolean emptyDefaultHostname) {
@@ -32,9 +32,9 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 beanName,
                 className,
                 instanceName,
-                serviceName,
                 checkName,
                 connection,
+                serviceNames,
                 instanceTags,
                 cassandraAliasing,
                 emptyDefaultHostname);

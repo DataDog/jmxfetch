@@ -87,7 +87,7 @@ public class Instance {
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
     private String instanceName;
-    private String service;
+    private List<String> services;
     private Map<String, String> tags;
     private String checkName;
     private String serviceCheckPrefix;
@@ -157,12 +157,9 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        this.service = (String) instanceMap.get("service");
-        if ((this.service == null || this.service.isEmpty()) && initConfig != null) {
-            this.service = (String) initConfig.get("service");
-        }
-        if (this.service != null && !this.service.isEmpty()) {
-            this.tags.put("service", this.service);
+        this.services = compileServiceList(instanceMap);
+         if (services.size() == 0) {
+            services = compileServiceList(initConfig);
         }
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
@@ -254,6 +251,27 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
+    }
+
+    /** this function is unsafe, please call holding a lock. */
+    @SuppressWarnings("unchecked")
+    private static List<String> compileServiceList(Map<String, Object> config) {
+        List<String> services = new ArrayList<>();
+        if (config == null || !config.containsKey("service")) {
+            return services;
+        }
+
+        try {
+            String svc = (String) config.get("service");
+            if (svc != null && !svc.isEmpty()) {
+                services.add(svc);
+            }
+        } catch (ClassCastException e) {
+            // must be a list then...
+            services = (List<String>) config.get("service");
+        }
+
+        return services;
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -575,9 +593,9 @@ public class Instance {
                                     beanName,
                                     className,
                                     instanceName,
-                                    service,
                                     checkName,
                                     connection,
+                                    services,
                                     tags,
                                     cassandraAliasing,
                                     emptyDefaultHostname);
@@ -594,9 +612,9 @@ public class Instance {
                                     beanName,
                                     className,
                                     instanceName,
-                                    service,
                                     checkName,
                                     connection,
+                                    services,
                                     tags,
                                     emptyDefaultHostname);
                 } else if (MULTI_TYPES.contains(attributeType)) {
@@ -612,9 +630,9 @@ public class Instance {
                                     beanName,
                                     className,
                                     instanceName,
-                                    service,
                                     checkName,
                                     connection,
+                                    services,
                                     tags,
                                     emptyDefaultHostname);
                 } else {
@@ -726,6 +744,13 @@ public class Instance {
                 }
             }
         }
+
+        if(this.services != null) {
+            for(String service : this.services){
+                tags.add("service:" + service);
+            }
+        }
+
         tags.add("instance:" + this.instanceName);
 
         if (this.emptyDefaultHostname) {

@@ -24,9 +24,9 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
-            String serviceName,
             String checkName,
             Connection connection,
+            List<String> serviceNames,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
         super(
@@ -34,9 +34,9 @@ public class JmxComplexAttribute extends JmxSubAttribute {
                 beanName,
                 className,
                 instanceName,
-                serviceName,
                 checkName,
                 connection,
+                serviceNames,
                 instanceTags,
                 false,
                 emptyDefaultHostname);

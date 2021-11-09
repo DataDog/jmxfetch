@@ -50,8 +50,8 @@ public abstract class JmxAttribute {
     private ObjectName beanName;
     private String domain;
     private String className;
-    private String serviceName;
     private String beanStringName;
+    private List<String> serviceNames;
     private Map<String, String> beanParameters;
     private String attributeName;
     private Map<String, Map<Object, Object>> valueConversions =
@@ -67,9 +67,9 @@ public abstract class JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
-            String serviceName,
             String checkName,
             Connection connection,
+            List<String> serviceNames,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
@@ -82,7 +82,7 @@ public abstract class JmxAttribute {
         this.beanStringName = beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
-        this.serviceName = serviceName;
+        this.serviceNames = serviceNames;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -137,8 +137,10 @@ public abstract class JmxAttribute {
     }
 
     private void addServiceTag() {
-        if (serviceName != null && !serviceName.isEmpty()) {
-            this.defaultTagsList.add("service:" + serviceName);
+        if (serviceNames != null) {
+            for (String serviceName : serviceNames) {
+                this.defaultTagsList.add("service:" + serviceName);
+            }
         }
     }
 

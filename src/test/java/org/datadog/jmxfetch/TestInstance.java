@@ -100,6 +100,9 @@ public class TestInstance extends TestCommon {
         assertEquals(4, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
+            for (String tag : tags) {
+                System.out.println("THIS IS A TAG WE GOT " + tag);
+            }
             this.assertServiceTag(Arrays.asList(tags), "global");
         }
     }
