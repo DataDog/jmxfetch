@@ -399,8 +399,8 @@ public class Instance {
 
     /** Recomputes the tag maps for the supplied service list. */
     public synchronized void updateTagsForServices(List<String> services) {
-            this.tagsByService.clear();
-            computeTagsForServices(services);
+        this.tagsByService.clear();
+        computeTagsForServices(services);
     }
 
     /**
@@ -591,7 +591,8 @@ public class Instance {
 
             if (tagsByService.size() > 0) {
                 for (Map.Entry<String, Map<String, String>> svc : tagsByService.entrySet()) {
-                    reportMetrics(reporter, attributeInfos, action, className, beanName, svc.getKey(), svc.getValue());
+                    reportMetrics(reporter, attributeInfos, action, className, beanName,
+                            svc.getKey(), svc.getValue());
                 }
             } else {
                 log.info("REPORTING SINGLE INSTANCE!");
@@ -603,7 +604,7 @@ public class Instance {
 
     private void reportMetrics(Reporter reporter, MBeanAttributeInfo[] attributeInfos,
             String action, String className, ObjectName beanName, String service,
-            Map<String,String> tags){
+            Map<String,String> tags) {
 
         int metricsCount = 0;
         boolean metricReachedDisplayed = false;
@@ -620,7 +621,7 @@ public class Instance {
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
                     reporter.displayMetricReached();
                     metricReachedDisplayed = true;
-                        }
+                }
             }
             JmxAttribute jmxAttribute;
             String attributeType = attributeInfo.getType();
@@ -713,7 +714,7 @@ public class Instance {
                                 && limitReached) {
                             reporter.displayMatchingAttributeName(
                                     jmxAttribute, metricsCount, maxReturnedMetrics);
-                                }
+                        }
                         break;
                     }
                 } catch (Exception e) {
@@ -730,7 +731,7 @@ public class Instance {
                     && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                         || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                 reporter.displayNonMatchingAttributeName(jmxAttribute);
-                        }
+            }
         }
         return;
     }
