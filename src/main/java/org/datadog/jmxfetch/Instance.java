@@ -581,7 +581,7 @@ public class Instance {
                             && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
                         reporter.displayMetricReached();
                         metricReachedDisplayed = true;
-                            }
+                    }
                 }
                 JmxAttribute jmxAttribute;
                 String attributeType = attributeInfo.getType();
@@ -674,7 +674,7 @@ public class Instance {
                                     && limitReached) {
                                 reporter.displayMatchingAttributeName(
                                         jmxAttribute, metricsCount, maxReturnedMetrics);
-                                    }
+                            }
                             break;
                         }
                     } catch (Exception e) {
@@ -691,7 +691,7 @@ public class Instance {
                         && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                             || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
-                            }
+                }
             }
         }
         log.info("Found " + matchingAttributes.size() + " matching attributes");
@@ -750,8 +750,8 @@ public class Instance {
             }
         }
 
-        if(this.services != null) {
-            for(String service : this.services){
+        if (this.services != null) {
+            for (String service : this.services) {
                 tags.add("service:" + service);
             }
         }
