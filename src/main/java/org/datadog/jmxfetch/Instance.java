@@ -114,7 +114,7 @@ public class Instance {
 
     /** Default constructor, builds an Instance from the provided instance map and init configs. */
     @SuppressWarnings("unchecked")
-    public synchronized Instance(
+    public Instance(
             Map<String, Object> instanceMap,
             Map<String, Object> initConfig,
             String checkName,
@@ -159,6 +159,7 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
+        // this should be synchronized but since we are in the constructor, this is fine
         List<String> services = compileServiceList(instanceMap);
         if (services.size() == 0) {
             services = compileServiceList(initConfig);
@@ -398,12 +399,14 @@ public class Instance {
 
     /** Recomputes the tag maps for the supplied service list. */
     public synchronized void updateTagsForServices(List<String> services) {
-
             this.tagsByService.clear();
             computeTagsForServices(services);
     }
 
-    /** this function is unsafe, please call holding a lock. */
+    /**
+     * This method compiles the set of service tags for each specified service.
+     * The method is unsafe, please call from a synchronized caller.
+     * */
     private void computeTagsForServices(List<String> services) {
 
         for (String service : services) {
