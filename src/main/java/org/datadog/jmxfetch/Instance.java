@@ -114,7 +114,7 @@ public class Instance {
 
     /** Default constructor, builds an Instance from the provided instance map and init configs. */
     @SuppressWarnings("unchecked")
-    public Instance(
+    public synchronized Instance(
             Map<String, Object> instanceMap,
             Map<String, Object> initConfig,
             String checkName,
@@ -159,14 +159,12 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        synchronized(this) {
-            List<String> services = compileServiceList(instanceMap);
-            if (services.size() == 0) {
-                services = compileServiceList(initConfig);
-            }
-
-            computeTagsForServices(services);
+        List<String> services = compileServiceList(instanceMap);
+        if (services.size() == 0) {
+            services = compileServiceList(initConfig);
         }
+
+        computeTagsForServices(services);
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
@@ -399,12 +397,10 @@ public class Instance {
     }
 
     /** Recomputes the tag maps for the supplied service list. */
-    public void updateTagsForServices(List<String> services) {
+    public synchronized void updateTagsForServices(List<String> services) {
 
-        synchronized(this) {
             this.tagsByService.clear();
             computeTagsForServices(services);
-        }
     }
 
     /** this function is unsafe, please call holding a lock. */
@@ -550,7 +546,7 @@ public class Instance {
         }
     }
 
-    private void getMatchingAttributes() throws IOException {
+    private synchronized void getMatchingAttributes() throws IOException {
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -590,15 +586,13 @@ public class Instance {
                 continue;
             }
 
-            synchronized(this) {
-                if (tagsByService.size() > 0) {
-                    for (Map.Entry<String, Map<String, String>> svc : tagsByService.entrySet()) {
-                        reportMetrics(reporter, attributeInfos, action, className, beanName, svc.getKey(), svc.getValue());
-                    }
-                } else {
-                    log.info("REPORTING SINGLE INSTANCE!");
-                    reportMetrics(reporter, attributeInfos, action, className, beanName, null, tags);
+            if (tagsByService.size() > 0) {
+                for (Map.Entry<String, Map<String, String>> svc : tagsByService.entrySet()) {
+                    reportMetrics(reporter, attributeInfos, action, className, beanName, svc.getKey(), svc.getValue());
                 }
+            } else {
+                log.info("REPORTING SINGLE INSTANCE!");
+                reportMetrics(reporter, attributeInfos, action, className, beanName, null, tags);
             }
         }
         log.info("Found " + matchingAttributes.size() + " matching attributes");

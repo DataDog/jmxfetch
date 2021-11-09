@@ -822,7 +822,7 @@ public class App {
         List<String[]> tagSets = new ArrayList<>();
         Set<String> services = instance.getServices();
         if (services.size() > 0) {
-            for(String service : services) {
+            for (String service : services) {
                 tagSets.add(instance.getServiceCheckTags(service));
             }
         } else {
@@ -831,8 +831,8 @@ public class App {
 
         for (String[] tagSet : tagSets) {
             if (instance.getServiceCheckPrefix() != null) {
-                this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
-                        status, message, tagSet);
+                this.sendCanConnectServiceCheck(reporter, checkName,
+                        instance.getServiceCheckPrefix(), status, message, tagSet);
             } else {
                 this.sendCanConnectServiceCheck(reporter, checkName, checkName,
                         status, message, tagSet);
