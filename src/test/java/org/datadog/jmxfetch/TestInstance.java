@@ -78,9 +78,11 @@ public class TestInstance extends TestCommon {
         }
     }
 
-    // assertServiceTag is used by testServiceTagGlobal and testServiceTagInstanceOverride
-    private void assertServiceTag(List<String> tagList, String service) throws Exception {
-        assertTrue(tagList.contains(new String("service:" + service)));
+    // assertServiceTags is used by testServiceTagGlobal and testServiceTagInstanceOverride
+    private void assertServiceTag(List<String> tagList, List<String> services) throws Exception {
+        for (String service: services) {
+            assertTrue(tagList.contains(new String("service:" + service)));
+        }
     }
 
     @Test
@@ -93,14 +95,35 @@ public class TestInstance extends TestCommon {
         assertEquals(28, metrics.size());
         for (Map<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
-            this.assertServiceTag(Arrays.asList(tags), "global");
+            this.assertServiceTag(Arrays.asList(tags), Arrays.asList("global"));
         }
 
         List<Map<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(4, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
-            this.assertServiceTag(Arrays.asList(tags), "global");
+            this.assertServiceTag(Arrays.asList(tags), Arrays.asList("global"));
+        }
+    }
+
+    @Test
+    public void testServiceTagGlobalList() throws Exception {
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        initApplication("jmx_service_tag_global_list.yaml");
+        run();
+
+        List<Map<String, Object>> metrics = getMetrics();
+        assertEquals(28, metrics.size());
+        for (Map<String, Object> metric : metrics) {
+            String[] tags = (String[]) metric.get("tags");
+            this.assertServiceTag(Arrays.asList(tags), Arrays.asList("global", "foo", "bar"));
+        }
+
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
+        assertEquals(4, serviceChecks.size());
+        for (Map<String, Object> sc : serviceChecks) {
+            String[] tags = (String[]) sc.get("tags");
+            this.assertServiceTag(Arrays.asList(tags), Arrays.asList("global", "foo", "bar"));
         }
     }
 
@@ -114,14 +137,14 @@ public class TestInstance extends TestCommon {
         assertEquals(28, metrics.size());
         for (Map<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
-            this.assertServiceTag(Arrays.asList(tags), "override");
+            this.assertServiceTag(Arrays.asList(tags), Arrays.asList("override"));
         }
 
         List<Map<String, Object>> serviceChecks = getServiceChecks();
         assertEquals(4, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
-            this.assertServiceTag(Arrays.asList(tags), "override");
+            this.assertServiceTag(Arrays.asList(tags), Arrays.asList("override"));
         }
     }
 
