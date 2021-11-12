@@ -151,16 +151,18 @@ public class App {
             // Set up the shutdown hook to properly close resources
             attachShutdownHook();
         }
-        System.exit(run(config));
+
+        App app = new App(config);
+        System.exit(app.run());
     }
 
     /**
      * Main entry point of JMXFetch that returns integer on exit instead of calling {@code
      * System#exit}.
      */
-    public static int run(AppConfig config) {
+    public int run() {
         Marker fatal = MarkerFactory.getMarker("FATAL");
-        String action = config.getAction();
+        String action = appConfig.getAction();
 
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(action)) {
@@ -170,7 +172,7 @@ public class App {
         }
 
         if (!action.equals(AppConfig.ACTION_COLLECT)
-            && !(config.isConsoleReporter() || config.isJsonReporter())) {
+            && !(appConfig.isConsoleReporter() || appConfig.isJsonReporter())) {
             // The "list_*" actions can not be used with the statsd reporter
             log.error(fatal,
                       action
@@ -193,32 +195,30 @@ public class App {
         log.info("JMX Fetch " + MetadataHelper.getVersion() + " has started");
 
         // set up the config status
-        config.updateStatus();
-
-        App app = new App(config);
+        appConfig.updateStatus();
 
         // Adding another shutdown hook for App related tasks
-        Runtime.getRuntime().addShutdownHook(new AppShutdownHook(app));
+        Runtime.getRuntime().addShutdownHook(new AppShutdownHook(this));
 
         // Get config from the ipc endpoint for "list_*" actions
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
-            app.getJsonConfigs();
+            getJsonConfigs();
         }
 
         // Initiate JMX Connections, get attributes that match the yaml configuration
-        app.init(false);
+        init(false);
 
         // We don't want to loop if the action is list_* as it's just used for display information
         // about what will be collected
         if (action.equals(AppConfig.ACTION_COLLECT)) {
             // Start the main loop
-            app.start();
+            start();
         }
         if (action.equals(AppConfig.ACTION_LIST_WITH_METRICS)) {
-            app.displayMetrics();
+            displayMetrics();
         }
         if (action.equals(AppConfig.ACTION_LIST_WITH_RATE_METRICS)) {
-            app.displayRateMetrics();
+            displayRateMetrics();
         }
         return 0;
     }
