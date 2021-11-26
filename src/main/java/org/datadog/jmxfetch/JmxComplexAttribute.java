@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import org.datadog.jmxfetch.service.ServiceNameProvider;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,7 +28,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             String instanceName,
             String checkName,
             Connection connection,
-            List<String> serviceNames,
+            ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
         super(
@@ -36,7 +38,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
                 instanceName,
                 checkName,
                 connection,
-                serviceNames,
+                serviceNameProvider,
                 instanceTags,
                 false,
                 emptyDefaultHostname);

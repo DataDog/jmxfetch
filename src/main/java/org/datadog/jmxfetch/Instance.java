@@ -2,6 +2,8 @@ package org.datadog.jmxfetch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
+import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -87,7 +89,7 @@ public class Instance {
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
     private String instanceName;
-    private List<String> services;
+    private ServiceNameProvider serviceNameProvider;
     private Map<String, String> tags;
     private String checkName;
     private String serviceCheckPrefix;
@@ -108,7 +110,8 @@ public class Instance {
                         ? new HashMap<String, Object>(instance.getInitConfig())
                         : null,
                 instance.getCheckName(),
-                appConfig);
+                appConfig,
+                instance.serviceNameProvider);
     }
 
     /** Default constructor, builds an Instance from the provided instance map and init configs. */
@@ -117,7 +120,8 @@ public class Instance {
             Map<String, Object> instanceMap,
             Map<String, Object> initConfig,
             String checkName,
-            AppConfig appConfig) {
+            AppConfig appConfig,
+            ServiceNameProvider serviceNameProvider) {
         this.appConfig = appConfig;
         this.instanceMap =
                 instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
@@ -157,11 +161,12 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        List<String> svcs = compileServiceList(instanceMap);
-        if (svcs.size() == 0) {
-            svcs = compileServiceList(initConfig);
+        if (appConfig.getServiceNameProvider() == null) {
+            this.serviceNameProvider = new ConfigServiceNameProvider(instanceMap, initConfig);
+        } else {
+            // Allow global overrides
+            this.serviceNameProvider = appConfig.getServiceNameProvider();
         }
-        updateServiceList(svcs);
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
@@ -252,32 +257,6 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
-    }
-
-    /** this function is unsafe, please call holding a lock. */
-    public synchronized void updateServiceList(List<String> services) {
-        this.services = services;
-    }
-
-    /** this function is unsafe, please call holding a lock. */
-    @SuppressWarnings("unchecked")
-    private static List<String> compileServiceList(Map<String, Object> config) {
-        List<String> services = new ArrayList<>();
-        if (config == null || !config.containsKey("service")) {
-            return services;
-        }
-
-        try {
-            String svc = (String) config.get("service");
-            if (svc != null && !svc.isEmpty()) {
-                services.add(svc);
-            }
-        } catch (ClassCastException e) {
-            // must be a list then...
-            services = (List<String>) config.get("service");
-        }
-
-        return services;
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -528,7 +507,7 @@ public class Instance {
         }
     }
 
-    private synchronized void getMatchingAttributes() throws IOException {
+    private void getMatchingAttributes() throws IOException {
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -600,7 +579,7 @@ public class Instance {
                                 instanceName,
                                 checkName,
                                 connection,
-                                services,
+                                serviceNameProvider,
                                 tags,
                                 cassandraAliasing,
                                 emptyDefaultHostname);
@@ -619,7 +598,7 @@ public class Instance {
                                 instanceName,
                                 checkName,
                                 connection,
-                                services,
+                                serviceNameProvider,
                                 tags,
                                 emptyDefaultHostname);
                 } else if (MULTI_TYPES.contains(attributeType)) {
@@ -637,7 +616,7 @@ public class Instance {
                                 instanceName,
                                 checkName,
                                 connection,
-                                services,
+                                serviceNameProvider,
                                 tags,
                                 emptyDefaultHostname);
                 } else {
@@ -735,7 +714,7 @@ public class Instance {
     }
 
     /** Returns a string array listing the service check tags. */
-    public synchronized String[] getServiceCheckTags() {
+    public String[] getServiceCheckTags() {
         List<String> tags = new ArrayList<String>();
         if (this.instanceMap.get("host") != null) {
             tags.add("jmx_server:" + this.instanceMap.get("host"));
@@ -750,8 +729,9 @@ public class Instance {
             }
         }
 
-        if (this.services != null) {
-            for (String service : this.services) {
+        List<String> services  = this.serviceNameProvider.getServiceNames();
+        if (services != null) {
+            for (String service : services) {
                 tags.add("service:" + service);
             }
         }

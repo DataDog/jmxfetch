@@ -858,7 +858,7 @@ public class App {
         Reporter reporter = appConfig.getReporter();
 
         try {
-            instance = new Instance(instanceMap, initConfig, checkName, appConfig);
+            instance = new Instance(instanceMap, initConfig, checkName, appConfig, null);
         } catch (Exception e) {
             String warning = "Unable to create instance. Please check your yaml file";
             appConfig.getStatus().addInitFailedCheck(checkName, warning, Status.STATUS_ERROR);

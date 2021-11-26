@@ -10,6 +10,7 @@ import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.JsonReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.datadog.jmxfetch.validator.Log4JLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
@@ -250,6 +251,11 @@ public class AppConfig {
     private Integer refreshBeansPeriod;
     // This is used by things like APM agent to provide tags that should be set with all metrics
     private Map<String, String> globalTags;
+    /**
+     * This is used by things like APM agent to provide a custom ServiceNameProvider that should be
+     * used for all Instances.
+     */
+    private ServiceNameProvider serviceNameProvider;
 
     @Builder.Default
     private Status status = new Status();
@@ -409,6 +415,10 @@ public class AppConfig {
 
     public Map<String, String> getGlobalTags() {
         return globalTags;
+    }
+
+    public ServiceNameProvider getServiceNameProvider() {
+        return serviceNameProvider;
     }
 
     /**

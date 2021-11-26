@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import org.datadog.jmxfetch.service.ServiceNameProvider;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +18,7 @@ abstract class JmxSubAttribute extends JmxAttribute {
             String instanceName,
             String checkName,
             Connection connection,
-            List<String> serviceNames,
+            ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
@@ -27,7 +29,7 @@ abstract class JmxSubAttribute extends JmxAttribute {
                 instanceName,
                 checkName,
                 connection,
-                serviceNames,
+                serviceNameProvider,
                 instanceTags,
                 cassandraAliasing,
                 emptyDefaultHostname);
