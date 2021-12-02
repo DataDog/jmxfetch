@@ -729,7 +729,7 @@ public class Instance {
             }
         }
 
-        List<String> services  = this.serviceNameProvider.getServiceNames();
+        Iterable<String> services  = this.serviceNameProvider.getServiceNames();
         if (services != null) {
             for (String service : services) {
                 tags.add("service:" + service);

@@ -29,7 +29,7 @@ public class ConfigServiceNameProvider implements ServiceNameProvider {
         this.serviceNames = services;
     }
 
-    public List<String> getServiceNames() {
+    public Iterable<String> getServiceNames() {
         return this.serviceNames;
     }
 

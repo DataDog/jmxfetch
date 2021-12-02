@@ -138,7 +138,7 @@ public abstract class JmxAttribute {
     }
 
     private void addServiceTags() {
-        List<String> serviceNames = this.serviceNameProvider.getServiceNames();
+        Iterable<String> serviceNames = this.serviceNameProvider.getServiceNames();
         if (serviceNames != null) {
             for (String serviceName : serviceNames) {
                 this.defaultTagsList.add("service:" + serviceName);
