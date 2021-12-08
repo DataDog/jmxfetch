@@ -32,13 +32,20 @@ public class ConfigServiceNameProvider implements ServiceNameProvider {
         this.additionalServiceNames = additionalServiceNames;
     }
 
+    /**
+     * Returns a String Iterable with the relevant services defined in the init config and instance
+     * maps supplied in the constructor, as well as any additional services derived from the
+     * additional ServiceNameProvider (if any).
+     *
+     * @return the service String Iterable.
+     */
     public Iterable<String> getServiceNames() {
         if (this.additionalServiceNames == null) {
             return this.serviceNames;
         }
 
         List<String> names = new ArrayList<String>(this.serviceNames);
-        for(String service : this.additionalServiceNames.getServiceNames()) {
+        for (String service : this.additionalServiceNames.getServiceNames()) {
             names.add(service);
         }
         return names;
