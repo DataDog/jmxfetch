@@ -161,12 +161,7 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        if (appConfig.getServiceNameProvider() == null) {
-            this.serviceNameProvider = new ConfigServiceNameProvider(instanceMap, initConfig);
-        } else {
-            // Allow global overrides
-            this.serviceNameProvider = appConfig.getServiceNameProvider();
-        }
+        this.serviceNameProvider = new ConfigServiceNameProvider(instanceMap, initConfig, appConfig.getServiceNameProvider());
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {

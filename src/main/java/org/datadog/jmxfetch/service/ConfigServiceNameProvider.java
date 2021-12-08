@@ -10,6 +10,7 @@ import java.util.Map;
  */
 public class ConfigServiceNameProvider implements ServiceNameProvider {
     private List<String> serviceNames;
+    private ServiceNameProvider additionalServiceNames;
 
 
     /**
@@ -21,16 +22,26 @@ public class ConfigServiceNameProvider implements ServiceNameProvider {
      */
     public ConfigServiceNameProvider(
             Map<String, Object> instanceMap,
-            Map<String, Object> initConfig) {
+            Map<String, Object> initConfig,
+            ServiceNameProvider additionalServiceNames) {
         List<String> services = compileServiceList(instanceMap);
         if (services.size() == 0) {
             services = compileServiceList(initConfig);
         }
         this.serviceNames = services;
+        this.additionalServiceNames = additionalServiceNames;
     }
 
     public Iterable<String> getServiceNames() {
-        return this.serviceNames;
+        if (this.additionalServiceNames == null) {
+            return this.serviceNames;
+        }
+
+        List<String> names = new ArrayList<String>(this.serviceNames);
+        for(String service : this.additionalServiceNames.getServiceNames()) {
+            names.add(service);
+        }
+        return names;
     }
 
     @SuppressWarnings("unchecked")
