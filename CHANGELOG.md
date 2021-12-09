@@ -5,6 +5,7 @@ Changelog
 
 ### Changes
 * [FEATURE] Support adding multiple service tags to submitted metrics [#375][]
+* [IMPROVEMENT] run() no longer static - call on App object [#376][]
 
 # 0.44.3 / 2021-08-24
 
@@ -629,6 +630,7 @@ Changelog
 [#365]: https://github.com/DataDog/jmxfetch/issues/365
 [#369]: https://github.com/DataDog/jmxfetch/issues/369
 [#375]: https://github.com/DataDog/jmxfetch/issues/375
+[#376]: https://github.com/DataDog/jmxfetch/issues/376
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
