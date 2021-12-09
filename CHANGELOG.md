@@ -1,7 +1,7 @@
 Changelog
 =========
 
-# 0.45.0 / Unreleased
+# 0.45.0 / 2021-12-09 
 
 ### Changes
 * [FEATURE] Support adding multiple service tags to submitted metrics [#375][]
