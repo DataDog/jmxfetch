@@ -1,7 +1,12 @@
 Changelog
 =========
 
-# 0.44.3 / 2021-08-24 
+# 0.45.0 / Unreleased
+
+### Changes
+* [FEATURE] Support adding multiple service tags to submitted metrics [#375][]
+
+# 0.44.3 / 2021-08-24
 
 ### Changes
 * [BUGFIX] Remove messages for non-error can_connect service checks [#369][]
@@ -623,6 +628,7 @@ Changelog
 [#364]: https://github.com/DataDog/jmxfetch/issues/364
 [#365]: https://github.com/DataDog/jmxfetch/issues/365
 [#369]: https://github.com/DataDog/jmxfetch/issues/369
+[#375]: https://github.com/DataDog/jmxfetch/issues/375
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
