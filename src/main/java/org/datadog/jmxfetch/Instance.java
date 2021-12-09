@@ -2,6 +2,8 @@ package org.datadog.jmxfetch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
+import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -87,7 +89,7 @@ public class Instance {
     private Map<String, Object> instanceMap;
     private Map<String, Object> initConfig;
     private String instanceName;
-    private String service;
+    private ServiceNameProvider serviceNameProvider;
     private Map<String, String> tags;
     private String checkName;
     private String serviceCheckPrefix;
@@ -108,7 +110,8 @@ public class Instance {
                         ? new HashMap<String, Object>(instance.getInitConfig())
                         : null,
                 instance.getCheckName(),
-                appConfig);
+                appConfig,
+                instance.serviceNameProvider);
     }
 
     /** Default constructor, builds an Instance from the provided instance map and init configs. */
@@ -117,7 +120,8 @@ public class Instance {
             Map<String, Object> instanceMap,
             Map<String, Object> initConfig,
             String checkName,
-            AppConfig appConfig) {
+            AppConfig appConfig,
+            ServiceNameProvider serviceNameProvider) {
         this.appConfig = appConfig;
         this.instanceMap =
                 instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
@@ -157,13 +161,8 @@ public class Instance {
             this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
         }
 
-        this.service = (String) instanceMap.get("service");
-        if ((this.service == null || this.service.isEmpty()) && initConfig != null) {
-            this.service = (String) initConfig.get("service");
-        }
-        if (this.service != null && !this.service.isEmpty()) {
-            this.tags.put("service", this.service);
-        }
+        this.serviceNameProvider = new ConfigServiceNameProvider(
+                instanceMap, initConfig, appConfig.getServiceNameProvider());
 
         this.minCollectionPeriod = (Integer) instanceMap.get("min_collection_interval");
         if (this.minCollectionPeriod == null && initConfig != null) {
@@ -547,7 +546,6 @@ public class Instance {
             }
 
             for (MBeanAttributeInfo attributeInfo : attributeInfos) {
-
                 if (metricsCount >= maxReturnedMetrics) {
                     limitReached = true;
                     if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -565,67 +563,67 @@ public class Instance {
                 if (SIMPLE_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                                    + beanName
-                                    + " : "
-                                    + attributeInfo
-                                    + " has attributeInfo simple type");
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo simple type");
                     jmxAttribute =
-                            new JmxSimpleAttribute(
-                                    attributeInfo,
-                                    beanName,
-                                    className,
-                                    instanceName,
-                                    service,
-                                    checkName,
-                                    connection,
-                                    tags,
-                                    cassandraAliasing,
-                                    emptyDefaultHostname);
+                        new JmxSimpleAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                cassandraAliasing,
+                                emptyDefaultHostname);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                                    + beanName
-                                    + " : "
-                                    + attributeInfo
-                                    + " has attributeInfo composite type");
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo composite type");
                     jmxAttribute =
-                            new JmxComplexAttribute(
-                                    attributeInfo,
-                                    beanName,
-                                    className,
-                                    instanceName,
-                                    service,
-                                    checkName,
-                                    connection,
-                                    tags,
-                                    emptyDefaultHostname);
+                        new JmxComplexAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                                    + beanName
-                                    + " : "
-                                    + attributeInfo
-                                    + " has attributeInfo tabular type");
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo tabular type");
                     jmxAttribute =
-                            new JmxTabularAttribute(
-                                    attributeInfo,
-                                    beanName,
-                                    className,
-                                    instanceName,
-                                    service,
-                                    checkName,
-                                    connection,
-                                    tags,
-                                    emptyDefaultHostname);
+                        new JmxTabularAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname);
                 } else {
                     try {
                         log.debug(
                                 ATTRIBUTE
-                                        + beanName
-                                        + " : "
-                                        + attributeInfo
-                                        + " has an unsupported type: "
-                                        + attributeType);
+                                + beanName
+                                + " : "
+                                + attributeInfo
+                                + " has an unsupported type: "
+                                + attributeType);
                     } catch (NullPointerException e) {
                         log.warn("Caught unexpected NullPointerException");
                     }
@@ -646,9 +644,9 @@ public class Instance {
                             if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                                     || action.equals(AppConfig.ACTION_LIST_MATCHING)
                                     || action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                                            && !limitReached
+                                    && !limitReached
                                     || action.equals(AppConfig.ACTION_LIST_LIMITED)
-                                            && limitReached) {
+                                    && limitReached) {
                                 reporter.displayMatchingAttributeName(
                                         jmxAttribute, metricsCount, maxReturnedMetrics);
                             }
@@ -657,16 +655,16 @@ public class Instance {
                     } catch (Exception e) {
                         log.error(
                                 "Error while trying to match attributeInfo configuration "
-                                        + "with the Attribute: "
-                                        + beanName
-                                        + " : "
-                                        + attributeInfo,
+                                + "with the Attribute: "
+                                + beanName
+                                + " : "
+                                + attributeInfo,
                                 e);
                     }
                 }
                 if (jmxAttribute.getMatchingConf() == null
                         && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                                || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                            || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
             }
@@ -726,6 +724,14 @@ public class Instance {
                 }
             }
         }
+
+        Iterable<String> services  = this.serviceNameProvider.getServiceNames();
+        if (services != null) {
+            for (String service : services) {
+                tags.add("service:" + service);
+            }
+        }
+
         tags.add("instance:" + this.instanceName);
 
         if (this.emptyDefaultHostname) {

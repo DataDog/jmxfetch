@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import lombok.extern.slf4j.Slf4j;
+import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,8 +51,8 @@ public abstract class JmxAttribute {
     private ObjectName beanName;
     private String domain;
     private String className;
-    private String serviceName;
     private String beanStringName;
+    private ServiceNameProvider serviceNameProvider;
     private Map<String, String> beanParameters;
     private String attributeName;
     private Map<String, Map<Object, Object>> valueConversions =
@@ -67,9 +68,9 @@ public abstract class JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
-            String serviceName,
             String checkName,
             Connection connection,
+            ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
@@ -82,7 +83,7 @@ public abstract class JmxAttribute {
         this.beanStringName = beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
-        this.serviceName = serviceName;
+        this.serviceNameProvider = serviceNameProvider;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -136,9 +137,12 @@ public abstract class JmxAttribute {
         }
     }
 
-    private void addServiceTag() {
-        if (serviceName != null && !serviceName.isEmpty()) {
-            this.defaultTagsList.add("service:" + serviceName);
+    private void addServiceTags() {
+        Iterable<String> serviceNames = this.serviceNameProvider.getServiceNames();
+        if (serviceNames != null) {
+            for (String serviceName : serviceNames) {
+                this.defaultTagsList.add("service:" + serviceName);
+            }
         }
     }
 
@@ -477,9 +481,9 @@ public abstract class JmxAttribute {
         this.addAdditionalTags();
         // - filter out excluded tags
         this.applyTagsBlackList();
-        // Add the service tag - comes last because if the service tag is blacklisted as
+        // Add the service tag(s) - comes last because if the service tag is blacklisted as
         // a JmxAttribute tag, we still want to include the service specified in the config.
-        this.addServiceTag();
+        this.addServiceTags();
     }
 
     MBeanAttributeInfo getAttribute() {

@@ -5,6 +5,7 @@ target/*
 .euml2
 .umlproject
 .classpath
+.factorypath
 .project
 .settings/
 /target

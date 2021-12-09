@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import lombok.extern.slf4j.Slf4j;
+import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,9 +34,9 @@ public class JmxTabularAttribute extends JmxSubAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
-            String serviceName,
             String checkName,
             Connection connection,
+            ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname) {
         super(
@@ -43,9 +44,9 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 beanName,
                 className,
                 instanceName,
-                serviceName,
                 checkName,
                 connection,
+                serviceNameProvider,
                 instanceTags,
                 false,
                 emptyDefaultHostname);

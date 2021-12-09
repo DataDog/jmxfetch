@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import org.datadog.jmxfetch.service.ServiceNameProvider;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -21,9 +23,9 @@ public class JmxSimpleAttribute extends JmxAttribute {
             ObjectName beanName,
             String className,
             String instanceName,
-            String serviceName,
             String checkName,
             Connection connection,
+            ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             Boolean emptyDefaultHostname) {
@@ -32,9 +34,9 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 beanName,
                 className,
                 instanceName,
-                serviceName,
                 checkName,
                 connection,
+                serviceNameProvider,
                 instanceTags,
                 cassandraAliasing,
                 emptyDefaultHostname);

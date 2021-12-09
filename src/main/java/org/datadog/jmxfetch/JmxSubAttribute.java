@@ -1,6 +1,9 @@
 package org.datadog.jmxfetch;
 
+import org.datadog.jmxfetch.service.ServiceNameProvider;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
@@ -8,12 +11,28 @@ import javax.management.ObjectName;
 abstract class JmxSubAttribute extends JmxAttribute {
     private Map<String, Metric> cachedMetrics = new HashMap<String, Metric>();
 
-    public JmxSubAttribute(MBeanAttributeInfo attribute, ObjectName beanName, String className,
-            String instanceName, String serviceName, String checkName, Connection connection,
-            Map<String, String> instanceTags, boolean cassandraAliasing,
+    public JmxSubAttribute(
+            MBeanAttributeInfo attribute,
+            ObjectName beanName,
+            String className,
+            String instanceName,
+            String checkName,
+            Connection connection,
+            ServiceNameProvider serviceNameProvider,
+            Map<String, String> instanceTags,
+            boolean cassandraAliasing,
             boolean emptyDefaultHostname) {
-        super(attribute, beanName, className, instanceName, serviceName, checkName, connection,
-                instanceTags, cassandraAliasing, emptyDefaultHostname);
+        super(
+                attribute,
+                beanName,
+                className,
+                instanceName,
+                checkName,
+                connection,
+                serviceNameProvider,
+                instanceTags,
+                cassandraAliasing,
+                emptyDefaultHostname);
     }
 
     public Metric getCachedMetric(String name) {
