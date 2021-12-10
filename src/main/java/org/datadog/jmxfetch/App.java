@@ -68,6 +68,8 @@ public class App {
     private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
     private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
 
+    private static final String LOG4J2_FMT_MSG_NOLOOKUPS = "log4j2.formatMsgNoLookups";
+
     private static final ByteArraySearcher CONFIG_TERM_SEARCHER
             = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
     private static final ByteArraySearcher LEGACY_CONFIG_TERM_SEARCHER
@@ -142,6 +144,9 @@ public class App {
         {
             // Running these commands here because they are logging specific,
             // not needed in dd-java-agent, which calls run directly.
+
+            // Nasty but no easy programmatic way to enable behavior otherwise
+            System.setProperty(LOG4J2_FMT_MSG_NOLOOKUPS, "True");
 
             // Set up the logger to add file handler
             CustomLogger.setup(Level.toLevel(config.getLogLevel()),
