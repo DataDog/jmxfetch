@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.44.4 / 2021-12-10
+
+### Changes
+
+* [BUGFIX] enable format no NoLookups for log4j
+
 # 0.45.0 / 2021-12-09 
 
 ### Changes
