@@ -5,6 +5,12 @@ Changelog
 
 ### Changes
 
+* [BUGFIX] bumping log4j to v2.12.2 [#380][] 
+
+# 0.44.5 / 2021-12-14 
+
+### Changes
+
 * [BUGFIX] bumping log4j to v2.12.2 [#380][]
 
 # 0.45.1 / 2021-12-13 
