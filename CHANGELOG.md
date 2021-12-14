@@ -6,7 +6,6 @@ Changelog
 ### Changes
 
 * [BUGFIX] bumping log4j to v2.12.2 [#380][] 
-* [IMPROVEMENT] pinning mvn-deploy-plugin to v2.8.2 to sabilize the build [#380][] 
 
 # 0.44.4 / 2021-12-10 
 
