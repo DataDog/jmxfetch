@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 0.44.5 / 2021-12-14 
+
+### Changes
+
+* [BUGFIX] bumping log4j to v2.12.2 [#380][] 
+* [IMPROVEMENT] pinning mvn-deploy-plugin to v2.8.2 to sabilize the build [#380][] 
+
 # 0.44.4 / 2021-12-10 
 
 ### Changes
@@ -629,6 +636,7 @@ Changelog
 [#364]: https://github.com/DataDog/jmxfetch/issues/364
 [#365]: https://github.com/DataDog/jmxfetch/issues/365
 [#369]: https://github.com/DataDog/jmxfetch/issues/369
+[#380]: https://github.com/DataDog/jmxfetch/issues/380
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
