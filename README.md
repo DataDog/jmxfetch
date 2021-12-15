@@ -124,5 +124,5 @@ otherwise the subsequent publishes will fail.
 
 ```
 Get help on usage:
-java -jar jmxfetch-0.45.1-jar-with-dependencies.jar --help
+java -jar jmxfetch-0.45.2-jar-with-dependencies.jar --help
 ```
