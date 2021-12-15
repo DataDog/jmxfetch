@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.45.2 / 2021-12-15 
+
+### Changes
+
+* [BUGFIX] bumping log4j to v2.12.2 [#380][]
+
 # 0.45.1 / 2021-12-13 
 
 ### Changes
@@ -643,6 +649,7 @@ Changelog
 [#369]: https://github.com/DataDog/jmxfetch/issues/369
 [#375]: https://github.com/DataDog/jmxfetch/issues/375
 [#376]: https://github.com/DataDog/jmxfetch/issues/376
+[#380]: https://github.com/DataDog/jmxfetch/issues/380
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
