@@ -8,20 +8,24 @@ import org.datadog.jmxfetch.util.StringUtils;
 import java.util.Arrays;
 import java.util.List;
 
-public class Log4JLevelValidator implements IParameterValidator {
-    public static final List<String> LOG4J_LEVELS =
+public class LogLevelValidator implements IParameterValidator {
+    // for history, there is a `FATAL` log level supported here as we were supporting it
+    // before moving to the `java.util.logging` log system.
+    // we keep it here since we still want it to be valid, but we consider it as ERROR
+    // in jmxfetch
+    public static final List<String> LOGLEVELS =
             Arrays.asList(
                     "ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL", "WARN");
 
-    /** Validates a string as a valid Log4J logging level. */
+    /** Validates a string as a valid logging level. */
     public void validate(String name, String value) throws ParameterException {
 
-        if (!LOG4J_LEVELS.contains(value)) {
+        if (!LOGLEVELS.contains(value)) {
             String message =
                     "Parameter "
                             + name
                             + " should be in ("
-                            + StringUtils.join(",", LOG4J_LEVELS)
+                            + StringUtils.join(",", LOGLEVELS)
                             + ")";
             throw new ParameterException(message);
         }

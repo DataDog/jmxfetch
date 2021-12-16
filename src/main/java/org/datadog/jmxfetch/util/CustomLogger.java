@@ -1,123 +1,126 @@
 package org.datadog.jmxfetch.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.ConsoleAppender;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
-import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.apache.logging.log4j.core.layout.PatternLayout;
 
+import org.datadog.jmxfetch.util.LogLevel;
+
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 
 @Slf4j
 public class CustomLogger {
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
+
     private static final String LAYOUT = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
 
     private static final String LAYOUT_RFC3339 =
         "%d{yyyy-MM-dd'T'HH:mm:ss'Z'} | JMX | %-5p | %c{1} | %m%n";
 
-    // log4j2 uses SYSTEM_OUT and SYSTEM_ERR - support both
-    private static final String SYSTEM_OUT_ALT = "STDOUT";
-    private static final String SYSTEM_ERR_ALT = "STDERR";
+    private static final String JDK14_LAYOUT = "%1$tF %1$tTZ | JMX | %2$s | %3$s | %4$s%n";
+    // FIXME(remy): todo, it is not rfc3339
+    private static final String JDK14_LAYOUT_RFC3339 = "%1$tF %1$tTZ | JMX | %2$s | %3$s | %4$s%n";
 
-    /** Sets up the custom logger to the specified level and location. */
-    public static void setup(Level level, String logLocation, boolean logFormatRfc3339) {
-        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        final Configuration config = ctx.getConfiguration();
+    // TODO(remy):
+    //   v code a LogLevel -> java.util.logging.Level in the enum
+    //   v use LogLevel
+    //   * exact same behavior as before concerning added handlers
+    //   * extra handler configuration
+    //   * proper error management
+    //   * fix this timezone value
+    //   * rfc3339 date support
+    /** setup and configure the logging. */
+    public static void setup(LogLevel level, String logLocation,
+                             boolean logFormatRfc3339) {
         String target = "CONSOLE";
 
-        String logPattern = logFormatRfc3339 ? LAYOUT_RFC3339 : LAYOUT;
+        // log format
+        // --
 
-        PatternLayout layout = PatternLayout.newBuilder()
-            .withConfiguration(config)
-            .withPattern(logPattern)
-            .build();
-
-        if (logLocation != null
-                && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
-                && !SYSTEM_ERR_ALT.equals(logLocation)
-                && !ConsoleAppender.Target.SYSTEM_OUT.toString().equals(logLocation)
-                && !SYSTEM_OUT_ALT.equals(logLocation)) {
-
-            target = "FileLogger";
-
-            RollingFileAppender fa = RollingFileAppender.newBuilder()
-                .setConfiguration(config)
-                .withName(target)
-                .withLayout(layout)
-                .withFileName(logLocation)
-                .withFilePattern(logLocation + ".%d")
-                .withPolicy(SizeBasedTriggeringPolicy.createPolicy("5MB"))
-                .withStrategy(DefaultRolloverStrategy.newBuilder().withMax("1").build())
-                .build();
-
-            fa.start();
-            config.addAppender(fa);
-            ctx.getRootLogger().addAppender(config.getAppender(fa.getName()));
-
-            log.info("File Handler set");
-        } else {
-
-            if (logLocation != null
-                    && (ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
-                        || SYSTEM_ERR_ALT.equals(logLocation))) {
-
-                ConsoleAppender console = (ConsoleAppender)config.getAppender("CONSOLE");
-                console.stop();
-                config.getRootLogger().removeAppender("CONSOLE");
-                ctx.updateLoggers();
-
-                ConsoleAppender ca = ConsoleAppender.newBuilder()
-                    .setConfiguration(config)
-                    .withName(logLocation)
-                    .setTarget(ConsoleAppender.Target.SYSTEM_ERR)
-                    .withLayout(layout)
-                    .build();
-
-                ca.start();
-                config.addAppender(ca);
-                ctx.getRootLogger().addAppender(config.getAppender(ca.getName()));
+        SimpleFormatter formatter = new SimpleFormatter() {
+            private static final String format = JDK14_LAYOUT;
+            private String simpleClassName(String str) {
+                int idx = str.lastIndexOf('.');
+                if (idx == -1 || idx + 1 == str.length()) {
+                    return str;
+                }
+                return str.substring(idx + 1, str.length());
             }
+
+            @Override
+            public synchronized String format(LogRecord lr) {
+                return String.format(format,
+                    new Date(lr.getMillis()),
+                    // NOTE(remy): may generate a lot of garbage
+                    LogLevel.fromJugLevel(lr.getLevel()).toString(),
+                    simpleClassName(lr.getSourceClassName()),
+                    lr.getMessage()
+                );
+            }
+        };
+
+        // prepare the different handlers
+        // --
+
+        ConsoleHandler consoleHandler = null;
+        FileHandler fileHandler = null;
+
+        if (logLocation != null && logLocation.length() > 0) {
+            // file logging
+            try {
+                // maximum one 5MB file
+                fileHandler = new FileHandler(logLocation, 5 * 1024 * 1024, 1);
+                fileHandler.setFormatter(formatter);
+            } catch (Exception e) {
+                fileHandler = null;
+                // TODO(remy): !!!
+            }
+
         }
 
-        // replace default appender with the correct layout
-        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-        loggerConfig.removeAppender(target);
+        // TODO(remy):
+        consoleHandler = new ConsoleHandler();
+        consoleHandler.setFormatter(formatter);
+        consoleHandler.setLevel(level.toJugLevel());
 
-        Appender appender = ConsoleAppender.newBuilder()
-                    .setConfiguration(config)
-                    .withName(target)
-                    .withLayout(layout)
-                    .build();
-        appender.start();
+        // should configure the root logger
+        // ---
 
-        loggerConfig.addAppender(appender, null, null);
-        loggerConfig.setLevel(level);
+        Logger logger = Logger.getLogger("");
 
-        ctx.updateLoggers();
+        // clean all existing hanlders
+        for (Handler handler : logger.getHandlers()) {
+            logger.removeHandler(handler);
+        }
+
+        // set our configured handlers
+        if (fileHandler != null) {
+            logger.addHandler(fileHandler);
+        }
+        if (consoleHandler != null) {
+            logger.addHandler(consoleHandler);
+        }
     }
 
     /** Laconic logging for reduced verbosity. */
-    public static void laconic(org.slf4j.Logger logger, Level level, String message, int max) {
+    public static void laconic(org.slf4j.Logger logger, LogLevel level, String message, int max) {
         if (shouldLog(message, max)) {
-            if (level.isInRange(Level.ERROR, Level.ALL)) {
+            if (level.contains(LogLevel.ERROR) || level.contains(LogLevel.ALL)) {
                 logger.error(message);
-            } else if (level == Level.WARN) {
+            } else if (level == LogLevel.WARN) {
                 logger.warn(message);
-            } else if (level == Level.INFO) {
+            } else if (level == LogLevel.INFO) {
                 logger.info(message);
-            } else if (level == Level.DEBUG) {
+            } else if (level == LogLevel.DEBUG) {
                 logger.debug(message);
             }
         }
