@@ -6,7 +6,7 @@ import java.util.logging.Level;
  * LogLevel used for internal logging to match Datadog Agent levels.
  * Comparison table with java.util.logging:
  * <pre>
- *  JUG     |  JMXFetch LogLevel
+ *  JUL     |  JMXFetch LogLevel
  * ----------------------------
  *  ALL     |  ALL
  *  SEVERE  |  ERROR
@@ -48,25 +48,25 @@ public enum LogLevel {
         return this.level <= other.level;
     }
 
-    /** fromJugLevel converts a java.util.logging.Level into a LogLevel */
-    public static LogLevel fromJugLevel(Level jugLevel) {
-        if (jugLevel == Level.ALL) {
+    /** fromJulLevel converts a java.util.logging.Level into a LogLevel */
+    public static LogLevel fromJulLevel(Level julLevel) {
+        if (julLevel == Level.ALL) {
             return ALL;
-        } else if (jugLevel == Level.SEVERE) {
+        } else if (julLevel == Level.SEVERE) {
             return ERROR;
-        } else if (jugLevel == Level.WARNING) {
+        } else if (julLevel == Level.WARNING) {
             return WARN;
-        } else if (jugLevel == Level.INFO) {
+        } else if (julLevel == Level.INFO) {
             return INFO;
-        } else if (jugLevel == Level.CONFIG) {
+        } else if (julLevel == Level.CONFIG) {
             return DEBUG;
-        } else if (jugLevel == Level.FINE) {
+        } else if (julLevel == Level.FINE) {
             return DEBUG;
-        } else if (jugLevel == Level.FINER) {
+        } else if (julLevel == Level.FINER) {
             return TRACE;
-        } else if (jugLevel == Level.FINEST) {
+        } else if (julLevel == Level.FINEST) {
             return TRACE;
-        } else if (jugLevel == Level.OFF) {
+        } else if (julLevel == Level.OFF) {
             return OFF;
         }
         return INFO; // TODO(remy): should we fallback on OFF?
@@ -82,8 +82,8 @@ public enum LogLevel {
         return INFO; // TODO(remy): should we fallback on OFF?
     }
 
-    /** toJugLevel converts a LogLevel to a `java.util.logging.Level`. */
-    public Level toJugLevel() {
+    /** toJulLevel converts a LogLevel to a `java.util.logging.Level`. */
+    public Level toJulLevel() {
         switch (this) {
             case ALL:
                 return Level.ALL;

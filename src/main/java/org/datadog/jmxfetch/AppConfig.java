@@ -73,7 +73,7 @@ public class AppConfig {
     @Parameter(
             names = {"--log_level", "-L"},
             description = "Level of verbosity",
-            validateWith = LogLevelValidator.class, // TODO(remy):
+            validateWith = LogLevelValidator.class,
             required = false)
     @Builder.Default
     private String logLevel = "INFO";

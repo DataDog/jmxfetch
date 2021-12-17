@@ -47,6 +47,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.security.auth.login.FailedLoginException;
@@ -227,8 +228,7 @@ public class App {
                 public void run() {
                     log.info("JMXFetch is closing");
                     // Properly close log handlers
-                    // TODO(remy):
-                    // LogManager.shutdown();
+                    // LogManager.reset(); TODO
                 }
             }
         );
