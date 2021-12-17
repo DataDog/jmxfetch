@@ -20,7 +20,7 @@ public class LogLevelValidator implements IParameterValidator {
     /** Validates a string as a valid logging level. */
     public void validate(String name, String value) throws ParameterException {
 
-        if (!LOGLEVELS.contains(value)) {
+        if (!LOGLEVELS.contains(value.toUpperCase())) {
             String message =
                     "Parameter "
                             + name

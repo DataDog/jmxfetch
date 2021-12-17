@@ -74,8 +74,12 @@ public enum LogLevel {
 
     /** fromString converts a string into a LogLevel, when not possible, it returns `INFO`. */
     public static LogLevel fromString(String str) {
+        // compatibility
+        if (str.toUpperCase().equals("FATAL")) {
+            return ERROR;
+        }
         for (LogLevel l : LogLevel.class.getEnumConstants()) {
-            if (str == l.toString()) {
+            if (str.toUpperCase().equals(l.toString().toUpperCase())) {
                 return l;
             }
         }
