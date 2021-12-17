@@ -54,11 +54,15 @@ public class CustomLogger {
         SimpleFormatter formatter = new SimpleFormatter() {
             private static final String format = JDK14_LAYOUT;
             private String simpleClassName(String str) {
-                int idx = str.lastIndexOf('.');
-                if (idx == -1 || idx + 1 == str.length()) {
+                int start = str.lastIndexOf('.');
+                int end = str.indexOf('$');
+                if (start == -1 || start + 1 == str.length()) {
                     return str;
                 }
-                return str.substring(idx + 1, str.length());
+                if (end == -1 || end <= start || end > str.length()) {
+                    end = str.length();
+                }
+                return str.substring(start + 1, end);
             }
 
             @Override
