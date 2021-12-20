@@ -46,7 +46,7 @@ public class CustomLogger {
     }
 
     /** setup and configure the logging. */
-    public static void setup(LogLevel level, String logLocation,
+    public synchronized static void setup(LogLevel level, String logLocation,
                              boolean logFormatRfc3339) {
         String target = "CONSOLE";
         final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
@@ -92,7 +92,7 @@ public class CustomLogger {
         FileHandler fileHandler = null;
 
         // the logLocation isn't always containing a file, it is sometimes
-        // referring to a standard output. We want to create a FileHander only
+        // referring to a standard output. We want to create a FileHandler only
         // if the logLocation is a file on the FS.
         if (logLocation != null && logLocation.length() > 0) {
             if (!isStdOut(logLocation) && !isStdErr(logLocation)) {
@@ -139,6 +139,14 @@ public class CustomLogger {
         }
         if (stderrHandler != null) {
             logger.addHandler(stderrHandler);
+        }
+    }
+
+    /** closeHandlers closes all opened handlers. */
+    public synchronized static void shutdown() {
+        Logger logger = Logger.getLogger("");
+        for (Handler handler : logger.getHandlers()) {
+            handler.close();
         }
     }
 

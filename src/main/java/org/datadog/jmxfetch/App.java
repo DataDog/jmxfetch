@@ -228,7 +228,7 @@ public class App {
                 public void run() {
                     log.info("JMXFetch is closing");
                     // Properly close log handlers
-                    // LogManager.reset(); TODO
+                    CustomLogger.shutdown();
                 }
             }
         );
