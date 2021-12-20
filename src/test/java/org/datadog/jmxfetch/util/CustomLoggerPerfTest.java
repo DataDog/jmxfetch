@@ -32,6 +32,7 @@ public final class CustomLoggerPerfTest {
     private final int duration;  // Duration in secs
     private final int testWorkers;
     private final int msgSize;  // length of log message in bytes
+    private final int uPause;  // length of log message in bytes
     private final boolean rfc3339;  // length of log message in bytes
 
     private AtomicBoolean running;
@@ -42,31 +43,20 @@ public final class CustomLoggerPerfTest {
     @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                 { 15, 1, 128, false },  // 15 seconds, non-blocking, 128 qSize, 2 sender workers, 2 processor workers
-                 { 15, 1, 512, false },  // 15 seconds, non-blocking, 512 qSize, 2 sender workers, 2 processor workers
-                 { 15, 1, 1024, false },  // 15 seconds, non-blocking, 1024 qSize, 2 sender workers, 2 processor workers
-                 { 15, 2, 128, false },  // 15 seconds, non-blocking, 128 qSize, 2 sender workers, 2 processor workers
-                 { 15, 2, 512, false },  // 15 seconds, non-blocking, 512 qSize, 2 sender workers, 2 processor workers
-                 { 15, 2, 1024, false },  // 15 seconds, non-blocking, 1024 qSize, 2 sender workers, 2 processor workers
-                 { 15, 4, 128, false },  // 15 seconds, non-blocking, 128 qSize, 2 sender workers, 2 processor workers
-                 { 15, 4, 512, false },  // 15 seconds, non-blocking, 512 qSize, 2 sender workers, 2 processor workers
-                 { 15, 4, 1024, false },  // 15 seconds, non-blocking, 1024 qSize, 2 sender workers, 2 processor workers
-                 { 15, 1, 128, true },  // 15 seconds, non-blocking, 128 qSize, 2 sender workers, 2 processor workers
-                 { 15, 1, 512, true },  // 15 seconds, non-blocking, 512 qSize, 2 sender workers, 2 processor workers
-                 { 15, 1, 1024, true },  // 15 seconds, non-blocking, 1024 qSize, 2 sender workers, 2 processor workers
-                 { 15, 2, 128, true },  // 15 seconds, non-blocking, 128 qSize, 2 sender workers, 2 processor workers
-                 { 15, 2, 512, true },  // 15 seconds, non-blocking, 512 qSize, 2 sender workers, 2 processor workers
-                 { 15, 2, 1024, true },  // 15 seconds, non-blocking, 1024 qSize, 2 sender workers, 2 processor workers
-                 { 15, 4, 128, true },  // 15 seconds, non-blocking, 128 qSize, 2 sender workers, 2 processor workers
-                 { 15, 4, 512, true },  // 15 seconds, non-blocking, 512 qSize, 2 sender workers, 2 processor workers
-                 { 15, 4, 1024, true },  // 15 seconds, non-blocking, 1024 qSize, 2 sender workers, 2 processor workers
+                 { 90, 100, 1, 128, false },  // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, false
+                 { 90, 100, 1, 512, false },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false
+                 { 90, 100, 1, 1024, false },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false
+                 { 90, 100, 1, 128, true },  // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, true
+                 { 90, 100, 1, 512, true },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true
+                 { 90, 100, 1, 1024, true },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true
            });
     }
 
-    public CustomLoggerPerfTest(int duration, int testWorkers, int msgSize, boolean rfc3339) throws IOException {
+    public CustomLoggerPerfTest(int duration, int uPause, int testWorkers, int msgSize, boolean rfc3339) throws IOException {
         this.duration = duration;
         this.testWorkers = testWorkers;
         this.msgSize = msgSize;
+        this.uPause = uPause;
         this.rfc3339 = rfc3339;
 
         this.executor = Executors.newFixedThreadPool(testWorkers);
@@ -96,13 +86,19 @@ public final class CustomLoggerPerfTest {
 
         final String msg = getRandomString(msgSize);
         final AtomicInteger count = new AtomicInteger(0);
+        final int pause =(int) TimeUnit.MICROSECONDS.toNanos(this.uPause);
 
         for(int i=0 ; i < this.testWorkers ; i++) {
             executor.submit(new Runnable() {
-                public void run() {
+                public void run()  {
                     while (running.get()) {
                        log.info(msg);
                        count.incrementAndGet();
+                       try {
+                           Thread.sleep(0, pause);
+                        } catch (InterruptedException e) {
+                            // pass
+                        }
                     }
                 }
             });
