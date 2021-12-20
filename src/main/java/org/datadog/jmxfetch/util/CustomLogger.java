@@ -35,6 +35,10 @@ public class CustomLogger {
     private static final String DATE_JDK14_LAYOUT_RFC3339 = "yyyy-MM-dd'T'HH:mm:ssXXX";
     private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%n";
 
+    private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    private static final int FILE_COUNT = 1;
+
     private static boolean isStdErr(String target) {
         List<String> stderrs = Arrays.asList("SYSTEM.ERR", "SYSTEM_ERR", "STDERR");
         return stderrs.contains(target.toUpperCase());
@@ -50,6 +54,8 @@ public class CustomLogger {
                              boolean logFormatRfc3339) {
         String target = "CONSOLE";
         final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
+                                                            Locale.getDefault());
 
         // log format
         // --
@@ -71,13 +77,8 @@ public class CustomLogger {
 
             @Override
             public synchronized String format(LogRecord lr) {
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat,
-                                                        Locale.getDefault());
                 return String.format(format,
-                    simpleDateFormat.format(new Date()).toString(),
-                    // NOTE(remy): these conversions may generate a lot of garbage
-                    //      (jaime): if performance impact over a sustained period of time
-                    //               isn't too bad, we can probably live with this.
+                    dateFormatter.format(new Date()).toString(),
                     LogLevel.fromJulLevel(lr.getLevel()).toString(),
                     simpleClassName(lr.getSourceClassName()),
                     lr.getMessage()
@@ -100,11 +101,11 @@ public class CustomLogger {
                 // file logging
                 try {
                     // maximum one 5MB file
-                    fileHandler = new FileHandler(logLocation, 5 * 1024 * 1024, 1);
+                    fileHandler = new FileHandler(logLocation, MAX_FILE_SIZE, FILE_COUNT);
                     fileHandler.setFormatter(formatter);
                 } catch (Exception e) {
                     fileHandler = null;
-                    log.error("can't open the file handler");
+                    log.error("can't open the file handler:", e);
                 }
             } else if (isStdErr(logLocation)) {
                 // console handler sending on stderr
@@ -127,7 +128,10 @@ public class CustomLogger {
 
         // clean all existing handlers
         for (Handler handler : logger.getHandlers()) {
-            logger.removeHandler(handler);
+            if (handler != null) {
+                handler.close();
+                logger.removeHandler(handler);
+            }
         }
 
         // set our configured handlers
@@ -147,7 +151,10 @@ public class CustomLogger {
     public static synchronized void shutdown() {
         Logger logger = Logger.getLogger("");
         for (Handler handler : logger.getHandlers()) {
-            handler.close();
+            if (handler != null) {
+                handler.close();
+                logger.removeHandler(handler);
+            }
         }
     }
 

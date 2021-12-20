@@ -18,6 +18,10 @@ import java.util.logging.Level;
  *  FINEST  |  TRACE
  *  OFF     |  OFF
  * </pre>
+ * <p>
+ * `FATAL` from previous bindings used by JMXFetch is now converted
+ * to `LogLevel.ERROR`.
+ * </p>
  */
 public enum LogLevel {
     ALL(0, "ALL"),
@@ -43,7 +47,7 @@ public enum LogLevel {
      */
     public boolean contains(LogLevel other) {
         if (this == OFF) {
-            return other.level == OFF;
+            return other == OFF;
         }
         return this.level <= other.level;
     }
