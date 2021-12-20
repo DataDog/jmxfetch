@@ -70,6 +70,7 @@ public enum LogLevel {
             return OFF;
         }
         return INFO; // TODO(remy): should we fallback on OFF?
+                     //      (jaime): IMHO nope.
     }
 
     /** fromString converts a string into a LogLevel, when not possible, it returns `INFO`. */
@@ -84,6 +85,7 @@ public enum LogLevel {
             }
         }
         return INFO; // TODO(remy): should we fallback on OFF?
+                     //      (jaime): IMHO nope.
     }
 
     /** toJulLevel converts a LogLevel to a `java.util.logging.Level`. */

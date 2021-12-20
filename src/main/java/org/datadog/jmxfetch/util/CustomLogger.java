@@ -75,6 +75,8 @@ public class CustomLogger {
                 return String.format(format,
                     simpleDateFormat.format(new Date()).toString(),
                     // NOTE(remy): these conversions may generate a lot of garbage
+                    //      (jaime): if performance impact over a sustained period of time
+                    //               isn't too bad, we can probably live with this.
                     LogLevel.fromJulLevel(lr.getLevel()).toString(),
                     simpleClassName(lr.getSourceClassName()),
                     lr.getMessage()
