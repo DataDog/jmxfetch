@@ -19,3 +19,4 @@ target/*
 
 # jenv
 .java_version
+.java-version
