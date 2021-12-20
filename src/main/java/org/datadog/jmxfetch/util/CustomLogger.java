@@ -86,6 +86,10 @@ public class CustomLogger {
             }
         };
 
+        // log level
+        // --
+        Level julLevel = level.toJulLevel();
+
         // prepare the different handlers
         // --
 
@@ -103,6 +107,7 @@ public class CustomLogger {
                     // maximum one 5MB file
                     fileHandler = new FileHandler(logLocation, MAX_FILE_SIZE, FILE_COUNT);
                     fileHandler.setFormatter(formatter);
+                    // note: fileHandler defaults to Level.ALL, so no need to set its log level
                 } catch (Exception e) {
                     fileHandler = null;
                     log.error("can't open the file handler:", e);
@@ -112,19 +117,20 @@ public class CustomLogger {
                 // note that ConsoleHandler is sending on System.err
                 stderrHandler = new ConsoleHandler();
                 stderrHandler.setFormatter(formatter);
-                stderrHandler.setLevel(level.toJulLevel());
+                stderrHandler.setLevel(julLevel);
             }
         }
 
         // always have a console handler sending the logs to stdout
         stdoutHandler = new StdoutConsoleHandler();
         stdoutHandler.setFormatter(formatter);
-        stdoutHandler.setLevel(level.toJulLevel());
+        stdoutHandler.setLevel(julLevel);
 
         // should configure the root logger
         // ---
 
         Logger logger = Logger.getLogger("");
+        logger.setLevel(julLevel);
 
         // clean all existing handlers
         for (Handler handler : logger.getHandlers()) {
