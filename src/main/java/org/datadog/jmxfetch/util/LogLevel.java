@@ -43,7 +43,7 @@ public enum LogLevel {
      */
     public boolean contains(LogLevel other) {
         if (this == OFF) {
-            return this.level == other.level;
+            return other.level == OFF;
         }
         return this.level <= other.level;
     }
