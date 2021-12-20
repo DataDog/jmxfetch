@@ -37,7 +37,7 @@ public class CustomLogger {
 
     private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-    private static final int FILE_COUNT = 1;
+    private static final int FILE_COUNT = 2;
 
     private static boolean isStdErr(String target) {
         List<String> stderrs = Arrays.asList("SYSTEM.ERR", "SYSTEM_ERR", "STDERR");
