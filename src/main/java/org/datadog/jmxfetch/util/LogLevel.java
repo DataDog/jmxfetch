@@ -48,7 +48,7 @@ public enum LogLevel {
         return this.level <= other.level;
     }
 
-    /** fromJulLevel converts a java.util.logging.Level into a LogLevel */
+    /** fromJulLevel converts a java.util.logging.Level into a LogLevel. */
     public static LogLevel fromJulLevel(Level julLevel) {
         if (julLevel == Level.ALL) {
             return ALL;
@@ -69,8 +69,8 @@ public enum LogLevel {
         } else if (julLevel == Level.OFF) {
             return OFF;
         }
-        // TODO(remy): should we fallback on OFF?
-        // (jaime): IMHO nope.
+
+        // should never happen but defaults to INFO
         return INFO;
     }
 
@@ -85,8 +85,8 @@ public enum LogLevel {
                 return l;
             }
         }
-        // TODO(remy): should we fallback on OFF?
-        // (jaime): IMHO nope.
+
+        // default to INFO
         return INFO;
     }
 
