@@ -69,8 +69,9 @@ public enum LogLevel {
         } else if (julLevel == Level.OFF) {
             return OFF;
         }
-        return INFO; // TODO(remy): should we fallback on OFF?
-                     //      (jaime): IMHO nope.
+        // TODO(remy): should we fallback on OFF?
+        // (jaime): IMHO nope.
+        return INFO;
     }
 
     /** fromString converts a string into a LogLevel, when not possible, it returns `INFO`. */
@@ -84,8 +85,9 @@ public enum LogLevel {
                 return l;
             }
         }
-        return INFO; // TODO(remy): should we fallback on OFF?
-                     //      (jaime): IMHO nope.
+        // TODO(remy): should we fallback on OFF?
+        // (jaime): IMHO nope.
+        return INFO;
     }
 
     /** toJulLevel converts a LogLevel to a `java.util.logging.Level`. */

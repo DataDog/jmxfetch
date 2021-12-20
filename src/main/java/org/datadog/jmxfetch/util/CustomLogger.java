@@ -46,7 +46,7 @@ public class CustomLogger {
     }
 
     /** setup and configure the logging. */
-    public synchronized static void setup(LogLevel level, String logLocation,
+    public static synchronized void setup(LogLevel level, String logLocation,
                              boolean logFormatRfc3339) {
         String target = "CONSOLE";
         final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
@@ -71,7 +71,8 @@ public class CustomLogger {
 
             @Override
             public synchronized String format(LogRecord lr) {
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat, Locale.getDefault());
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat,
+                                                        Locale.getDefault());
                 return String.format(format,
                     simpleDateFormat.format(new Date()).toString(),
                     // NOTE(remy): these conversions may generate a lot of garbage
@@ -143,7 +144,7 @@ public class CustomLogger {
     }
 
     /** closeHandlers closes all opened handlers. */
-    public synchronized static void shutdown() {
+    public static synchronized void shutdown() {
         Logger logger = Logger.getLogger("");
         for (Handler handler : logger.getHandlers()) {
             handler.close();
