@@ -94,7 +94,10 @@ public enum LogLevel {
         return INFO;
     }
 
-    /** toJulLevel converts a LogLevel to a `java.util.logging.Level`. */
+    /**
+     * toJulLevel converts a LogLevel to a `java.util.logging.Level`.
+     * This mapping needs to match http://slf4j.org/api/org/slf4j/impl/JDK14LoggerAdapter.html
+     **/
     public Level toJulLevel() {
         switch (this) {
             case ALL:
@@ -106,9 +109,9 @@ public enum LogLevel {
             case INFO:
                 return Level.INFO;
             case DEBUG:
-                return Level.CONFIG;
+                return Level.FINE;
             case TRACE:
-                return Level.FINER;
+                return Level.FINEST;
             case OFF:
                 return Level.OFF;
             default:
