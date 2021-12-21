@@ -1,123 +1,180 @@
 package org.datadog.jmxfetch.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.ConsoleAppender;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
-import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.apache.logging.log4j.core.layout.PatternLayout;
 
+import org.datadog.jmxfetch.util.LogLevel;
+import org.datadog.jmxfetch.util.StdoutConsoleHandler;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Filter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 
 @Slf4j
 public class CustomLogger {
+    // Keep a reference to our logger so it doesn't get GC'd
+    private static Logger jmxfetchLogger;
+
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
-    private static final String LAYOUT = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
 
-    private static final String LAYOUT_RFC3339 =
-        "%d{yyyy-MM-dd'T'HH:mm:ss'Z'} | JMX | %-5p | %c{1} | %m%n";
+    private static final String DATE_JDK14_LAYOUT = "yyyy-MM-dd HH:mm:ss z";
+    private static final String DATE_JDK14_LAYOUT_RFC3339 = "yyyy-MM-dd'T'HH:mm:ssXXX";
+    private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%5$s%n";
 
-    // log4j2 uses SYSTEM_OUT and SYSTEM_ERR - support both
-    private static final String SYSTEM_OUT_ALT = "STDOUT";
-    private static final String SYSTEM_ERR_ALT = "STDERR";
+    private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-    /** Sets up the custom logger to the specified level and location. */
-    public static void setup(Level level, String logLocation, boolean logFormatRfc3339) {
-        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        final Configuration config = ctx.getConfiguration();
+    private static final int FILE_COUNT = 2;
+
+    private static boolean isStdErr(String target) {
+        List<String> stderrs = Arrays.asList("SYSTEM.ERR", "SYSTEM_ERR", "STDERR");
+        return stderrs.contains(target.toUpperCase());
+    }
+
+    private static boolean isStdOut(String target) {
+        List<String> stdouts = Arrays.asList("SYSTEM.OUT", "SYSTEM_OUT", "STDOUT");
+        return stdouts.contains(target.toUpperCase());
+    }
+
+    /** setup and configure the logging. */
+    public static synchronized void setup(LogLevel level, String logLocation,
+                             boolean logFormatRfc3339) {
         String target = "CONSOLE";
+        final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
+                                                            Locale.getDefault());
 
-        String logPattern = logFormatRfc3339 ? LAYOUT_RFC3339 : LAYOUT;
+        // log format
+        SimpleFormatter formatter = new SimpleFormatter() {
+            private static final String format = JDK14_LAYOUT;
 
-        PatternLayout layout = PatternLayout.newBuilder()
-            .withConfiguration(config)
-            .withPattern(logPattern)
-            .build();
+            private String simpleClassName(String str) {
+                int start = str.lastIndexOf('.');
+                int end = str.indexOf('$');
+                if (start == -1 || start + 1 == str.length()) {
+                    return str;
+                }
+                if (end == -1 || end <= start || end > str.length()) {
+                    end = str.length();
+                }
+                return str.substring(start + 1, end);
+            }
 
-        if (logLocation != null
-                && !ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
-                && !SYSTEM_ERR_ALT.equals(logLocation)
-                && !ConsoleAppender.Target.SYSTEM_OUT.toString().equals(logLocation)
-                && !SYSTEM_OUT_ALT.equals(logLocation)) {
+            @Override
+            public synchronized String format(LogRecord lr) {
+                String exception = "";
+                if (lr.getThrown() != null) {
+                    StringWriter writer = new StringWriter();
+                    PrintWriter stream = new PrintWriter(writer);
+                    stream.println();
+                    lr.getThrown().printStackTrace(stream);
+                    stream.close();
+                    exception = writer.toString();
+                }
+                return String.format(format,
+                    dateFormatter.format(new Date()).toString(),
+                    LogLevel.fromJulLevel(lr.getLevel()).toString(),
+                    simpleClassName(lr.getSourceClassName()),
+                    lr.getMessage(),
+                    exception
+                );
+            }
+        };
 
-            target = "FileLogger";
+        // log level
+        Level julLevel = level.toJulLevel();
 
-            RollingFileAppender fa = RollingFileAppender.newBuilder()
-                .setConfiguration(config)
-                .withName(target)
-                .withLayout(layout)
-                .withFileName(logLocation)
-                .withFilePattern(logLocation + ".%d")
-                .withPolicy(SizeBasedTriggeringPolicy.createPolicy("5MB"))
-                .withStrategy(DefaultRolloverStrategy.newBuilder().withMax("1").build())
-                .build();
+        // Reset logging (removes all existing handlers, including on the root logger)
+        // Note: at some point we'd likely want to be more fine-grained and allow
+        // log handlers on other loggers instead, with some control on their log level
+        final LogManager manager = LogManager.getLogManager();
+        manager.reset();
 
-            fa.start();
-            config.addAppender(fa);
-            ctx.getRootLogger().addAppender(config.getAppender(fa.getName()));
+        // prepare the different handlers
+        ConsoleHandler stdoutHandler = null;
+        ConsoleHandler stderrHandler = null;
+        FileHandler fileHandler = null;
 
-            log.info("File Handler set");
-        } else {
-
-            if (logLocation != null
-                    && (ConsoleAppender.Target.SYSTEM_ERR.toString().equals(logLocation)
-                        || SYSTEM_ERR_ALT.equals(logLocation))) {
-
-                ConsoleAppender console = (ConsoleAppender)config.getAppender("CONSOLE");
-                console.stop();
-                config.getRootLogger().removeAppender("CONSOLE");
-                ctx.updateLoggers();
-
-                ConsoleAppender ca = ConsoleAppender.newBuilder()
-                    .setConfiguration(config)
-                    .withName(logLocation)
-                    .setTarget(ConsoleAppender.Target.SYSTEM_ERR)
-                    .withLayout(layout)
-                    .build();
-
-                ca.start();
-                config.addAppender(ca);
-                ctx.getRootLogger().addAppender(config.getAppender(ca.getName()));
+        // the logLocation isn't always containing a file, it is sometimes
+        // referring to a standard output. We want to create a FileHandler only
+        // if the logLocation is a file on the FS.
+        if (logLocation != null && logLocation.length() > 0) {
+            if (!isStdOut(logLocation) && !isStdErr(logLocation)) {
+                // file logging
+                try {
+                    // maximum one 5MB file
+                    fileHandler = new FileHandler(logLocation, MAX_FILE_SIZE, FILE_COUNT);
+                    fileHandler.setFormatter(formatter);
+                    // note: fileHandler defaults to Level.ALL, so no need to set its log level
+                } catch (Exception e) {
+                    fileHandler = null;
+                    log.error("can't open the file handler:", e);
+                }
+            } else if (isStdErr(logLocation)) {
+                // console handler sending on stderr
+                // note that ConsoleHandler is sending on System.err
+                stderrHandler = new ConsoleHandler();
+                stderrHandler.setFormatter(formatter);
+                stderrHandler.setLevel(julLevel);
             }
         }
 
-        // replace default appender with the correct layout
-        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-        loggerConfig.removeAppender(target);
+        // always have a console handler sending the logs to stdout
+        stdoutHandler = new StdoutConsoleHandler();
+        stdoutHandler.setFormatter(formatter);
+        stdoutHandler.setLevel(julLevel);
 
-        Appender appender = ConsoleAppender.newBuilder()
-                    .setConfiguration(config)
-                    .withName(target)
-                    .withLayout(layout)
-                    .build();
-        appender.start();
+        // Create our Logger, and set our configured handlers on it
+        jmxfetchLogger = Logger.getLogger("org.datadog.jmxfetch");
+        jmxfetchLogger.setLevel(julLevel);
 
-        loggerConfig.addAppender(appender, null, null);
-        loggerConfig.setLevel(level);
+        if (fileHandler != null) {
+            jmxfetchLogger.addHandler(fileHandler);
+        }
+        if (stdoutHandler != null) { // always non-null but doesn't cost much
+            jmxfetchLogger.addHandler(stdoutHandler);
+        }
+        if (stderrHandler != null) {
+            jmxfetchLogger.addHandler(stderrHandler);
+        }
+    }
 
-        ctx.updateLoggers();
+    /** closeHandlers closes all opened handlers. */
+    public static synchronized void shutdown() {
+        for (Handler handler : jmxfetchLogger.getHandlers()) {
+            if (handler != null) {
+                handler.close();
+                jmxfetchLogger.removeHandler(handler);
+            }
+        }
     }
 
     /** Laconic logging for reduced verbosity. */
-    public static void laconic(org.slf4j.Logger logger, Level level, String message, int max) {
+    public static void laconic(org.slf4j.Logger logger, LogLevel level, String message, int max) {
         if (shouldLog(message, max)) {
-            if (level.isInRange(Level.ERROR, Level.ALL)) {
+            if (level == LogLevel.ERROR) {
                 logger.error(message);
-            } else if (level == Level.WARN) {
+            } else if (level == LogLevel.WARN) {
                 logger.warn(message);
-            } else if (level == Level.INFO) {
+            } else if (level == LogLevel.INFO) {
                 logger.info(message);
-            } else if (level == Level.DEBUG) {
+            } else if (level == LogLevel.DEBUG) {
                 logger.debug(message);
             }
         }
