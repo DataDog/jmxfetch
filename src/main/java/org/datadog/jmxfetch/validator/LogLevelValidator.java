@@ -13,6 +13,8 @@ public class LogLevelValidator implements IParameterValidator {
     // before moving to the `java.util.logging` log system.
     // we keep it here since we still want it to be valid, but we consider it as ERROR
     // in jmxfetch
+    // FIXME: remove the "LEVEL" log level, which was introduced by mistake early in JMXFetch's
+    // development (currently defaults to INFO).
     public static final List<String> LOGLEVELS =
             Arrays.asList(
                     "ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "LEVEL", "WARN");

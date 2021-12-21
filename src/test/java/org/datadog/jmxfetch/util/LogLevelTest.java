@@ -23,7 +23,10 @@ public class LogLevelTest {
                 {"INFO", LogLevel.INFO, Level.INFO},
                 {"WARN", LogLevel.WARN, Level.WARNING},
                 {"ERROR", LogLevel.ERROR, Level.SEVERE},
+                {"FATAL", LogLevel.ERROR, Level.SEVERE},
                 {"OFF", LogLevel.OFF, Level.OFF},
+                {"LEVEL", LogLevel.INFO, Level.INFO},
+                {"some_unknown_level", LogLevel.INFO, Level.INFO},
         });
     }
 
