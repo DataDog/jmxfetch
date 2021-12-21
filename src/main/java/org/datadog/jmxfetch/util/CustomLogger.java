@@ -156,7 +156,7 @@ public class CustomLogger {
     /** Laconic logging for reduced verbosity. */
     public static void laconic(org.slf4j.Logger logger, LogLevel level, String message, int max) {
         if (shouldLog(message, max)) {
-            if (level.contains(LogLevel.ERROR) || level.contains(LogLevel.ALL)) {
+            if (level == LogLevel.ERROR || level == LogLevel.ALL) {
                 logger.error(message);
             } else if (level == LogLevel.WARN) {
                 logger.warn(message);
