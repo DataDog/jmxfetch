@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.util.LogLevel;
 import org.datadog.jmxfetch.util.StdoutConsoleHandler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -34,7 +36,7 @@ public class CustomLogger {
 
     private static final String DATE_JDK14_LAYOUT = "yyyy-MM-dd HH:mm:ss z";
     private static final String DATE_JDK14_LAYOUT_RFC3339 = "yyyy-MM-dd'T'HH:mm:ssXXX";
-    private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%n";
+    private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%5$s%n";
 
     private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -76,11 +78,21 @@ public class CustomLogger {
 
             @Override
             public synchronized String format(LogRecord lr) {
+                String exception = "";
+                if (lr.getThrown() != null) {
+                    StringWriter writer = new StringWriter();
+                    PrintWriter stream = new PrintWriter(writer);
+                    stream.write("\n");
+                    lr.getThrown().printStackTrace(stream);
+                    stream.close();
+                    exception = writer.toString();
+                }
                 return String.format(format,
                     dateFormatter.format(new Date()).toString(),
                     LogLevel.fromJulLevel(lr.getLevel()).toString(),
                     simpleClassName(lr.getSourceClassName()),
-                    lr.getMessage()
+                    lr.getMessage(),
+                    exception
                 );
             }
         };
