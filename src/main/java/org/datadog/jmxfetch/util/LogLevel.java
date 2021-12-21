@@ -24,13 +24,13 @@ import java.util.logging.Level;
  * </p>
  */
 public enum LogLevel {
-    ALL(0, "ALL"),
+    OFF(0, "OFF"),
     ERROR(1, "ERROR"),
     WARN(2, "WARN"),
     INFO(3, "INFO"),
     DEBUG(4, "DEBUG"),
     TRACE(5, "TRACE"),
-    OFF(6, "OFF");
+    ALL(6, "ALL");
 
     private int level;
     private String label;
@@ -46,10 +46,10 @@ public enum LogLevel {
      * as well.
      */
     public boolean contains(LogLevel other) {
-        if (this == OFF) {
-            return other == OFF;
+        if (this == OFF || other == OFF) {
+            return other == this;
         }
-        return this.level <= other.level;
+        return this.level >= other.level;
     }
 
     /** fromJulLevel converts a java.util.logging.Level into a LogLevel. */
