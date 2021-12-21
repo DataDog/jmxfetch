@@ -24,10 +24,10 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import org.apache.logging.log4j.Level;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
+import org.datadog.jmxfetch.util.LogLevel;
 import org.junit.After;
 import org.junit.BeforeClass;
 
@@ -46,7 +46,7 @@ public class TestCommon {
         if (level == null) {
             level = "ALL";
         }
-        CustomLogger.setup(Level.toLevel(level), "/tmp/jmxfetch_test.log", false);
+        CustomLogger.setup(LogLevel.ALL, "/tmp/jmxfetch_test.log", false);
     }
 
     /**

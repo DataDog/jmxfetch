@@ -6,8 +6,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.tasks.TaskMethod;
@@ -17,6 +15,7 @@ import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
+import org.datadog.jmxfetch.util.LogLevel;
 import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
 import org.slf4j.Marker;
@@ -144,7 +143,7 @@ public class App {
             // not needed in dd-java-agent, which calls run directly.
 
             // Set up the logger to add file handler
-            CustomLogger.setup(Level.toLevel(config.getLogLevel()),
+            CustomLogger.setup(LogLevel.fromString(config.getLogLevel()),
                     config.getLogLocation(),
                     config.isLogFormatRfc3339());
 
@@ -159,21 +158,18 @@ public class App {
      * System#exit}.
      */
     public static int run(AppConfig config) {
-        Marker fatal = MarkerFactory.getMarker("FATAL");
         String action = config.getAction();
 
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(action)) {
-            log.error(fatal,
-                    action + " is not in " + AppConfig.ACTIONS + ". Exiting.");
+            log.error(action + " is not in " + AppConfig.ACTIONS + ". Exiting.");
             return 1;
         }
 
         if (!action.equals(AppConfig.ACTION_COLLECT)
             && !(config.isConsoleReporter() || config.isJsonReporter())) {
             // The "list_*" actions can not be used with the statsd reporter
-            log.error(fatal,
-                      action
+            log.error(action
                       + " argument can only be used with the console or json reporter. Exiting.");
             return 1;
         }
@@ -230,8 +226,8 @@ public class App {
                 @Override
                 public void run() {
                     log.info("JMXFetch is closing");
-                    // Properly close log handlers
-                    LogManager.shutdown();
+                    // make sure log handlers are properly closed
+                    CustomLogger.shutdown();
                 }
             }
         );
@@ -1192,7 +1188,7 @@ public class App {
                                     + " metrics.";
 
                     instanceStatus = Status.STATUS_WARNING;
-                    CustomLogger.laconic(log, Level.WARN, instanceMessage, 0);
+                    CustomLogger.laconic(log, LogLevel.WARN, instanceMessage, 0);
                 }
 
                 if (numberOfMetrics > 0) {

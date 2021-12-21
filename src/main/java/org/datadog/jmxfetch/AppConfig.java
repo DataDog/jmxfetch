@@ -10,7 +10,7 @@ import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.JsonReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
-import org.datadog.jmxfetch.validator.Log4JLevelValidator;
+import org.datadog.jmxfetch.validator.LogLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
 
@@ -72,7 +72,7 @@ public class AppConfig {
     @Parameter(
             names = {"--log_level", "-L"},
             description = "Level of verbosity",
-            validateWith = Log4JLevelValidator.class,
+            validateWith = LogLevelValidator.class,
             required = false)
     @Builder.Default
     private String logLevel = "INFO";
