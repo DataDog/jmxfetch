@@ -8,7 +8,7 @@ import java.util.logging.Level;
  * <pre>
  *  JUL     |  JMXFetch LogLevel
  * ----------------------------
- *  ALL     |  ALL
+ *  OFF     |  OFF
  *  SEVERE  |  ERROR
  *  WARNING |  WARN
  *  INFO    |  INFO
@@ -16,7 +16,7 @@ import java.util.logging.Level;
  *  FINE    |  DEBUG
  *  FINER   |  TRACE
  *  FINEST  |  TRACE
- *  OFF     |  OFF
+ *  ALL     |  ALL
  * </pre>
  * <p>
  * `FATAL` from previous bindings used by JMXFetch is now converted
@@ -40,17 +40,6 @@ public enum LogLevel {
     }
 
     // --
-
-    /** contains returns if the given log level is contained.
-     * If this level is `OFF`, `contains` returns `true` only if `other` is `OFF`
-     * as well.
-     */
-    public boolean contains(LogLevel other) {
-        if (this == OFF || other == OFF) {
-            return other == this;
-        }
-        return this.level >= other.level;
-    }
 
     /** fromJulLevel converts a java.util.logging.Level into a LogLevel. */
     public static LogLevel fromJulLevel(Level julLevel) {
