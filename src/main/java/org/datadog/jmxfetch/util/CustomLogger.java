@@ -26,7 +26,8 @@ import java.util.logging.SimpleFormatter;
 
 @Slf4j
 public class CustomLogger {
-    private static final Logger logger = Logger.getLogger("");
+    // Keep a reference to our logger so it doesn't get GC'd
+    private static Logger jmxfetchLogger;
 
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
@@ -56,8 +57,6 @@ public class CustomLogger {
         final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
         final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
                                                             Locale.getDefault());
-        final LogManager manager = LogManager.getLogManager();
-        manager.reset();
 
         // log format
         SimpleFormatter formatter = new SimpleFormatter() {
@@ -88,6 +87,12 @@ public class CustomLogger {
 
         // log level
         Level julLevel = level.toJulLevel();
+
+        // Reset logging (removes all existing handlers, including on the root logger)
+        // Note: at some point we'd likely want to be more fine-grained and allow
+        // log handlers on other loggers instead, with some control on their log level
+        final LogManager manager = LogManager.getLogManager();
+        manager.reset();
 
         // prepare the different handlers
         ConsoleHandler stdoutHandler = null;
@@ -123,56 +128,27 @@ public class CustomLogger {
         stdoutHandler.setFormatter(formatter);
         stdoutHandler.setLevel(julLevel);
 
-        logger.setLevel(julLevel);
+        // Create our Logger, and set our configured handlers on it
+        jmxfetchLogger = Logger.getLogger("org.datadog.jmxfetch");
+        jmxfetchLogger.setLevel(julLevel);
 
-        // set our configured handlers
         if (fileHandler != null) {
-            logger.addHandler(fileHandler);
+            jmxfetchLogger.addHandler(fileHandler);
         }
         if (stdoutHandler != null) { // always non-null but doesn't cost much
-            logger.addHandler(stdoutHandler);
+            jmxfetchLogger.addHandler(stdoutHandler);
         }
         if (stderrHandler != null) {
-            logger.addHandler(stderrHandler);
+            jmxfetchLogger.addHandler(stderrHandler);
         }
-
-        // filter all other log handlers
-        for (Enumeration<String> logNames = manager.getLoggerNames() ;
-                logNames.hasMoreElements() ; ) {
-            String logName = logNames.nextElement();
-
-            for (Handler handler : manager.getLogger(logName).getHandlers()) {
-                if (handler != null) {
-
-                    handler.setFilter(new Filter() {
-                        @Override
-                        public boolean isLoggable(LogRecord record) {
-                            return false;
-                        }
-                    });
-                }
-            }
-        }
-
-        // set our jmxfetch handlers
-        for (Handler handler : logger.getHandlers()) {
-            handler.setFilter(new Filter() {
-                @Override
-                public boolean isLoggable(LogRecord record) {
-                    String sourceClass = record.getSourceClassName();
-                    return sourceClass.startsWith("org.datadog.jmxfetch");
-                }
-            });
-        }
-
     }
 
     /** closeHandlers closes all opened handlers. */
     public static synchronized void shutdown() {
-        for (Handler handler : logger.getHandlers()) {
+        for (Handler handler : jmxfetchLogger.getHandlers()) {
             if (handler != null) {
                 handler.close();
-                logger.removeHandler(handler);
+                jmxfetchLogger.removeHandler(handler);
             }
         }
     }
