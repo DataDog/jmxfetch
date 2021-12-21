@@ -29,9 +29,6 @@ public class CustomLogger {
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
 
-    private static final String LAYOUT_RFC3339 =
-        "%d{yyyy-MM-dd'T'HH:mm:ss'Z'} | JMX | %-5p | %c{1} | %m%n";
-
     private static final String DATE_JDK14_LAYOUT = "yyyy-MM-dd HH:mm:ss z";
     private static final String DATE_JDK14_LAYOUT_RFC3339 = "yyyy-MM-dd'T'HH:mm:ssXXX";
     private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%n";
