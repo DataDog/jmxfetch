@@ -139,7 +139,8 @@ public class CustomLogger {
         }
 
         // filter all other log handlers
-        for (Enumeration<String> logNames = manager.getLoggerNames() ;logNames.hasMoreElements() ; ) {
+        for (Enumeration<String> logNames = manager.getLoggerNames() ;
+                logNames.hasMoreElements() ; ) {
             String logName = logNames.nextElement();
 
             for (Handler handler : manager.getLogger(logName).getHandlers()) {
@@ -156,7 +157,7 @@ public class CustomLogger {
         }
 
         // set our jmxfetch handlers
-        for(Handler handler : logger.getHandlers()) {
+        for (Handler handler : logger.getHandlers()) {
             handler.setFilter(new Filter() {
                 @Override
                 public boolean isLoggable(LogRecord record) {
