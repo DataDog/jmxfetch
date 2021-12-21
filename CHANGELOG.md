@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.44.6 / 2021-12-21
+
+### Changes
+
+* [OTHER] remove all dependencies on log4j and use `java.util.logging` instead [#383][]
+
 # 0.44.5 / 2021-12-14 
 
 ### Changes
@@ -636,6 +642,7 @@ Changelog
 [#365]: https://github.com/DataDog/jmxfetch/issues/365
 [#369]: https://github.com/DataDog/jmxfetch/issues/369
 [#380]: https://github.com/DataDog/jmxfetch/issues/380
+[#383]: https://github.com/DataDog/jmxfetch/issues/383
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
