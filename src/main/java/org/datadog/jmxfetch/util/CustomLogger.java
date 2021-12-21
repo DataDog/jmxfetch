@@ -82,7 +82,7 @@ public class CustomLogger {
                 if (lr.getThrown() != null) {
                     StringWriter writer = new StringWriter();
                     PrintWriter stream = new PrintWriter(writer);
-                    stream.write("\n");
+                    stream.println();
                     lr.getThrown().printStackTrace(stream);
                     stream.close();
                     exception = writer.toString();
