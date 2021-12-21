@@ -12,7 +12,7 @@ import java.util.List;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.StatsdReporter;
 import org.datadog.jmxfetch.util.StringUtils;
-import org.datadog.jmxfetch.validator.Log4JLevelValidator;
+import org.datadog.jmxfetch.validator.LogLevelValidator;
 import org.junit.Test;
 
 public class TestParsingJCommander {
@@ -53,7 +53,7 @@ public class TestParsingJCommander {
 
     @Test
     public void testParsingLogLevel() {
-        for (String logLevel : Log4JLevelValidator.LOG4J_LEVELS) {
+        for (String logLevel : LogLevelValidator.LOGLEVELS) {
             String[] params =
                     new String[] {
                         "--reporter",

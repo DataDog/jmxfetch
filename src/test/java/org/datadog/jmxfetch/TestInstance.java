@@ -14,12 +14,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 import org.junit.Test;
 
 public class TestInstance extends TestCommon {
-    private static final Logger log = LogManager.getLogger("Test Instance");
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger("Test Instance");
 
     @Test
     public void testMinCollectionInterval() throws Exception {
