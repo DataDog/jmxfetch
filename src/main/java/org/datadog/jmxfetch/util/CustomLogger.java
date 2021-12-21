@@ -8,14 +8,17 @@ import org.datadog.jmxfetch.util.StdoutConsoleHandler;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
+import java.util.logging.Filter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -25,8 +28,6 @@ import java.util.logging.SimpleFormatter;
 public class CustomLogger {
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
-
-    private static final String LAYOUT = "%d{yyyy-MM-dd HH:mm:ss z} | JMX | %-5p | %c{1} | %m%n";
 
     private static final String LAYOUT_RFC3339 =
         "%d{yyyy-MM-dd'T'HH:mm:ss'Z'} | JMX | %-5p | %c{1} | %m%n";
@@ -56,10 +57,10 @@ public class CustomLogger {
         final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
         final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
                                                             Locale.getDefault());
+        final LogManager manager = LogManager.getLogManager();
+        manager.reset();
 
         // log format
-        // --
-
         SimpleFormatter formatter = new SimpleFormatter() {
             private static final String format = JDK14_LAYOUT;
 
@@ -87,12 +88,9 @@ public class CustomLogger {
         };
 
         // log level
-        // --
         Level julLevel = level.toJulLevel();
 
         // prepare the different handlers
-        // --
-
         ConsoleHandler stdoutHandler = null;
         ConsoleHandler stderrHandler = null;
         FileHandler fileHandler = null;
@@ -126,22 +124,10 @@ public class CustomLogger {
         stdoutHandler.setFormatter(formatter);
         stdoutHandler.setLevel(julLevel);
 
-        // should configure the root logger
-        // ---
-
         Logger logger = Logger.getLogger("");
         logger.setLevel(julLevel);
 
-        // clean all existing handlers
-        for (Handler handler : logger.getHandlers()) {
-            if (handler != null) {
-                handler.close();
-                logger.removeHandler(handler);
-            }
-        }
-
         // set our configured handlers
-
         if (fileHandler != null) {
             logger.addHandler(fileHandler);
         }
@@ -151,6 +137,35 @@ public class CustomLogger {
         if (stderrHandler != null) {
             logger.addHandler(stderrHandler);
         }
+
+        // filter all other log handlers
+        for (Enumeration<String> logNames = manager.getLoggerNames() ;logNames.hasMoreElements() ; ) {
+            String logName = logNames.nextElement();
+
+            for (Handler handler : manager.getLogger(logName).getHandlers()) {
+                if (handler != null) {
+
+                    handler.setFilter(new Filter() {
+                        @Override
+                        public boolean isLoggable(LogRecord record) {
+                            return false;
+                        }
+                    });
+                }
+            }
+        }
+
+        // set our jmxfetch handlers
+        for(Handler handler : logger.getHandlers()) {
+            handler.setFilter(new Filter() {
+                @Override
+                public boolean isLoggable(LogRecord record) {
+                    String sourceClass = record.getSourceClassName();
+                    return sourceClass.startsWith("org.datadog.jmxfetch");
+                }
+            });
+        }
+
     }
 
     /** closeHandlers closes all opened handlers. */
