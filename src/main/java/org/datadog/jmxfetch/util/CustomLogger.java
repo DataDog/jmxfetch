@@ -26,6 +26,8 @@ import java.util.logging.SimpleFormatter;
 
 @Slf4j
 public class CustomLogger {
+    private static final Logger logger = Logger.getLogger("");
+
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
 
@@ -121,7 +123,6 @@ public class CustomLogger {
         stdoutHandler.setFormatter(formatter);
         stdoutHandler.setLevel(julLevel);
 
-        Logger logger = Logger.getLogger("");
         logger.setLevel(julLevel);
 
         // set our configured handlers
@@ -168,7 +169,6 @@ public class CustomLogger {
 
     /** closeHandlers closes all opened handlers. */
     public static synchronized void shutdown() {
-        Logger logger = Logger.getLogger("");
         for (Handler handler : logger.getHandlers()) {
             if (handler != null) {
                 handler.close();
