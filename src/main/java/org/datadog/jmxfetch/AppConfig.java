@@ -2,14 +2,13 @@ package org.datadog.jmxfetch;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-
 import lombok.Builder;
 import lombok.ToString;
 import org.datadog.jmxfetch.converter.ExitWatcherConverter;
-import org.datadog.jmxfetch.converter.ReporterConverter;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.JsonReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
+import org.datadog.jmxfetch.reporter.ReporterFactory;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.datadog.jmxfetch.validator.LogLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
@@ -57,6 +56,9 @@ public class AppConfig {
     private static final int DEFAULT_THREAD_POOL_SIZE = 3;
     private static final int DEFAULT_COLLECTION_TO_S = 60;
     private static final int DEFAULT_RECONNECTION_TO_S = 60;
+    private static final int DEFAULT_STATSD_QUEUE_SIZE = 4096;
+
+    private Reporter reporter;
 
     @Parameter(
             names = {"--help", "-h"},
@@ -111,9 +113,22 @@ public class AppConfig {
                      + "\"statsd:unix://[STATSD_UNIX_SOCKET_PATH]\", "
                      + "\"console\" or \"json\"",
             validateWith = ReporterValidator.class,
-            converter = ReporterConverter.class,
+            required = true)
+    private String reporterString;
+
+    @Parameter(
+            names = {"--statsd_telemetry", "-st"},
+            description = "Enable StatsD client telemetry reporting",
             required = false)
-    private Reporter reporter;
+    private boolean statsdTelemetry;
+
+    @Parameter(
+            names = {"--statsd_queue_size", "-sq"},
+            description = "Maximum number of unprocessed messages in the StatsD client queue.",
+            validateWith = PositiveIntegerValidator.class,
+            required = false)
+    @Builder.Default
+    private int statsdQueueSize = DEFAULT_STATSD_QUEUE_SIZE;
 
     @Parameter(
             names = {"--check", "-c"},
@@ -290,11 +305,11 @@ public class AppConfig {
     }
 
     public boolean isConsoleReporter() {
-        return reporter != null && (reporter instanceof ConsoleReporter);
+        return getReporter() != null && (getReporter() instanceof ConsoleReporter);
     }
 
     public boolean isJsonReporter() {
-        return reporter != null && (reporter instanceof JsonReporter);
+        return getReporter() != null && (getReporter() instanceof JsonReporter);
     }
 
     public boolean isHelp() {
@@ -345,7 +360,11 @@ public class AppConfig {
         return adEnabled;
     }
 
+    /** Returns the Reporter for this app config. */
     public Reporter getReporter() {
+        if (reporter == null && reporterString != null) {
+            reporter = ReporterFactory.getReporter(this);
+        }
         return reporter;
     }
 
@@ -359,6 +378,18 @@ public class AppConfig {
 
     public String getTmpDirectory() {
         return tmpDirectory;
+    }
+
+    public String getReporterString() {
+        return reporterString;
+    }
+
+    public boolean getStatsdTelemetry() {
+        return statsdTelemetry;
+    }
+
+    public int getStatsdQueueSize() {
+        return statsdQueueSize;
     }
 
     public String getLogLevel() {

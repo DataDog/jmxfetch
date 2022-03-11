@@ -4,6 +4,7 @@ import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -23,7 +24,7 @@ public class TestParsingJCommander {
     private static final String SINGLE_CHECK = "jmx.yaml";
     private static final List<String> MULTI_CHECK = Arrays.asList("jmx.yaml", "jmx-2.yaml");
     private static final String STATUS_LOCATION = "/status/status_location";
-    private static final String EXIT_FILE_LOCATION = "/status/exit_locationt";
+    private static final String EXIT_FILE_LOCATION = "/status/exit_location";
     private static final String IPC_HOSTNAME = "localhost";
     private static final String IPC_PORT = "5001";
 
@@ -161,6 +162,8 @@ public class TestParsingJCommander {
         assertTrue(appConfig.getReporter() instanceof StatsdReporter);
         assertEquals("localhost", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
         assertEquals(10, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
+        assertFalse(((StatsdReporter) appConfig.getReporter()).getTelemetry());
+        assertEquals(4096, ((StatsdReporter) appConfig.getReporter()).getQueueSize());
 
         // statsd reporter with custom ipv4 host
         params =
@@ -232,6 +235,28 @@ public class TestParsingJCommander {
         assertTrue(appConfig.getReporter() instanceof StatsdReporter);
         assertEquals("/path/to/dsd.socket", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
         assertEquals(0, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
+
+        // Telemetry and queue size
+        params =
+                new String[] {
+                    "-r",
+                    "statsd:unix:///path/to/dsd.socket",
+                    "-st",
+                    "-sq",
+                    "8192",
+                    "--check",
+                    SINGLE_CHECK,
+                    "--conf_directory",
+                    CONF_DIR,
+                    AppConfig.ACTION_COLLECT
+                };
+        appConfig = testCommand(params);
+        assertNotNull(appConfig.getReporter());
+        assertTrue(appConfig.getReporter() instanceof StatsdReporter);
+        assertEquals("/path/to/dsd.socket", ((StatsdReporter) appConfig.getReporter()).getStatsdHost());
+        assertEquals(0, ((StatsdReporter) appConfig.getReporter()).getStatsdPort());
+        assertTrue(((StatsdReporter) appConfig.getReporter()).getTelemetry());
+        assertEquals(8192, ((StatsdReporter) appConfig.getReporter()).getQueueSize());
     }
 
     @Test
