@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.46.0 / 2022-03-14
+
+### Changes
+
+* [FEATURE] Make StatsD client queue size and telemetry configurable [#390][]
+
 # 0.45.3 / 2021-12-22
 
 ### Changes
@@ -669,6 +675,7 @@ Changelog
 [#376]: https://github.com/DataDog/jmxfetch/issues/376
 [#380]: https://github.com/DataDog/jmxfetch/issues/380
 [#383]: https://github.com/DataDog/jmxfetch/issues/383
+[#390]: https://github.com/DataDog/jmxfetch/issues/390
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
