@@ -104,6 +104,19 @@
 - include:
     domain: java.lang
     type: GarbageCollector
+    name: Shenandoah Cycles
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.major_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.major_collection_time
+        metric_type: counter
+
+# Z Garbage Collector
+- include:
+    domain: java.lang
+    type: GarbageCollector
     name: ZGC
     attribute:
       CollectionCount:
@@ -115,11 +128,22 @@
 - include:
     domain: java.lang
     type: GarbageCollector
-    name: Shenandoah Cycles
+    name: ZGC Cycles
     attribute:
       CollectionCount:
-        alias: jvm.gc.major_collection_count
+        alias: jvm.gc.zgc_cycles_collection_count
         metric_type: counter
       CollectionTime:
-        alias: jvm.gc.major_collection_time
+        alias: jvm.gc.zgc_cycles_collection_time
+        metric_type: counter
+- include:
+    domain: java.lang
+    type: GarbageCollector
+    name: ZGC Pauses
+    attribute:
+      CollectionCount:
+        alias: jvm.gc.zgc_pauses_collection_count
+        metric_type: counter
+      CollectionTime:
+        alias: jvm.gc.zgc_pauses_collection_time
         metric_type: counter
