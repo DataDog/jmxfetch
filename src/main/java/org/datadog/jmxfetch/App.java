@@ -83,6 +83,14 @@ public class App {
     private AppConfig appConfig;
     private HttpClient client;
 
+    /**
+     * Main method for backwards compatibility in case someone is launching process by class
+     * instead of by jar IE: java -classpath jmxfetch.jar org.datadog.jmxfetch.App
+     */
+    public static void main(String[] args) {
+        JmxFetch.main(args);
+    }
+
     /** Application constructor. */
     public App(AppConfig appConfig) {
         this.appConfig = appConfig;
