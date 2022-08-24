@@ -5,7 +5,7 @@
 
     <groupId>com.datadoghq</groupId>
     <artifactId>jmxfetch</artifactId>
-    <version>0.46.0</version>
+    <version>0.47.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
@@ -264,7 +264,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.datadog.jmxfetch.App</mainClass>
+                            <mainClass>org.datadog.jmxfetch.JmxFetch</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                         <manifestEntries>
