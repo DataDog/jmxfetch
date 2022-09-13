@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 0.47.0 / 2022-09-13
+
+* [FEATURE] Add ZGC Cycles and ZGC Pauses beans support out of the box [#393][]
+* [FEATURE] Splits the JCommander code into it's own class to allow embedded applications to exclude it [#397][]
+* [SECURITY] Bump `snakeyaml` dependency to version `1.31` to mitigate [CVE-2022-25857](https://nvd.nist.gov/vuln/detail/CVE-2022-25857) [#398][]
+
 # 0.46.0 / 2022-03-14
 
 ### Changes
@@ -676,6 +682,9 @@ Changelog
 [#380]: https://github.com/DataDog/jmxfetch/issues/380
 [#383]: https://github.com/DataDog/jmxfetch/issues/383
 [#390]: https://github.com/DataDog/jmxfetch/issues/390
+[#393]: https://github.com/DataDog/jmxfetch/issues/393
+[#397]: https://github.com/DataDog/jmxfetch/issues/397
+[#398]: https://github.com/DataDog/jmxfetch/issues/398
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
