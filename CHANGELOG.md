@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.47.1 / 2022-09-15
+
+* [SECURITY] Bump `snakeyaml` dependency to version `1.32` to mitigate [CVE-2022-38752](https://nvd.nist.gov/vuln/detail/CVE-2022-38752) [#400][]
+
 # 0.47.0 / 2022-09-13
 
 * [FEATURE] Add ZGC Cycles and ZGC Pauses beans support out of the box [#393][]
