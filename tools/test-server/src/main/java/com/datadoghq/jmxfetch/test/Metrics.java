@@ -3,22 +3,65 @@ package com.datadoghq.jmxfetch.test;
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import javax.management.openmbean.*;
 
 public class Metrics implements MetricsMBean, MBeanRegistration {
     private final String name;
-    private final AtomicReference<Double> doubleValue;
-    private final AtomicReference<Float> floatValue;
-    private final AtomicBoolean boolValue;
-    private final AtomicReference<Number> numberValue;
+    private final MetricsDAO metricsDAO;
+    private final TabularData tabularData;
 
-    public Metrics(String name) {
+    public Metrics(final String name, final MetricsDAO metricsDAO) {
         this.name = name;
-        this.doubleValue = new AtomicReference<>(0.0);
-        this.floatValue = new AtomicReference<>((float) 0);
-        this.boolValue = new AtomicBoolean();
-        this.numberValue = new AtomicReference<Number>(0);
+        this.metricsDAO = metricsDAO;
+
+        try {
+            final CompositeType rowType = new CompositeType(
+                    "myCompositeType",
+                    "My composite type",
+                    new String[]{"foo", "bar", "toto"},
+                    new String[]{
+                            "Description of `foo`", "Description of `bar`", "Description of `toto`"
+                    },
+                    new OpenType[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING});
+            final TabularType tabularType =
+                    new TabularType(
+                            "myTabularType", "My tabular type", rowType, new String[] {"foo"});
+            /*
+            final String[] itemNamesDescriptionsAndIndexName = {
+                    "Name",
+                    "Number",
+            };
+            final OpenType[] itemTypes = {
+                    SimpleType.STRING,
+                    SimpleType.INTEGER,
+            };
+            final CompositeType pageType = new CompositeType(
+                    "compositeType",
+                    "CompositeType info",
+                    itemNamesDescriptionsAndIndexName,
+                    itemNamesDescriptionsAndIndexName,
+                    itemTypes
+            );
+            final TabularType tabularType = new TabularType(
+                    "CustomActionTable",
+                    "CustomAction table",
+                    pageType,
+                    itemNamesDescriptionsAndIndexName
+            );*/
+            this.tabularData = new TabularDataSupport(tabularType);
+//            this.tabularData.put(new CompositeDataSupport(pageType, itemNamesDescriptionsAndIndexName, new Object[]{
+//                    "Id1",
+//                    101
+//            }));
+            this.tabularData.put(new CompositeDataSupport(
+                    rowType,
+                    new String[] {"foo", "bar", "toto"},
+                    new Object[] {"1", 1, "tata"}));
+            System.out.println("Mbean ready!");
+        } catch (OpenDataException e) {
+            System.err.println(e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -28,54 +71,28 @@ public class Metrics implements MetricsMBean, MBeanRegistration {
 
     @Override
     public Number getNumberValue() {
-        return this.numberValue.get();
+        return this.metricsDAO.getNumberValue();
     }
 
     @Override
     public Double getDoubleValue() {
-        return this.doubleValue.get();
+        return this.metricsDAO.getDoubleValue();
     }
 
     @Override
     public Float getFloatValue() {
-        return this.floatValue.get();
+        return this.metricsDAO.getFloatValue();
     }
 
     @Override
     public Boolean getBooleanValue() {
-        return this.boolValue.get();
-    }
-
-    private void incDoubleValue() {
-        final Double current = this.doubleValue.get();
-        final Double next = current + 1;
-        this.doubleValue.compareAndSet(current, next);
-    }
-
-    private void incFloatValue() {
-        final Float current = this.floatValue.get();
-        final Float next = current + 1;
-        this.floatValue.compareAndSet(current, next);
-    }
-
-    private void incBooleanValue() {
-        final boolean current = this.boolValue.get();
-        final boolean next = !current;
-        this.boolValue.compareAndSet(current, next);
-    }
-
-    private void incNumberValue() {
-        final Number current = this.numberValue.get();
-        final Number next = current.intValue() + 1;
-        this.numberValue.compareAndSet(current, next);
+        return this.metricsDAO.getBooleanValue();
     }
 
     @Override
-    public void Do() {
-        this.incDoubleValue();
-        this.incFloatValue();
-        this.incBooleanValue();
-        this.incNumberValue();
+    public TabularData getTabularData() {
+        System.out.println(this.tabularData);
+        return this.tabularData;
     }
 
     @Override

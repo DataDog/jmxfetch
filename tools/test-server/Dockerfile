@@ -19,13 +19,16 @@ WORKDIR /app/main/java
 
 EXPOSE 9010
 
-ENTRYPOINT ["java"]
-
-CMD [ \
+ENTRYPOINT [ \
+    "java", \
     "-Dcom.sun.management.jmxremote=true", \
     "-Dcom.sun.management.jmxremote.port=9010", \
     "-Dcom.sun.management.jmxremote.rmi.port=9010", \
     "-Dcom.sun.management.jmxremote.authenticate=false", \
     "-Dcom.sun.management.jmxremote.ssl=false", \
     "com.datadoghq.jmxfetch.test.Service" \
+]
+
+CMD [ \
+    "10" \
 ]
