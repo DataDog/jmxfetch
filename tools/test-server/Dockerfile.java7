@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1
+FROM ubuntu:latest AS java7
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN set -eu && \
+    apt-get update; \
+    apt-get upgrade; \
+    apt-get install -y wget; \
+    wget -nv https://download.java.net/openjdk/jdk7u75/ri/jdk_ri-7u75-b13-linux-x64-18_dec_2014.tar.gz ; \
+    mkdir -p java; \
+    tar -xzf jdk_ri-7u75-b13-linux-x64-18_dec_2014.tar.gz  --directory java --strip-components=1; \
+    mv java /usr/local/ ; \
+    rm -rf *.tar.gz ;
+
+ENV PATH="$PATH:/usr/local/java/bin"
+
+FROM java7
+
+WORKDIR /src/app
+
+COPY src .
+
+WORKDIR /src/app/main/java
+
+
+RUN set -eu && \
+    javac -d . com/datadoghq/jmxfetch/test/Service.java ;
+
+EXPOSE 9010
+
+ENTRYPOINT ["java"]
+
+CMD [ \
+    "-Dcom.sun.management.jmxremote=true", \
+    "-Dcom.sun.management.jmxremote.port=9010", \
+    "-Dcom.sun.management.jmxremote.rmi.port=9010", \
+    "-Dcom.sun.management.jmxremote.authenticate=false", \
+    "-Dcom.sun.management.jmxremote.ssl=false", \
+    "com.datadoghq.jmxfetch.test.Service" \
+]
