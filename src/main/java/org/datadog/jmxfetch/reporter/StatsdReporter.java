@@ -49,7 +49,7 @@ public class StatsdReporter extends Reporter {
                 .errorHandler(handler)
                 .entityID(entityId);
 
-        // When using UDS set the datagram size to 8k
+        // When using UDS set the datagram size to 8k and disable origin detection
         if (this.statsdPort == 0) {
             builder.maxPacketSizeBytes(8192);
             builder.constantTags("dd.internal.card:none");
