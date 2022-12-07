@@ -52,6 +52,7 @@ public class StatsdReporter extends Reporter {
         // When using UDS set the datagram size to 8k
         if (this.statsdPort == 0) {
             builder.maxPacketSizeBytes(8192);
+            builder.constantTags("dd.internal.card:none");
         }
         statsDClient = builder.build();
     }
