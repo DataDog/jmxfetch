@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.47.2 / 2022-12-08
+
+* [BUGFIX] When using UDS, prevent Agent from attaching container tags to the metrics [#403][]
+
 # 0.47.1 / 2022-09-15
 
 * [SECURITY] Bump `snakeyaml` dependency to version `1.32` to mitigate [CVE-2022-38752](https://nvd.nist.gov/vuln/detail/CVE-2022-38752) [#400][]
@@ -689,6 +693,8 @@ Changelog
 [#393]: https://github.com/DataDog/jmxfetch/issues/393
 [#397]: https://github.com/DataDog/jmxfetch/issues/397
 [#398]: https://github.com/DataDog/jmxfetch/issues/398
+[#400]: https://github.com/DataDog/jmxfetch/issues/400
+[#403]: https://github.com/DataDog/jmxfetch/issues/403
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
