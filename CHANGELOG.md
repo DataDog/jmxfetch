@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.47.3 / 2022-02-03
+
+* [BUGFIX] Fixed issue where pulling metrics from `javax.management.openmbean.TabularData` would not work if no tags were specified [#406][]
+* [OTHER] Bump `snakeyaml` dependency to version `1.33` [#405][]
+
 # 0.47.2 / 2022-12-08
 
 * [BUGFIX] When using UDS, prevent Agent from attaching container tags to the metrics [#403][]
@@ -695,6 +700,8 @@ Changelog
 [#398]: https://github.com/DataDog/jmxfetch/issues/398
 [#400]: https://github.com/DataDog/jmxfetch/issues/400
 [#403]: https://github.com/DataDog/jmxfetch/issues/403
+[#405]: https://github.com/DataDog/jmxfetch/issues/405
+[#406]: https://github.com/DataDog/jmxfetch/issues/406
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
