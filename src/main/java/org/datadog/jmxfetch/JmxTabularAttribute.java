@@ -96,19 +96,22 @@ public class JmxTabularAttribute extends JmxSubAttribute {
         Map<String, ?> attributeParams = getAttributesFor(fullMetricKey);
         if (attributeParams != null) {
             Map<String, String> yamlTags = (Map) attributeParams.get("tags");
-            for (String tagName : yamlTags.keySet()) {
-                String tag = tagName;
-                String value = yamlTags.get(tagName);
-                Object resolvedValue;
 
-                if (value.startsWith("$")) {
-                    resolvedValue = getValue(key, value.substring(1));
-                    if (resolvedValue != null) {
-                        value = (String) resolvedValue;
+            if (yamlTags != null) {
+                for (String tagName : yamlTags.keySet()) {
+                    String tag = tagName;
+                    String value = yamlTags.get(tagName);
+                    Object resolvedValue;
+
+                    if (value.startsWith("$")) {
+                        resolvedValue = getValue(key, value.substring(1));
+                        if (resolvedValue != null) {
+                            value = (String) resolvedValue;
+                        }
                     }
-                }
 
-                tagsList.add(tag + ":" + value);
+                    tagsList.add(tag + ":" + value);
+                }
             }
         }
         String[] defaultTags = super.getTags();

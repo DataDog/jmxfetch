@@ -1,0 +1,19 @@
+---
+init_config:
+
+instances:
+  - jvm_direct: true
+    refresh_beans: 4
+    name: jmx_test_instance
+    tags:
+      - "env:stage"
+      - "newTag:test"
+    conf:
+      - include:
+          domain: org.datadog.jmxfetch.test
+          attribute:
+            Tabulardata.foo:
+              metric_type: gauge
+              alias: multiattr.foo_tagless
+              limit: 1
+              sort: desc
