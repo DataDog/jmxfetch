@@ -1,0 +1,44 @@
+---
+init_config:
+  is_jmx: true
+  collect_default_metrics: false
+  collect_default_jvm_metrics: false
+  conf:
+    - include:
+        domain: test
+        type: MyMBean
+        attribute:
+          # mbean = test:name=Example_0000000000,type=MyMBean
+          # class name = com.datadoghq.jmxfetch.test.Metrics
+          # attributes
+          #  %0   - BooleanValue (java.lang.Boolean, r)
+          #  %1   - DoubleValue (java.lang.Double, r)
+          #  %2   - FloatValue (java.lang.Float, r)
+          #  %3   - Name (java.lang.String, r)
+          #  %4   - NumberValue (java.lang.Number, r)
+          #  %5   - TabularDataSupport (javax.management.openmbean.TabularDataSupport, r)
+          BooleanValue:
+            alias: jmx.test.boolean_value
+            metric_type: gauge
+          DoubleValue:
+            alias: jmx.test.double_value
+            metric_type: counter
+          FloatValue:
+            alias: jmx.test.float_value
+            metric_type: counter
+          NumberValue:
+            alias: jmx.test.number_value
+            metric_type: counter
+          TabularData.foo:
+            alias: jmx.test.tabular_data_foo
+            metric_type: gauge
+            limit: 1
+            sort: desc
+
+instances:
+  - host: localhost
+    port: 9010
+    user: username
+    name: jmx_instance_name_attr_inc
+    tags:
+      - jmx:fetch
