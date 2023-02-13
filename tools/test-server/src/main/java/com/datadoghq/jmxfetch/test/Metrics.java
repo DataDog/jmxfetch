@@ -3,12 +3,19 @@ package com.datadoghq.jmxfetch.test;
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.management.openmbean.*;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenType;
+import javax.management.openmbean.SimpleType;
+import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularDataSupport;
+import javax.management.openmbean.TabularType;
 
 public class Metrics implements MetricsMBean, MBeanRegistration {
     private final String name;
     private final MetricsDAO metricsDAO;
-    private final TabularData tabularData;
+    private final TabularDataSupport tabularData;
 
     public Metrics(final String name, final MetricsDAO metricsDAO) {
         this.name = name;
@@ -25,7 +32,7 @@ public class Metrics implements MetricsMBean, MBeanRegistration {
                     new OpenType[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING});
             final TabularType tabularType =
                     new TabularType(
-                            "myTabularType", "My tabular type", rowType, new String[] {"foo"});
+                            "myTabularType", "My tabular type", rowType, new String[]{"foo"});
             /*
             final String[] itemNamesDescriptionsAndIndexName = {
                     "Name",
@@ -55,8 +62,8 @@ public class Metrics implements MetricsMBean, MBeanRegistration {
 //            }));
             this.tabularData.put(new CompositeDataSupport(
                     rowType,
-                    new String[] {"foo", "bar", "toto"},
-                    new Object[] {"1", 1, "tata"}));
+                    new String[]{"foo", "bar", "toto"},
+                    new Object[]{"1", 1, "tata"}));
             System.out.println("Mbean ready!");
         } catch (OpenDataException e) {
             System.err.println(e);
@@ -91,7 +98,10 @@ public class Metrics implements MetricsMBean, MBeanRegistration {
 
     @Override
     public TabularData getTabularData() {
-        System.out.println(this.tabularData);
+        return this.tabularData;
+    }
+    @Override
+    public TabularDataSupport getTabularDataSupport() {
         return this.tabularData;
     }
 
