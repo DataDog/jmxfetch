@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularDataSupport;
 
 public interface SimpleTestJavaAppMBean {
 
@@ -38,4 +39,5 @@ public interface SimpleTestJavaAppMBean {
     Float getInstanceFloat();
 
     TabularData getTabulardata();
+    TabularDataSupport getTabularDataSupport();
 }

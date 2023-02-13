@@ -40,7 +40,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final Map<String, Integer> hashmap = new HashMap<String, Integer>();
     private final Object object1337 = new Double(13.37);
     private final BigDecimal numberBig = new BigDecimal(123456788901234567890.0);
-    private final TabularData tabulardata;
+    private final TabularDataSupport tabulardata;
     private final CompositeType compositetype;
 
     SimpleTestJavaApp() {
@@ -133,7 +133,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         return instanceFloat;
     }
 
-    private TabularData buildTabularType() {
+    private TabularDataSupport buildTabularType() {
         try {
             CompositeType rowType = buildCompositeType();
             TabularType tabularType =
@@ -179,6 +179,9 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     }
 
     public TabularData getTabulardata() {
+        return tabulardata;
+    }
+    public TabularDataSupport getTabularDataSupport() {
         return tabulardata;
     }
 }

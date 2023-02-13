@@ -54,5 +54,13 @@ instances:
                           toto: $toto
                         limit: 1
                         sort: desc
+                    TabularDataSupport.foo:
+                      metric_type: gauge
+                      alias: multiattr_supp.foo
+                      tags:
+                        foo: $foo
+                        toto: $toto
+                      limit: 1
+                      sort: desc
             - include:
                domain: org.datadog.jmxfetch.test
