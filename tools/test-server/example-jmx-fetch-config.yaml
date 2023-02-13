@@ -34,6 +34,11 @@ init_config:
             metric_type: gauge
             limit: 1
             sort: desc
+          TabularDataSupport.foo:
+            alias: jmx.test.tabular_data_supp_foo
+            metric_type: gauge
+            limit: 1
+            sort: desc
 
 instances:
   - host: localhost

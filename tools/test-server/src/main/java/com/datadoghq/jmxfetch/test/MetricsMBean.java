@@ -1,6 +1,7 @@
 package com.datadoghq.jmxfetch.test;
 
 import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularDataSupport;
 
 public interface MetricsMBean {
     String getName();
@@ -14,5 +15,7 @@ public interface MetricsMBean {
     Boolean getBooleanValue();
 
     TabularData getTabularData();
+
+    TabularDataSupport getTabularDataSupport();
 
 }

@@ -38,6 +38,15 @@ instances:
 
 ```
 
+To test the config run:
+```shell
+java -jar jmxfetch-0.47.3-jar-with-dependencies.jar \
+--reporter console \
+--check example-jmx-fetch-config.yaml \
+--log_level DEBUG \
+collect
+```
+
 Using [jmxterm](https://docs.cyclopsgroup.org/jmxterm):
 
 ```shell
