@@ -60,7 +60,10 @@ public class Instance {
                     "java.util.HashMap",
                     "java.util.Map");
     private static final List<String> MULTI_TYPES =
-            Arrays.asList("javax.management.openmbean.TabularData");
+            Arrays.asList(
+                    "javax.management.openmbean.TabularData",
+                    //Adding TabularDataSupport as it implements TabularData
+                    "javax.management.openmbean.TabularDataSupport");
     private static final int MAX_RETURNED_METRICS = 350;
     private static final int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";

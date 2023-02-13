@@ -583,7 +583,7 @@ public class TestApp extends TestCommon {
         // 29 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
         // + 1 multi-value, see jmx.yaml in the test/resources folder
-        assertEquals(29, metrics.size());
+        assertEquals(30, metrics.size());
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
@@ -606,6 +606,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
 
         assertCoverage();
 
@@ -614,8 +615,8 @@ public class TestApp extends TestCommon {
         metrics = getMetrics();
         // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
-        // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(31, metrics.size());
+        // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(32, metrics.size());
 
         // We test for the same metrics but this time, the counter should be here
         // Previous metrics
@@ -636,6 +637,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
 
         // Counters
         assertMetric("subattr.counter", 0.0, commonTags, 5);
@@ -652,8 +654,8 @@ public class TestApp extends TestCommon {
         metrics = getMetrics();
         // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
-        // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(31, metrics.size());
+        // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(32, metrics.size());
 
         // Previous metrics
         assertMetric("this.is.100", 100.0, commonTags, 8);
@@ -673,6 +675,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
+        assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
 
         // Counter (verify rate metrics within range)
         assertMetric("subattr.counter", 0.95, 1, commonTags, 5);
@@ -694,10 +697,10 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 28 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
+        // 29 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
-        // + 1 multi-value, see jmx.yaml in the test/resources folder
-        assertEquals(28, metrics.size());
+        // + 2 multi-value, see jmx.yaml in the test/resources folder
+        assertEquals(29, metrics.size());
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
@@ -719,6 +722,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
 
         assertCoverage();
 
@@ -727,8 +731,8 @@ public class TestApp extends TestCommon {
         metrics = getMetrics();
         // 30 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
-        // + 1 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(30, metrics.size());
+        // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
+        assertEquals(31, metrics.size());
 
         // We test for the same metrics but this time, the counter should be here
         // Previous metrics
@@ -748,6 +752,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
 
         // Counters
         assertMetric("subattr.counter", 0.0, commonTags, 5);
@@ -760,12 +765,12 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        assertEquals(29, metrics.size());
+        assertEquals(30, metrics.size());
 
         // The metric should be back in the next cycle.
         run();
         metrics = getMetrics();
-        assertEquals(30, metrics.size());
+        assertEquals(31, metrics.size());
         assertMetric("test.counter", 0.0, commonTags, 5);
 
         // Check that they are working again
@@ -776,7 +781,7 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        assertEquals(30, metrics.size());
+        assertEquals(31, metrics.size());
 
         // Previous metrics
         assertMetric("this.is.100", 100.0, commonTags, 8);
@@ -795,6 +800,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
         assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
         assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
+        assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
 
         // Counter (verify rate metrics within range)
         assertMetric("subattr.counter", 0.95, 1, commonTags, 5);
