@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.47.4 / 2022-02-14
+
+* [BUGFIX] Fixed issue where pulling metrics from `javax.management.openmbean.TabularDataSupport` would not work as it was not recognised as an implementation of `javax.management.openmbean.TabularData` [#409][]
+
 # 0.47.3 / 2022-02-03
 
 * [BUGFIX] Fixed issue where pulling metrics from `javax.management.openmbean.TabularData` would not work if no tags were specified [#406][]
@@ -702,6 +706,7 @@ Changelog
 [#403]: https://github.com/DataDog/jmxfetch/issues/403
 [#405]: https://github.com/DataDog/jmxfetch/issues/405
 [#406]: https://github.com/DataDog/jmxfetch/issues/406
+[#409]: https://github.com/DataDog/jmxfetch/issues/409
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
