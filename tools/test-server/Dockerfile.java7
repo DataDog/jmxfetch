@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -eu && \
     apt-get update; \
-    apt-get upgrade; \
+    apt-get upgrade -y; \
     apt-get install -y wget; \
     wget -nv https://download.java.net/openjdk/jdk7u75/ri/jdk_ri-7u75-b13-linux-x64-18_dec_2014.tar.gz ; \
     mkdir -p java; \
