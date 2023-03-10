@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.47.5 / 2022-03-10
+
+* [SECURITY] Bump `snakeyaml` dependency to version `2.0` to mitigate [CVE-2022-1471](https://nvd.nist.gov/vuln/detail/CVE-2022-1471) [#413][]
+
 # 0.47.4 / 2022-02-14
 
 * [BUGFIX] Fixed issue where pulling metrics from `javax.management.openmbean.TabularDataSupport` would not work as it was not recognised as an implementation of `javax.management.openmbean.TabularData` [#409][]
@@ -707,6 +711,7 @@ Changelog
 [#405]: https://github.com/DataDog/jmxfetch/issues/405
 [#406]: https://github.com/DataDog/jmxfetch/issues/406
 [#409]: https://github.com/DataDog/jmxfetch/issues/409
+[#413]: https://github.com/DataDog/jmxfetch/issues/413
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
