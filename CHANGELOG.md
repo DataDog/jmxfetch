@@ -3,7 +3,7 @@ Changelog
 
 # 0.47.6 / 2022-03-30
 
-* [FEATURE] Configure DogStatsD client to use blocking IO to reduce data drops with large metric payloads [#414][]
+* [FEATURE] Configure DogStatsD client to use blocking IO to reduce data drops with large metric payloads [#416][]
 
 # 0.47.5 / 2022-03-10
 
@@ -716,7 +716,7 @@ Changelog
 [#406]: https://github.com/DataDog/jmxfetch/issues/406
 [#409]: https://github.com/DataDog/jmxfetch/issues/409
 [#413]: https://github.com/DataDog/jmxfetch/issues/413
-[#414]: https://github.com/DataDog/jmxfetch/issues/414
+[#416]: https://github.com/DataDog/jmxfetch/issues/416
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
