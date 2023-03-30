@@ -42,9 +42,10 @@ public class StatsdReporter extends Reporter {
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
-        log.info("Initializing blocking Statsd reporter with parameters host={} port={} "
-                        + "telemetry={} queueSize={} entityId={}",
-                this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId);
+        log.info("Initializing Statsd reporter with parameters host={} port={} "
+                        + "telemetry={} queueSize={} entityId={} blocking={}",
+                this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId,
+                !nonBlocking);
         NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder()
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
