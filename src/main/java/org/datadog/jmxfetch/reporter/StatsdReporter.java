@@ -18,13 +18,17 @@ public class StatsdReporter extends Reporter {
     private Boolean telemetry;
     private int queueSize;
     private long initializationTime;
+    private boolean nonBlocking;
 
     /** Constructor, instantiates statsd reported to provided host and port. */
-    public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize) {
+    public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize,
+        boolean nonBlocking
+    ) {
         this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
         this.telemetry = telemetry;
         this.queueSize = queueSize;
+        this.nonBlocking = nonBlocking;
         this.init();
     }
 
@@ -38,14 +42,15 @@ public class StatsdReporter extends Reporter {
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
-        log.info("Initializing Statsd reporter with parameters host={} port={} telemetry={} "
-                        + "queueSize={} entityId={}",
+        log.info("Initializing blocking Statsd reporter with parameters host={} port={} "
+                        + "telemetry={} queueSize={} entityId={}",
                 this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId);
         NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder()
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
                 .enableTelemetry(this.telemetry)
                 .queueSize(this.queueSize)
+                .blocking(!nonBlocking)
                 .errorHandler(handler)
                 .entityID(entityId);
 
