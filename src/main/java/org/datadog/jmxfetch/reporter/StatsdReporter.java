@@ -21,7 +21,9 @@ public class StatsdReporter extends Reporter {
     private boolean nonBlocking;
 
     /** Constructor, instantiates statsd reported to provided host and port. */
-    public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize, boolean nonBlocking) {
+    public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize,
+        boolean nonBlocking
+    ) {
         this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
         this.telemetry = telemetry;
