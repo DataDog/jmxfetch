@@ -231,6 +231,13 @@ public class AppConfig {
     @Builder.Default
     private int ipcPort = 0;
 
+    @Parameter(
+           names = {"--statsd-nonblocking"},
+           description = "Use non-blocking mode when sending metrics via statsd",
+           required = false)
+    @Builder.Default
+    private boolean statsdNonBlocking = false;
+
     /**
      * Boolean setting to determine whether to ignore jvm_direct instances.
      * If set to true, other instances will be ignored.
@@ -461,5 +468,9 @@ public class AppConfig {
 
     public boolean isEmbedded() {
         return embedded;
+    }
+
+    public boolean isStatsdNonBlocking() {
+        return statsdNonBlocking;
     }
 }

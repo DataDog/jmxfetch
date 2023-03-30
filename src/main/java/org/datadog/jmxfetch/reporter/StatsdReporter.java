@@ -18,13 +18,17 @@ public class StatsdReporter extends Reporter {
     private Boolean telemetry;
     private int queueSize;
     private long initializationTime;
+    private boolean nonBlocking;
 
     /** Constructor, instantiates statsd reported to provided host and port. */
-    public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize) {
+    public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize,
+        boolean nonBlocking
+    ) {
         this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
         this.telemetry = telemetry;
         this.queueSize = queueSize;
+        this.nonBlocking = nonBlocking;
         this.init();
     }
 
@@ -46,7 +50,7 @@ public class StatsdReporter extends Reporter {
                 .port(this.statsdPort)
                 .enableTelemetry(this.telemetry)
                 .queueSize(this.queueSize)
-                .blocking(true)
+                .blocking(!nonBlocking)
                 .errorHandler(handler)
                 .entityID(entityId);
 
