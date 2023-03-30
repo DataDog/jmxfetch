@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.47.6 / 2022-03-30
+
+* [FEATURE] Configure DogStatsD client to use blocking IO to reduce data drops with large metric payloads [#416][]
+
 # 0.47.5 / 2022-03-10
 
 * [SECURITY] Bump `snakeyaml` dependency to version `2.0` to mitigate [CVE-2022-1471](https://nvd.nist.gov/vuln/detail/CVE-2022-1471) [#413][]
@@ -46,19 +50,19 @@ Changelog
 
 * [OTHER] remove all dependencies on log4j and use `java.util.logging` instead [#383][]
 
-# 0.45.2 / 2021-12-15 
-
-### Changes
-
-* [BUGFIX] bumping log4j to v2.12.2 [#380][] 
-
-# 0.44.5 / 2021-12-14 
+# 0.45.2 / 2021-12-15
 
 ### Changes
 
 * [BUGFIX] bumping log4j to v2.12.2 [#380][]
 
-# 0.45.1 / 2021-12-13 
+# 0.44.5 / 2021-12-14
+
+### Changes
+
+* [BUGFIX] bumping log4j to v2.12.2 [#380][]
+
+# 0.45.1 / 2021-12-13
 
 ### Changes
 
@@ -70,7 +74,7 @@ Changelog
 
 * [BUGFIX] enable format no NoLookups for log4j
 
-# 0.45.0 / 2021-12-09 
+# 0.45.0 / 2021-12-09
 
 ### Changes
 * [FEATURE] Support adding multiple service tags to submitted metrics [#375][]
@@ -712,6 +716,7 @@ Changelog
 [#406]: https://github.com/DataDog/jmxfetch/issues/406
 [#409]: https://github.com/DataDog/jmxfetch/issues/409
 [#413]: https://github.com/DataDog/jmxfetch/issues/413
+[#416]: https://github.com/DataDog/jmxfetch/issues/416
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
