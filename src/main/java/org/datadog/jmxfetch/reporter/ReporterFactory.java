@@ -27,7 +27,8 @@ public class ReporterFactory {
                         host,
                         port,
                         appConfig.getStatsdTelemetry(),
-                        appConfig.getStatsdQueueSize());
+                        appConfig.getStatsdQueueSize(),
+                        appConfig.isStatsdNonBlocking());
             }
 
             matcher = Pattern.compile("^statsd:unix://(.*)$").matcher(type);
@@ -37,7 +38,8 @@ public class ReporterFactory {
                         socketPath,
                         0,
                         appConfig.getStatsdTelemetry(),
-                        appConfig.getStatsdQueueSize());
+                        appConfig.getStatsdQueueSize(),
+                        appConfig.isStatsdNonBlocking());
             }
         }
         throw new IllegalArgumentException("Invalid reporter type: " + type);
