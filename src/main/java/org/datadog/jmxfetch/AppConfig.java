@@ -238,6 +238,20 @@ public class AppConfig {
     @Builder.Default
     private boolean statsdNonBlocking = false;
 
+    @Parameter(
+           names = {"--statsd-client-buffer-size"},
+           description = "Configure the statsd socket buffer size (in bytes)",
+           required = false)
+    @Builder.Default
+    private int statsdClientBufferSize = 0;
+
+    @Parameter(
+           names = {"--statsd-client-socket-timeout"},
+           description = "Configure the statsd socket timeout (in milliseconds)",
+           required = false)
+    @Builder.Default
+    private int statsdClientSocketTimeout = 0;
+
     /**
      * Boolean setting to determine whether to ignore jvm_direct instances.
      * If set to true, other instances will be ignored.
@@ -472,5 +486,13 @@ public class AppConfig {
 
     public boolean isStatsdNonBlocking() {
         return statsdNonBlocking;
+    }
+
+    public int getStatsdClientBufferSize() {
+        return statsdClientBufferSize;
+    }
+
+    public int getSocketTimeout() {
+        return statsdClientSocketTimeout;
     }
 }

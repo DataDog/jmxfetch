@@ -19,16 +19,20 @@ public class StatsdReporter extends Reporter {
     private int queueSize;
     private long initializationTime;
     private boolean nonBlocking;
+    private int socketBufferSize;
+    private int socketTimeout;
 
     /** Constructor, instantiates statsd reported to provided host and port. */
     public StatsdReporter(String statsdHost, int statsdPort, boolean telemetry, int queueSize,
-        boolean nonBlocking
+        boolean nonBlocking, int socketBufferSize, int socketTimeout
     ) {
         this.statsdHost = statsdHost;
         this.statsdPort = statsdPort;
         this.telemetry = telemetry;
         this.queueSize = queueSize;
         this.nonBlocking = nonBlocking;
+        this.socketBufferSize = socketBufferSize;
+        this.socketTimeout = socketTimeout;
         this.init();
     }
 
@@ -42,9 +46,11 @@ public class StatsdReporter extends Reporter {
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
-        log.info("Initializing blocking Statsd reporter with parameters host={} port={} "
-                        + "telemetry={} queueSize={} entityId={}",
-                this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId);
+        log.info("Initializing Statsd reporter with parameters host={} port={} "
+                        + "telemetry={} queueSize={} entityId={} blocking={} "
+                        + "socketBufferSize={} socketTimeout={}",
+                this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId,
+                !this.nonBlocking, this.socketBufferSize, this.socketTimeout);
         NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder()
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
@@ -58,6 +64,12 @@ public class StatsdReporter extends Reporter {
         if (this.statsdPort == 0) {
             builder.maxPacketSizeBytes(8192);
             builder.constantTags("dd.internal.card:none");
+        }
+        if (this.socketBufferSize != 0) {
+            builder.socketBufferSize(this.socketBufferSize);
+        }
+        if (this.socketTimeout != 0) {
+            builder.timeout(this.socketTimeout);
         }
         statsDClient = builder.build();
     }
