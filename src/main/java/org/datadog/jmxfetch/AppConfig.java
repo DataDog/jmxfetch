@@ -131,6 +131,29 @@ public class AppConfig {
     private int statsdQueueSize = DEFAULT_STATSD_QUEUE_SIZE;
 
     @Parameter(
+           names = {"--statsd_nonblocking"},
+           description = "Use non-blocking mode when sending metrics via statsd",
+           required = false)
+    @Builder.Default
+    private boolean statsdNonBlocking = false;
+
+    @Parameter(
+           names = {"--statsd_buffer_size"},
+           description = "Configure the statsd socket buffer size (in bytes)",
+           validateWith = PositiveIntegerValidator.class,
+           required = false)
+    @Builder.Default
+    private int statsdBufferSize = 0;
+
+    @Parameter(
+           names = {"--statsd_socket_timeout"},
+           description = "Configure the statsd socket timeout (in milliseconds)",
+           validateWith = PositiveIntegerValidator.class,
+           required = false)
+    @Builder.Default
+    private int statsdSocketTimeout = 0;
+
+    @Parameter(
             names = {"--check", "-c"},
             description = "Yaml file name to read (must be in the confd directory)",
             required = false,
@@ -230,27 +253,6 @@ public class AppConfig {
             required = false)
     @Builder.Default
     private int ipcPort = 0;
-
-    @Parameter(
-           names = {"--statsd-nonblocking"},
-           description = "Use non-blocking mode when sending metrics via statsd",
-           required = false)
-    @Builder.Default
-    private boolean statsdNonBlocking = false;
-
-    @Parameter(
-           names = {"--statsd-client-buffer-size"},
-           description = "Configure the statsd socket buffer size (in bytes)",
-           required = false)
-    @Builder.Default
-    private int statsdClientBufferSize = 0;
-
-    @Parameter(
-           names = {"--statsd-client-socket-timeout"},
-           description = "Configure the statsd socket timeout (in milliseconds)",
-           required = false)
-    @Builder.Default
-    private int statsdClientSocketTimeout = 0;
 
     /**
      * Boolean setting to determine whether to ignore jvm_direct instances.
@@ -488,11 +490,11 @@ public class AppConfig {
         return statsdNonBlocking;
     }
 
-    public int getStatsdClientBufferSize() {
-        return statsdClientBufferSize;
+    public int getStatsdBufferSize() {
+        return statsdBufferSize;
     }
 
     public int getSocketTimeout() {
-        return statsdClientSocketTimeout;
+        return statsdSocketTimeout;
     }
 }

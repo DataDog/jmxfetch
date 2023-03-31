@@ -29,7 +29,7 @@ public class ReporterFactory {
                         appConfig.getStatsdTelemetry(),
                         appConfig.getStatsdQueueSize(),
                         appConfig.isStatsdNonBlocking(),
-                        appConfig.getStatsdClientBufferSize(),
+                        appConfig.getStatsdBufferSize(),
                         appConfig.getSocketTimeout());
             }
 
@@ -42,7 +42,7 @@ public class ReporterFactory {
                         appConfig.getStatsdTelemetry(),
                         appConfig.getStatsdQueueSize(),
                         appConfig.isStatsdNonBlocking(),
-                        appConfig.getStatsdClientBufferSize(),
+                        appConfig.getStatsdBufferSize(),
                         appConfig.getSocketTimeout());
             }
         }
