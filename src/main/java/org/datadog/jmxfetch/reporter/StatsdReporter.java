@@ -41,16 +41,12 @@ public class StatsdReporter extends Reporter {
 
         // Only set the entityId to "none" if UDS communication is activated
         String entityId = this.statsdPort == 0 ? "none" : null;
+        int defaultUdsDatagramSize = 8192;
 
         handler = new LoggingErrorHandler();
         /* Create the StatsDClient with "entity-id" set to "none" to avoid
            having dogstatsd server adding origin tags, when the connection is
            done with UDS. */
-        log.info("Initializing Statsd reporter with parameters host={} port={} "
-                        + "telemetry={} queueSize={} entityId={} blocking={} "
-                        + "socketBufferSize={} socketTimeout={}",
-                this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId,
-                !this.nonBlocking, this.socketBufferSize, this.socketTimeout);
         NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder()
                 .hostname(this.statsdHost)
                 .port(this.statsdPort)
@@ -60,17 +56,44 @@ public class StatsdReporter extends Reporter {
                 .errorHandler(handler)
                 .entityID(entityId);
 
-        // When using UDS set the datagram size to 8k and disable origin detection
+        String extraInitLog = "";
         if (this.statsdPort == 0) {
-            builder.maxPacketSizeBytes(8192);
+            int packetSize = defaultUdsDatagramSize;
+
+            // If a socketBufferSize is specified to be smaller than the default
+            // uds datagram size, then we cannot create packets bigger than the
+            // socket buffer size, otherwise we see `java.io.IOException: Message too long`
+            //
+            // Conversely, we cannot always make the packetSize equal to the user-specified
+            // socketBufferSize. The user may specify a value larger than what is actually
+            // allowed on their system, which would _also_ cause `Message too long` exceptions.
+            //
+            // In an ideal world, the maxPacketSize would be equal to the actual value of
+            // socket send buffer at runtime. This logic would need to be implemented
+            // inside java-dogstatsd-client.
+            if (this.socketBufferSize != 0 && this.socketBufferSize < packetSize) {
+                packetSize = this.socketBufferSize;
+            }
+
+            extraInitLog += "maxPacketSize=" + packetSize;
+            builder.maxPacketSizeBytes(packetSize);
+            // Disable origin detection
             builder.constantTags("dd.internal.card:none");
         }
+
         if (this.socketBufferSize != 0) {
+            extraInitLog += " socketBufferSize=" + this.socketBufferSize;
             builder.socketBufferSize(this.socketBufferSize);
         }
         if (this.socketTimeout != 0) {
+            extraInitLog += " socketTimeout=" + this.socketTimeout;
             builder.timeout(this.socketTimeout);
         }
+        log.info("Initializing Statsd reporter with parameters host={} port={} "
+                        + "telemetry={} queueSize={} entityId={} blocking={} "
+                        + "{}",
+                this.statsdHost, this.statsdPort, this.telemetry, this.queueSize, entityId,
+                !this.nonBlocking, extraInitLog);
         statsDClient = builder.build();
     }
 
