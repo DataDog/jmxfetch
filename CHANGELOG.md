@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.47.7 / 2022-04-03
+
+* [FEATURE] Adds config options for statsd client socket buffer size and socket timeout [#420][]
+* [BUGFIX] A bean refresh will now be aborted if a connection error occurs during a bean refresh [#419][]
+
 # 0.47.6 / 2022-03-30
 
 * [FEATURE] Configure DogStatsD client to use blocking IO to reduce data drops with large metric payloads [#416][]
@@ -717,6 +722,8 @@ Changelog
 [#409]: https://github.com/DataDog/jmxfetch/issues/409
 [#413]: https://github.com/DataDog/jmxfetch/issues/413
 [#416]: https://github.com/DataDog/jmxfetch/issues/416
+[#419]: https://github.com/DataDog/jmxfetch/issues/419
+[#420]: https://github.com/DataDog/jmxfetch/issues/420
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
