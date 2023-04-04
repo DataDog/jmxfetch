@@ -17,7 +17,6 @@ public class StatsdReporter extends Reporter {
     private int statsdPort;
     private Boolean telemetry;
     private int queueSize;
-    private long initializationTime;
     private boolean nonBlocking;
     private int socketBufferSize;
     private int socketTimeout;
@@ -37,8 +36,6 @@ public class StatsdReporter extends Reporter {
     }
 
     private void init() {
-        initializationTime = System.currentTimeMillis();
-
         // Only set the entityId to "none" if UDS communication is activated
         String entityId = this.statsdPort == 0 ? "none" : null;
         int defaultUdsDatagramSize = 8192;
@@ -99,10 +96,6 @@ public class StatsdReporter extends Reporter {
 
     protected void sendMetricPoint(
             String metricType, String metricName, double value, String[] tags) {
-        if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
-            this.statsDClient.stop();
-            init();
-        }
         if (metricType.equals("monotonic_count")) {
             statsDClient.count(metricName, (long) value, tags);
         } else if (metricType.equals("histogram")) {
@@ -115,11 +108,6 @@ public class StatsdReporter extends Reporter {
     /** Submits service check. */
     public void doSendServiceCheck(
             String serviceCheckName, String status, String message, String[] tags) {
-        if (System.currentTimeMillis() - this.initializationTime > 300 * 1000) {
-            this.statsDClient.stop();
-            init();
-        }
-
         ServiceCheck sc = ServiceCheck.builder()
                 .withName(serviceCheckName)
                 .withStatus(this.statusToServiceCheckStatus(status))
