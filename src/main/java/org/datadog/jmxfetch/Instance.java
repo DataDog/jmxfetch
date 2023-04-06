@@ -69,6 +69,7 @@ public class Instance {
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
+    private static final int ATTR_MATCH_IO_EXCEPTION_THRESHOLD = 10;
 
     private static final ThreadLocal<Yaml> YAML =
         new ThreadLocal<Yaml>() {
@@ -515,6 +516,7 @@ public class Instance {
         this.matchingAttributes.clear();
         this.failingAttributes.clear();
         int metricsCount = 0;
+        int ioExceptionsSeen = 0;
 
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
@@ -527,9 +529,6 @@ public class Instance {
                     break;
                 }
             }
-            if (!connection.isAlive()) {
-                throw new IOException("Connection to application died during bean refresh");
-            }
             String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
@@ -541,10 +540,13 @@ public class Instance {
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
                 // we should not continue
-                log.warn("Cannot get bean attributes or class name: " + e.getMessage());
-                if (e.getMessage().equals(connection.CLOSED_CLIENT_CAUSE)) {
+                log.warn("[IOException] Cannot get bean attributes or class name: {}",
+                    e.getMessage());
+                if (e.getMessage().equals(Connection.CLOSED_CLIENT_CAUSE)
+                    || ioExceptionsSeen > Instance.ATTR_MATCH_IO_EXCEPTION_THRESHOLD) {
                     throw e;
                 }
+                ioExceptionsSeen++;
                 continue;
             } catch (Exception e) {
                 log.warn("Cannot get bean attributes or class name: " + e.getMessage());
