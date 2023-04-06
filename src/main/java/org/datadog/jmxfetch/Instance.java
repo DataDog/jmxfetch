@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -520,6 +521,8 @@ public class Instance {
             reporter.displayInstanceName(this);
         }
 
+        long t_alive = 0;
+
         for (ObjectName beanName : beans) {
             if (limitReached) {
                 log.debug("Limit reached");
@@ -527,18 +530,28 @@ public class Instance {
                     break;
                 }
             }
+
+            long t_beg = Instant.now().toEpochMilli();
+
             if (!connection.isAlive()) {
                 throw new IOException("Connection to application died during bean refresh");
             }
+
+            t_alive += Instant.now().toEpochMilli() - t_beg;
+
             String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
                 log.debug("Getting class name for bean: " + beanName);
+                t_beg = Instant.now().toEpochMilli();
                 className = connection.getClassNameForBean(beanName);
+                log.debug("!!\tclass\t" + beanName + "\t" + (Instant.now().toEpochMilli() - t_beg));
 
                 // Get all the attributes for bean_name
+                t_beg = Instant.now().toEpochMilli();
                 log.debug("Getting attributes for bean: " + beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
+                log.debug("!!\tattrib\t" + beanName + "\t" + (Instant.now().toEpochMilli() - t_beg));
             } catch (IOException e) {
                 // we should not continue
                 log.warn("Cannot get bean attributes or class name: " + e.getMessage());
@@ -551,7 +564,11 @@ public class Instance {
                 continue;
             }
 
+            long t_inst = 0;
+            long t_conf = 0;
+
             for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+
                 if (metricsCount >= maxReturnedMetrics) {
                     limitReached = true;
                     if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -564,6 +581,9 @@ public class Instance {
                         metricReachedDisplayed = true;
                     }
                 }
+
+                t_beg = Instant.now().toEpochMilli();
+
                 JmxAttribute jmxAttribute;
                 String attributeType = attributeInfo.getType();
                 if (SIMPLE_TYPES.contains(attributeType)) {
@@ -636,6 +656,9 @@ public class Instance {
                     continue;
                 }
 
+                t_inst += Instant.now().toEpochMilli() - t_beg;
+                t_beg = Instant.now().toEpochMilli();
+
                 // For each attribute we try it with each configuration to see if there is one that
                 // matches
                 // If so, we store the attribute so metrics will be collected from it. Otherwise we
@@ -668,13 +691,23 @@ public class Instance {
                                 e);
                     }
                 }
+
+                t_conf += Instant.now().toEpochMilli() - t_beg;
+
                 if (jmxAttribute.getMatchingConf() == null
                         && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                             || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
             }
+
+            log.debug("!!\tinst\t" + beanName + "\t" + t_inst);
+            log.debug("!!\tconf\t" + beanName + "\t" + t_conf);
+
         }
+
+        log.debug("!!\talive\t\t" + t_alive);
+
         log.info("Found " + matchingAttributes.size() + " matching attributes");
     }
 
