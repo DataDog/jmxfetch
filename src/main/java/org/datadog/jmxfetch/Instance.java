@@ -509,7 +509,7 @@ public class Instance {
     }
 
 
-    private boolean canMatchBeanName(String name) {
+    private int canMatchBeanName(String name) {
         log.debug("!! matching bean: " + name);
 
         int splitPosition = name.indexOf(':');
@@ -526,18 +526,18 @@ public class Instance {
                 pats.isEmpty())
             {
                 log.debug("!! matched by empty config #" + i + ": " + c.toString());
-                return true;
+                return i;
             }
 
             if (inc.getBeanNames().contains(name)) {
                 log.debug("!! matched by name config #" + i);
-                return true;
+                return i;
             }
 
             for (Pattern pat: pats) {
                 if (pat.matcher(name).matches()) {
                     log.debug("!! matched by regex config #" + i);
-                    return true;
+                    return i;
                 }
             }
 
@@ -545,19 +545,19 @@ public class Instance {
             if (inc.isEmptyBeanName() && pats.isEmpty()) {
                 if (domain.equals(inc.getDomain())) {
                     log.debug("!! matched by domain config #" + i);
-                    return true;
+                    return i;
                 }
                 Pattern dre = inc.getDomainRegex();
                 if (dre != null && dre.matcher(domain).matches()) {
                     log.debug("!! matched by domain regex config #" + i);
-                    return true;
+                    return i;
                 }
             }
         }
 
         log.debug("!! failed to match bean: " + name);
 
-        return false;
+        return -1;
     }
 
     private void getMatchingAttributes() throws IOException {
@@ -574,7 +574,7 @@ public class Instance {
             reporter.displayInstanceName(this);
         }
 
-        long t_alive = 0;
+        long t_beg = 0;
 
         for (ObjectName beanName : beans) {
             if (limitReached) {
@@ -584,15 +584,8 @@ public class Instance {
                 }
             }
 
-            long t_beg = Instant.now().toEpochMilli();
-
-            if (!connection.isAlive()) {
-                throw new IOException("Connection to application died during bean refresh");
-            }
-
-            t_alive += Instant.now().toEpochMilli() - t_beg;
-
-            if (!canMatchBeanName(beanName.toString())) {
+            int matchedConf = canMatchBeanName(beanName.toString());
+            if (matchedConf < 0) {
                 continue;
             }
 
@@ -623,6 +616,8 @@ public class Instance {
 
             long t_inst = 0;
             long t_conf = 0;
+            long n_matched = 0;
+            long n_filtered = 0;
 
             for (MBeanAttributeInfo attributeInfo : attributeInfos) {
 
@@ -720,12 +715,16 @@ public class Instance {
                 // matches
                 // If so, we store the attribute so metrics will be collected from it. Otherwise we
                 // discard it.
+
+                boolean matched = false;
                 for (Configuration conf : configurationList) {
                     try {
                         if (jmxAttribute.match(conf)) {
                             jmxAttribute.setMatchingConf(conf);
                             metricsCount += jmxAttribute.getMetricsCount();
                             this.matchingAttributes.add(jmxAttribute);
+
+                            matched = true;
 
                             if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                                     || action.equals(AppConfig.ACTION_LIST_MATCHING)
@@ -751,6 +750,12 @@ public class Instance {
 
                 t_conf += Instant.now().toEpochMilli() - t_beg;
 
+                if (matched) {
+                    n_matched++;
+                } else {
+                    n_filtered++;
+                }
+
                 if (jmxAttribute.getMatchingConf() == null
                         && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                             || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
@@ -760,10 +765,8 @@ public class Instance {
 
             log.debug("!!\tinst\t" + beanName + "\t" + t_inst);
             log.debug("!!\tconf\t" + beanName + "\t" + t_conf);
-
+            log.debug("!!\tnum matched\t" + beanName + "\t" + matchedConf + "\t" + n_matched + "\t" + n_filtered);
         }
-
-        log.debug("!!\talive\t\t" + t_alive);
 
         log.info("Found " + matchingAttributes.size() + " matching attributes");
     }
