@@ -575,6 +575,19 @@ public class Instance {
         }
 
         long t_beg = 0;
+        boolean need_class = false;
+        for (Configuration conf: configurationList) {
+            Filter inc = conf.getInclude();
+            Filter exc = conf.getExclude();
+            if (inc.getClassName() != null ||
+                inc.getClassNameRegex() != null ||
+                exc.getClassName() != null ||
+                exc.getClassNameRegex() != null)
+            {
+                need_class = true;
+                break;
+            }
+        }
 
         for (ObjectName beanName : beans) {
             if (limitReached) {
@@ -589,13 +602,15 @@ public class Instance {
                 continue;
             }
 
-            String className;
+            String className = null;
             MBeanAttributeInfo[] attributeInfos;
             try {
                 log.debug("Getting class name for bean: " + beanName);
-                t_beg = Instant.now().toEpochMilli();
-                className = connection.getClassNameForBean(beanName);
-                log.debug("!!\tclass\t" + beanName + "\t" + (Instant.now().toEpochMilli() - t_beg));
+                if (need_class) {
+                    t_beg = Instant.now().toEpochMilli();
+                    className = connection.getClassNameForBean(beanName);
+                    log.debug("!!\tclass\t" + beanName + "\t" + (Instant.now().toEpochMilli() - t_beg));
+                }
 
                 // Get all the attributes for bean_name
                 t_beg = Instant.now().toEpochMilli();
