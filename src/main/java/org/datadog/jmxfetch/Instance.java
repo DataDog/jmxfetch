@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
@@ -507,6 +508,58 @@ public class Instance {
         }
     }
 
+
+    private boolean canMatchBeanName(String name) {
+        log.debug("!! matching bean: " + name);
+
+        int splitPosition = name.indexOf(':');
+        String domain = name.substring(0, splitPosition);
+
+        for (int i = 0; i < configurationList.size(); i++) {
+            Configuration c = configurationList.get(i);
+            Filter inc = c.getInclude();
+            List<Pattern> pats = inc.getBeanRegexes();
+
+            if (inc.getDomain() == null &&
+                inc.getDomainRegex() == null &&
+                inc.isEmptyBeanName() &&
+                pats.isEmpty())
+            {
+                log.debug("!! matched by empty config #" + i + ": " + c.toString());
+                return true;
+            }
+
+            if (inc.getBeanNames().contains(name)) {
+                log.debug("!! matched by name config #" + i);
+                return true;
+            }
+
+            for (Pattern pat: pats) {
+                if (pat.matcher(name).matches()) {
+                    log.debug("!! matched by regex config #" + i);
+                    return true;
+                }
+            }
+
+            // Bean name already checks the domain part
+            if (inc.isEmptyBeanName() && pats.isEmpty()) {
+                if (domain.equals(inc.getDomain())) {
+                    log.debug("!! matched by domain config #" + i);
+                    return true;
+                }
+                Pattern dre = inc.getDomainRegex();
+                if (dre != null && dre.matcher(domain).matches()) {
+                    log.debug("!! matched by domain regex config #" + i);
+                    return true;
+                }
+            }
+        }
+
+        log.debug("!! failed to match bean: " + name);
+
+        return false;
+    }
+
     private void getMatchingAttributes() throws IOException {
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
@@ -538,6 +591,10 @@ public class Instance {
             }
 
             t_alive += Instant.now().toEpochMilli() - t_beg;
+
+            if (!canMatchBeanName(beanName.toString())) {
+                continue;
+            }
 
             String className;
             MBeanAttributeInfo[] attributeInfos;
