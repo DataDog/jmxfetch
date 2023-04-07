@@ -25,7 +25,7 @@ import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
 @Slf4j
-public class Instance {
+public class Instance implements BeanListener{
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
                     "long",
@@ -102,6 +102,7 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
+    private boolean enableBeanSubscription;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -256,6 +257,8 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
+        this.enableBeanSubscription = true;
+
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -416,6 +419,10 @@ public class Instance {
             throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
+        if (this.enableBeanSubscription) {
+            log.info("Subscribing for bean notifications before init");
+            this.subscribeToBeans();
+        }
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
@@ -503,6 +510,113 @@ public class Instance {
             return true;
         } else {
             return isPeriodDue(this.lastCollectionTime, this.minCollectionPeriod);
+        }
+    }
+
+    // TODO de-dup this with getMatchingAttributes which means taking 'action' into account as well
+    private void addMatchingAttributes(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos, int maxToAdd) throws IOException {
+        int newlyAddedAttributes = 0;
+        for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+            if (newlyAddedAttributes > maxToAdd) {
+                limitReached = true;
+                break;
+            }
+            JmxAttribute jmxAttribute;
+            String attributeType = attributeInfo.getType();
+            if (SIMPLE_TYPES.contains(attributeType)) {
+                log.debug(
+                        ATTRIBUTE
+                        + beanName
+                        + " : "
+                        + attributeInfo
+                        + " has attributeInfo simple type");
+                jmxAttribute =
+                    new JmxSimpleAttribute(
+                            attributeInfo,
+                            beanName,
+                            className,
+                            instanceName,
+                            checkName,
+                            connection,
+                            serviceNameProvider,
+                            tags,
+                            cassandraAliasing,
+                            emptyDefaultHostname);
+            } else if (COMPOSED_TYPES.contains(attributeType)) {
+                log.debug(
+                        ATTRIBUTE
+                        + beanName
+                        + " : "
+                        + attributeInfo
+                        + " has attributeInfo composite type");
+                jmxAttribute =
+                    new JmxComplexAttribute(
+                            attributeInfo,
+                            beanName,
+                            className,
+                            instanceName,
+                            checkName,
+                            connection,
+                            serviceNameProvider,
+                            tags,
+                            emptyDefaultHostname);
+            } else if (MULTI_TYPES.contains(attributeType)) {
+                log.debug(
+                        ATTRIBUTE
+                        + beanName
+                        + " : "
+                        + attributeInfo
+                        + " has attributeInfo tabular type");
+                jmxAttribute =
+                    new JmxTabularAttribute(
+                            attributeInfo,
+                            beanName,
+                            className,
+                            instanceName,
+                            checkName,
+                            connection,
+                            serviceNameProvider,
+                            tags,
+                            emptyDefaultHostname);
+            } else {
+                try {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has an unsupported type: "
+                            + attributeType);
+                } catch (NullPointerException e) {
+                    log.warn("Caught unexpected NullPointerException");
+                }
+                continue;
+            }
+
+            // For each attribute we try it with each configuration to see if there is one that
+            // matches
+            // If so, we store the attribute so metrics will be collected from it. Otherwise we
+            // discard it.
+            for (Configuration conf : configurationList) {
+                try {
+                    if (jmxAttribute.match(conf)) {
+                        jmxAttribute.setMatchingConf(conf);
+                        newlyAddedAttributes += jmxAttribute.getMetricsCount();
+                        log.info("Added attribute {} from bean {}.", jmxAttribute.toString(), beanName);
+                        this.matchingAttributes.add(jmxAttribute);
+
+                        break;
+                    }
+                } catch (Exception e) {
+                    log.error(
+                            "Error while trying to match attributeInfo configuration "
+                            + "with the Attribute: "
+                            + beanName
+                            + " : "
+                            + attributeInfo,
+                            e);
+                }
+            }
         }
     }
 
@@ -676,6 +790,45 @@ public class Instance {
             }
         }
         log.info("Found " + matchingAttributes.size() + " matching attributes");
+    }
+
+    // TODO once this runs in a separate thread we need locks around the attribute collection
+    public void beanRegistered(ObjectName beanName) {
+        log.info("Bean registered. {}", beanName);
+        String className;
+        MBeanAttributeInfo[] attributeInfos;
+        try {
+            log.debug("Getting class name for bean: " + beanName);
+            className = connection.getClassNameForBean(beanName);
+
+            // Get all the attributes for bean_name
+            log.debug("Getting attributes for bean: " + beanName);
+            attributeInfos = connection.getAttributesForBean(beanName);
+
+            int currentMetricCount = this.matchingAttributes.size();
+            this.addMatchingAttributes(beanName, className, attributeInfos, maxReturnedMetrics - currentMetricCount);
+        } catch (IOException e) {
+            // Nothing to do, connection issue
+            log.warn("Could not connect to get bean attributes or class name: " + e.getMessage());
+            return;
+        } catch (Exception e) {
+            log.warn("Cannot get bean attributes or class name: " + e.getMessage());
+            return;
+        }
+    }
+    public void beanUnregistered(ObjectName mBeanName) {
+        log.info("Bean unregistered. {}", mBeanName);
+    }
+
+    private void subscribeToBeans() {
+        List<String> beanScopes = this.getBeansScopes();
+        try {
+            log.info("Subscribing to {} bean scopes", beanScopes.size());
+
+            connection.subscribeToBeanScopes(beanScopes, this);
+        } catch (Exception e) {
+            log.warn("Exception while subscribing to beans {}", e);
+        }
     }
 
     /** Returns a list of strings listing the bean scopes. */

@@ -7,7 +7,9 @@ import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -21,8 +23,16 @@ import javax.management.IntrospectionException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerDelegate;
+import javax.management.relation.MBeanServerNotificationFilter;
+import javax.management.MBeanServerNotification;
+import javax.management.MalformedObjectNameException;
+import javax.management.Notification;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.remote.JMXConnectionNotification;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -35,6 +45,56 @@ public class Connection {
     protected MBeanServerConnection mbs;
     protected Map<String, Object> env;
     protected JMXServiceURL address;
+
+    private static class MyConnectionNotificationListener implements NotificationListener {
+        public void handleNotification(Notification notification, Object handback) {
+            if (!(notification instanceof JMXConnectionNotification)) {
+                return;
+            }
+            if (!(handback instanceof Connection)) {
+                return;
+            }
+
+            JMXConnectionNotification connNotif = (JMXConnectionNotification) notification;
+            Connection conn = (Connection) handback;
+            if (connNotif.getType() == JMXConnectionNotification.CLOSED
+                    || connNotif.getType() == JMXConnectionNotification.FAILED) {
+                //conn.closeConnector();
+            }
+            log.info("Received connection notification: " + connNotif.getType() + " Message: " + connNotif.getMessage());
+        }
+    }
+
+    private static class BeanNotificationListener implements NotificationListener {
+        private BeanListener bl;
+
+        public BeanNotificationListener(BeanListener bl) {
+            this.bl = bl;
+        }
+        public void handleNotification(Notification notification, Object handback) {
+            if (!(notification instanceof MBeanServerNotification)) {
+                log.warn("Got unknown notification, expected MBeanServerNotification but got {}", notification.getClass());
+            }
+            MBeanServerNotification mbs = (MBeanServerNotification) notification;
+            ObjectName mBeanName = mbs.getMBeanName();
+            // TODO run this beanRegistered/unRegistered in a new thread or threadpool
+            if (mbs.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+                bl.beanRegistered(mBeanName);
+            } else if (mbs.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
+                this.bl.beanUnregistered(mBeanName);
+            }
+        }
+    }
+
+    public void subscribeToBeanScopes(List<String> beanScopes, BeanListener bl) throws MalformedObjectNameException, IOException, InstanceNotFoundException{
+        BeanNotificationListener listener = new BeanNotificationListener(bl);
+        for (String scope : beanScopes) {
+            ObjectName name = new ObjectName(scope);
+            MBeanServerNotificationFilter filter = new MBeanServerNotificationFilter();
+            filter.enableObjectName(name);
+        }
+        mbs.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, listener, null, null);
+    }
 
     /** Gets attributes for matching bean name. */
     public MBeanAttributeInfo[] getAttributesForBean(ObjectName beanName)
@@ -63,6 +123,9 @@ public class Connection {
         log.info("Connecting to: " + this.address);
         connector = JMXConnectorFactory.connect(this.address, this.env);
         mbs = connector.getMBeanServerConnection();
+
+        NotificationListener listener = new MyConnectionNotificationListener();
+        connector.addConnectionNotificationListener(listener, null, this);
     }
 
     /** Gets attribute for matching bean and attribute name. */
