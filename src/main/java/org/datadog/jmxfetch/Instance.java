@@ -6,6 +6,10 @@ import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
+import static java.util.concurrent.TimeUnit.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -103,6 +107,7 @@ public class Instance implements BeanListener{
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
     private boolean enableBeanSubscription;
+    private ReentrantLock beanAttributeLock;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -257,8 +262,10 @@ public class Instance implements BeanListener{
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
-        this.enableBeanSubscription = true;
 
+        this.beanAttributeLock = new ReentrantLock();
+        Boolean enableBeanSubscription = (Boolean) instanceMap.get("enable_bean_subscription");
+        this.enableBeanSubscription = enableBeanSubscription != null && enableBeanSubscription;
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -422,14 +429,21 @@ public class Instance implements BeanListener{
         if (this.enableBeanSubscription) {
             log.info("Subscribing for bean notifications before init");
             this.subscribeToBeans();
+        } else {
+            log.info("Bean subscription not enabled.");
         }
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
-        this.refreshBeansList();
-        this.initialRefreshTime = this.lastRefreshTime;
-        log.info("Connected to JMX Server at " + this.toString());
-        this.getMatchingAttributes();
+        this.beanAttributeLock.lock();
+        try {
+            this.refreshBeansList();
+            this.initialRefreshTime = this.lastRefreshTime;
+            log.info("Connected to JMX Server at " + this.toString());
+            this.getMatchingAttributes();
+        } finally {
+            this.beanAttributeLock.unlock();
+        }
         log.info("Done initializing JMX Server at " + this.toString());
     }
 
@@ -459,38 +473,49 @@ public class Instance implements BeanListener{
         Integer period = (this.initialRefreshTime == this.lastRefreshTime)
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
 
-        if (isPeriodDue(this.lastRefreshTime, period)) {
-            log.info("Refreshing bean list");
-            this.refreshBeansList();
-            this.getMatchingAttributes();
-        }
-
         List<Metric> metrics = new ArrayList<Metric>();
-        Iterator<JmxAttribute> it = matchingAttributes.iterator();
+        this.beanAttributeLock.lock();
+        try {
+            if (isPeriodDue(this.lastRefreshTime, period)) {
+                log.info("Refreshing bean list");
+                this.refreshBeansList();
+                this.getMatchingAttributes();
+            }
 
-        // increment the lastCollectionTime
-        this.lastCollectionTime = System.currentTimeMillis();
+            Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
-        while (it.hasNext()) {
-            JmxAttribute jmxAttr = it.next();
-            try {
-                List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
-                metrics.addAll(jmxAttrMetrics);
-                this.failingAttributes.remove(jmxAttr);
-            } catch (IOException e) {
-                throw e;
-            } catch (Exception e) {
-                log.debug("Cannot get metrics for attribute: " + jmxAttr, e);
-                if (this.failingAttributes.contains(jmxAttr)) {
-                    log.debug(
-                            "Cannot generate metrics for attribute: "
-                                    + jmxAttr
-                                    + " twice in a row. Removing it from the attribute list");
-                    it.remove();
-                } else {
-                    this.failingAttributes.add(jmxAttr);
+            // increment the lastCollectionTime
+            this.lastCollectionTime = System.currentTimeMillis();
+
+            log.info("Starting Collection of " + matchingAttributes.size() + " attributes");
+            while (it.hasNext()) {
+                JmxAttribute jmxAttr = it.next();
+                try {
+                    List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
+                    metrics.addAll(jmxAttrMetrics);
+                    this.failingAttributes.remove(jmxAttr);
+                } catch (IOException e) {
+                    log.warn("Got IOException {}, rethrowing...", e);
+                    this.beanAttributeLock.unlock();
+                    throw e;
+                } catch (Exception e) {
+                    log.warn("Cannot get metrics for attribute: " + jmxAttr, e);
+                    if (this.failingAttributes.contains(jmxAttr)) {
+                        log.debug(
+                                "Cannot generate metrics for attribute: "
+                                        + jmxAttr
+                                        + " twice in a row. Removing it from the attribute list");
+                        it.remove();
+                    } else {
+                        this.failingAttributes.add(jmxAttr);
+                    }
                 }
             }
+        
+            long duration = System.currentTimeMillis() - this.lastCollectionTime;
+            log.info("Collection " + matchingAttributes.size() + " matching attributes finished in " + duration + "ms.");
+        } finally {
+            this.beanAttributeLock.unlock();
         }
         return metrics;
     }
@@ -514,7 +539,7 @@ public class Instance implements BeanListener{
     }
 
     // TODO de-dup this with getMatchingAttributes which means taking 'action' into account as well
-    private void addMatchingAttributes(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos, int maxToAdd) throws IOException {
+    private void addMatchingAttributesForBean(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos, int maxToAdd) throws IOException {
         int newlyAddedAttributes = 0;
         for (MBeanAttributeInfo attributeInfo : attributeInfos) {
             if (newlyAddedAttributes > maxToAdd) {
@@ -602,9 +627,13 @@ public class Instance implements BeanListener{
                     if (jmxAttribute.match(conf)) {
                         jmxAttribute.setMatchingConf(conf);
                         newlyAddedAttributes += jmxAttribute.getMetricsCount();
-                        log.info("Added attribute {} from bean {}.", jmxAttribute.toString(), beanName);
-                        this.matchingAttributes.add(jmxAttribute);
-
+                        log.debug("Added attribute {} from bean {}.", jmxAttribute.toString(), beanName);
+                        this.beanAttributeLock.lock();
+                        try {
+                            this.matchingAttributes.add(jmxAttribute);
+                        } finally {
+                            this.beanAttributeLock.unlock();
+                        }
                         break;
                     }
                 } catch (Exception e) {
@@ -620,7 +649,12 @@ public class Instance implements BeanListener{
         }
     }
 
+    // must be called while this.beanAttributeLock is held
     private void getMatchingAttributes() throws IOException {
+        if (!this.beanAttributeLock.isHeldByCurrentThread()) {
+            log.error("BAD CONCURRENCY, lock not held {}", this.beanAttributeLock.toString());
+            throw new IOException("BAD CONCURRENCY");
+        }
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -794,7 +828,7 @@ public class Instance implements BeanListener{
 
     // TODO once this runs in a separate thread we need locks around the attribute collection
     public void beanRegistered(ObjectName beanName) {
-        log.info("Bean registered. {}", beanName);
+        log.debug("Bean registered event. {}", beanName);
         String className;
         MBeanAttributeInfo[] attributeInfos;
         try {
@@ -806,7 +840,13 @@ public class Instance implements BeanListener{
             attributeInfos = connection.getAttributesForBean(beanName);
 
             int currentMetricCount = this.matchingAttributes.size();
-            this.addMatchingAttributes(beanName, className, attributeInfos, maxReturnedMetrics - currentMetricCount);
+            this.addMatchingAttributesForBean(beanName, className, attributeInfos, maxReturnedMetrics - currentMetricCount);
+            this.beanAttributeLock.lock();
+            try {
+                this.beans.add(beanName);
+            } finally {
+                this.beanAttributeLock.unlock();
+            }
         } catch (IOException e) {
             // Nothing to do, connection issue
             log.warn("Could not connect to get bean attributes or class name: " + e.getMessage());
@@ -817,15 +857,46 @@ public class Instance implements BeanListener{
         }
     }
     public void beanUnregistered(ObjectName mBeanName) {
-        log.info("Bean unregistered. {}", mBeanName);
+        log.info("Bean unregistered event. {}", mBeanName);
+    }
+
+    private class BeanSubscriber implements Runnable {
+        private List<String> beanScopes;
+        private Connection connection;
+        private BeanListener listener;
+        public CompletableFuture<Boolean> subscriptionSuccessful;
+
+        BeanSubscriber(List<String> beanScopes, Connection connection, BeanListener listener) {
+            this.beanScopes = beanScopes;
+            this.connection = connection;
+            this.listener = listener;
+            this.subscriptionSuccessful = new CompletableFuture<Boolean>();
+        }
+
+        public void run() {
+            try {
+                log.info("Subscribing to {} bean scopes", beanScopes.size());
+
+                connection.subscribeToBeanScopes(beanScopes, this.listener);
+                this.subscriptionSuccessful.complete(true);
+
+                Thread.currentThread().join();
+            } catch (Exception e) {
+                log.warn("Exception while subscribing to beans {}", e);
+                this.subscriptionSuccessful.complete(false);
+            }
+        }
     }
 
     private void subscribeToBeans() {
         List<String> beanScopes = this.getBeansScopes();
-        try {
-            log.info("Subscribing to {} bean scopes", beanScopes.size());
+        BeanSubscriber subscriber = new BeanSubscriber(beanScopes, this.connection, this);
 
-            connection.subscribeToBeanScopes(beanScopes, this);
+        try {
+            new Thread(subscriber).start();
+            if (subscriber.subscriptionSuccessful.get(1, SECONDS)) {
+                log.info("Subscribed successfully!");
+            }
         } catch (Exception e) {
             log.warn("Exception while subscribing to beans {}", e);
         }
