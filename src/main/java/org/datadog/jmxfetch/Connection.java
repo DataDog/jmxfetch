@@ -46,25 +46,6 @@ public class Connection {
     protected Map<String, Object> env;
     protected JMXServiceURL address;
 
-    private static class MyConnectionNotificationListener implements NotificationListener {
-        public void handleNotification(Notification notification, Object handback) {
-            if (!(notification instanceof JMXConnectionNotification)) {
-                return;
-            }
-            if (!(handback instanceof Connection)) {
-                return;
-            }
-
-            JMXConnectionNotification connNotif = (JMXConnectionNotification) notification;
-            Connection conn = (Connection) handback;
-            if (connNotif.getType() == JMXConnectionNotification.CLOSED
-                    || connNotif.getType() == JMXConnectionNotification.FAILED) {
-                //conn.closeConnector();
-            }
-            log.info("Received connection notification: " + connNotif.getType() + " Message: " + connNotif.getMessage());
-        }
-    }
-
     private static class BeanNotificationListener implements NotificationListener {
         private BeanListener bl;
 
@@ -77,7 +58,6 @@ public class Connection {
             }
             MBeanServerNotification mbs = (MBeanServerNotification) notification;
             ObjectName mBeanName = mbs.getMBeanName();
-            // TODO run this beanRegistered/unRegistered in a new thread or threadpool
             if (mbs.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
                 bl.beanRegistered(mBeanName);
             } else if (mbs.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
@@ -123,9 +103,6 @@ public class Connection {
         log.info("Connecting to: " + this.address);
         connector = JMXConnectorFactory.connect(this.address, this.env);
         mbs = connector.getMBeanServerConnection();
-
-        NotificationListener listener = new MyConnectionNotificationListener();
-        connector.addConnectionNotificationListener(listener, null, this);
     }
 
     /** Gets attribute for matching bean and attribute name. */
