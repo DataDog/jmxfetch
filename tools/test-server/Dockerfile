@@ -30,5 +30,6 @@ ENTRYPOINT [ \
 ]
 
 CMD [ \
-    "10" \
+    "10", \
+    "true" \
 ]
