@@ -417,13 +417,12 @@ public class Instance {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
         log.info(
-                "Trying to collect bean list for the first time for JMX Server at "
-                        + this.toString());
+                "Trying to collect bean list for the first time for JMX Server at {}", this);
         this.refreshBeansList();
         this.initialRefreshTime = this.lastRefreshTime;
-        log.info("Connected to JMX Server at " + this.toString());
+        log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
         this.getMatchingAttributes();
-        log.info("Done initializing JMX Server at " + this.toString());
+        log.info("Done initializing JMX Server at {}", this);
     }
 
     /** Returns a string representation for the instance. */
@@ -520,7 +519,7 @@ public class Instance {
             reporter.displayInstanceName(this);
         }
 
-        for (ObjectName beanName : beans) {
+        for (ObjectName beanName : this.beans) {
             if (limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -533,11 +532,11 @@ public class Instance {
             String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
-                log.debug("Getting class name for bean: " + beanName);
+                log.debug("Getting class name for bean: {}", beanName);
                 className = connection.getClassNameForBean(beanName);
 
                 // Get all the attributes for bean_name
-                log.debug("Getting attributes for bean: " + beanName);
+                log.debug("Getting attributes for bean: {}", beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
                 // we should not continue
@@ -547,7 +546,7 @@ public class Instance {
                 }
                 continue;
             } catch (Exception e) {
-                log.warn("Cannot get bean attributes or class name: " + e.getMessage());
+                log.warn("Cannot get bean attributes or class name: {}", e.getMessage());
                 continue;
             }
 
@@ -675,7 +674,7 @@ public class Instance {
                 }
             }
         }
-        log.info("Found " + matchingAttributes.size() + " matching attributes");
+        log.info("Found {} matching attributes", matchingAttributes.size());
     }
 
     /** Returns a list of strings listing the bean scopes. */

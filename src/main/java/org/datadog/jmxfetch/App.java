@@ -72,44 +72,49 @@ public class App {
     private int lastJsonConfigTs;
     private Map<String, Object> adJsonConfigs;
     private Map<String, YamlParser> configs;
-    private Map<String, YamlParser> adPipeConfigs = new ConcurrentHashMap<String, YamlParser>();
-    private List<Instance> instances = new ArrayList<Instance>();
-    private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<String, Instance>();
+    private Map<String, YamlParser> adPipeConfigs = new ConcurrentHashMap<>();
+    private List<Instance> instances = new ArrayList<>();
+    private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
 
     private TaskProcessor collectionProcessor;
     private TaskProcessor recoveryProcessor;
 
-    private AppConfig appConfig;
+    private final AppConfig appConfig;
     private HttpClient client;
 
     /**
      * Main method for backwards compatibility in case someone is launching process by class
      * instead of by jar IE: java -classpath jmxfetch.jar org.datadog.jmxfetch.App
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         JmxFetch.main(args);
     }
 
     /** Application constructor. */
-    public App(AppConfig appConfig) {
+    public App(final AppConfig appConfig) {
         this.appConfig = appConfig;
 
         ExecutorService collectionThreadPool = null;
         ExecutorService recoveryThreadPool = null;
-        if (!appConfig.isEmbedded()) { // Creates executors in standalone mode only
-            collectionThreadPool = buildExecutorService(appConfig.getThreadPoolSize(),
+        if (!this.appConfig.isEmbedded()) { // Creates executors in standalone mode only
+            collectionThreadPool = this.buildExecutorService(
+                    this.appConfig.getThreadPoolSize(),
                     COLLECTION_POOL_NAME);
-            recoveryThreadPool = buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+            recoveryThreadPool = this.buildExecutorService(
+                    this.appConfig.getReconnectionThreadPoolSize(),
                     RECOVERY_POOL_NAME);
         }
-        recoveryProcessor = new TaskProcessor(recoveryThreadPool, appConfig.getReporter());
-        collectionProcessor = new TaskProcessor(collectionThreadPool, appConfig.getReporter());
+        this.recoveryProcessor = new TaskProcessor(
+                recoveryThreadPool, this.appConfig.getReporter());
+        this.collectionProcessor = new TaskProcessor(
+                collectionThreadPool, this.appConfig.getReporter());
         // setup client
-        if (appConfig.remoteEnabled()) {
-            client = new HttpClient(appConfig.getIpcHost(), appConfig.getIpcPort(), false);
+        if (this.appConfig.remoteEnabled()) {
+            this.client = new HttpClient(
+                    this.appConfig.getIpcHost(), this.appConfig.getIpcPort(), false);
         }
-        this.configs = getConfigs(appConfig);
+        this.configs = getConfigs(this.appConfig);
     }
 
     /**
@@ -117,7 +122,7 @@ public class App {
      * System#exit}.
      */
     public int run() {
-        String action = appConfig.getAction();
+        final String action = this.appConfig.getAction();
 
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(action)) {
@@ -126,7 +131,7 @@ public class App {
         }
 
         if (!action.equals(AppConfig.ACTION_COLLECT)
-            && !(appConfig.isConsoleReporter() || appConfig.isJsonReporter())) {
+            && !(this.appConfig.isConsoleReporter() || this.appConfig.isJsonReporter())) {
             // The "list_*" actions can not be used with the statsd reporter
             log.error(action
                       + " argument can only be used with the console or json reporter. Exiting.");
@@ -148,36 +153,36 @@ public class App {
         log.info("JMX Fetch " + MetadataHelper.getVersion() + " has started");
 
         // set up the config status
-        appConfig.updateStatus();
+        this.appConfig.updateStatus();
 
         // Adding another shutdown hook for App related tasks
         Runtime.getRuntime().addShutdownHook(new AppShutdownHook(this));
 
         // Get config from the ipc endpoint for "list_*" actions
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
-            getJsonConfigs();
+            this.getJsonConfigs();
         }
 
         // Initiate JMX Connections, get attributes that match the yaml configuration
-        init(false);
+        this.init(false);
 
         // We don't want to loop if the action is list_* as it's just used for display information
         // about what will be collected
         if (action.equals(AppConfig.ACTION_COLLECT)) {
             // Start the main loop
-            start();
+            this.start();
         }
         if (action.equals(AppConfig.ACTION_LIST_WITH_METRICS)) {
-            displayMetrics();
+            this.displayMetrics();
         }
         if (action.equals(AppConfig.ACTION_LIST_WITH_RATE_METRICS)) {
-            displayRateMetrics();
+            this.displayRateMetrics();
         }
         return 0;
     }
 
     /** Sets reinitialization flag. */
-    public void setReinit(boolean reinit) {
+    public void setReinit(final boolean reinit) {
         this.reinit.set(reinit);
     }
 
@@ -186,34 +191,36 @@ public class App {
         return loopCounter;
     }
 
-    private void clearInstances(Collection<Instance> instances) {
-        List<InstanceTask<Void>> cleanupInstanceTasks =
-                new ArrayList<InstanceTask<Void>>(instances.size());
-        for (Instance instance : instances) {
+    private void clearInstances(final Collection<Instance> instances) {
+        final List<InstanceTask<Void>> cleanupInstanceTasks =
+                new ArrayList<>(instances.size());
+        for (final Instance instance : instances) {
             // create the cleanup task
             cleanupInstanceTasks.add(new InstanceCleanupTask(instance));
         }
 
         try {
-            if (!recoveryProcessor.ready()) {
+            if (!this.recoveryProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for recovery processor, "
                         + "previous one hogging threads");
-                recoveryProcessor.stop();
-                recoveryProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                this.recoveryProcessor.stop();
+                this.recoveryProcessor.setThreadPoolExecutor(
+                        this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
                                 RECOVERY_POOL_NAME));
             }
 
             List<TaskStatusHandler> statuses =
-                    recoveryProcessor.processTasks(
+                    this.recoveryProcessor.processTasks(
                             cleanupInstanceTasks,
-                            appConfig.getReconnectionTimeout(),
+                            this.appConfig.getReconnectionTimeout(),
                             TimeUnit.SECONDS,
                             new TaskMethod<Void>() {
                                 @Override
                                 public TaskStatusHandler invoke(
-                                        Instance instance, Future<Void> future, Reporter reporter) {
+                                        final Instance instance,
+                                        final Future<Void> future,
+                                        final Reporter reporter) {
                                     return App.processRecoveryResults(instance, future, reporter);
                                 }
                             });
@@ -236,35 +243,35 @@ public class App {
      * @param size The thread pool size
      * @return The create executor
      */
-    private ExecutorService buildExecutorService(int size, final String poolName) {
+    private ExecutorService buildExecutorService(final int size, final String poolName) {
         return Executors.newFixedThreadPool(size, new ThreadFactory() {
 
             private final AtomicInteger counter = new AtomicInteger(0);
 
             @Override
             public Thread newThread(Runnable runnable) {
-                String threadName = poolName + "-" + counter.incrementAndGet();
-                Thread thread = new Thread(runnable, threadName);
+                final String threadName = poolName + "-" + counter.incrementAndGet();
+                final Thread thread = new Thread(runnable, threadName);
                 thread.setDaemon(appConfig.isDaemon());
                 return thread;
             }
         });
     }
 
-    private String getAutoDiscoveryName(String config) {
-        String[] splitted = config.split(System.getProperty("line.separator"), 2);
+    private String getAutoDiscoveryName(final String config) {
+        final String[] splitted = config.split(System.getProperty("line.separator"), 2);
 
-        return AUTO_DISCOVERY_PREFIX + splitted[0].substring(2, splitted[0].length());
+        return AUTO_DISCOVERY_PREFIX + splitted[0].substring(2);
     }
 
     private FileInputStream newAutoDiscoveryPipe() {
         FileInputStream adPipe = null;
-        String pipeName = appConfig.getAutoDiscoveryPipe();
+        final String pipeName = this.appConfig.getAutoDiscoveryPipe();
         try {
             adPipe = new FileInputStream(pipeName);
-            log.info("Named pipe for Auto-Discovery opened: " + pipeName);
+            log.info("Named pipe for Auto-Discovery opened: {}", pipeName);
         } catch (FileNotFoundException e) {
-            log.info("Unable to open named pipe for Auto-Discovery: " + pipeName);
+            log.info("Unable to open named pipe for Auto-Discovery: {}", pipeName);
         }
 
         return adPipe;
@@ -275,10 +282,10 @@ public class App {
         boolean reinit = false;
         String[] discovered;
 
-        String configs = new String(buffer, UTF_8);
+        final String configs = new String(buffer, UTF_8);
         String separator = App.AD_CONFIG_SEP;
 
-        if (configs.indexOf(App.AD_LEGACY_CONFIG_SEP) != -1) {
+        if (configs.contains(App.AD_LEGACY_CONFIG_SEP)) {
             separator = App.AD_LEGACY_CONFIG_SEP;
         }
         discovered = configs.split(separator + System.getProperty("line.separator"));
@@ -288,10 +295,10 @@ public class App {
                 continue;
             }
 
-            String name = getAutoDiscoveryName(config);
+            final String name = getAutoDiscoveryName(config);
             log.debug("Attempting to apply config. Name: " + name);
-            InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
-            YamlParser yaml = new YamlParser(stream);
+            final InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
+            final YamlParser yaml = new YamlParser(stream);
 
             if (this.addConfig(name, yaml)) {
                 reinit = true;
@@ -310,27 +317,27 @@ public class App {
 
     /* Display metrics on the console report */
     void displayMetrics() {
-        doIteration();
+        this.doIteration();
     }
 
     /* Display metrics on the console report, including rate metrics */
     void displayRateMetrics() {
-        doIteration();
+        this.doIteration();
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             log.warn(e.getMessage(), e);
         }
-        doIteration();
+        this.doIteration();
     }
 
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         FileInputStream adPipe = null;
 
-        if (appConfig.getAutoDiscoveryPipeEnabled()) {
+        if (this.appConfig.getAutoDiscoveryPipeEnabled()) {
             log.info("Auto Discovery enabled");
-            adPipe = newAutoDiscoveryPipe();
+            adPipe = this.newAutoDiscoveryPipe();
             try {
                 FileHelper.touch(new File(appConfig.getJmxLaunchFile()));
             } catch (IOException e) {
@@ -342,12 +349,12 @@ public class App {
 
         while (true) {
             // Exit on exit file trigger...
-            if (appConfig.getExitWatcher().shouldExit()) {
+            if (this.appConfig.getExitWatcher().shouldExit()) {
                 log.info("Exit file detected: stopping JMXFetch.");
                 return;
             }
 
-            if (adPipe == null && appConfig.getAutoDiscoveryPipeEnabled()) {
+            if (adPipe == null && this.appConfig.getAutoDiscoveryPipeEnabled()) {
                 // If SD is enabled and the pipe is not open, retry opening pipe
                 adPipe = newAutoDiscoveryPipe();
             }
@@ -376,11 +383,11 @@ public class App {
                             System.arraycopy(minibuff, 0, buffer, oldLen, len);
                         }
                     }
-                    setReinit(processAutoDiscovery(buffer));
+                    this.setReinit(processAutoDiscovery(buffer));
                 }
 
-                if (appConfig.remoteEnabled()) {
-                    setReinit(getJsonConfigs());
+                if (this.appConfig.remoteEnabled()) {
+                    this.setReinit(getJsonConfigs());
                 }
             } catch (IOException e) {
                 log.warn(
@@ -397,19 +404,19 @@ public class App {
             }
 
             if (instances.size() > 0) {
-                doIteration();
+                this.doIteration();
             } else {
                 log.warn("No instance could be initiated. Retrying initialization.");
-                lastJsonConfigTs = 0; // reset TS to get AC instances
-                appConfig.getStatus().flush();
-                configs = getConfigs(appConfig);
-                init(true);
+                this.lastJsonConfigTs = 0; // reset TS to get AC instances
+                this.appConfig.getStatus().flush();
+                this.configs = getConfigs(appConfig);
+                this.init(true);
             }
-            long duration = System.currentTimeMillis() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.debug("Iteration ran in " + duration + " ms");
             // Sleep until next collection
             try {
-                long loopPeriod = appConfig.getCheckPeriod();
+                final long loopPeriod = this.appConfig.getCheckPeriod();
                 long sleepPeriod = loopPeriod - duration;
                 if (sleepPeriod < loopPeriod / 2) {
                     log.debug(
@@ -417,7 +424,7 @@ public class App {
                         + " the next cycle will be delayed");
                     sleepPeriod = loopPeriod / 2;
                 } else {
-                    log.debug("Sleeping for " + sleepPeriod + " ms.");
+                    log.debug("Sleeping for {} ms.", sleepPeriod);
                 }
                 Thread.sleep(sleepPeriod);
             } catch (InterruptedException e) {
@@ -427,8 +434,8 @@ public class App {
     }
 
     void stop() {
-        collectionProcessor.stop();
-        recoveryProcessor.stop();
+        this.collectionProcessor.stop();
+        this.recoveryProcessor.stop();
     }
 
     /**
@@ -436,83 +443,84 @@ public class App {
      * instances.
      */
     public void doIteration() {
-        Reporter reporter = appConfig.getReporter();
+        final Reporter reporter = this.appConfig.getReporter();
         loopCounter++;
 
         try {
             List<InstanceTask<List<Metric>>> getMetricsTasks =
-                    new ArrayList<InstanceTask<List<Metric>>>(instances.size());
+                    new ArrayList<>(this.instances.size());
 
-            for (Instance instance : instances) {
+            for (Instance instance : this.instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
             }
 
-            if (!collectionProcessor.ready()) {
+            if (!this.collectionProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for collection processor, "
                         + "previous one hogging threads");
-                collectionProcessor.stop();
-                collectionProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getThreadPoolSize(), COLLECTION_POOL_NAME));
+                this.collectionProcessor.stop();
+                this.collectionProcessor.setThreadPoolExecutor(
+                        this.buildExecutorService(
+                                this.appConfig.getThreadPoolSize(), COLLECTION_POOL_NAME));
             }
 
-            List<TaskStatusHandler> statuses =
-                    collectionProcessor.processTasks(
+            final List<TaskStatusHandler> statuses =
+                    this.collectionProcessor.processTasks(
                             getMetricsTasks,
-                            appConfig.getCollectionTimeout(),
+                            this.appConfig.getCollectionTimeout(),
                             TimeUnit.SECONDS,
                             new TaskMethod<List<Metric>>() {
                                 @Override
                                 public TaskStatusHandler invoke(
-                                        Instance instance,
-                                        Future<List<Metric>> future,
-                                        Reporter reporter) {
+                                        final Instance instance,
+                                        final Future<List<Metric>> future,
+                                        final Reporter reporter) {
                                     return App.processCollectionResults(instance, future, reporter);
                                 }
                             });
 
-            processCollectionStatus(getMetricsTasks, statuses);
+            this.processCollectionStatus(getMetricsTasks, statuses);
 
         } catch (Exception e) {
             // INTERNAL ERROR
             // This might also have a place in the status processor
 
             String instanceMessage;
-            String instanceStatus = Status.STATUS_ERROR;
-            String scStatus = Status.STATUS_ERROR;
+            final String instanceStatus = Status.STATUS_ERROR;
+            final String scStatus = Status.STATUS_ERROR;
 
             log.warn("JMXFetch internal error invoking concurrent tasks: ", e);
 
-            for (Instance instance : instances) {
+            for (Instance instance : this.instances) {
                 // don't add instances to broken instances, issue was internal
                 instanceMessage =
                         "Internal JMXFetch error refreshing bean list for instance " + instance;
                 this.reportStatus(
-                        appConfig, reporter, instance, 0, instanceMessage, instanceStatus);
+                        this.appConfig, reporter, instance, 0, instanceMessage, instanceStatus);
                 this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
             }
         }
 
         // Attempt to fix broken instances
-        fixBrokenInstances(reporter);
+        this.fixBrokenInstances(reporter);
 
         try {
-            appConfig.getStatus().flush();
+            this.appConfig.getStatus().flush();
         } catch (Exception e) {
             log.error("Unable to flush stats.", e);
         }
     }
 
-    private void fixBrokenInstances(Reporter reporter) {
-        if (brokenInstanceMap.isEmpty()) {
+    private void fixBrokenInstances(final Reporter reporter) {
+        if (this.brokenInstanceMap.isEmpty()) {
             return;
         }
 
         log.debug("Trying to recover broken instances...");
-        List<InstanceTask<Void>> fixInstanceTasks =
-                new ArrayList<InstanceTask<Void>>(brokenInstanceMap.values().size());
+        final List<InstanceTask<Void>> fixInstanceTasks =
+                new ArrayList<>(this.brokenInstanceMap.values().size());
 
-        for (Instance instance : brokenInstanceMap.values()) {
+        for (final Instance instance : this.brokenInstanceMap.values()) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
             reporter.clearCountersAggregator(instance.getName());
@@ -527,44 +535,46 @@ public class App {
             // collect metrics from this broken instance during next collection and close
             // ongoing connections (do so asynchronously to avoid locking on network timeout).
             instance.cleanUpAsync();
-            instances.remove(instance);
+            this.instances.remove(instance);
 
             // Resetting the instance
-            Instance newInstance = new Instance(instance, appConfig);
+            final Instance newInstance = new Instance(instance, this.appConfig);
 
             // create the initializing task
             fixInstanceTasks.add(new InstanceInitializingTask(newInstance, true));
         }
 
         try {
-            if (!recoveryProcessor.ready()) {
+            if (!this.recoveryProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for recovery processor, "
                         + "previous one hogging threads");
-                recoveryProcessor.stop();
-                recoveryProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                this.recoveryProcessor.stop();
+                this.recoveryProcessor.setThreadPoolExecutor(
+                        this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
                                 RECOVERY_POOL_NAME));
             }
 
             Collections.shuffle(fixInstanceTasks);
-            List<TaskStatusHandler> statuses =
-                    recoveryProcessor.processTasks(
+            final List<TaskStatusHandler> statuses =
+                    this.recoveryProcessor.processTasks(
                             fixInstanceTasks,
-                            appConfig.getReconnectionTimeout(),
+                            this.appConfig.getReconnectionTimeout(),
                             TimeUnit.SECONDS,
                             new TaskMethod<Void>() {
                                 @Override
                                 public TaskStatusHandler invoke(
-                                        Instance instance, Future<Void> future, Reporter reporter) {
+                                        final Instance instance,
+                                        final Future<Void> future,
+                                        final Reporter reporter) {
                                     return App.processRecoveryResults(instance, future, reporter);
                                 }
                             });
 
-            processFixedStatus(fixInstanceTasks, statuses);
+            this.processFixedStatus(fixInstanceTasks, statuses);
 
             // update with statuses
-            processStatus(fixInstanceTasks, statuses);
+            this.processStatus(fixInstanceTasks, statuses);
 
         } catch (Exception e) {
             // NADA
@@ -577,7 +587,7 @@ public class App {
      * Adds a configuration to the auto-discovery pipe-collected configuration list. This method is
      * deprecated.
      */
-    public boolean addConfig(String name, YamlParser config) {
+    public boolean addConfig(final String name, final YamlParser config) {
         // named groups not supported with Java6:
         //
         // "AUTO_DISCOVERY_PREFIX(?<check>.{1,80})_(?<version>\\d{0,AD_MAX_MAG_INSTANCES})"
@@ -587,7 +597,7 @@ public class App {
             log.debug("Name too long - skipping: " + name);
             return false;
         }
-        String patternText =
+        final String patternText =
                 AUTO_DISCOVERY_PREFIX
                         + "(.{1,"
                         + AD_MAX_NAME_LEN
@@ -595,9 +605,9 @@ public class App {
                         + AD_MAX_MAG_INSTANCES
                         + "})";
 
-        Pattern pattern = Pattern.compile(patternText);
+        final Pattern pattern = Pattern.compile(patternText);
 
-        Matcher matcher = pattern.matcher(name);
+        final Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
             // bad name.
             log.debug("Cannot match instance name: " + name);
@@ -605,7 +615,7 @@ public class App {
         }
 
         // Java 6 doesn't allow name matching - group 1 is "check"
-        String check = matcher.group(1);
+        final String check = matcher.group(1);
         if (this.configs.containsKey(check)) {
             // there was already a file config for the check.
             log.debug("Key already present - skipping: " + name);
@@ -619,58 +629,48 @@ public class App {
     }
 
     /** Adds a configuration to the auto-discovery HTTP collected configuration list (JSON). */
-    public boolean addJsonConfig(String name, String json) {
+    public boolean addJsonConfig(final String name, final String json) {
         return false;
     }
 
-    private Map<String, YamlParser> getConfigs(AppConfig config) {
-        Map<String, YamlParser> configs = new ConcurrentHashMap<String, YamlParser>();
+    private Map<String, YamlParser> getConfigs(final AppConfig config) {
+        final Map<String, YamlParser> configs = new ConcurrentHashMap<>();
 
-        loadFileConfigs(config, configs);
-        loadResourceConfigs(config, configs);
+        this.loadFileConfigs(config, configs);
+        this.loadResourceConfigs(config, configs);
 
-        log.info("Found " + configs.size() + " config files");
+        log.info("Found {} config files", configs.size());
         return configs;
     }
 
-    private void loadFileConfigs(AppConfig config, Map<String, YamlParser> configs) {
-        List<String> fileList = config.getYamlFileList();
+    private void loadFileConfigs(final AppConfig config, final Map<String, YamlParser> configs) {
+        final List<String> fileList = config.getYamlFileList();
         if (fileList != null) {
-            for (String fileName : fileList) {
-                File file = new File(config.getConfdDirectory(), fileName);
-                String name = file.getName().replace(".yaml", "");
-                String yamlPath = file.getAbsolutePath();
-                FileInputStream yamlInputStream = null;
-                log.info("Reading " + yamlPath);
-                try {
-                    yamlInputStream = new FileInputStream(yamlPath);
+            for (final String fileName : fileList) {
+                final File file = new File(config.getConfdDirectory(), fileName);
+                final String name = file.getName().replace(".yaml", "");
+                final String yamlPath = file.getAbsolutePath();
+                log.info("Reading {}", yamlPath);
+                try (FileInputStream yamlInputStream = new FileInputStream(yamlPath)) {
                     configs.put(name, new YamlParser(yamlInputStream));
                 } catch (FileNotFoundException e) {
                     log.warn("Cannot find " + yamlPath);
                 } catch (Exception e) {
                     log.warn("Cannot parse yaml file " + yamlPath, e);
-                } finally {
-                    if (yamlInputStream != null) {
-                        try {
-                            yamlInputStream.close();
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    }
                 }
             }
         }
     }
 
     private void loadResourceConfigs(
-            AppConfig config, Map<String, YamlParser> configs) {
-        List<String> resourceConfigList = config.getInstanceConfigResources();
+            final AppConfig config, final Map<String, YamlParser> configs) {
+        final List<String> resourceConfigList = config.getInstanceConfigResources();
         if (resourceConfigList != null) {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            for (String resourceName : resourceConfigList) {
-                String name = resourceName.replace(".yaml", "");
-                log.info("Reading " + resourceName);
-                InputStream inputStream = classLoader.getResourceAsStream(resourceName);
+            final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            for (final String resourceName : resourceConfigList) {
+                final String name = resourceName.replace(".yaml", "");
+                log.info("Reading {}", resourceName);
+                final InputStream inputStream = classLoader.getResourceAsStream(resourceName);
                 if (inputStream == null) {
                     log.warn("Cannot find " + resourceName);
                 } else {
@@ -715,7 +715,7 @@ public class App {
             byte[] utf8 = response.getResponseBody().getBytes(UTF_8);
             InputStream jsonInputStream = new ByteArrayInputStream(utf8);
             JsonParser parser = new JsonParser(jsonInputStream);
-            int timestamp = ((Integer) parser.getJsonTimestamp()).intValue();
+            int timestamp = (Integer) parser.getJsonTimestamp();
             if (timestamp > lastJsonConfigTs) {
                 adJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
                 lastJsonConfigTs = timestamp;
@@ -735,15 +735,15 @@ public class App {
     }
 
     private void reportStatus(
-            AppConfig appConfig,
-            Reporter reporter,
-            Instance instance,
-            int metricCount,
-            String message,
-            String status) {
-        String checkName = instance.getCheckName();
+            final AppConfig appConfig,
+            final Reporter reporter,
+            final Instance instance,
+            final int metricCount,
+            final String message,
+            final String status) {
+        final String checkName = instance.getCheckName();
 
-        Status stats = appConfig.getStatus();
+        final Status stats = appConfig.getStatus();
         stats.addInstanceStats(
                 checkName, instance.getName(),
                 metricCount, reporter.getServiceCheckCount(checkName),
@@ -754,8 +754,11 @@ public class App {
     }
 
     private void sendServiceCheck(
-            Reporter reporter, Instance instance, String message, String status) {
-        String checkName = instance.getCheckName();
+            final Reporter reporter,
+            final Instance instance,
+            final String message,
+            final String status) {
+        final String checkName = instance.getCheckName();
 
         if (instance.getServiceCheckPrefix() != null) {
             this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
@@ -765,7 +768,8 @@ public class App {
                     status, message, instance.getServiceCheckTags());
 
             // Service check with formatted name is kept for backward compatibility
-            String formattedCheckName = ServiceCheckHelper.formatServiceCheckPrefix(checkName);
+            final String formattedCheckName = ServiceCheckHelper
+                    .formatServiceCheckPrefix(checkName);
             if (!formattedCheckName.equals(checkName)) {
                 this.sendCanConnectServiceCheck(reporter, checkName, formattedCheckName,
                         status, message, instance.getServiceCheckTags());
@@ -775,11 +779,16 @@ public class App {
         reporter.resetServiceCheckCount(checkName);
     }
 
-    private void sendCanConnectServiceCheck(Reporter reporter, String checkName,
-        String serviceCheckPrefix, String status, String message, String[] tags) {
-        String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
+    private void sendCanConnectServiceCheck(
+            final Reporter reporter,
+            final String checkName,
+            final String serviceCheckPrefix,
+            final String status,
+            String message,
+            final String[] tags) {
+        final String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
 
-        if (status != Status.STATUS_ERROR) {
+        if (!status.equals(Status.STATUS_ERROR)) {
             message = null;
         }
 
@@ -788,38 +797,34 @@ public class App {
     }
 
     private Instance instantiate(
-            Map<String, Object> instanceMap,
-            Map<String, Object> initConfig,
-            String checkName,
-            AppConfig appConfig) {
-
-        Instance instance;
-        Reporter reporter = appConfig.getReporter();
+            final Map<String, Object> instanceMap,
+            final Map<String, Object> initConfig,
+            final String checkName,
+            final AppConfig appConfig) {
 
         try {
-            instance = new Instance(instanceMap, initConfig, checkName, appConfig, null);
+            return new Instance(instanceMap, initConfig, checkName, appConfig, null);
         } catch (Exception e) {
             String warning = "Unable to create instance. Please check your yaml file";
             appConfig.getStatus().addInitFailedCheck(checkName, warning, Status.STATUS_ERROR);
             log.error(warning, e);
-            return null;
         }
-
-        return instance;
+        return null;
     }
 
     /** Initializes instances and metric collection. */
-    public void init(boolean forceNewConnection) {
+    public void init(final boolean forceNewConnection) {
         log.info("Cleaning up instances...");
-        clearInstances(instances);
-        clearInstances(brokenInstanceMap.values());
-        brokenInstanceMap.clear();
+        this.clearInstances(this.instances);
+        this.clearInstances(this.brokenInstanceMap.values());
+        this.brokenInstanceMap.clear();
 
-        List<Instance> newInstances = new ArrayList<Instance>();
+        final List<Instance> newInstances = new ArrayList<>();
 
         log.info("Dealing with YAML config instances...");
-        Iterator<Entry<String, YamlParser>> it = configs.entrySet().iterator();
-        Iterator<Entry<String, YamlParser>> itPipeConfigs = adPipeConfigs.entrySet().iterator();
+        final Iterator<Entry<String, YamlParser>> it = this.configs.entrySet().iterator();
+        final Iterator<Entry<String, YamlParser>> itPipeConfigs = this.adPipeConfigs
+                        .entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
             Map.Entry<String, YamlParser> entry;
             boolean fromPipeIterator = false;
@@ -830,65 +835,65 @@ public class App {
                 fromPipeIterator = true;
             }
 
-            String name = entry.getKey();
-            YamlParser yamlConfig = entry.getValue();
+            final String name = entry.getKey();
+            final YamlParser yamlConfig = entry.getValue();
             // AD config cache doesn't remove configs - it just overwrites.
             if (!fromPipeIterator) {
                 it.remove();
             }
 
-            List<Map<String, Object>> configInstances =
+            final List<Map<String, Object>> configInstances =
                     ((List<Map<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
-                String warning = "No instance found in :" + name;
+                final String warning = "No instance found in :" + name;
                 log.warn(warning);
-                appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
+                this.appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
                 continue;
             }
 
-            for (Map<String, Object> configInstance : configInstances) {
+            for (final Map<String, Object> configInstance : configInstances) {
                 if (appConfig.isTargetDirectInstances() != isDirectInstance(configInstance)) {
                     log.info("Skipping instance '{}'. targetDirectInstances={} != jvm_direct={}",
                             name,
-                            appConfig.isTargetDirectInstances(),
+                            this.appConfig.isTargetDirectInstances(),
                             isDirectInstance(configInstance));
                     continue;
                 }
 
                 // Create a new Instance object
                 log.info("Instantiating instance for: {}", name);
-                Instance instance =
+                final Instance instance =
                         instantiate(
                                 configInstance,
                                 (Map<String, Object>) yamlConfig.getInitConfig(),
                                 name,
-                                appConfig);
+                                this.appConfig);
                 newInstances.add(instance);
             }
         }
 
         // Process JSON configurations
         log.info("Dealing with Auto-Config instances collected...");
-        if (adJsonConfigs != null) {
-            for (String check : adJsonConfigs.keySet()) {
-                Map<String, Object> checkConfig =
-                        (Map<String, Object>) adJsonConfigs.get(check);
-                Map<String, Object> initConfig =
+        if (this.adJsonConfigs != null) {
+            for (String check : this.adJsonConfigs.keySet()) {
+                final Map<String, Object> checkConfig =
+                        (Map<String, Object>) this.adJsonConfigs.get(check);
+                final Map<String, Object> initConfig =
                         (Map<String, Object>) checkConfig.get("init_config");
-                List<Map<String, Object>> configInstances =
+                final List<Map<String, Object>> configInstances =
                         (List<Map<String, Object>>) checkConfig.get("instances");
-                String checkName = (String) checkConfig.get("check_name");
+                final String checkName = (String) checkConfig.get("check_name");
                 for (Map<String, Object> configInstance : configInstances) {
                     log.info("Instantiating instance for: " + checkName);
-                    Instance instance =
-                            instantiate(configInstance, initConfig, checkName, appConfig);
+                    final Instance instance =
+                            instantiate(configInstance, initConfig, checkName, this.appConfig);
                     newInstances.add(instance);
                 }
             }
         }
 
-        List<InstanceTask<Void>> instanceInitTasks =
-                new ArrayList<InstanceTask<Void>>(newInstances.size());
+        final List<InstanceTask<Void>> instanceInitTasks =
+                new ArrayList<>(newInstances.size());
         for (Instance instance : newInstances) {
             // create the initializing tasks
             instanceInitTasks.add(new InstanceInitializingTask(instance, forceNewConnection));
@@ -898,35 +903,37 @@ public class App {
         log.info("Started instance initialization...");
 
         try {
-            if (!recoveryProcessor.ready()) {
+            if (!this.recoveryProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for recovery processor, "
                         + "previous one hogging threads");
-                recoveryProcessor.stop();
-                recoveryProcessor.setThreadPoolExecutor(
-                        buildExecutorService(appConfig.getReconnectionThreadPoolSize(),
+                this.recoveryProcessor.stop();
+                this.recoveryProcessor.setThreadPoolExecutor(
+                        this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
                                 RECOVERY_POOL_NAME));
             }
 
-            List<TaskStatusHandler> statuses =
-                    recoveryProcessor.processTasks(
+            final List<TaskStatusHandler> statuses =
+                    this.recoveryProcessor.processTasks(
                             instanceInitTasks,
-                            appConfig.getCollectionTimeout(),
+                            this.appConfig.getCollectionTimeout(),
                             TimeUnit.SECONDS,
                             new TaskMethod<Void>() {
                                 @Override
                                 public TaskStatusHandler invoke(
-                                        Instance instance, Future<Void> future, Reporter reporter) {
+                                        final Instance instance,
+                                        final Future<Void> future,
+                                        final Reporter reporter) {
                                     return App.processRecoveryResults(instance, future, reporter);
                                 }
                             });
 
             log.info("Completed instance initialization...");
 
-            processInstantiationStatus(instanceInitTasks, statuses);
+            this.processInstantiationStatus(instanceInitTasks, statuses);
 
             // update with statuses
-            processStatus(instanceInitTasks, statuses);
+            this.processStatus(instanceInitTasks, statuses);
         } catch (Exception e) {
             // NADA
             log.warn("Critical issue initializing instances: " + e);
@@ -934,9 +941,11 @@ public class App {
     }
 
     static TaskStatusHandler processRecoveryResults(
-            Instance instance, Future<Void> future, Reporter reporter) {
+            final Instance instance,
+            final Future<Void> future,
+            final Reporter reporter) {
 
-        TaskStatusHandler status = new TaskStatusHandler();
+        final TaskStatusHandler status = new TaskStatusHandler();
         Throwable exc = null;
 
         try {
@@ -958,18 +967,18 @@ public class App {
     }
 
     static TaskStatusHandler processCollectionResults(
-            Instance instance,
-            Future<List<Metric>> future,
-            Reporter reporter) {
+            final Instance instance,
+            final Future<List<Metric>> future,
+            final Reporter reporter) {
 
-        TaskStatusHandler status = new TaskStatusHandler();
+        final TaskStatusHandler status = new TaskStatusHandler();
         Throwable exc = null;
 
         try {
             int numberOfMetrics = 0;
 
             if (future.isDone()) {
-                List<Metric> metrics = future.get();
+                final List<Metric> metrics = future.get();
                 numberOfMetrics = metrics.size();
 
                 status.setData(metrics);
@@ -1001,46 +1010,47 @@ public class App {
     }
 
     private <T> void processInstantiationStatus(
-            List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+            final List<InstanceTask<T>> tasks,
+            final List<TaskStatusHandler> statuses) {
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
-        ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
+        final ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
         int idx = statuses.size();
         while (sit.hasPrevious()) {
             idx--;
 
-            Instance instance = tasks.get(idx).getInstance();
+            final Instance instance = tasks.get(idx).getInstance();
 
             try {
-                TaskStatusHandler status = sit.previous();
+                final TaskStatusHandler status = sit.previous();
                 status.raiseForStatus();
 
                 // All was good, add instance
-                instances.add(instance);
-                log.info("Successfully initialized instance: " + instance.getName());
+                this.instances.add(instance);
+                log.info("Successfully initialized instance: {}", instance.getName());
             } catch (Throwable e) {
                 log.warn(
-                    "Could not initialize instance: " + instance.getName()
-                    + ": ", e);
+                    "Could not initialize instance: {}:", instance.getName(), e);
                 instance.cleanUpAsync();
-                brokenInstanceMap.put(instance.toString(), instance);
+                this.brokenInstanceMap.put(instance.toString(), instance);
             }
         }
     }
 
     private <T> void processFixedStatus(
-            List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+            final List<InstanceTask<T>> tasks,
+            final List<TaskStatusHandler> statuses) {
         // cleanup fixed broken instances - matching indices between statuses and tasks
-        ListIterator<TaskStatusHandler> it = statuses.listIterator();
+        final ListIterator<TaskStatusHandler> it = statuses.listIterator();
         int idx = 0;
         while (it.hasNext()) {
-            TaskStatusHandler status = it.next();
+            final TaskStatusHandler status = it.next();
 
             try {
                 status.raiseForStatus();
 
-                Instance instance = tasks.get(idx).getInstance();
-                brokenInstanceMap.remove(instance.toString());
+                final Instance instance = tasks.get(idx).getInstance();
+                this.brokenInstanceMap.remove(instance.toString());
                 this.instances.add(instance);
 
             } catch (Throwable e) {
@@ -1051,13 +1061,15 @@ public class App {
         }
     }
 
-    private <T> void processStatus(List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+    private <T> void processStatus(
+            final List<InstanceTask<T>> tasks,
+            final List<TaskStatusHandler> statuses) {
         for (int i = 0; i < statuses.size(); i++) {
 
-            InstanceTask task = tasks.get(i);
+            InstanceTask<T> task = tasks.get(i);
             TaskStatusHandler status = statuses.get(i);
             Instance instance = task.getInstance();
-            Reporter reporter = appConfig.getReporter();
+            Reporter reporter = this.appConfig.getReporter();
             String warning = task.getWarning();
 
             try {
@@ -1092,7 +1104,7 @@ public class App {
                     log.warn(warning);
 
                     this.reportStatus(
-                            appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
+                            this.appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
                 }
             }
@@ -1100,25 +1112,24 @@ public class App {
     }
 
     private <T> void processCollectionStatus(
-            List<InstanceTask<T>> tasks, List<TaskStatusHandler> statuses) {
+            final List<InstanceTask<T>> tasks, final List<TaskStatusHandler> statuses) {
         for (int i = 0; i < statuses.size(); i++) {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
             String scStatus = Status.STATUS_OK;
-            List<Metric> metrics;
 
             int numberOfMetrics = 0;
 
-            InstanceTask<T> task = tasks.get(i);
-            TaskStatusHandler status = statuses.get(i);
-            Instance instance = task.getInstance();
-            Reporter reporter = appConfig.getReporter();
+            final InstanceTask<T> task = tasks.get(i);
+            final TaskStatusHandler status = statuses.get(i);
+            final Instance instance = task.getInstance();
+            final Reporter reporter = this.appConfig.getReporter();
 
             try {
                 status.raiseForStatus();
 
                 // If we get here all was good - metric count  available
-                metrics = (List<Metric>) status.getData();
+                final List<Metric> metrics = (List<Metric>) status.getData();
                 numberOfMetrics = metrics.size();
 
                 if (instance.isLimitReached()) {
@@ -1151,14 +1162,14 @@ public class App {
                 instanceMessage = task.getWarning();
                 instanceStatus = Status.STATUS_ERROR;
 
-                brokenInstanceMap.put(instance.toString(), instance);
+                this.brokenInstanceMap.put(instance.toString(), instance);
                 log.debug("Adding broken instance to list: " + instance.getName());
 
                 log.warn(instanceMessage, ee.getCause());
             } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
                 log.debug("Adding broken instance to list: " + instance.getName());
-                brokenInstanceMap.put(instance.toString(), instance);
+                this.brokenInstanceMap.put(instance.toString(), instance);
 
                 instanceStatus = Status.STATUS_ERROR;
                 instanceMessage = task.getWarning() + ": " + t.toString();
@@ -1172,7 +1183,7 @@ public class App {
                 }
 
                 this.reportStatus(
-                        appConfig,
+                        this.appConfig,
                         reporter,
                         instance,
                         numberOfMetrics,
