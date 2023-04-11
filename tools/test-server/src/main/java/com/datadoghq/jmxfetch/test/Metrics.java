@@ -64,7 +64,7 @@ public class Metrics implements MetricsMBean, MBeanRegistration {
                     rowType,
                     new String[]{"foo", "bar", "toto"},
                     new Object[]{"1", 1, "tata"}));
-            System.out.println("Mbean ready!");
+            System.out.println("Mbean " + name + " ready! " + metricsDAO.toString());
         } catch (OpenDataException e) {
             System.err.println(e);
             throw new RuntimeException(e);
