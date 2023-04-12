@@ -1167,7 +1167,7 @@ public class App {
 
             } finally {
 
-                if (instanceStatus == Status.STATUS_ERROR) {
+                if (Status.STATUS_ERROR.equals(instanceStatus)) {
                     scStatus = Status.STATUS_ERROR;
                 }
 
