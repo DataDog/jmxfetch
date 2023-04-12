@@ -538,8 +538,6 @@ public class Instance {
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
                 // we should not continue
-                log.warn("[IOException] Cannot get bean attributes or class name: {}",
-                    e.getMessage());
                 throw e;
             } catch (Exception e) {
                 log.warn("Cannot get bean attributes or class name: " + e.getMessage());
