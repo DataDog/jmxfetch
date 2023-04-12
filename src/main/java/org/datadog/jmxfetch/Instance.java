@@ -86,6 +86,7 @@ public class Instance implements BeanListener{
     private List<String> beanScopes;
     private List<Configuration> configurationList = new ArrayList<Configuration>();
     private List<JmxAttribute> matchingAttributes;
+    private int metricCountForMatchingAttributes;
     private HashSet<JmxAttribute> failingAttributes;
     private Integer initialRefreshBeansPeriod;
     private Integer refreshBeansPeriod;
@@ -139,6 +140,7 @@ public class Instance implements BeanListener{
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
         this.matchingAttributes = new ArrayList<JmxAttribute>();
+        this.metricCountForMatchingAttributes = 0;
         this.failingAttributes = new HashSet<JmxAttribute>();
         if (appConfig.getRefreshBeansPeriod() == null) {
             this.refreshBeansPeriod = (Integer) instanceMap.get("refresh_beans");
@@ -511,7 +513,7 @@ public class Instance implements BeanListener{
                     }
                 }
             }
-        
+
             long duration = System.currentTimeMillis() - this.lastCollectionTime;
             log.info("Collection " + matchingAttributes.size() + " matching attributes finished in " + duration + "ms.");
         } finally {
@@ -538,13 +540,23 @@ public class Instance implements BeanListener{
         }
     }
 
-    // TODO de-dup this with getMatchingAttributes which means taking 'action' into account as well
-    private void addMatchingAttributesForBean(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos, int maxToAdd) throws IOException {
-        int newlyAddedAttributes = 0;
+    private void addMatchingAttributesForBean(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos) throws IOException {
+        boolean metricReachedDisplayed = false;
+        Reporter reporter = appConfig.getReporter();
+        String action = appConfig.getAction();
+
         for (MBeanAttributeInfo attributeInfo : attributeInfos) {
-            if (newlyAddedAttributes > maxToAdd) {
-                limitReached = true;
-                break;
+            if (this.metricCountForMatchingAttributes >= maxReturnedMetrics) {
+                this.limitReached = true;
+                if (action.equals(AppConfig.ACTION_COLLECT)) {
+                    log.warn("Maximum number of metrics reached.");
+                    break;
+                } else if (!metricReachedDisplayed
+                        && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                        && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
+                    reporter.displayMetricReached();
+                    metricReachedDisplayed = true;
+                }
             }
             JmxAttribute jmxAttribute;
             String attributeType = attributeInfo.getType();
@@ -626,13 +638,22 @@ public class Instance implements BeanListener{
                 try {
                     if (jmxAttribute.match(conf)) {
                         jmxAttribute.setMatchingConf(conf);
-                        newlyAddedAttributes += jmxAttribute.getMetricsCount();
+                        this.metricCountForMatchingAttributes += jmxAttribute.getMetricsCount();
                         log.debug("Added attribute {} from bean {}.", jmxAttribute.toString(), beanName);
                         this.beanAttributeLock.lock();
                         try {
                             this.matchingAttributes.add(jmxAttribute);
                         } finally {
                             this.beanAttributeLock.unlock();
+                        }
+                        if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                                || action.equals(AppConfig.ACTION_LIST_MATCHING)
+                                || action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                                && !limitReached
+                                || action.equals(AppConfig.ACTION_LIST_LIMITED)
+                                && limitReached) {
+                            reporter.displayMatchingAttributeName(
+                                    jmxAttribute, this.metricCountForMatchingAttributes, maxReturnedMetrics);
                         }
                         break;
                     }
@@ -646,6 +667,12 @@ public class Instance implements BeanListener{
                             e);
                 }
             }
+
+            if (jmxAttribute.getMatchingConf() == null
+                    && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                        || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                reporter.displayNonMatchingAttributeName(jmxAttribute);
+            }
         }
     }
 
@@ -658,11 +685,9 @@ public class Instance implements BeanListener{
         limitReached = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
-        boolean metricReachedDisplayed = false;
 
         this.matchingAttributes.clear();
         this.failingAttributes.clear();
-        int metricsCount = 0;
 
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
@@ -675,9 +700,6 @@ public class Instance implements BeanListener{
                     break;
                 }
             }
-            if (!connection.isAlive()) {
-                throw new IOException("Connection to application died during bean refresh");
-            }
             String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
@@ -688,145 +710,17 @@ public class Instance implements BeanListener{
                 log.debug("Getting attributes for bean: " + beanName);
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
-                // we should not continue
-                log.warn("Cannot get bean attributes or class name: " + e.getMessage());
-                if (e.getMessage().equals(connection.CLOSED_CLIENT_CAUSE)) {
-                    throw e;
-                }
-                continue;
+                throw e;
             } catch (Exception e) {
                 log.warn("Cannot get bean attributes or class name: " + e.getMessage());
                 continue;
             }
 
-            for (MBeanAttributeInfo attributeInfo : attributeInfos) {
-                if (metricsCount >= maxReturnedMetrics) {
-                    limitReached = true;
-                    if (action.equals(AppConfig.ACTION_COLLECT)) {
-                        log.warn("Maximum number of metrics reached.");
-                        break;
-                    } else if (!metricReachedDisplayed
-                            && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                            && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
-                        reporter.displayMetricReached();
-                        metricReachedDisplayed = true;
-                    }
-                }
-                JmxAttribute jmxAttribute;
-                String attributeType = attributeInfo.getType();
-                if (SIMPLE_TYPES.contains(attributeType)) {
-                    log.debug(
-                            ATTRIBUTE
-                            + beanName
-                            + " : "
-                            + attributeInfo
-                            + " has attributeInfo simple type");
-                    jmxAttribute =
-                        new JmxSimpleAttribute(
-                                attributeInfo,
-                                beanName,
-                                className,
-                                instanceName,
-                                checkName,
-                                connection,
-                                serviceNameProvider,
-                                tags,
-                                cassandraAliasing,
-                                emptyDefaultHostname);
-                } else if (COMPOSED_TYPES.contains(attributeType)) {
-                    log.debug(
-                            ATTRIBUTE
-                            + beanName
-                            + " : "
-                            + attributeInfo
-                            + " has attributeInfo composite type");
-                    jmxAttribute =
-                        new JmxComplexAttribute(
-                                attributeInfo,
-                                beanName,
-                                className,
-                                instanceName,
-                                checkName,
-                                connection,
-                                serviceNameProvider,
-                                tags,
-                                emptyDefaultHostname);
-                } else if (MULTI_TYPES.contains(attributeType)) {
-                    log.debug(
-                            ATTRIBUTE
-                            + beanName
-                            + " : "
-                            + attributeInfo
-                            + " has attributeInfo tabular type");
-                    jmxAttribute =
-                        new JmxTabularAttribute(
-                                attributeInfo,
-                                beanName,
-                                className,
-                                instanceName,
-                                checkName,
-                                connection,
-                                serviceNameProvider,
-                                tags,
-                                emptyDefaultHostname);
-                } else {
-                    try {
-                        log.debug(
-                                ATTRIBUTE
-                                + beanName
-                                + " : "
-                                + attributeInfo
-                                + " has an unsupported type: "
-                                + attributeType);
-                    } catch (NullPointerException e) {
-                        log.warn("Caught unexpected NullPointerException");
-                    }
-                    continue;
-                }
-
-                // For each attribute we try it with each configuration to see if there is one that
-                // matches
-                // If so, we store the attribute so metrics will be collected from it. Otherwise we
-                // discard it.
-                for (Configuration conf : configurationList) {
-                    try {
-                        if (jmxAttribute.match(conf)) {
-                            jmxAttribute.setMatchingConf(conf);
-                            metricsCount += jmxAttribute.getMetricsCount();
-                            this.matchingAttributes.add(jmxAttribute);
-
-                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                                    || action.equals(AppConfig.ACTION_LIST_MATCHING)
-                                    || action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                                    && !limitReached
-                                    || action.equals(AppConfig.ACTION_LIST_LIMITED)
-                                    && limitReached) {
-                                reporter.displayMatchingAttributeName(
-                                        jmxAttribute, metricsCount, maxReturnedMetrics);
-                            }
-                            break;
-                        }
-                    } catch (Exception e) {
-                        log.error(
-                                "Error while trying to match attributeInfo configuration "
-                                + "with the Attribute: "
-                                + beanName
-                                + " : "
-                                + attributeInfo,
-                                e);
-                    }
-                }
-                if (jmxAttribute.getMatchingConf() == null
-                        && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                            || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
-                    reporter.displayNonMatchingAttributeName(jmxAttribute);
-                }
-            }
+            addMatchingAttributesForBean(beanName, className, attributeInfos);
         }
-        log.info("Found " + matchingAttributes.size() + " matching attributes");
+        log.info("Found {} matching attributes, collecting {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
     }
 
-    // TODO once this runs in a separate thread we need locks around the attribute collection
     public void beanRegistered(ObjectName beanName) {
         log.debug("Bean registered event. {}", beanName);
         String className;
@@ -839,8 +733,7 @@ public class Instance implements BeanListener{
             log.debug("Getting attributes for bean: " + beanName);
             attributeInfos = connection.getAttributesForBean(beanName);
 
-            int currentMetricCount = this.matchingAttributes.size();
-            this.addMatchingAttributesForBean(beanName, className, attributeInfos, maxReturnedMetrics - currentMetricCount);
+            this.addMatchingAttributesForBean(beanName, className, attributeInfos);
             this.beanAttributeLock.lock();
             try {
                 this.beans.add(beanName);
