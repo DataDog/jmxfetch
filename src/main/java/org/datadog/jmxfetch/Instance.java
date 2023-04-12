@@ -6,7 +6,6 @@ import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.concurrent.CompletableFuture;
 import static java.util.concurrent.TimeUnit.*;
 
 import java.io.File;
@@ -107,6 +106,7 @@ public class Instance implements BeanListener{
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
     private boolean enableBeanSubscription;
+    private boolean beanSubscriptionActive;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -263,8 +263,10 @@ public class Instance implements BeanListener{
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
+        this.beans = new HashSet<>();
         Boolean enableBeanSubscription = (Boolean) instanceMap.get("enable_bean_subscription");
         this.enableBeanSubscription = enableBeanSubscription != null && enableBeanSubscription;
+        this.beanSubscriptionActive = false;
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -425,16 +427,16 @@ public class Instance implements BeanListener{
             throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
-        if (this.enableBeanSubscription) {
-            log.info("Subscribing for bean notifications before init");
-            this.subscribeToBeans();
-        } else {
-            log.info("Bean subscription not enabled.");
-        }
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
         this.refreshBeansList();
+        if (this.enableBeanSubscription) {
+            log.info("Subscribing for bean notifications");
+            this.subscribeToBeans();
+        } else {
+            log.info("Bean subscription not enabled.");
+        }
         this.initialRefreshTime = this.lastRefreshTime;
         log.info("Connected to JMX Server at " + this.toString());
         this.getMatchingAttributes();
@@ -723,33 +725,6 @@ public class Instance implements BeanListener{
         log.info("Bean unregistered event. {}", mBeanName);
     }
 
-    private class BeanSubscriber implements Runnable {
-        private List<String> beanScopes;
-        private Connection connection;
-        private BeanListener listener;
-        public CompletableFuture<Boolean> subscriptionSuccessful;
-
-        BeanSubscriber(List<String> beanScopes, Connection connection, BeanListener listener) {
-            this.beanScopes = beanScopes;
-            this.connection = connection;
-            this.listener = listener;
-            this.subscriptionSuccessful = new CompletableFuture<Boolean>();
-        }
-
-        public void run() {
-            try {
-                log.info("Subscribing to {} bean scopes", beanScopes.size());
-
-                connection.subscribeToBeanScopes(beanScopes, this.listener);
-                this.subscriptionSuccessful.complete(true);
-
-                Thread.currentThread().join();
-            } catch (Exception e) {
-                log.warn("Exception while subscribing to beans {}", e);
-                this.subscriptionSuccessful.complete(false);
-            }
-        }
-    }
 
     private void subscribeToBeans() {
         List<String> beanScopes = this.getBeansScopes();
@@ -757,11 +732,18 @@ public class Instance implements BeanListener{
 
         try {
             new Thread(subscriber).start();
-            if (subscriber.subscriptionSuccessful.get(1, SECONDS)) {
-                log.info("Subscribed successfully!");
-            }
+            this.beanSubscriptionActive = subscriber.subscriptionSuccessful.get(1, SECONDS);
         } catch (Exception e) {
-            log.warn("Exception while subscribing to beans {}", e);
+            log.warn("Error retrieving bean subscription value, assuming subscription failed. Exception: {}", e);
+            this.beanSubscriptionActive = false;
+        }
+
+        if (this.beanSubscriptionActive) {
+            log.info("Subscribed to {} bean scopes successfully!", beanScopes.size());
+        } else {
+            log.warn("Bean subscription failed! Will rely on bean_refresh, ensure it is set "
+                    + " to an appropriate value (currently {} seconds)",
+                    this.refreshBeansPeriod);
         }
     }
 
@@ -778,27 +760,53 @@ public class Instance implements BeanListener{
      * certain actions, and fallback if necessary.
      */
     private synchronized void refreshBeansList() throws IOException {
-        this.beans = new HashSet<ObjectName>();
+        Set<ObjectName> newBeans = new HashSet<>();
         String action = appConfig.getAction();
         boolean limitQueryScopes =
                 !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
+        boolean fullBeanQueryNeeded = false;
         if (limitQueryScopes) {
             try {
                 List<String> beanScopes = getBeansScopes();
                 for (String scope : beanScopes) {
                     ObjectName name = new ObjectName(scope);
-                    this.beans.addAll(connection.queryNames(name));
+                    newBeans.addAll(connection.queryNames(name));
                 }
             } catch (Exception e) {
+                fullBeanQueryNeeded = true;
                 log.error(
                         "Unable to compute a common bean scope, querying all beans as a fallback",
                         e);
             }
         }
 
-        this.beans = (this.beans.isEmpty()) ? connection.queryNames(null) : this.beans;
+        if (fullBeanQueryNeeded) {
+            newBeans = connection.queryNames(null);
+        }
+        if (this.beanSubscriptionActive && !fullBeanQueryNeeded) {
+            // This code exists to validate the bean-subscription is working properly
+            // If every new bean and de-registered bean properly fires an event, then
+            // this.beans (current set that has been updated via subscription) should
+            // always equal the new set of beans queried (unless it was a full bean query)
+            Set<ObjectName> beansNotSeen = new HashSet<>();
+            if (!this.beans.containsAll(newBeans)) {
+                beansNotSeen.addAll(newBeans);
+                beansNotSeen.removeAll(this.beans);
+                log.error("Bean refresh found {} new beans that were not already known via subscription", beansNotSeen.size());
+            }
+            if (!newBeans.containsAll(this.beans)){
+                beansNotSeen.addAll(this.beans);
+                beansNotSeen.removeAll(newBeans);
+                log.error("Bean refresh found {} FEWER beans than already known via subscription", beansNotSeen.size());
+            }
+
+            for (ObjectName b : beansNotSeen) {
+                log.error("Bean {} is one that has never been seen before, see why subscription did not detect this bean.", b.toString());
+            }
+        }
+        this.beans = newBeans;
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
