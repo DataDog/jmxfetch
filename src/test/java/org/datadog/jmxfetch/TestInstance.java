@@ -216,4 +216,42 @@ public class TestInstance extends TestCommon {
         // 17 = 13 metrics from java.lang + 2 iteration=one + 2 iteration=two
         assertEquals(17, metrics.size());
     }
+
+    /** Tests bean_subscription */
+    @Test
+    public void testBeanSubscription() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        initApplication("jmx_bean_subscription.yaml");
+
+        // We do a first collection
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang
+        assertEquals(13, metrics.size());
+
+        // We register an additional mbean
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
+        log.info("sleeping before the next collection");
+        Thread.sleep(1500);
+
+        // We run a second collection. refresh_beans_initial should be due.
+        run();
+        metrics = getMetrics();
+
+        // 15 = 13 metrics from java.lang + 2 iteration=one
+        assertEquals(15, metrics.size());
+
+        // We register additional mbean
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=two");
+        log.info("sleeping before the next collection");
+        Thread.sleep(1500);
+
+        // We run a third collection.
+        run();
+        metrics = getMetrics();
+
+        // 17 = 13 metrics from java.lang + 2 iteration=one + 2 iteration=two
+        assertEquals(17, metrics.size());
+    }
 }
