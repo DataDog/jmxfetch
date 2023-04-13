@@ -107,6 +107,9 @@ public class Metrics implements MetricsMBean, MBeanRegistration {
 
     @Override
     public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
+        if (name != null) {
+            return name;
+        }
         return new ObjectName("test:type=MyMBean,name=" + this.name);
     }
 

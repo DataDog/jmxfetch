@@ -1,18 +1,21 @@
 package com.datadoghq.jmxfetch.test;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
 import static java.util.concurrent.TimeUnit.*;
+
+import java.util.Hashtable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 
 class MetricTick implements Runnable{
-    private MBeanServer mbs;
-    private MetricsDAO metricsDAO;
+    private final MBeanServer mbs;
+    private final MetricsDAO metricsDAO;
     private long nextBeanIdx;
 
-    MetricTick(MBeanServer mbs, MetricsDAO dao, long nextBeanIdx) {
+    MetricTick(final MBeanServer mbs, final MetricsDAO dao, final long nextBeanIdx) {
         this.mbs = mbs;
         this.metricsDAO = dao;
         this.nextBeanIdx = nextBeanIdx;
@@ -55,6 +58,14 @@ public class Service {
             final MetricsMBean metrics = new Metrics(metricName, metricsDAO);
             mbs.registerMBean(metrics, null);
         }
+
+        // register a bean a single bean with different ObjectName
+        final Hashtable<String, String> scopeTestTable = new Hashtable<>();
+        scopeTestTable.put("type","scoped");
+        scopeTestTable.put("name","scopedTest");
+        scopeTestTable.put("request","special");
+        mbs.registerMBean( new Metrics("scopeTest", metricsDAO), new ObjectName("scope.test", scopeTestTable));
+
         final MetricTick ticker = new MetricTick(mbs, metricsDAO, generateNewBeans);
         Service.scheduler.scheduleAtFixedRate(ticker, 1, 1, SECONDS);
         Thread.currentThread().join();

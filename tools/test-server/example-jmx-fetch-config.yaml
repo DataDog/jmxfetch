@@ -39,6 +39,9 @@ init_config:
             metric_type: gauge
             limit: 1
             sort: desc
+    - include:
+        bean:
+          - scope.test:name=scopedTest,type=scoped,request=special
 
 instances:
   - host: localhost
