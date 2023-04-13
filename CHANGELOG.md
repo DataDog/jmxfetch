@@ -1,5 +1,8 @@
 Changelog
 =========
+# 0.47.8 / 2022-04-14
+
+* [BUGFIX] Changes connection failure detection during bean refresh to be more efficient [#424][]
 
 # 0.47.7 / 2022-04-03
 
@@ -724,6 +727,7 @@ Changelog
 [#416]: https://github.com/DataDog/jmxfetch/issues/416
 [#419]: https://github.com/DataDog/jmxfetch/issues/419
 [#420]: https://github.com/DataDog/jmxfetch/issues/420
+[#424]: https://github.com/DataDog/jmxfetch/issues/424
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
