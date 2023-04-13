@@ -527,9 +527,6 @@ public class Instance {
                     break;
                 }
             }
-            if (!connection.isAlive()) {
-                throw new IOException("Connection to application died during bean refresh");
-            }
             String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
@@ -541,11 +538,7 @@ public class Instance {
                 attributeInfos = connection.getAttributesForBean(beanName);
             } catch (IOException e) {
                 // we should not continue
-                log.warn("Cannot get bean attributes or class name: " + e.getMessage());
-                if (e.getMessage().equals(connection.CLOSED_CLIENT_CAUSE)) {
-                    throw e;
-                }
-                continue;
+                throw e;
             } catch (Exception e) {
                 log.warn("Cannot get bean attributes or class name: " + e.getMessage());
                 continue;

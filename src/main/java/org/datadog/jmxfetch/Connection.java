@@ -30,7 +30,6 @@ import javax.management.remote.JMXServiceURL;
 @Slf4j
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
-    public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
     protected Map<String, Object> env;
