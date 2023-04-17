@@ -258,4 +258,51 @@ public class TestInstance extends TestCommon {
         // 17 = 13 metrics from java.lang + 2 iteration=one + 2 iteration=two
         assertEquals(17, metrics.size());
     }
+
+    @Test
+    public void testBeanUnsubscription() throws Exception {
+        // This delay is for the subscription thread to recieve the MBeanNotification
+        // and call into `Instance`. Conceptually this is just a Thread.yield()
+        int subscriptionDelay = 200;
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        // Bean-refresh interval is to to 50s, so the only bean refresh will be
+        // initial fetch
+        initApplication("jmx_bean_subscription.yaml");
+
+        // We do a first collection
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang
+        assertEquals(13, metrics.size());
+
+        // We register an additional mbean
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
+        log.info("sleeping before the next collection");
+        Thread.sleep(subscriptionDelay);
+
+        run();
+        metrics = getMetrics();
+
+        // 15 = 13 metrics from java.lang + 2 iteration=one
+        assertEquals(15, metrics.size());
+
+        // We UN-register first mbean
+        unregisterMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
+        log.info("sleeping before the next collection");
+        Thread.sleep(subscriptionDelay);
+
+        // We run a third collection.
+        run();
+        metrics = getMetrics();
+
+        // 13 metrics from java.lang only
+        // Note that the collected metrics size is correct even without any special work for bean
+        // unregistration as the `iteration=one` metric will fail to be found and simply not be included
+        assertEquals(13, metrics.size());
+        // Which is why this second check exists, it reflects the running total of metrics
+        // collected which is used to determine if new attributes can be added
+        Instance i = app.getInstances().get(0);
+        assertEquals(13, i.getCurrentNumberOfMetrics());
+    }
 }

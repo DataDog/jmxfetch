@@ -566,6 +566,8 @@ public class Instance implements BeanListener{
                                         + jmxAttr
                                         + " twice in a row. Removing it from the attribute list");
                         it.remove();
+                        this.failingAttributes.remove(jmxAttr);
+                        this.metricCountForMatchingAttributes -= jmxAttr.getLastMetricsCount();
                     } else {
                         this.failingAttributes.add(jmxAttr);
                     }
@@ -799,14 +801,27 @@ public class Instance implements BeanListener{
         } catch (Exception e) {
             log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
         } finally {
+            log.debug("Bean registration processed. {}", beanName);
             this.beanAndAttributeLock.unlock();
         }
     }
     public void beanUnregistered(ObjectName mBeanName) {
         this.beanAndAttributeLock.lock();
         try {
-            log.info("Bean unregistered event. {}", mBeanName);
+            int removedMetrics = 0;
+            int removedAttributes = 0;
+            for (Iterator<JmxAttribute> it = this.matchingAttributes.iterator(); it.hasNext();) {
+                JmxAttribute current = it.next();
+                if (current.getBeanName().compareTo(mBeanName) == 0) {
+                    it.remove();
+                    removedMetrics += current.getLastMetricsCount();
+                    removedAttributes++;
+                }
+            }
+            log.info("Bean unregistered event, removed {} attributes ({} metrics) matching bean {}", removedAttributes, removedMetrics, mBeanName);
+            this.metricCountForMatchingAttributes -= removedMetrics;
         } finally {
+            log.debug("Bean unregistration processed. {}", mBeanName);
             this.beanAndAttributeLock.unlock();
         }
     }
@@ -959,6 +974,11 @@ public class Instance implements BeanListener{
     /** Returns the maximum number of metrics an instance may collect. */
     public int getMaxNumberOfMetrics() {
         return this.maxReturnedMetrics;
+    }
+
+    /** Returns the current number of metrics this instance will collect. */
+    public int getCurrentNumberOfMetrics() {
+        return this.metricCountForMatchingAttributes;
     }
 
     /** Returns whether or not the instance has reached the maximum bean collection limit. */

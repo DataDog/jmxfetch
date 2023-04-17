@@ -55,8 +55,10 @@ public class Connection {
         public void handleNotification(Notification notification, Object handback) {
             if (!(notification instanceof MBeanServerNotification)) {
                 log.warn("Got unknown notification, expected MBeanServerNotification but got {}", notification.getClass());
+                return;
             }
             MBeanServerNotification mbs = (MBeanServerNotification) notification;
+            log.debug("MBeanNotification: ts {} seqNum: {} msg: '{}' userData: {} ", mbs.getTimeStamp(), mbs.getSequenceNumber(), mbs.getMessage(), mbs.getUserData());
             ObjectName mBeanName = mbs.getMBeanName();
             if (mbs.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
                 bl.beanRegistered(mBeanName);

@@ -134,7 +134,7 @@ public class JmxTabularAttribute extends JmxSubAttribute {
     }
 
     @Override
-    public List<Metric> getMetrics()
+    public List<Metric> getMetricsImpl()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
         Map<String, List<Metric>> subMetrics = new HashMap<String, List<Metric>>();

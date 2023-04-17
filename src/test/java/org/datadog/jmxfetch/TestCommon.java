@@ -14,6 +14,7 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,11 +74,30 @@ public class TestCommon {
      * @throws MBeanRegistrationException
      */
     @After
-    public void unregisterMBean() throws MBeanRegistrationException, InstanceNotFoundException {
+    public void unregisterAllMBeans() throws MBeanRegistrationException, InstanceNotFoundException {
         if (mbs != null) {
             for (ObjectName objectName : objectNames) {
                 mbs.unregisterMBean(objectName);
             }
+        }
+    }
+
+    /**
+     * Unregister a specific MBean.
+     *
+     * @throws InstanceNotFoundException
+     * @throws MBeanRegistrationException
+     */
+    protected void unregisterMBean(Object application, String objectStringName) throws MBeanRegistrationException, InstanceNotFoundException, MalformedObjectNameException {
+        if (mbs != null) {
+            ObjectName objectName = new ObjectName(objectStringName);
+            for (Iterator<ObjectName> it = objectNames.iterator(); it.hasNext();) {
+                ObjectName elem = it.next();
+                if (elem.compareTo(objectName) == 0) {
+                    it.remove();
+                }
+            }
+            mbs.unregisterMBean(objectName);
         }
     }
 

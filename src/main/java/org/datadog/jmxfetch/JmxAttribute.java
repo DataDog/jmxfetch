@@ -62,6 +62,7 @@ public abstract class JmxAttribute {
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
+    private int lastMetricSize;
 
     JmxAttribute(
             MBeanAttributeInfo attribute,
@@ -84,6 +85,7 @@ public abstract class JmxAttribute {
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
         this.serviceNameProvider = serviceNameProvider;
+        this.lastMetricSize = 0;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -254,9 +256,17 @@ public abstract class JmxAttribute {
                 + attribute.getType();
     }
 
-    public abstract List<Metric> getMetrics()
+    protected abstract List<Metric> getMetricsImpl()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException;
+
+    final public List<Metric> getMetrics()
+            throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
+                    ReflectionException, IOException {
+        List<Metric> metrics = this.getMetricsImpl();
+        this.lastMetricSize = metrics.size();
+        return metrics;
+    }
 
     /**
      * An abstract function implemented in the inherited classes JmxSimpleAttribute and
@@ -278,6 +288,12 @@ public abstract class JmxAttribute {
             return 0;
         }
     }
+
+    /** Gets the most recent collection's metric count */
+    public int getLastMetricsCount() {
+        return this.lastMetricSize;
+    }
+
 
     /** Gets the JMX Attribute info value. Makes a call through the connection */
     Object getJmxValue()
