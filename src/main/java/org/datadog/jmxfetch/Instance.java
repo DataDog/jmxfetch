@@ -426,27 +426,6 @@ public class Instance implements BeanListener{
         return connection;
     }
 
-    private class LockHolder implements AutoCloseable {
-        private final ReentrantLock lock;
-
-        public LockHolder(ReentrantLock lock) {
-            this.lock = lock;
-
-            lock.lock();
-        }
-
-        @Override
-        public void close() {
-            /*
-            log.info("Releasing lock from thread {}, lockCount is {}", Thread.currentThread().toString(), lock.getHoldCount());
-            for (StackTraceElement elem : Thread.currentThread().getStackTrace()) {
-                log.info("\t{}", elem.toString());
-            } */
-            lock.unlock();
-            //log.info("Lock released, lockCount is {}", lock.getHoldCount());
-        }
-    }
-
     private class DebugReentrantLock extends ReentrantLock {
         private boolean verbose;
         public DebugReentrantLock(boolean verbose) {
@@ -499,12 +478,15 @@ public class Instance implements BeanListener{
                 "Trying to collect bean list for the first time for JMX Server at "
                         + this.toString());
 
-        try (LockHolder ignored = new LockHolder(this.beanAndAttributeLock)) {
+        this.beanAndAttributeLock.lock();
+        try {
             this.refreshBeansList(true);
             this.initialRefreshTime = this.lastRefreshTime;
             log.info("Connected to JMX Server at " + this.toString());
             this.getMatchingAttributes();
             log.info("Done initializing JMX Server at " + this.toString());
+        } finally {
+            this.beanAndAttributeLock.unlock();
         }
     }
 
@@ -531,18 +513,6 @@ public class Instance implements BeanListener{
         // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
         // specified in the yaml/json config
         log.debug("getMetrics invoked");
-        Integer period = (this.initialRefreshTime == this.lastRefreshTime)
-            ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
-
-        List<Metric> metrics = new ArrayList<Metric>();
-        if (isPeriodDue(this.lastRefreshTime, period)) {
-            log.info("Refreshing bean list");
-            try (LockHolder ignored = new LockHolder(this.beanAndAttributeLock)) {
-                this.refreshBeansList(false);
-                this.getMatchingAttributes();
-            }
-        }
-
         if (this.beanAndAttributeLock.isLocked() && !this.beanAndAttributeLock.isHeldByCurrentThread()) {
             log.debug("Waiting for lock, isLocked {} isHeldByCurrentThread {} holdCount {}", this.beanAndAttributeLock.isLocked(), this.beanAndAttributeLock.isHeldByCurrentThread(), this.beanAndAttributeLock.getHoldCount());
             Thread owner = this.beanAndAttributeLock.getOwningThread();
@@ -558,8 +528,21 @@ public class Instance implements BeanListener{
                 }
             }
         }
-        try (LockHolder ignored = new LockHolder(this.beanAndAttributeLock)) {
+
+        Integer period = (this.initialRefreshTime == this.lastRefreshTime)
+            ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
+
+        List<Metric> metrics = new ArrayList<Metric>();
+        this.beanAndAttributeLock.lock();
+        try {
             log.debug("Got the lock");
+
+            if (isPeriodDue(this.lastRefreshTime, period)) {
+                log.info("Refreshing bean list");
+                this.refreshBeansList(false);
+                this.getMatchingAttributes();
+            }
+
             Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
             // increment the lastCollectionTime
@@ -591,6 +574,8 @@ public class Instance implements BeanListener{
 
             long duration = System.currentTimeMillis() - this.lastCollectionTime;
             log.info("Collection " + matchingAttributes.size() + " matching attributes finished in " + duration + "ms.");
+        } finally {
+            this.beanAndAttributeLock.unlock();
         }
         return metrics;
     }
@@ -753,7 +738,8 @@ public class Instance implements BeanListener{
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
 
-        try (LockHolder ignored = new LockHolder(this.beanAndAttributeLock)) {
+        this.beanAndAttributeLock.lock();
+        try {
             this.matchingAttributes.clear();
             this.failingAttributes.clear();
 
@@ -787,6 +773,8 @@ public class Instance implements BeanListener{
                 addMatchingAttributesForBean(beanName, className, attributeInfos);
             }
             log.info("Found {} matching attributes, collecting {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
+        } finally {
+            this.beanAndAttributeLock.unlock();
         }
     }
 
@@ -815,8 +803,11 @@ public class Instance implements BeanListener{
         }
     }
     public void beanUnregistered(ObjectName mBeanName) {
-        try (LockHolder ignored = new LockHolder(this.beanAndAttributeLock)) {
+        this.beanAndAttributeLock.lock();
+        try {
             log.info("Bean unregistered event. {}", mBeanName);
+        } finally {
+            this.beanAndAttributeLock.unlock();
         }
     }
 
@@ -861,7 +852,8 @@ public class Instance implements BeanListener{
                 !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
-        try (LockHolder ignored = new LockHolder(this.beanAndAttributeLock)) {
+        this.beanAndAttributeLock.lock();
+        try {
 
             boolean fullBeanQueryNeeded = false;
             if (limitQueryScopes) {
@@ -905,6 +897,8 @@ public class Instance implements BeanListener{
             }
             this.beans = newBeans;
             this.lastRefreshTime = System.currentTimeMillis();
+        } finally {
+            this.beanAndAttributeLock.unlock();
         }
     }
 
