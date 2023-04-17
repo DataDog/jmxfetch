@@ -2,7 +2,7 @@ init_config:
 
 instances:
   -   process_name_regex: .*surefire.*
-      min_collection_interval: 1
+      min_collection_interval: null
       enable_bean_subscription: true
       refresh_beans: 50
       name: jmx_test_instance

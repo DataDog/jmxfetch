@@ -220,7 +220,12 @@ public class TestInstance extends TestCommon {
     /** Tests bean_subscription */
     @Test
     public void testBeanSubscription() throws Exception {
+        // This delay is for the subscription thread to recieve the MBeanNotification
+        // and call into `Instance`. Conceptually this is just a Thread.yield()
+        int subscriptionDelay = 10;
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        // Bean-refresh interval is to to 50s, so the only bean refresh will be
+        // initial fetch
         initApplication("jmx_bean_subscription.yaml");
 
         // We do a first collection
@@ -233,9 +238,8 @@ public class TestInstance extends TestCommon {
         // We register an additional mbean
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
         log.info("sleeping before the next collection");
-        Thread.sleep(1500);
+        Thread.sleep(subscriptionDelay);
 
-        // We run a second collection. refresh_beans_initial should be due.
         run();
         metrics = getMetrics();
 
@@ -245,7 +249,7 @@ public class TestInstance extends TestCommon {
         // We register additional mbean
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=two");
         log.info("sleeping before the next collection");
-        Thread.sleep(1500);
+        Thread.sleep(subscriptionDelay);
 
         // We run a third collection.
         run();
