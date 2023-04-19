@@ -776,29 +776,32 @@ public class Instance {
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
+            connection = null;
         }
     }
 
     /**
      * Asynchronoush cleanup of instance, including connection.
      * */
-    public void cleanUpAsync() {
-        class AsyncCleaner implements Runnable {
-            Instance instance;
+    public synchronized void cleanUpAsync() {
+        appConfig = null;
 
-            AsyncCleaner(Instance instance) {
-                this.instance = instance;
+        class AsyncCleaner implements Runnable {
+            Connection conn;
+
+            AsyncCleaner(Connection conn) {
+                this.conn = conn;
             }
 
             @Override
             public void run() {
-                instance.appConfig = null;
-                if (instance.connection != null) {
-                    instance.connection.closeConnector();
-                }
+                conn.closeConnector();
             }
         }
 
-        new Thread(new AsyncCleaner(this)).start();
+        if (connection != null) {
+            new Thread(new AsyncCleaner(connection), "jmx-closer").start();
+            connection = null;
+        }
     }
 }
