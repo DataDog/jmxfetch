@@ -23,7 +23,7 @@ import org.testcontainers.utility.DockerImageName;
 import org.junit.Before;
 import org.junit.Rule;
 
-public class TestIntegrationSolr extends TestIntegration {
+public class TestSolrContainer extends TestRemoteAppCommon {
     
     private static final int jmxPort = 8799;
     private MBeanServerConnection mBeanServerConnection;
