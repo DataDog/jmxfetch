@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -529,12 +530,13 @@ public class Instance {
             String className;
             MBeanAttributeInfo[] attributeInfos;
             try {
-                log.debug("Getting class name for bean: {}", beanName);
-                className = connection.getClassNameForBean(beanName);
+                log.debug("Getting bean info for bean: {}", beanName);
+                MBeanInfo info = connection.getMBeanInfo(beanName);
 
-                // Get all the attributes for bean_name
+                log.debug("Getting class name for bean: {}", beanName);
+                className = info.getClassName();
                 log.debug("Getting attributes for bean: {}", beanName);
-                attributeInfos = connection.getAttributesForBean(beanName);
+                attributeInfos = info.getAttributes();
             } catch (IOException e) {
                 // we should not continue
                 throw e;

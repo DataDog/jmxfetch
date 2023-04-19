@@ -20,6 +20,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
+import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
@@ -36,17 +37,10 @@ public class Connection {
     protected JMXServiceURL address;
 
     /** Gets attributes for matching bean name. */
-    public MBeanAttributeInfo[] getAttributesForBean(ObjectName beanName)
+    public MBeanInfo getMBeanInfo(ObjectName beanName)
             throws InstanceNotFoundException, IntrospectionException, ReflectionException,
                     IOException {
-        return mbs.getMBeanInfo(beanName).getAttributes();
-    }
-
-    /** Gets class name for matching bean name. */
-    public String getClassNameForBean(ObjectName beanName)
-            throws InstanceNotFoundException, IntrospectionException, ReflectionException,
-            IOException {
-        return mbs.getMBeanInfo(beanName).getClassName();
+        return mbs.getMBeanInfo(beanName);
     }
 
     /** Queries beans on specific scope. Returns set of matching query names.. */
