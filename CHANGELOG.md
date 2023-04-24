@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.47.9 /TBC
+
 # 0.47.8 / 2022-04-14
 
 * [BUGFIX] Changes connection failure detection during bean refresh to be more efficient [#424][]
