@@ -11,6 +11,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
     steps:
       - checkout
+      - setup_remote_docker
       - run: mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configurationFile=log4j2.travis.properties -Dtests.log_level=info
       - run:
           when: on_fail
