@@ -92,6 +92,7 @@ public class HttpClient {
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
             } catch (Exception e) {
+                log.info("Exception during dummyTrustManager configuration: ", e);
                 log.debug("session token unavailable - not setting");
                 this.token = "";
             }
