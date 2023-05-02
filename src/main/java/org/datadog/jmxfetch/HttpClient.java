@@ -94,7 +94,8 @@ public class HttpClient {
                 try {
                     sc = SSLContext.getInstance("SSL");
                 } catch (NoSuchAlgorithmException e) {
-                    log.warn("Unable to get the SSLContext 'SSL' algorithm from any of the installed providers. Providers: ");
+                    log.warn("Unable to get the SSLContext 'SSL' algorithm from any of the installed providers. e: ", e);
+                    log.warn("Providers: ");
                     for (Provider prov : Security.getProviders()) {
                         log.warn("{}", prov.toString());
                     }
