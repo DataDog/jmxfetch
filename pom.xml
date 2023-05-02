@@ -5,7 +5,7 @@
 
     <groupId>com.datadoghq</groupId>
     <artifactId>jmxfetch</artifactId>
-    <version>0.47.8</version>
+    <version>0.47.9-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>jmxfetch</name>
@@ -42,7 +42,7 @@
         <slf4j.version>1.7.32</slf4j.version>
         <jackson.version>2.12.3</jackson.version>
         <snakeyaml.version>2.0</snakeyaml.version>
-        <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+        <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
         <!-- Note: using project checkstyle with AOSP style
         find the default google java checkstyle config here -
         <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
@@ -95,7 +95,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.6</version>
+                        <version>1.6.13</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>nexus</serverId>
@@ -108,7 +108,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
