@@ -11,6 +11,9 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.security.Security;
+import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 
 @Slf4j
 public class HttpClient {
@@ -88,11 +91,21 @@ public class HttpClient {
                                         String authType) {}
                             }
                         };
-                sc = SSLContext.getInstance("SSL");
+                try {
+                    sc = SSLContext.getInstance("SSL");
+                } catch (NoSuchAlgorithmException e) {
+                    log.warn("Unable to get the SSLContext 'SSL' algorithm from any of the installed providers. Providers: ");
+                    for (Provider prov : Security.getProviders()) {
+                        log.warn("{}", prov.toString());
+                    }
+                    log.warn("Using default SSLContext");
+                    sc = SSLContext.getDefault();
+                }
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                log.info("Successfully installed DummyTrustManager");
             } catch (Exception e) {
-                log.info("Exception during dummyTrustManager configuration: ", e);
+                log.error("Exception during dummyTrustManager configuration: ", e);
                 log.debug("session token unavailable - not setting");
                 this.token = "";
             }
