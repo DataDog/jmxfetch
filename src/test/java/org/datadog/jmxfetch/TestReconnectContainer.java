@@ -16,12 +16,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.DockerImageName;
 
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -96,8 +98,12 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
         }
         return found;
     }
+
+    private static ImageFromDockerfile img = new ImageFromDockerfile()
+        .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
+
     @Rule
-    public GenericContainer<?> cont = new GenericContainer<>(DockerImageName.parse("jmx-failure-server"))
+    public GenericContainer<?> cont = new GenericContainer<>(img)
         .withExposedPorts(rmiPort, controlPort)
         .withEnv(Collections.singletonMap("JJ_RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("JJ_CONTROL_HTTP_PORT", "" + controlPort))
