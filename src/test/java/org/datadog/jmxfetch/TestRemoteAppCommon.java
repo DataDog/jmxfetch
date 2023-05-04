@@ -38,6 +38,9 @@ final class ConfigUtil {
     private static String getFormattedTemplateConfig(String resourceName, String host, int port) throws IOException{
         URL yamlURL =
                 Thread.currentThread().getContextClassLoader().getResource(resourceName);
+        if (yamlURL == null) {
+            throw new IOException("Could not find resource with name " + resourceName);
+        }
         String yamlContents = ConfigUtil.readUrlContentsToString(yamlURL);
         String templatedContent = MessageFormat.format(yamlContents, host, port);
 

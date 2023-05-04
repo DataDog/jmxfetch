@@ -4,13 +4,10 @@ init_config:
   collect_default_jvm_metrics: false
 
 instances:
-    -   name: jmxint_solr
+    -   name: jmxint_container
         host: {0}
         collect_default_jvm_metrics: false
         port: {1,number,#}
         conf:
           - include:
-              domain: solr
-              attribute:
-                Value:
-                  metric_type: gauge
+              domain: Bohnanza
