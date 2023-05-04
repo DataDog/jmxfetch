@@ -4,13 +4,13 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
-import static java.util.concurrent.TimeUnit.*;
-
 import java.util.Hashtable;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
-class MetricTick implements Runnable{
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+class MetricTick implements Runnable {
     private final MBeanServer mbs;
     private final MetricsDAO metricsDAO;
     private long nextBeanIdx;
@@ -42,10 +42,11 @@ class MetricTick implements Runnable{
 public class Service {
     private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
+
         long totalMetrics = 1;
         long generateNewBeans = -1;
-        if (args.length > 1) {
+        if (args.length > 0) {
             totalMetrics = Long.parseLong(args[0]);
             if (args.length == 2) {
                 generateNewBeans = totalMetrics;
@@ -61,10 +62,10 @@ public class Service {
 
         // register a bean a single bean with different ObjectName
         final Hashtable<String, String> scopeTestTable = new Hashtable<>();
-        scopeTestTable.put("type","scoped");
-        scopeTestTable.put("name","scopedTest");
-        scopeTestTable.put("request","special");
-        mbs.registerMBean( new Metrics("scopeTest", metricsDAO), new ObjectName("scope.test", scopeTestTable));
+        scopeTestTable.put("type", "scoped");
+        scopeTestTable.put("name", "scopedTest");
+        scopeTestTable.put("request", "special");
+        mbs.registerMBean(new Metrics("scopeTest", metricsDAO), new ObjectName("scope.test", scopeTestTable));
 
         final MetricTick ticker = new MetricTick(mbs, metricsDAO, generateNewBeans);
         Service.scheduler.scheduleAtFixedRate(ticker, 1, 1, SECONDS);
