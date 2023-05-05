@@ -7,13 +7,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.security.Security;
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
 
 @Slf4j
 public class HttpClient {
@@ -24,6 +22,11 @@ public class HttpClient {
     private int port;
 
     private static final String USER_AGENT = "Datadog/JMXFetch";
+    // Per javadocs, this is the only version that all compliant JVMs are required to support
+    // I found 'TLS' was the appropriate protocol (will use the latest support TLSv? version)
+    // rather than specifically 'TLSv1' as the docs recommend
+    // https://docs.oracle.com/javase/7/docs/api/javax/net/ssl/SSLContext.html
+    private static final String minRequiredSSLProtocol = "TLS";
 
     public static class HttpResponse {
         private int responseCode;
@@ -79,7 +82,7 @@ public class HttpClient {
                         new TrustManager[] {
                             new X509TrustManager() {
                                 public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                                    return null;
+                                    return new X509Certificate[0];
                                 }
 
                                 public void checkClientTrusted(
@@ -91,22 +94,14 @@ public class HttpClient {
                                         String authType) {}
                             }
                         };
-                try {
-                    sc = SSLContext.getInstance("SSL");
-                } catch (NoSuchAlgorithmException e) {
-                    log.warn("Unable to get the SSLContext 'SSL' algorithm from any of the installed providers. e: ", e);
-                    log.warn("Providers: ");
-                    for (Provider prov : Security.getProviders()) {
-                        log.warn("{}", prov.toString());
-                    }
-                    log.warn("Using default SSLContext");
-                    sc = SSLContext.getDefault();
-                }
+                sc = SSLContext.getInstance(minRequiredSSLProtocol);
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-                log.info("Successfully installed DummyTrustManager");
+                log.info("Successfully installed dummyTrustManager");
             } catch (Exception e) {
-                log.error("Exception during dummyTrustManager configuration: ", e);
+                log.error("Error installing dummyTrustManager. Communications with the Agent will "
+                        + "be affected. Agent Status will be unreliable and AutoDiscovery of new "
+                        + "JMX checks will fail. error: ", e);
                 log.debug("session token unavailable - not setting");
                 this.token = "";
             }
