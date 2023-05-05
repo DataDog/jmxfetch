@@ -5,8 +5,12 @@ import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -74,6 +78,16 @@ public class App
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
         RMISocketFactory.setSocketFactory(customRMISocketFactory);
 
+        // Initialize RMI registry at same port as the jmx service
+        LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
+
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+
+        MetricsDAO mDao = new MetricsDAO();
+        mDao.runTickLoop();
+
+        BeanManager bm = new BeanManager(mbs, mDao);
+
         Javalin controlServer = Javalin.create();
 
         controlServer.post("/cutNetwork", ctx -> {
@@ -85,12 +99,37 @@ public class App
             customRMISocketFactory.setClosed(false);
             ctx.result("JMX network restored").status(200);
         });
+
+        controlServer.get("/beans/{domain}", ctx -> {
+            String domain = ctx.pathParam("domain");
+            Optional<List<Metrics>> bs = bm.getMBeanState(domain);
+            if (bs.isPresent()) {
+                List<String> metricNames = bs.get().stream().map(metric -> metric.name).collect(Collectors.toList());
+
+                ctx.status(200).json(metricNames);
+            } else {
+                ctx.status(404);
+            }
+        });
+
+        controlServer.post("/beans/{domain}", ctx -> {
+            String domain = ctx.pathParam("domain");
+
+            BeanSpec beanSpec;
+            try {
+                beanSpec = ctx.bodyAsClass(BeanSpec.class);
+                beanSpec.domain = domain;
+            } catch (Exception e) {
+                ctx.status(400).result("Invalid JSON format");
+                return;
+            }
+
+            // This should block until the mbeanserver reaches the desired state
+            bm.setMBeanState(beanSpec);
+
+            ctx.status(200).result("Received bean request for domain: " + domain);
+        });
         controlServer.start(config.controlPort);
-
-        // Initialize RMI registry at same port as the jmx service
-        LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
-
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
         String domain = "Bohnanza";
         ObjectName mbeanName = new ObjectName(domain + ":name=MyMBean");
