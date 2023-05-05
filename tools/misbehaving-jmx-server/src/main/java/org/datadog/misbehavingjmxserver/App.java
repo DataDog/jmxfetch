@@ -29,11 +29,27 @@ class AppConfig {
     @Parameter(names = {"--rmi-port", "-rp"})
     public int rmiPort = 1099;
 
-    @Parameter(names = {"--rmi-interface", "-ri"})
-    public String rmiInterface = "localhost";
+    @Parameter(names = {"--rmi-host", "-rh"})
+    public String rmiHost = "localhost";
 
     @Parameter(names = {"--control-port", "-cp"})
     public int controlPort = 8080;
+
+    public void overrideFromEnv() {
+        String val;
+        val = System.getenv("RMI_PORT");
+        if (val != null) {
+            this.rmiPort = Integer.parseInt(val);
+        }
+        val = System.getenv("RMI_HOST");
+        if (val != null) {
+            this.rmiHost = val;
+        }
+        val = System.getenv("CONTROL_PORT");
+        if (val != null) {
+            this.controlPort = Integer.parseInt(val);
+        }
+    }
 }
 
 @Slf4j
@@ -45,8 +61,10 @@ public class App
         JCommander jCommander = JCommander.newBuilder()
                 .addObject(config)
                 .build();
+
         try {
             jCommander.parse(args);
+            config.overrideFromEnv();
         } catch (Exception e) {
             jCommander.usage();
             System.exit(1);
@@ -58,18 +76,6 @@ public class App
 
         Javalin controlServer = Javalin.create();
 
-        controlServer.post("/closeAllSockets", ctx -> {
-            customRMISocketFactory.closeAllSockets();
-            ctx.result("Sockets closed.").status(200);
-        });
-        controlServer.post("/closeClientSockets", ctx -> {
-            customRMISocketFactory.closeClientSockets();
-            ctx.result("Client Sockets closed.").status(200);
-        });
-        controlServer.post("/closeServerSockets", ctx -> {
-            customRMISocketFactory.closeServerSockets();
-            ctx.result("Server Sockets closed.").status(200);
-        });
         controlServer.post("/cutNetwork", ctx -> {
             customRMISocketFactory.setClosed(true);
             customRMISocketFactory.closeAllSockets();
@@ -95,7 +101,7 @@ public class App
         // IMPORTANT! Without this, the custom RMI socket factory will not be used for JMX connections
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, customRMISocketFactory);
 
-        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + config.rmiInterface + ":" + config.rmiPort + "/jmxrmi");
+        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + config.rmiHost + ":" + config.rmiPort + "/jmxrmi");
         log.info("JMXRMI Service listening at {}", url);
         JMXConnectorServer connector = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
 

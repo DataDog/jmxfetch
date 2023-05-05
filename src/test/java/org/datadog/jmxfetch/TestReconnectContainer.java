@@ -40,20 +40,12 @@ class JMXFailServerClient {
         this.port = port;
     }
 
-    public void startJMXServer() throws IOException {
-        sendPostRequest("/start");
-    }
-
-    public void stopJMXServer() throws IOException {
-        sendPostRequest("/stop");
-    }
-
     public void jmxCutNetwork() throws IOException {
-        sendPostRequest("/jmx/cutNetwork");
+        sendPostRequest("/cutNetwork");
     }
 
     public void jmxRestoreNetwork() throws IOException {
-        sendPostRequest("/jmx/restoreNetwork");
+        sendPostRequest("/restoreNetwork");
     }
 
     private void sendPostRequest(String endpoint) throws IOException {
@@ -105,8 +97,8 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
     @Rule
     public GenericContainer<?> cont = new GenericContainer<>(img)
         .withExposedPorts(rmiPort, controlPort)
-        .withEnv(Collections.singletonMap("JJ_RMI_PORT", "" + rmiPort))
-        .withEnv(Collections.singletonMap("JJ_CONTROL_HTTP_PORT", "" + controlPort))
+        .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
+        .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 1));
 
     @Test
