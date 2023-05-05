@@ -3,7 +3,7 @@ package org.datadog.misbehavingjmxserver;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 
-public interface MetricsMBean {
+public interface MetricMBean {
     String getName();
 
     Number getNumberValue();

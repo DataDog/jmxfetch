@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.TimeUnit;
 
-public class MetricsDAO {
+public class MetricDAO {
     private final AtomicReference<Double> doubleValue;
     private final AtomicReference<Float> floatValue;
     private final AtomicBoolean boolValue;
@@ -14,7 +14,7 @@ public class MetricsDAO {
     private final ScheduledExecutorService executor;
 
 
-    public MetricsDAO() {
+    public MetricDAO() {
         this.doubleValue = new AtomicReference<>(0.0);
         this.floatValue = new AtomicReference<>((float) 0);
         this.boolValue = new AtomicBoolean();

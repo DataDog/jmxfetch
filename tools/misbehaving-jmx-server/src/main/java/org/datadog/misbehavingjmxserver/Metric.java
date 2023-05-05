@@ -17,12 +17,12 @@ import javax.management.openmbean.TabularType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Metrics implements MetricsMBean {
+public class Metric implements MetricMBean {
     public final String name;
-    private final MetricsDAO metricsDAO;
+    private final MetricDAO metricsDAO;
     private final TabularDataSupport tabularData;
 
-    public Metrics(final String name, final MetricsDAO metricsDAO) {
+    public Metric(final String name, final MetricDAO metricsDAO) {
         this.name = name;
         this.metricsDAO = metricsDAO;
 

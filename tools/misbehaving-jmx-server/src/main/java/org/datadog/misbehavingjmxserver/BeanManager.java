@@ -19,66 +19,70 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BeanManager {
     private final MBeanServer mBeanServer;
-    private final Map<String, List<Metrics>> registeredBeans;
-    private final MetricsDAO mDao;
+    private final Map<String, List<Metric>> registeredBeans;
+    private final MetricDAO mDao;
 
-    public BeanManager(MBeanServer mBeanServer, MetricsDAO mDao) {
+    public BeanManager(MBeanServer mBeanServer, MetricDAO mDao) {
         this.mBeanServer = mBeanServer;
         this.registeredBeans = new HashMap<>();
         this.mDao = mDao;
     }
 
-    private ObjectName getObjName(String domain, Metrics metric) throws MalformedObjectNameException {
+    private ObjectName getObjName(String domain, Metric metric) throws MalformedObjectNameException {
         return new ObjectName(domain + ":name=" + metric.name);
     }
 
-    public void setMBeanState(BeanSpec beanSpec) {
+    public void setMBeanState(String beanDomain, int numDesiredBeans) {
         RandomIdentifier idGen = new RandomIdentifier();
-        ArrayList<Metrics> newlyRegisteredBeans = new ArrayList<>();
+        ArrayList<Metric> newlyRegisteredBeans = new ArrayList<>();
         int numExistingBeans = 0;
-        if (registeredBeans.containsKey(beanSpec.domain)) {
-            numExistingBeans = registeredBeans.get(beanSpec.domain).size();
+        List<Metric> existingBeans = this.registeredBeans.get(beanDomain);
+        if (registeredBeans.containsKey(beanDomain)) {
+            numExistingBeans = existingBeans.size();
         }
-        if (numExistingBeans == beanSpec.numDesiredBeans) {
+        if (numExistingBeans == numDesiredBeans) {
             // Already have all the beans we want, nothing to do
             return;
-        } else if (numExistingBeans > beanSpec.numDesiredBeans) {
+        } else if (numExistingBeans > numDesiredBeans) {
             // Too many beans, unregister some
-            int beansToRemove = numExistingBeans - beanSpec.numDesiredBeans;
-            List<Metrics> existingBeans = this.registeredBeans.get(beanSpec.domain);
+            int beansToRemove = numExistingBeans - numDesiredBeans;
 
             // Pop beans off until we get to desired amount
             for (int i = 0; i < beansToRemove; i++) {
-                Metrics m = existingBeans.get(0);
+                Metric m = existingBeans.get(0);
                 try {
-                    this.mBeanServer.unregisterMBean(getObjName(beanSpec.domain, m));
+                    this.mBeanServer.unregisterMBean(getObjName(beanDomain, m));
                     existingBeans.remove(0);
                 } catch (MBeanRegistrationException | InstanceNotFoundException | MalformedObjectNameException e) {
                     log.warn("Could not unregister bean");
                     e.printStackTrace();
                 }
             }
-            registeredBeans.put(beanSpec.domain, existingBeans);
-        } else if (numExistingBeans < beanSpec.numDesiredBeans) {
-            int newBeansToBeAdded = beanSpec.numDesiredBeans - numExistingBeans;
+            registeredBeans.put(beanDomain, existingBeans);
+        } else if (numExistingBeans < numDesiredBeans) {
+            int newBeansToBeAdded = numDesiredBeans - numExistingBeans;
             for (int i = 0; i < newBeansToBeAdded; i++) {
-                Metrics metric = new Metrics("Bean-" + idGen.generateIdentifier(), mDao);
+                Metric metric = new Metric("Bean-" + idGen.generateIdentifier(), mDao);
                 try {
-                    ObjectName obj = getObjName(beanSpec.domain, metric);
+                    ObjectName obj = getObjName(beanDomain, metric);
                     log.debug("Registering bean with ObjectName: {}", obj);
                     this.mBeanServer.registerMBean(metric, obj);
                     newlyRegisteredBeans.add(metric);
                 } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException | MalformedObjectNameException e) {
-                    log.error("Could not add bean {} for domain {}", metric.name, beanSpec.domain);
+                    log.error("Could not add bean {} for domain {}", metric.name, beanDomain);
                     e.printStackTrace();
                 }
             }
-            registeredBeans.put(beanSpec.domain, newlyRegisteredBeans);
+            ArrayList<Metric> totalBeans = new ArrayList<>(newlyRegisteredBeans);
+            if (existingBeans != null) {
+                totalBeans.addAll(existingBeans);
+            }
+            registeredBeans.put(beanDomain, totalBeans);
         }
 
     }
 
-    public Optional<List<Metrics>> getMBeanState(String domain) {
+    public Optional<List<Metric>> getMBeanState(String domain) {
         return Optional.ofNullable(registeredBeans.get(domain));
     }
 }

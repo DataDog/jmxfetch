@@ -56,6 +56,11 @@ class AppConfig {
     }
 }
 
+class BeanSpec {
+    public String domain;
+    public int numDesiredBeans;
+}
+
 @Slf4j
 public class App 
 {
@@ -83,7 +88,7 @@ public class App
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        MetricsDAO mDao = new MetricsDAO();
+        MetricDAO mDao = new MetricDAO();
         mDao.runTickLoop();
 
         BeanManager bm = new BeanManager(mbs, mDao);
@@ -102,7 +107,7 @@ public class App
 
         controlServer.get("/beans/{domain}", ctx -> {
             String domain = ctx.pathParam("domain");
-            Optional<List<Metrics>> bs = bm.getMBeanState(domain);
+            Optional<List<Metric>> bs = bm.getMBeanState(domain);
             if (bs.isPresent()) {
                 List<String> metricNames = bs.get().stream().map(metric -> metric.name).collect(Collectors.toList());
 
@@ -125,7 +130,7 @@ public class App
             }
 
             // This should block until the mbeanserver reaches the desired state
-            bm.setMBeanState(beanSpec);
+            bm.setMBeanState(beanSpec.domain, beanSpec.numDesiredBeans);
 
             ctx.status(200).result("Received bean request for domain: " + domain);
         });
