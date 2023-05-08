@@ -11,7 +11,16 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
+import java.security.KeyStore;
+import java.security.Security;
+import java.security.cert.CertificateFactory;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
+
 
 @Slf4j
 public class HttpClient {
@@ -77,25 +86,32 @@ public class HttpClient {
         this.token = System.getenv("SESSION_TOKEN");
 
         if (!verify) {
+
+            // Add Bouncy Castle FIPS provider
+            Security.addProvider(new BouncyCastleFipsProvider());
+
+
+            // You can now use this truststore for making HTTPS requests
             try {
-                dummyTrustManager =
-                        new TrustManager[] {
-                            new X509TrustManager() {
-                                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                                    return new X509Certificate[0];
-                                }
+                // Create a new FIPS-compliant truststore
+                KeyStore truststore = KeyStore.getInstance("BCFKS", "BCFIPS");
+                truststore.load(null, null);
+                String pemEncodedCert = System.getenv("IPC_PEM");
 
-                                public void checkClientTrusted(
-                                        java.security.cert.X509Certificate[] certs,
-                                        String authType) {}
+                // Import the PEM-encoded self-signed certificate
+                CertificateFactory certFactory = CertificateFactory.getInstance("X.509", "BCFIPS");
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(pemEncodedCert.getBytes(StandardCharsets.UTF_8));
+                java.security.cert.Certificate cert = certFactory.generateCertificate(inputStream);
 
-                                public void checkServerTrusted(
-                                        java.security.cert.X509Certificate[] certs,
-                                        String authType) {}
-                            }
-                        };
-                sc = SSLContext.getInstance(minRequiredSSLProtocol);
-                sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
+                // Add the self-signed certificate to the truststore
+                truststore.setCertificateEntry("control_server_cert", cert);
+
+                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX", "BCFIPS");
+                trustManagerFactory.init(truststore);
+
+                SSLContext sslContext = SSLContext.getInstance("TLS", "BCFIPS");
+                sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
                 log.info("Successfully installed dummyTrustManager");
             } catch (Exception e) {

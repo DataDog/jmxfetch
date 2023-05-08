@@ -197,6 +197,19 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bc-fips</artifactId>
+            <version>1.0.2.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpg-fips</artifactId>
+            <version>1.0.7.1</version>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
     <scm>
         <connection>scm:git:git@github.com:Datadog/jmxfetch.git</connection>
