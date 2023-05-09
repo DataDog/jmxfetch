@@ -41,6 +41,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final Object object1337 = new Double(13.37);
     private final BigDecimal numberBig = new BigDecimal(123456788901234567890.0);
     private final TabularDataSupport tabulardata;
+    private final TabularData complexTabularData;
     private final CompositeType compositetype;
 
     SimpleTestJavaApp() {
@@ -52,6 +53,40 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         tabulardata = buildTabularType();
         if (tabulardata != null) {
             tabulardata.put(buildCompositeData(1));
+        }
+        complexTabularData = buildComplexTabularType();
+        if (complexTabularData != null) {
+            complexTabularData.put(buildComplexCompositeData(complexTabularData.getTabularType().getRowType(), "Something", 1));
+            complexTabularData.put(buildComplexCompositeData(complexTabularData.getTabularType().getRowType(), "Other", 2));
+            complexTabularData.put(buildComplexCompositeData(complexTabularData.getTabularType().getRowType(), "TheOne", 3));
+            complexTabularData.put(buildComplexCompositeData(complexTabularData.getTabularType().getRowType(), "Ignored", 4));
+        }
+    }
+
+    private CompositeData buildComplexCompositeData(final CompositeType ct, final String name, final int value) {
+        try {
+            return new CompositeDataSupport(
+                    ct,
+                    new String[] {"name", "int"},
+                    new Object[] {name, value});
+        } catch (OpenDataException e) {
+            return null;
+        }
+    }
+
+    private TabularData buildComplexTabularType() {
+        try {
+            final CompositeType ct = new CompositeType(
+                    "a.b.c", "name and int",
+                    new String[]{"name", "int"},
+                    new String[]{"name of integer", "value of integer"},
+                    new OpenType<?>[]{SimpleType.STRING, SimpleType.INTEGER});
+            final TabularType tt = new TabularType(
+                    "d.e.f", "name and int indexed by name", ct,
+                    new String[] {"name"});
+                    return new TabularDataSupport(tt);
+        } catch (OpenDataException e) {
+            return null;
         }
     }
 
@@ -92,8 +127,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     }
 
     public void populateHashMap(int count) {
-        for (Integer i = 1; i <= count; i++) {
-            hashmap.put(i.toString(), i);
+        for (int i = 1; i <= count; i++) {
+            hashmap.put(Integer.toString(i), i);
         }
     }
 
@@ -183,5 +218,9 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     }
     public TabularDataSupport getTabularDataSupport() {
         return tabulardata;
+    }
+
+    public TabularData getComplexTabularData(){
+        return complexTabularData;
     }
 }

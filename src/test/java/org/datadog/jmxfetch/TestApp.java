@@ -1052,4 +1052,33 @@ public class TestApp extends TestCommon {
 
         assertCoverage();
     }
+    @Test
+    public void testTabularDataTargeted() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        initApplication("jmx_tabular_data_targeted.yaml");
+
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang + 2 defined - 1 error
+        assertEquals(14, metrics.size());
+
+        List<String> tags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp",
+                "foo:1",
+                "toto:tata",
+                "newTag:test"
+        );
+
+        assertMetric("multiattr.foo_tagged", 1.0, tags, -1);
+
+        assertCoverage();
+    }
 }

@@ -39,5 +39,8 @@ public interface SimpleTestJavaAppMBean {
     Float getInstanceFloat();
 
     TabularData getTabulardata();
+
     TabularDataSupport getTabularDataSupport();
+
+    TabularData getComplexTabularData();
 }
