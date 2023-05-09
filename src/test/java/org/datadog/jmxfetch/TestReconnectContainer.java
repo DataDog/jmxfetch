@@ -3,6 +3,7 @@ package org.datadog.jmxfetch;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -12,12 +13,12 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.utility.DockerImageName;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,56 +26,24 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
-
-@Slf4j
-class JMXFailServerClient {
-    private final String host;
-    private final int port;
-
-    public JMXFailServerClient(String host, int port) {
-        this.host = host;
-        this.port = port;
-    }
-
-    public void jmxCutNetwork() throws IOException {
-        sendPostRequest("/cutNetwork");
-    }
-
-    public void jmxRestoreNetwork() throws IOException {
-        sendPostRequest("/restoreNetwork");
-    }
-
-    private void sendPostRequest(String endpoint) throws IOException {
-        URL url = new URL("http://" + host + ":" + port + endpoint);
-        log.info("Sending POST to {} ", url);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestMethod("POST");
-
-        int responseCode = con.getResponseCode();
-
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuffer response = new StringBuffer();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-            System.out.println(response.toString());
-        } else {
-            System.out.println("HTTP POST request failed with status code: " + responseCode);
-        }
-    }
-}
 
 
 public class TestReconnectContainer extends TestRemoteAppCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
+    private JMXServerControlClient controlClient;
+
+    private static String concatWithNewlines(String... lines) {
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            sb.append(line).append(System.lineSeparator());
+        }
+        return sb.toString();
+    }
 
     private static boolean isDomainPresent(String domain, MBeanServerConnection mbs) {
         boolean found = false;
@@ -94,6 +63,11 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
     private static ImageFromDockerfile img = new ImageFromDockerfile()
         .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
 
+    @Before
+    public void setup() {
+        this.controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
+    }
+
     @Rule
     public GenericContainer<?> cont = new GenericContainer<>(img)
         .withExposedPorts(rmiPort, controlPort)
@@ -103,12 +77,10 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
     @Test
     public void testJMXDirectBasic() throws Exception {
-        final int runtimeRmiPort = cont.getMappedPort(rmiPort);
-
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), runtimeRmiPort
+            cont.getHost(), cont.getMappedPort(rmiPort)
         );
 
         log.info("Connecting to jmx url: {}", remoteJmxServiceUrl);
@@ -121,13 +93,10 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
     @Test
     public void testJMXDirectReconnect() throws Exception {
-        final int runtimeControlPort = cont.getMappedPort(controlPort);
-        final int runtimeRmiPort = cont.getMappedPort(rmiPort);
-
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), runtimeRmiPort
+            cont.getHost(), cont.getMappedPort(rmiPort)
         );
 
         log.info("Connecting to jmx url: {}", remoteJmxServiceUrl);
@@ -137,13 +106,11 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
         assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
 
-        JMXFailServerClient client = new JMXFailServerClient(cont.getHost(), runtimeControlPort);
-
-        client.jmxCutNetwork();
+        this.controlClient.jmxCutNetwork();
 
         assertEquals(false, isDomainPresent("Bohnanza", mBeanServerConnection));
 
-        client.jmxRestoreNetwork();
+        this.controlClient.jmxRestoreNetwork();
 
         assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
     }
@@ -154,8 +121,38 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
-        assertEquals(true, metrics.size() >= 1);
+        assertEquals(1, metrics.size());
     }
+
+    @Test
+    public void testJMXFetchManyMetrics() throws IOException, InterruptedException {
+        int numBeans = 100;
+        int numAttributesPerBean = 4;
+
+        String testDomain = "test-domain";
+        this.controlClient.createMBeans(testDomain, numBeans);
+        this.initApplication(concatWithNewlines(
+            "init_config:",
+            "  is_jmx: true",
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + cont.getHost(),
+            "        collect_default_jvm_metrics: false",
+            "        max_returned_metrics: 300000",
+            "        port: " + cont.getMappedPort(rmiPort),
+            "        conf:",
+            "          - include:",
+            "              domain: " + testDomain
+        ));
+
+        this.app.doIteration();
+        List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+        int expectedMetrics =  numBeans * numAttributesPerBean;
+        assertEquals(expectedMetrics, metrics.size());
+
+    }
+
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
         this.initApplication("jmxint_container.yaml", cont.getHost(), cont.getMappedPort(rmiPort));
@@ -164,8 +161,7 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         assertEquals(1, metrics.size());
 
-        JMXFailServerClient client = new JMXFailServerClient(cont.getHost(), cont.getMappedPort(controlPort));
-        client.jmxCutNetwork();
+        this.controlClient.jmxCutNetwork();
 
         this.app.doIteration();
         metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
@@ -173,13 +169,13 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
         // After previous iteration where network was cut off, instance will be marked as broken
         // Restore network
-        client.jmxRestoreNetwork();
+        this.controlClient.jmxRestoreNetwork();
 
         // Do iteration to recover instance
         this.app.doIteration();
 
         // Previous iteration recovered, which just means the new instance has been 'init'ed
-        // So no metrics are available yet
+        // But no metrics have been collected.
         metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         assertEquals(0, metrics.size());
 
@@ -187,6 +183,5 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
         this.app.doIteration();
         metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         assertEquals(1, metrics.size());
-
     }
 }

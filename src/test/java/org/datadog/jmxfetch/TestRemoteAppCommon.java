@@ -60,6 +60,11 @@ final class ConfigUtil {
         return tempFile;
     }
 
+    public static Path writeConfigYamlToTemp(String yaml, String resourceNameWithoutExtension) throws IOException {
+        Path tempFile = ConfigUtil.writeConfigToTempFile(yaml, resourceNameWithoutExtension);
+        return tempFile;
+    }
+
     public static Path writeTemplatedResourceToTemp(String resourceName, String host, int port) throws IOException {
         String resourceNameWithoutExtension = resourceName.substring(0, resourceName.indexOf(".", 0));
         String templatedContent = ConfigUtil.getFormattedTemplateConfig(resourceName, host, port);
@@ -82,11 +87,34 @@ public class TestRemoteAppCommon {
      * Init JMXFetch with the given YAML configuration template 
      * The `resourceName` should be a full file name (with .yaml extension) in 
      * `resources` and should utilize Java MessageFormat templating for Host
-     * and Port connection info. An example can be found in `jmxint_solr.yaml`
+     * and Port connection info. An example can be found in `jmxint_container.yaml`
     */
     protected void initApplication(String resourceName, String host, int port)
             throws IOException {
         Path tempFile = ConfigUtil.writeTemplatedResourceToTemp(resourceName, host, port);
+
+        String confdDirectory = tempFile.getParent().toString();
+        String yamlFileName = tempFile.getFileName().toString();
+        
+        List<String> params = new ArrayList<String>();
+        params.add("--reporter");
+        params.add("console");
+
+        if (confdDirectory != null) {
+            params.add("-c");
+            params.add(yamlFileName);
+            params.add("--conf_directory");
+            params.add(confdDirectory);
+            params.add("collect");
+        }
+        new JCommander(appConfig, params.toArray(new String[params.size()]));
+        this.app = new App(appConfig);
+        app.init(false);
+    }
+
+    protected void initApplication(String config)
+            throws IOException {
+        Path tempFile = ConfigUtil.writeConfigYamlToTemp(config, "config");
 
         String confdDirectory = tempFile.getParent().toString();
         String yamlFileName = tempFile.getFileName().toString();
