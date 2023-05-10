@@ -32,7 +32,7 @@ import java.io.OutputStream;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 
 
-public class TestReconnectContainer extends TestRemoteAppCommon {
+public class TestReconnectContainer extends TestCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
     private JMXServerControlClient controlClient;
@@ -83,7 +83,6 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
             cont.getHost(), cont.getMappedPort(rmiPort)
         );
 
-        log.info("Connecting to jmx url: {}", remoteJmxServiceUrl);
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
         JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
         MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
@@ -99,7 +98,6 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
             cont.getHost(), cont.getMappedPort(rmiPort)
         );
 
-        log.info("Connecting to jmx url: {}", remoteJmxServiceUrl);
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
         JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
         MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
