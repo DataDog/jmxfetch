@@ -3,7 +3,6 @@ package org.datadog.jmxfetch;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,14 +19,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
-import lombok.extern.slf4j.Slf4j;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.file.Paths;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 
@@ -36,14 +28,6 @@ public class TestReconnectContainer extends TestCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
     private JMXServerControlClient controlClient;
-
-    private static String concatWithNewlines(String... lines) {
-        StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            sb.append(line).append(System.lineSeparator());
-        }
-        return sb.toString();
-    }
 
     private static boolean isDomainPresent(String domain, MBeanServerConnection mbs) {
         boolean found = false;
@@ -115,7 +99,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException, InterruptedException {
-        this.initApplicationWithYamlLines(concatWithNewlines(
+        this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
@@ -128,7 +112,7 @@ public class TestReconnectContainer extends TestCommon {
             "        conf:",
             "          - include:",
             "              domain: Bohnanza"
-        ));
+        );
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
@@ -142,7 +126,7 @@ public class TestReconnectContainer extends TestCommon {
 
         String testDomain = "test-domain";
         this.controlClient.createMBeans(testDomain, numBeans);
-        this.initApplicationWithYamlLines(concatWithNewlines(
+        this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
@@ -155,7 +139,7 @@ public class TestReconnectContainer extends TestCommon {
             "        conf:",
             "          - include:",
             "              domain: " + testDomain
-        ));
+        );
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
@@ -165,7 +149,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
-        this.initApplicationWithYamlLines(concatWithNewlines(
+        this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
@@ -178,7 +162,7 @@ public class TestReconnectContainer extends TestCommon {
             "        conf:",
             "          - include:",
             "              domain: Bohnanza"
-        ));
+        );
 
 
         this.app.doIteration();
