@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import javax.management.remote.JMXServiceURL;
@@ -67,9 +68,17 @@ public class AttachApiConnection extends Connection {
         try {
             vm.loadAgent(agent);
         } catch (Exception e) {
-            log.warn("Error initializing JMX agent from management-agent.jar, trying 'startLocalManagementAgent' instead", e);
-            // TODO this option doesn't exist in java 7, which we still support. How to call invoke it in a way that is safe for java7?
-            vm.startLocalManagementAgent();
+            log.warn("Error initializing JMX agent from management-agent.jar", e);
+
+            try {
+                Method method = com.sun.tools.attach.VirtualMachine.class.getMethod("startLocalManagementAgent");
+                log.info("Found startLocalManagementAgent API, attempting to use it.");
+                method.invoke(vm);
+            } catch (NoSuchMethodException noMethodE) {
+                log.warn("startLocalManagementAgent method not found, must be on java7", noMethodE);
+            } catch (Exception reflectionE) {
+                log.warn("Error invoking the startLocalManagementAgent method", reflectionE);
+            }
         }
     }
 }
