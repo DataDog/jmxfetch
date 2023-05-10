@@ -67,7 +67,9 @@ public class AttachApiConnection extends Connection {
         try {
             vm.loadAgent(agent);
         } catch (Exception e) {
-            log.warn("Error initializing JMX agent", e);
+            log.warn("Error initializing JMX agent from management-agent.jar, trying 'startLocalManagementAgent' instead", e);
+            // TODO this option doesn't exist in java 7, which we still support. How to call invoke it in a way that is safe for java7?
+            vm.startLocalManagementAgent();
         }
     }
 }
