@@ -1,6 +1,5 @@
 package org.datadog.misbehavingjmxserver;
 
-public interface MyIntMBean {
+public interface SingleAttributeMetricMBean {
     int getCounter();
-    void setCounter(int value);
 }

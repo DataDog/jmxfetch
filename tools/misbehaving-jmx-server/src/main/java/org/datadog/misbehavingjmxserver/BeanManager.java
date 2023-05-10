@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BeanManager {
     private final MBeanServer mBeanServer;
-    private final Map<String, List<Metric>> registeredBeans;
+    private final Map<String, List<FourAttributeMetric>> registeredBeans;
     private final MetricDAO mDao;
 
     public BeanManager(MBeanServer mBeanServer, MetricDAO mDao) {
@@ -28,15 +28,15 @@ public class BeanManager {
         this.mDao = mDao;
     }
 
-    private ObjectName getObjName(String domain, Metric metric) throws MalformedObjectNameException {
+    private ObjectName getObjName(String domain, FourAttributeMetric metric) throws MalformedObjectNameException {
         return new ObjectName(domain + ":name=" + metric.name);
     }
 
     public void setMBeanState(String beanDomain, int numDesiredBeans) {
         RandomIdentifier idGen = new RandomIdentifier();
-        ArrayList<Metric> newlyRegisteredBeans = new ArrayList<>();
+        ArrayList<FourAttributeMetric> newlyRegisteredBeans = new ArrayList<>();
         int numExistingBeans = 0;
-        List<Metric> existingBeans = this.registeredBeans.get(beanDomain);
+        List<FourAttributeMetric> existingBeans = this.registeredBeans.get(beanDomain);
         if (registeredBeans.containsKey(beanDomain)) {
             numExistingBeans = existingBeans.size();
         }
@@ -49,7 +49,7 @@ public class BeanManager {
 
             // Pop beans off until we get to desired amount
             for (int i = 0; i < beansToRemove; i++) {
-                Metric m = existingBeans.get(0);
+                FourAttributeMetric m = existingBeans.get(0);
                 try {
                     this.mBeanServer.unregisterMBean(getObjName(beanDomain, m));
                     existingBeans.remove(0);
@@ -62,7 +62,7 @@ public class BeanManager {
         } else if (numExistingBeans < numDesiredBeans) {
             int newBeansToBeAdded = numDesiredBeans - numExistingBeans;
             for (int i = 0; i < newBeansToBeAdded; i++) {
-                Metric metric = new Metric("Bean-" + idGen.generateIdentifier(), mDao);
+                FourAttributeMetric metric = new FourAttributeMetric("Bean-" + idGen.generateIdentifier(), mDao);
                 try {
                     ObjectName obj = getObjName(beanDomain, metric);
                     log.debug("Registering bean with ObjectName: {}", obj);
@@ -73,7 +73,7 @@ public class BeanManager {
                     e.printStackTrace();
                 }
             }
-            ArrayList<Metric> totalBeans = new ArrayList<>(newlyRegisteredBeans);
+            ArrayList<FourAttributeMetric> totalBeans = new ArrayList<>(newlyRegisteredBeans);
             if (existingBeans != null) {
                 totalBeans.addAll(existingBeans);
             }
@@ -82,7 +82,7 @@ public class BeanManager {
 
     }
 
-    public Optional<List<Metric>> getMBeanState(String domain) {
+    public Optional<List<FourAttributeMetric>> getMBeanState(String domain) {
         return Optional.ofNullable(registeredBeans.get(domain));
     }
 }

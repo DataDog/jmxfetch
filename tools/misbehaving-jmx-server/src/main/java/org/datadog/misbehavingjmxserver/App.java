@@ -64,6 +64,7 @@ class BeanSpec {
 @Slf4j
 public class App 
 {
+    final static String testDomain = "Bohnanza";
     public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
     {
         AppConfig config = new AppConfig();
@@ -93,6 +94,11 @@ public class App
 
         BeanManager bm = new BeanManager(mbs, mDao);
 
+        // Register single static bean under known domain
+        ObjectName mbeanName = new ObjectName(testDomain + ":name=MyMBean");
+        SingleAttributeMetricMBean mbean = new SingleAttributeMetric(mDao);
+        mbs.registerMBean(mbean, mbeanName);
+
         Javalin controlServer = Javalin.create();
 
         controlServer.post("/cutNetwork", ctx -> {
@@ -107,7 +113,7 @@ public class App
 
         controlServer.get("/beans/{domain}", ctx -> {
             String domain = ctx.pathParam("domain");
-            Optional<List<Metric>> bs = bm.getMBeanState(domain);
+            Optional<List<FourAttributeMetric>> bs = bm.getMBeanState(domain);
             if (bs.isPresent()) {
                 List<String> metricNames = bs.get().stream().map(metric -> metric.name).collect(Collectors.toList());
 
@@ -136,10 +142,6 @@ public class App
         });
         controlServer.start(config.controlPort);
 
-        String domain = "Bohnanza";
-        ObjectName mbeanName = new ObjectName(domain + ":name=MyMBean");
-        MyIntMBean mbean = new MyInt();
-        mbs.registerMBean(mbean, mbeanName);
 
         Map<String, Object> env = new HashMap<>();
         // IMPORTANT! Without this, the custom RMI socket factory will not be used for JMX connections
