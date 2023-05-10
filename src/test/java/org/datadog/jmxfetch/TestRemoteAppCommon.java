@@ -1,9 +1,6 @@
 package org.datadog.jmxfetch;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,43 +8,13 @@ import com.beust.jcommander.JCommander;
 
 import static org.mockito.Mockito.spy;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import java.text.MessageFormat;
-
 final class ConfigUtil {
-    private static String readUrlContentsToString(URL url) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        InputStream inputStream = url.openStream();
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-        } finally {
-            inputStream.close();
-        }
-        return sb.toString();
-    }
-
-    private static String getFormattedTemplateConfig(String resourceName, String host, int port) throws IOException{
-        URL yamlURL =
-                Thread.currentThread().getContextClassLoader().getResource(resourceName);
-        if (yamlURL == null) {
-            throw new IOException("Could not find resource with name " + resourceName);
-        }
-        String yamlContents = ConfigUtil.readUrlContentsToString(yamlURL);
-        String templatedContent = MessageFormat.format(yamlContents, host, port);
-
-        return templatedContent;
-    }
-
-    private static Path writeConfigToTempFile(String content, String yamlName) throws IOException {
+    public static Path writeConfigYamlToTemp(String content, String yamlName) throws IOException {
         Path tempDirectory = Files.createTempDirectory("temp-dir");
         // Create a temporary file within the temporary directory
         Path tempFile = Files.createTempFile(tempDirectory, yamlName, ".yaml");
@@ -60,16 +27,12 @@ final class ConfigUtil {
         return tempFile;
     }
 
-    public static Path writeConfigYamlToTemp(String yaml, String resourceNameWithoutExtension) throws IOException {
-        Path tempFile = ConfigUtil.writeConfigToTempFile(yaml, resourceNameWithoutExtension);
-        return tempFile;
-    }
-
-    public static Path writeTemplatedResourceToTemp(String resourceName, String host, int port) throws IOException {
-        String resourceNameWithoutExtension = resourceName.substring(0, resourceName.indexOf(".", 0));
-        String templatedContent = ConfigUtil.getFormattedTemplateConfig(resourceName, host, port);
-        Path tempFile = ConfigUtil.writeConfigToTempFile(templatedContent, resourceNameWithoutExtension);
-        return tempFile;
+    public static String concatWithNewlines(String... lines) {
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            sb.append(line).append(System.lineSeparator());
+        }
+        return sb.toString();
     }
 }
 
@@ -85,36 +48,13 @@ public class TestRemoteAppCommon {
 
     /*
      * Init JMXFetch with the given YAML configuration template 
-     * The `resourceName` should be a full file name (with .yaml extension) in 
-     * `resources` and should utilize Java MessageFormat templating for Host
-     * and Port connection info. An example can be found in `jmxint_container.yaml`
+     * The configuration can be specified as a yaml literal with each arg
+     * representing one line of the Yaml file
     */
-    protected void initApplication(String resourceName, String host, int port)
+    protected void initApplicationWithYamlLines(String... yamlLines)
             throws IOException {
-        Path tempFile = ConfigUtil.writeTemplatedResourceToTemp(resourceName, host, port);
-
-        String confdDirectory = tempFile.getParent().toString();
-        String yamlFileName = tempFile.getFileName().toString();
-        
-        List<String> params = new ArrayList<String>();
-        params.add("--reporter");
-        params.add("console");
-
-        if (confdDirectory != null) {
-            params.add("-c");
-            params.add(yamlFileName);
-            params.add("--conf_directory");
-            params.add(confdDirectory);
-            params.add("collect");
-        }
-        new JCommander(appConfig, params.toArray(new String[params.size()]));
-        this.app = new App(appConfig);
-        app.init(false);
-    }
-
-    protected void initApplication(String config)
-            throws IOException {
-        Path tempFile = ConfigUtil.writeConfigYamlToTemp(config, "config");
+        String yamlConfig = ConfigUtil.concatWithNewlines(yamlLines);
+        Path tempFile = ConfigUtil.writeConfigYamlToTemp(yamlConfig, "config");
 
         String confdDirectory = tempFile.getParent().toString();
         String yamlFileName = tempFile.getFileName().toString();

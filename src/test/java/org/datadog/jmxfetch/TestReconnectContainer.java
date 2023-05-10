@@ -117,7 +117,20 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException, InterruptedException {
-        this.initApplication("jmxint_container.yaml", cont.getHost(), cont.getMappedPort(rmiPort));
+        this.initApplicationWithYamlLines(concatWithNewlines(
+            "init_config:",
+            "  is_jmx: true",
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + cont.getHost(),
+            "        collect_default_jvm_metrics: false",
+            "        max_returned_metrics: 300000",
+            "        port: " + cont.getMappedPort(rmiPort),
+            "        conf:",
+            "          - include:",
+            "              domain: Bohnanza"
+        ));
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
@@ -131,7 +144,7 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
 
         String testDomain = "test-domain";
         this.controlClient.createMBeans(testDomain, numBeans);
-        this.initApplication(concatWithNewlines(
+        this.initApplicationWithYamlLines(concatWithNewlines(
             "init_config:",
             "  is_jmx: true",
             "",
@@ -150,12 +163,25 @@ public class TestReconnectContainer extends TestRemoteAppCommon {
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         int expectedMetrics =  numBeans * numAttributesPerBean;
         assertEquals(expectedMetrics, metrics.size());
-
     }
 
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
-        this.initApplication("jmxint_container.yaml", cont.getHost(), cont.getMappedPort(rmiPort));
+        this.initApplicationWithYamlLines(concatWithNewlines(
+            "init_config:",
+            "  is_jmx: true",
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + cont.getHost(),
+            "        collect_default_jvm_metrics: false",
+            "        max_returned_metrics: 300000",
+            "        port: " + cont.getMappedPort(rmiPort),
+            "        conf:",
+            "          - include:",
+            "              domain: Bohnanza"
+        ));
+
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
