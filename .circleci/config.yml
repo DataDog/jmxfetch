@@ -26,15 +26,15 @@ jobs:
     <<: *build_steps
   test_openjdk15:
     docker:
-      - image: circleci/openjdk:15-jdk
+      - image: circleci/openjdk:15-jdk-buster
     <<: *build_steps
-  test_openjdk19:
+  test_openjdk17:
     docker:
-      - image: circleci/openjdk:19-jdk
+      - image: circleci/openjdk:17-jdk-buster
     <<: *build_steps
-  test_openjdk21:
+  test_openjdk18:
     docker:
-      - image: circleci/openjdk:21-jdk
+      - image: circleci/openjdk:18-jdk-buster
     <<: *build_steps
 
 workflows:
@@ -45,5 +45,5 @@ workflows:
       - test_openjdk8
       - test_openjdk11
       - test_openjdk15
-      - test_openjdk19
-      - test_openjdk21
+      - test_openjdk17
+      - test_openjdk18
