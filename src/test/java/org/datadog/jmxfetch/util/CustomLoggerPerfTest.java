@@ -1,4 +1,4 @@
-package com.timgroup.statsd;
+package org.datadog.jmxfetch.util;
 
 import lombok.extern.slf4j.Slf4j;
 
