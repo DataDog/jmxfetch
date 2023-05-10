@@ -216,6 +216,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
+                    <!-- required for tests in jdk9+ ref https://bugs.openjdk.org/browse/JDK-8180425 -->
                     <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
                 </configuration>
             </plugin>

@@ -58,6 +58,10 @@ public class AttachApiConnection extends Connection {
                 "No match found. Available JVMs can be listed with the `list_jvms` command.");
     }
 
+    // management-agent.jar has been removed in java 8+
+    // Once JMXFetch drops java7 support, this should be simplified to simply invoke
+    // vm.startLocalManagementAgent
+    // ref https://bugs.openjdk.org/browse/JDK-8179063
     private void loadJmxAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {
         String agent =
                 vm.getSystemProperties().getProperty("java.home")
@@ -71,7 +75,8 @@ public class AttachApiConnection extends Connection {
             log.warn("Error initializing JMX agent from management-agent.jar", e);
 
             try {
-                Method method = com.sun.tools.attach.VirtualMachine.class.getMethod("startLocalManagementAgent");
+                Method method = com.sun.tools.attach.VirtualMachine
+                    .class.getMethod("startLocalManagementAgent");
                 log.info("Found startLocalManagementAgent API, attempting to use it.");
                 method.invoke(vm);
             } catch (NoSuchMethodException noMethodE) {
