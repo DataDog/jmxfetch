@@ -20,6 +20,22 @@ jobs:
     docker:
       - image: circleci/openjdk:8-jdk
     <<: *build_steps
+  test_openjdk11:
+    docker:
+      - image: circleci/openjdk:11-jdk
+    <<: *build_steps
+  test_openjdk15:
+    docker:
+      - image: circleci/openjdk:15-jdk
+    <<: *build_steps
+  test_openjdk19:
+    docker:
+      - image: circleci/openjdk:19-jdk
+    <<: *build_steps
+  test_openjdk21:
+    docker:
+      - image: circleci/openjdk:21-jdk
+    <<: *build_steps
 
 workflows:
   version: 2
@@ -27,3 +43,7 @@ workflows:
     jobs:
       - lint_openjdk8
       - test_openjdk8
+      - test_openjdk11
+      - test_openjdk15
+      - test_openjdk19
+      - test_openjdk21
