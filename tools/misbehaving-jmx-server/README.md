@@ -23,6 +23,8 @@ as well as an HTTP control interface to allow injection of network errors.
 ## HTTP Control Actions
 - POST `/cutNetwork` - Denies any requests to create a new socket (ie, no more connections will be 'accept'ed) and then closes existing TCP sockets
 - POST `/restoreNetwork` - Allows new sockets to be created
+- GET `/beans/:domain` - Retrieves a list of bean names that are currently registered under the given domain. The length of this array should be exactly the number of beans under that domain
+- POST `/beans/:domain` - Declares how many 4-attribute beans should exist with this domain. Beans will either be created or destroyed to reach the desired amount. Payload should be JSON with a single key: `numDesiredBeans`.
 
 ## Docker
 ```

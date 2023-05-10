@@ -57,7 +57,6 @@ class AppConfig {
 }
 
 class BeanSpec {
-    public String domain;
     public int numDesiredBeans;
 }
 
@@ -129,14 +128,13 @@ public class App
             BeanSpec beanSpec;
             try {
                 beanSpec = ctx.bodyAsClass(BeanSpec.class);
-                beanSpec.domain = domain;
             } catch (Exception e) {
                 ctx.status(400).result("Invalid JSON format");
                 return;
             }
 
             // This should block until the mbeanserver reaches the desired state
-            bm.setMBeanState(beanSpec.domain, beanSpec.numDesiredBeans);
+            bm.setMBeanState(domain, beanSpec.numDesiredBeans);
 
             ctx.status(200).result("Received bean request for domain: " + domain);
         });

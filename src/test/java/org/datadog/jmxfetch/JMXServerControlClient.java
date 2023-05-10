@@ -29,7 +29,7 @@ public class JMXServerControlClient {
 
     public void createMBeans(String domain, int numDesiredBeans) throws IOException {
         String endpoint = "/beans/" + domain;
-        String jsonPayload = "{\"domain\": \"" + domain + "\", \"numDesiredBeans\": " + numDesiredBeans + "}";
+        String jsonPayload = "{\"numDesiredBeans\": " + numDesiredBeans + "}";
         sendPostRequestWithPayload(endpoint, jsonPayload);
     }
 
