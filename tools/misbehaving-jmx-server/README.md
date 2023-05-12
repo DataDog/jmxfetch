@@ -33,3 +33,34 @@ $ docker run --rm -p :1099 misbehaving-jmx-server
 ```
 
 Can connect via jmxterm ` java -jar ~/jmxterm-1.0.2-uber.jar --url localhost:<rmi port>`
+
+## Testing the server with the Agent
+
+There are a couple of ways you can get the Agent to pull metrics from this test server.
+
+### JMX integration config
+
+Copy `misbehaving-jmxfetch-conf.yaml` to `/etc/datadog-agent/conf.d/` and just run the uber jar created by Maven.
+You will need to restart the Agent to pick up the config.
+
+### Using Docker
+
+After building the `misbehaving-jmx-server` you can simply run:
+
+```shell
+$ docker run \
+--rm \
+-p :1099 \
+--label "com.datadoghq.ad.checks"='{"misbehaving":{"init_config":{"is_jmx":true},"instances":[{"host":"%%host%%","port":"1099","collect_default_jvm_metrics":false,"max_returned_metrics":300000,"conf":[{"include":{"domain":"Bohnanza"}}]}]}}' \
+misbehaving-jmx-server 
+```
+
+The Agent will auto discover the container and begin to collect metrics from it. 
+
+### Using Docker Compose
+
+```shell
+$ docker compose up
+```
+
+The Agent will auto discover the container and begin to collect metrics from it.
