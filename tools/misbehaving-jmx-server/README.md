@@ -40,7 +40,7 @@ There are a couple of ways you can get the Agent to pull metrics from this test 
 
 ### JMX integration config
 
-Copy `misbehaving-jmxfetch-conf.yaml` to `/etc/datadog-agent/conf.d/` and just run the uber jar created by Maven.
+Copy `misbehaving-jmxfetch-conf.yaml` to `/etc/datadog-agent/conf.d/` and just run the `with-dependencies` jar created by Maven.
 You will need to restart the Agent to pick up the config.
 
 ### Using Docker
