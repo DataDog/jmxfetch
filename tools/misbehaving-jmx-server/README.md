@@ -50,7 +50,7 @@ After building the `misbehaving-jmx-server` you can simply run:
 ```shell
 $ docker run \
 --rm \
--p :1099 \
+-p 1099:1099 \
 --label "com.datadoghq.ad.checks"='{"misbehaving":{"init_config":{"is_jmx":true},"instances":[{"host":"%%host%%","port":"1099","collect_default_jvm_metrics":false,"max_returned_metrics":300000,"conf":[{"include":{"domain":"Bohnanza"}}]}]}}' \
 misbehaving-jmx-server 
 ```
