@@ -26,7 +26,7 @@ public class HttpClient {
     // I found 'TLS' was the appropriate protocol (will use the latest support TLSv? version)
     // rather than specifically 'TLSv1' as the docs recommend
     // https://docs.oracle.com/javase/7/docs/api/javax/net/ssl/SSLContext.html
-    private static final String minRequiredSSLProtocol = "TLS";
+    private static final String sslProtocol = System.getProperty("jmxfetch.min_tls_version", "TLS");
 
     public static class HttpResponse {
         private int responseCode;
@@ -94,10 +94,10 @@ public class HttpClient {
                                         String authType) {}
                             }
                         };
-                sc = SSLContext.getInstance(minRequiredSSLProtocol);
+                sc = SSLContext.getInstance(sslProtocol);
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-                log.info("Successfully installed dummyTrustManager");
+                log.info("Successfully installed dummyTrustManager with {}", sslProtocol);
             } catch (Exception e) {
                 log.error("Error installing dummyTrustManager. Communications with the Agent will "
                         + "be affected. Agent Status will be unreliable and AutoDiscovery of new "
