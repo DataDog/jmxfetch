@@ -20,6 +20,15 @@ as well as an HTTP control interface to allow injection of network errors.
 - `RMI_HOST` - hostname for JMX to listen on (default localhost)
 - `CONTROL_PORT` - HTTP control port (default 8080)
 
+To enable debug logging, set the system property `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug`.
+This can be done in the Dockerfile `CMD` if running in a container
+
+For extra debug logging around RMI systems, try any/all of the following:
+- `-Djava.rmi.server.logCalls=true`
+- `-Dsun.rmi.server.exceptionTrace=true`
+- `-Dsun.rmi.transport.logLevel=verbose`
+- `-Dsun.rmi.transport.tcp.logLevel=verbose`
+
 ## HTTP Control Actions
 - POST `/cutNetwork` - Denies any requests to create a new socket (ie, no more connections will be 'accept'ed) and then closes existing TCP sockets
 - POST `/restoreNetwork` - Allows new sockets to be created
