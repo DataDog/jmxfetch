@@ -3,9 +3,7 @@ package org.datadog.misbehavingjmxserver;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +16,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import javax.management.openmbean.OpenDataException;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
@@ -64,8 +63,7 @@ class BeanSpec {
 public class App 
 {
     final static String testDomain = "Bohnanza";
-    public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
-    {
+    public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException, OpenDataException {
         AppConfig config = new AppConfig();
         JCommander jCommander = JCommander.newBuilder()
                 .addObject(config)
@@ -94,9 +92,13 @@ public class App
         BeanManager bm = new BeanManager(mbs, mDao);
 
         // Register single static bean under known domain
-        ObjectName mbeanName = new ObjectName(testDomain + ":name=MyMBean");
+        ObjectName mbeanName = BeanManager.getObjName(testDomain, "MyMBean");
         SingleAttributeMetricMBean mbean = new SingleAttributeMetric(mDao);
         mbs.registerMBean(mbean, mbeanName);
+
+        // Register single static TabularData bean under known domain
+        TabularDataMBean tabularDataMBean = new FourEntriesTabularData(mDao);
+        mbs.registerMBean(tabularDataMBean, BeanManager.getObjName(testDomain, "MyTabularData"));
 
         Javalin controlServer = Javalin.create();
 

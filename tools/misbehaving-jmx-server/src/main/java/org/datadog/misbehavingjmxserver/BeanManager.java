@@ -10,6 +10,7 @@ import javax.management.ObjectName;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,8 +29,21 @@ public class BeanManager {
         this.mDao = mDao;
     }
 
-    private ObjectName getObjName(String domain, FourAttributeMetric metric) throws MalformedObjectNameException {
-        return new ObjectName(domain + ":name=" + metric.name);
+    protected static ObjectName getObjName(String domain, FourAttributeMetric metric) throws MalformedObjectNameException {
+        return getObjName(domain, metric.name);
+    }
+
+    protected static ObjectName getObjName(String domain, String name) throws MalformedObjectNameException {
+        final Hashtable<String, String> properties = new Hashtable<>();
+        properties.put("name", name);
+        return new ObjectName(domain, properties);
+    }
+
+    protected static ObjectName getObjName(String domain, String name, String type) throws MalformedObjectNameException {
+        final Hashtable<String, String> properties = new Hashtable<>();
+        properties.put("name", name);
+        properties.put("type", type);
+        return new ObjectName(domain, properties);
     }
 
     public void setMBeanState(String beanDomain, int numDesiredBeans) {
@@ -37,7 +51,7 @@ public class BeanManager {
         ArrayList<FourAttributeMetric> newlyRegisteredBeans = new ArrayList<>();
         int numExistingBeans = 0;
         List<FourAttributeMetric> existingBeans = this.registeredBeans.get(beanDomain);
-        if (registeredBeans.containsKey(beanDomain)) {
+        if (this.registeredBeans.containsKey(beanDomain)) {
             numExistingBeans = existingBeans.size();
         }
         if (numExistingBeans == numDesiredBeans) {
@@ -49,7 +63,7 @@ public class BeanManager {
 
             // Pop beans off until we get to desired amount
             for (int i = 0; i < beansToRemove; i++) {
-                FourAttributeMetric m = existingBeans.get(0);
+                final FourAttributeMetric m = existingBeans.get(0);
                 try {
                     this.mBeanServer.unregisterMBean(getObjName(beanDomain, m));
                     existingBeans.remove(0);
@@ -62,7 +76,7 @@ public class BeanManager {
         } else if (numExistingBeans < numDesiredBeans) {
             int newBeansToBeAdded = numDesiredBeans - numExistingBeans;
             for (int i = 0; i < newBeansToBeAdded; i++) {
-                FourAttributeMetric metric = new FourAttributeMetric("Bean-" + idGen.generateIdentifier(), mDao);
+                final FourAttributeMetric metric = new FourAttributeMetric("Bean-" + idGen.generateIdentifier(), mDao);
                 try {
                     ObjectName obj = getObjName(beanDomain, metric);
                     log.debug("Registering bean with ObjectName: {}", obj);
@@ -79,7 +93,6 @@ public class BeanManager {
             }
             registeredBeans.put(beanDomain, totalBeans);
         }
-
     }
 
     public Optional<List<FourAttributeMetric>> getMBeanState(String domain) {

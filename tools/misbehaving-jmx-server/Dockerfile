@@ -23,5 +23,11 @@ WORKDIR /app
 # Copy the JAR file from the Maven image to the final image
 COPY  --from=build /app/target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar .
 
+# JMX port
+EXPOSE 1099
+
+# Web port
+EXPOSE 8080
+
 # Set the command to run the JAR file
 CMD ["java", "-jar", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar"]
