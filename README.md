@@ -53,6 +53,18 @@ To run unit test, issue the following command:
 mvn test
 ```
 
+Some tests utilize [TestContainers](https://www.testcontainers.org/) which requires a docker client.
+You can rely on the CI to run these, or if you have docker installed on Linux these should work out of the box.
+
+If you're on macOS or Windows, docker desktop is architected to run a linux VM which then runs all your containers.
+This makes the networking a bit different and you should use the following command to run the tests.
+
+```
+docker run -it --rm -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker.sock maven:3.8-eclipse-temurin-8 mvn test
+```
+
+This version runs the maven jmxfetch tests within a container as well, which works as long as the `TEST_CONTAINERS_HOST_OVERRIDE` env var is set.
+
 ### Testing Deployments
 
 You can test the deployment by using the Nexus3 OSS image. To do so you need to:
@@ -124,5 +136,5 @@ otherwise the subsequent publishes will fail.
 
 ```
 Get help on usage:
-java -jar jmxfetch-0.47.7-jar-with-dependencies.jar --help
+java -jar jmxfetch-0.47.9-SNAPSHOT-jar-with-dependencies.jar --help
 ```

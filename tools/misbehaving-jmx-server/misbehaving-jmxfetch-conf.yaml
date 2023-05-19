@@ -1,0 +1,14 @@
+---
+init_config:
+  is_jmx: true
+
+instances:
+  - host: localhost
+    port: 1099
+    collect_default_jvm_metrics: false
+    max_returned_metrics: 300000
+    conf:
+      - include:
+          domain: Bohnanza
+    tags:
+      - jmx:fetch

@@ -22,6 +22,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
+import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerDelegate;
 import javax.management.relation.MBeanServerNotificationFilter;
@@ -40,7 +41,6 @@ import javax.management.remote.JMXServiceURL;
 @Slf4j
 public class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
-    public static final String CLOSED_CLIENT_CAUSE = "The client has been closed";
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
     protected Map<String, Object> env;
@@ -79,17 +79,10 @@ public class Connection {
     }
 
     /** Gets attributes for matching bean name. */
-    public MBeanAttributeInfo[] getAttributesForBean(ObjectName beanName)
+    public MBeanInfo getMBeanInfo(ObjectName beanName)
             throws InstanceNotFoundException, IntrospectionException, ReflectionException,
                     IOException {
-        return mbs.getMBeanInfo(beanName).getAttributes();
-    }
-
-    /** Gets class name for matching bean name. */
-    public String getClassNameForBean(ObjectName beanName)
-            throws InstanceNotFoundException, IntrospectionException, ReflectionException,
-            IOException {
-        return mbs.getMBeanInfo(beanName).getClassName();
+        return mbs.getMBeanInfo(beanName);
     }
 
     /** Queries beans on specific scope. Returns set of matching query names.. */

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -475,16 +476,15 @@ public class Instance implements BeanListener{
             log.info("Bean subscription not enabled.");
         }
         log.info(
-                "Trying to collect bean list for the first time for JMX Server at "
-                        + this.toString());
+                "Trying to collect bean list for the first time for JMX Server at {}", this);
 
         this.beanAndAttributeLock.lock();
         try {
             this.refreshBeansList(true);
             this.initialRefreshTime = this.lastRefreshTime;
-            log.info("Connected to JMX Server at " + this.toString());
+            log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
             this.getMatchingAttributes();
-            log.info("Done initializing JMX Server at " + this.toString());
+            log.info("Done initializing JMX Server at {}", this);
         } finally {
             this.beanAndAttributeLock.unlock();
         }
@@ -759,12 +759,13 @@ public class Instance implements BeanListener{
                 String className;
                 MBeanAttributeInfo[] attributeInfos;
                 try {
-                    log.debug("Getting class name for bean: " + beanName);
-                    className = connection.getClassNameForBean(beanName);
+                    log.debug("Getting bean info for bean: {}", beanName);
+                    MBeanInfo info = connection.getMBeanInfo(beanName);
 
-                    // Get all the attributes for bean_name
-                    log.debug("Getting attributes for bean: " + beanName);
-                    attributeInfos = connection.getAttributesForBean(beanName);
+                    log.debug("Getting class name for bean: {}", beanName);
+                    className = info.getClassName();
+                    log.debug("Getting attributes for bean: {}", beanName);
+                    attributeInfos = info.getAttributes();
                 } catch (IOException e) {
                     throw e;
                 } catch (Exception e) {
@@ -786,12 +787,13 @@ public class Instance implements BeanListener{
         String className;
         MBeanAttributeInfo[] attributeInfos;
         try {
-            log.debug("Getting class name for bean: " + beanName);
-            className = connection.getClassNameForBean(beanName);
+            log.debug("Getting bean info for bean: {}", beanName);
+            MBeanInfo info = connection.getMBeanInfo(beanName);
 
-            // Get all the attributes for bean_name
-            log.debug("Getting attributes for bean: " + beanName);
-            attributeInfos = connection.getAttributesForBean(beanName);
+            log.debug("Getting class name for bean: {}", beanName);
+            className = info.getClassName();
+            log.debug("Getting attributes for bean: {}", beanName);
+            attributeInfos = info.getAttributes();
 
             this.addMatchingAttributesForBean(beanName, className, attributeInfos);
             this.beans.add(beanName);
@@ -991,29 +993,32 @@ public class Instance implements BeanListener{
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
+            connection = null;
         }
     }
 
     /**
      * Asynchronoush cleanup of instance, including connection.
      * */
-    public void cleanUpAsync() {
-        class AsyncCleaner implements Runnable {
-            Instance instance;
+    public synchronized void cleanUpAsync() {
+        appConfig = null;
 
-            AsyncCleaner(Instance instance) {
-                this.instance = instance;
+        class AsyncCleaner implements Runnable {
+            Connection conn;
+
+            AsyncCleaner(Connection conn) {
+                this.conn = conn;
             }
 
             @Override
             public void run() {
-                instance.appConfig = null;
-                if (instance.connection != null) {
-                    instance.connection.closeConnector();
-                }
+                conn.closeConnector();
             }
         }
 
-        new Thread(new AsyncCleaner(this)).start();
+        if (connection != null) {
+            new Thread(new AsyncCleaner(connection), "jmx-closer").start();
+            connection = null;
+        }
     }
 }
