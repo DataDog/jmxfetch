@@ -192,4 +192,120 @@ public class TestBeanSubscription extends TestCommon {
 
         assertEquals("actual metrics collected matches expectedMetrics", expectedMetrics, metrics.size());
     }
+
+    @Test
+    public void testBeanRemoval() throws IOException, InterruptedException {
+        String testDomain = "test-domain";
+        cont.followOutput(logConsumer);
+        this.initApplicationWithYamlLines(
+            "init_config:",
+            "  is_jmx: true",
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + cont.getHost(),
+            "        port: " + cont.getMappedPort(rmiPort),
+            "        min_collection_interval: null",
+            "        enable_bean_subscription: true",
+            "        refresh_beans: 5000", // effectively disable bean refresh
+            "        collect_default_jvm_metrics: false",
+            "        max_returned_metrics: 300000",
+            "        conf:",
+            "          - include:",
+            "              domain: " + testDomain,
+            "              attribute:",
+            "                - DoubleValue",
+            "                - NumberValue",
+            "                - FloatValue",
+            "                - BooleanValue"
+        );
+
+        this.app.doIteration();
+        List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+        assertEquals("Sanity check, no beans/metrics exist at beginning of test", 0, metrics.size());
+
+        int numBeans = 20;
+        int numAttributesPerBean = 4;
+        int expectedMetrics = numBeans * numAttributesPerBean;
+
+        this.controlClient.createMBeans(testDomain, numBeans);
+
+        Thread.sleep(500);
+
+        this.app.doIteration();
+        metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+
+        assertEquals("After creating beans, correct metrics collected", expectedMetrics, metrics.size());
+
+        numBeans = 10;
+        expectedMetrics = numBeans * numAttributesPerBean;
+
+        this.controlClient.createMBeans(testDomain, numBeans);
+
+        Thread.sleep(500);
+
+        assertEquals("Number of metrics to be collected properly updated", expectedMetrics, this.app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        this.app.doIteration();
+        metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+
+        assertEquals("After removing beans, correct metrics collected", expectedMetrics, metrics.size());
+    }
+
+    @Test
+    public void testDisconnectDuringBeanCreation() throws IOException, InterruptedException {
+        String testDomain = "test-domain";
+        cont.followOutput(logConsumer);
+        this.initApplicationWithYamlLines(
+            "init_config:",
+            "  is_jmx: true",
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + cont.getHost(),
+            "        port: " + cont.getMappedPort(rmiPort),
+            "        min_collection_interval: null",
+            "        enable_bean_subscription: true",
+            "        refresh_beans: 5000", // effectively disable bean refresh
+            "        collect_default_jvm_metrics: false",
+            "        max_returned_metrics: 300000",
+            "        conf:",
+            "          - include:",
+            "              domain: " + testDomain,
+            "              attribute:",
+            "                - DoubleValue",
+            "                - NumberValue",
+            "                - FloatValue",
+            "                - BooleanValue"
+        );
+
+        this.app.doIteration();
+        List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+        assertEquals("Sanity check, no beans/metrics exist at beginning of test", 0, metrics.size());
+
+
+        // Cut network
+        this.controlClient.jmxCutNetwork();
+
+
+        int numBeans = 20;
+        int numAttributesPerBean = 4;
+        int expectedMetrics = numBeans * numAttributesPerBean;
+
+        this.controlClient.createMBeans(testDomain, numBeans);
+        // once beans created, restore network
+
+        this.controlClient.jmxRestoreNetwork();
+
+        // Allow connection restoration and bean refresh
+        Thread.sleep(500);
+
+        this.app.doIteration();
+        metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+
+        assertEquals("Number of metrics to be collected properly updated", expectedMetrics, this.app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        assertEquals("Network recovered, did we collect correct metrics?", expectedMetrics, metrics.size());
+
+    }
 }
