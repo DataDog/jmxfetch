@@ -508,6 +508,10 @@ public class Instance implements BeanListener{
 
     /** Returns a map of metrics collected. */
     public List<Metric> getMetrics() throws IOException {
+        if (!this.isInstanceHealthy()) {
+            this.connection.closeConnector();
+            throw new IOException("Instance is in a bad state", null);
+        }
         // In case of ephemeral beans, we can force to refresh the bean list x seconds
         // post initialization and every x seconds thereafter.
         // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
@@ -760,7 +764,7 @@ public class Instance implements BeanListener{
 
                 addMatchingAttributesForBean(beanName, className, attributeInfos);
             }
-            log.info("Found {} matching attributes, collecting {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
+            log.info("Found {} matching attributes with {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
         } finally {
             this.beanAndAttributeLock.unlock();
         }
@@ -902,6 +906,13 @@ public class Instance implements BeanListener{
         } finally {
             this.beanAndAttributeLock.unlock();
         }
+    }
+
+    /** True if instance is in a good state to collect metrics */
+    private boolean isInstanceHealthy() {
+        // If we have subscription mode on and the connection has either failed or notifications
+        // have been lost, then we must consider this instance unhealthy and re-init.
+        return !(this.beanSubscriptionActive && connection.hasSeenConnectionIssues());
     }
 
     /** Returns a string array listing the service check tags. */

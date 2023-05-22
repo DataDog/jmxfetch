@@ -20,6 +20,7 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
+import javax.management.ListenerNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
@@ -45,6 +46,31 @@ public class Connection {
     protected MBeanServerConnection mbs;
     protected Map<String, Object> env;
     protected JMXServiceURL address;
+    private NotificationListener connectionNotificationListener;
+    private boolean seenConnectionIssues;
+
+    private static class ConnectionNotificationListener implements NotificationListener {
+        public void handleNotification(Notification notification, Object handback) {
+            if (!(notification instanceof JMXConnectionNotification)) {
+                return;
+            }
+            if (!(handback instanceof Connection)) {
+                return;
+            }
+
+            JMXConnectionNotification connNotif = (JMXConnectionNotification) notification;
+            Connection conn = (Connection) handback;
+
+            if (connNotif.getType() == JMXConnectionNotification.CLOSED
+                    || connNotif.getType() == JMXConnectionNotification.FAILED
+                    || connNotif.getType() == JMXConnectionNotification.NOTIFS_LOST) {
+                log.warn("Connection is potentially in a bad state, marking connection issues. {} - {}", connNotif.getType(), connNotif.getMessage());
+                conn.seenConnectionIssues = true;
+            }
+            log.debug("Received connection notification: {} Message: {}",
+                 connNotif.getType(), connNotif.getMessage());
+        }
+    }
 
     private static class BeanNotificationListener implements NotificationListener {
         private BeanListener bl;
@@ -54,11 +80,10 @@ public class Connection {
         }
         public void handleNotification(Notification notification, Object handback) {
             if (!(notification instanceof MBeanServerNotification)) {
-                log.warn("Got unknown notification, expected MBeanServerNotification but got {}", notification.getClass());
                 return;
             }
             MBeanServerNotification mbs = (MBeanServerNotification) notification;
-            log.debug("MBeanNotification: ts {} seqNum: {} msg: '{}' userData: {} ", mbs.getTimeStamp(), mbs.getSequenceNumber(), mbs.getMessage(), mbs.getUserData());
+            log.debug("MBeanNotification: ts {} seqNum: {} msg: '{}'", mbs.getTimeStamp(), mbs.getSequenceNumber(), mbs.getMessage());
             ObjectName mBeanName = mbs.getMBeanName();
             if (mbs.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
                 bl.beanRegistered(mBeanName);
@@ -98,6 +123,9 @@ public class Connection {
         log.info("Connecting to: " + this.address);
         connector = JMXConnectorFactory.connect(this.address, this.env);
         mbs = connector.getMBeanServerConnection();
+
+        this.connectionNotificationListener = new ConnectionNotificationListener();
+        connector.addConnectionNotificationListener(this.connectionNotificationListener, null, this);
     }
 
     /** Gets attribute for matching bean and attribute name. */
@@ -115,11 +143,18 @@ public class Connection {
     public void closeConnector() {
         if (connector != null) {
             try {
+                this.connector.removeConnectionNotificationListener(this.connectionNotificationListener);
                 connector.close();
-            } catch (IOException e) {
+                connector = null;
+            } catch (IOException | ListenerNotFoundException e) {
                 // ignore
             }
         }
+    }
+
+    /** True if connection has been notified of failure/lost notifications */
+    public boolean hasSeenConnectionIssues() {
+        return this.seenConnectionIssues;
     }
 
     /** Returns a boolean describing if the connection is still alive. */

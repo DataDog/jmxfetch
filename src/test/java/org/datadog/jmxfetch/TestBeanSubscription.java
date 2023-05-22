@@ -253,8 +253,8 @@ public class TestBeanSubscription extends TestCommon {
     }
 
     @Test
-    public void testDisconnectDuringBeanCreation() throws IOException, InterruptedException {
-        String testDomain = "test-domain";
+    public void testNetworkFailure() throws IOException, InterruptedException {
+        String testDomain = "test-domain-nwkfail";
         cont.followOutput(logConsumer);
         this.initApplicationWithYamlLines(
             "init_config:",
@@ -283,27 +283,91 @@ public class TestBeanSubscription extends TestCommon {
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         assertEquals("Sanity check, no beans/metrics exist at beginning of test", 0, metrics.size());
 
-
-        // Cut network
         this.controlClient.jmxCutNetwork();
-
+        // In testing, this needs a slight delay for the connection to "fail"
+        // via JMXConnectionNotification.
+        // Artificially sleep to allow time for this since that is the point of this test
+        Thread.sleep(50);
+        this.controlClient.jmxRestoreNetwork();
 
         int numBeans = 20;
         int numAttributesPerBean = 4;
         int expectedMetrics = numBeans * numAttributesPerBean;
 
         this.controlClient.createMBeans(testDomain, numBeans);
-        // once beans created, restore network
 
-        this.controlClient.jmxRestoreNetwork();
-
-        // Allow connection restoration and bean refresh
-        Thread.sleep(500);
-
+        // One iteration to recover instance, no metrics are actually collected
+        this.app.doIteration();
+        // Second iteration should collect metrics
         this.app.doIteration();
         metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
 
         assertEquals("Number of metrics to be collected properly updated", expectedMetrics, this.app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        assertEquals("Network recovered, did we collect correct metrics?", expectedMetrics, metrics.size());
+    }
+
+    @Test
+    public void testDisconnectDuringBeanCreation() throws IOException, InterruptedException {
+        String testDomain = "test-domain-dsc-bn-creat";
+        cont.followOutput(logConsumer);
+        this.initApplicationWithYamlLines(
+            "init_config:",
+            "  is_jmx: true",
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + cont.getHost(),
+            "        port: " + cont.getMappedPort(rmiPort),
+            "        min_collection_interval: null",
+            "        enable_bean_subscription: true",
+            "        refresh_beans: 5000", // effectively disable bean refresh
+            "        collect_default_jvm_metrics: false",
+            "        max_returned_metrics: 300000",
+            "        conf:",
+            "          - include:",
+            "              domain: " + testDomain,
+            "              attribute:",
+            "                - DoubleValue",
+            "                - NumberValue",
+            "                - FloatValue",
+            "                - BooleanValue"
+        );
+
+        this.app.doIteration();
+        List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+        assertEquals("Sanity check, no beans/metrics exist at beginning of test", 0, metrics.size());
+
+        this.controlClient.jmxCutNetwork();
+
+        int numBeans = 20;
+        int numAttributesPerBean = 4;
+        int expectedMetrics = numBeans * numAttributesPerBean;
+
+        this.controlClient.createMBeans(testDomain, numBeans);
+
+        // once beans created, restore network
+        this.controlClient.jmxRestoreNetwork();
+
+        // When attempting to collect metrics, instance is marked as broken due to an unhealthy network
+        // _and_ it is added to brokenInstances so the broken instance is recovered in the _same_ iteration
+        // Note in other "reconnection" tests (see TestReconnection) there are two iterations required
+        // The first marks it as broken and the second recovers it. This test only needs one since getMetrics
+        // fails so quickly. So this is technically a race and if this test ever becomes flakey this is why.
+        this.app.doIteration();
+
+        // Now create more beans which triggers subscription updates
+        numBeans = 22;
+        expectedMetrics = numBeans * numAttributesPerBean;
+        this.controlClient.createMBeans(testDomain, numBeans);
+
+        // Allow subscription updates to be processed
+        Thread.sleep(500);
+
+        assertEquals("Number of metrics to be collected properly updated", expectedMetrics, this.app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        this.app.doIteration();
+        metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
 
         assertEquals("Network recovered, did we collect correct metrics?", expectedMetrics, metrics.size());
 

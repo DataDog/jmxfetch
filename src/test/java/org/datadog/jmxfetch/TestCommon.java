@@ -109,6 +109,9 @@ public class TestCommon {
                 mbs.unregisterMBean(objectName);
             }
         }
+        if (this.app != null) {
+            this.app.stop();
+        }
     }
 
     /**
