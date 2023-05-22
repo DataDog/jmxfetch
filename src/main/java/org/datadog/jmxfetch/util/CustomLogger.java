@@ -31,12 +31,19 @@ public class CustomLogger {
     // Keep a reference to our logger so it doesn't get GC'd
     private static Logger jmxfetchLogger;
 
+    // Enable by setting -Djmxfetch.filelinelogging,
+    // if true, log record will include the source file and line number
+    private static boolean enableFileLineLogging = 
+        System.getProperty("jmxfetch.filelinelogging", "false").equals("true");
+
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
 
     private static final String DATE_JDK14_LAYOUT = "yyyy-MM-dd HH:mm:ss z";
     private static final String DATE_JDK14_LAYOUT_RFC3339 = "yyyy-MM-dd'T'HH:mm:ssXXX";
     private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%5$s%n";
+    private static final String JDK14_LAYOUT_FILE_LINE =
+            "%s | JMX | %2$s | %3$s:%4$d | %5$s%6$s%n";
 
     private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -87,6 +94,22 @@ public class CustomLogger {
                     stream.close();
                     exception = writer.toString();
                 }
+
+                if (enableFileLineLogging) {
+                    Throwable throwable = new Throwable();
+                    StackTraceElement logEmissionFrame = throwable.getStackTrace()[6];
+
+                    return String.format(JDK14_LAYOUT_FILE_LINE,
+                        dateFormatter.format(new Date()).toString(),
+                        LogLevel.fromJulLevel(lr.getLevel()).toString(),
+                        logEmissionFrame.getFileName(),
+                        logEmissionFrame.getLineNumber(),
+                        lr.getMessage(),
+                        exception
+                    );
+
+                }
+
                 return String.format(format,
                     dateFormatter.format(new Date()).toString(),
                     LogLevel.fromJulLevel(lr.getLevel()).toString(),
