@@ -513,21 +513,6 @@ public class Instance implements BeanListener{
         // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
         // specified in the yaml/json config
         log.debug("getMetrics invoked");
-        if (this.beanAndAttributeLock.isLocked() && !this.beanAndAttributeLock.isHeldByCurrentThread()) {
-            log.debug("Waiting for lock, isLocked {} isHeldByCurrentThread {} holdCount {}", this.beanAndAttributeLock.isLocked(), this.beanAndAttributeLock.isHeldByCurrentThread(), this.beanAndAttributeLock.getHoldCount());
-            Thread owner = this.beanAndAttributeLock.getOwningThread();
-            if (owner != null) {
-                log.debug("Owning thread is {} ", owner.getName());
-            }
-            Map<Thread, StackTraceElement[]> allStacks = Thread.getAllStackTraces();
-            for (Map.Entry<Thread, StackTraceElement[]> entry : allStacks.entrySet()) {
-                log.info("Thread: {} {}", entry.getKey().toString(), (entry.getKey() == owner ? "THIS IS THE LOCK" : ""));
-
-                for (StackTraceElement elem : entry.getValue()) {
-                    log.info("\t{}", elem.toString());
-                }
-            }
-        }
 
         Integer period = (this.initialRefreshTime == this.lastRefreshTime)
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
