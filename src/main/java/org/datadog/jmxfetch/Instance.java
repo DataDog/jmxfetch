@@ -860,7 +860,6 @@ public class Instance implements BeanListener{
 
         this.beanAndAttributeLock.lock();
         try {
-
             boolean fullBeanQueryNeeded = false;
             if (limitQueryScopes) {
                 try {
@@ -885,20 +884,29 @@ public class Instance implements BeanListener{
                 // If every new bean and de-registered bean properly fires an event, then
                 // this.beans (current set that has been updated via subscription) should
                 // always equal the new set of beans queried (unless it was a full bean query)
-                Set<ObjectName> beansNotSeen = new HashSet<>();
                 if (!this.beans.containsAll(newBeans)) {
+                    // Newly queried set of beans contains beans not actively tracked
+                    // ie, maybe a registeredBean subscription msg did not get processed correctly
+                    Set<ObjectName> beansNotSeen = new HashSet<>();
                     beansNotSeen.addAll(newBeans);
                     beansNotSeen.removeAll(this.beans);
-                    log.error("Bean refresh found {} new beans that were not already known via subscription", beansNotSeen.size());
+
+                    log.error("Bean refresh found {} new beans that were not already tracked via subscription", beansNotSeen.size());
+                    for (ObjectName b : beansNotSeen) {
+                        log.error("New not-tracked bean {}", b);
+                    }
                 }
                 if (!newBeans.containsAll(this.beans)){
-                    beansNotSeen.addAll(this.beans);
-                    beansNotSeen.removeAll(newBeans);
-                    log.error("Bean refresh found {} FEWER beans than already known via subscription", beansNotSeen.size());
-                }
+                    // Newly queried set of beans is missing beans that are actively tracked
+                    // ie, maybe a deregisteredBean subscription msg did not get processed correctly
+                    Set<ObjectName> incorrectlyTrackedBeans = new HashSet<>();
+                    incorrectlyTrackedBeans.addAll(this.beans);
+                    incorrectlyTrackedBeans.removeAll(newBeans);
 
-                for (ObjectName b : beansNotSeen) {
-                    log.error("Bean {} is one that has never been seen before, see why subscription did not detect this bean.", b.toString());
+                    log.error("Bean refresh found {} FEWER beans than already tracked via subscription", incorrectlyTrackedBeans.size());
+                    for (ObjectName b : incorrectlyTrackedBeans) {
+                        log.error("Currently tracked bean that not returned from fresh query: {}", b);
+                    }
                 }
             }
             this.beans = newBeans;
