@@ -113,7 +113,6 @@ public class Instance implements BeanListener{
     private boolean emptyDefaultHostname;
     private boolean enableBeanSubscription;
     private boolean beanSubscriptionActive;
-    private DebugReentrantLock beanAndAttributeLock;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -274,7 +273,6 @@ public class Instance implements BeanListener{
         Boolean enableBeanSubscription = (Boolean) instanceMap.get("enable_bean_subscription");
         this.enableBeanSubscription = enableBeanSubscription != null && enableBeanSubscription;
         this.beanSubscriptionActive = false;
-        this.beanAndAttributeLock = new DebugReentrantLock(false);
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
@@ -430,45 +428,8 @@ public class Instance implements BeanListener{
         return connection;
     }
 
-    private class DebugReentrantLock extends ReentrantLock {
-        private boolean verbose;
-        public DebugReentrantLock(boolean verbose) {
-            this.verbose = verbose;
-        }
-        @Override
-        public void lock() {
-            if (this.verbose) {
-                log.info("About to acquire lock from thread {}, lockCount is {}", Thread.currentThread().toString(), this.getHoldCount());
-                for (StackTraceElement elem : Thread.currentThread().getStackTrace()) {
-                    log.info("\t{}", elem.toString());
-                }
-            }
-            super.lock();
-            if (this.verbose) {
-                log.info("Lock acquired, lockCount is {}", this.getHoldCount());
-            }
-        } 
-        @Override
-        public void unlock() {
-            if (this.verbose) {
-                log.info("Releasing lock from thread {}, lockCount is {}", Thread.currentThread().toString(), this.getHoldCount());
-                for (StackTraceElement elem : Thread.currentThread().getStackTrace()) {
-                    log.info("\t{}", elem.toString());
-                }
-            }
-            super.unlock();
-
-            if (this.verbose) {
-                log.info("Lock released, lockCount is {}", this.getHoldCount());
-            }
-        }
-        public Thread getOwningThread() {
-            return getOwner();
-        }
-    }
-
     /** Initializes the instance. May force a new connection.. */
-    public void init(boolean forceNewConnection)
+    public synchronized void init(boolean forceNewConnection)
             throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
@@ -481,16 +442,11 @@ public class Instance implements BeanListener{
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
 
-        this.beanAndAttributeLock.lock();
-        try {
-            this.refreshBeansList(true);
-            this.initialRefreshTime = this.lastRefreshTime;
-            log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
-            this.getMatchingAttributes();
-            log.info("Done initializing JMX Server at {}", this);
-        } finally {
-            this.beanAndAttributeLock.unlock();
-        }
+        this.refreshBeansList(true);
+        this.initialRefreshTime = this.lastRefreshTime;
+        log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
+        this.getMatchingAttributes();
+        log.info("Done initializing JMX Server at {}", this);
     }
 
     /** Returns a string representation for the instance. */
@@ -510,7 +466,7 @@ public class Instance implements BeanListener{
     }
 
     /** Returns a map of metrics collected. */
-    public List<Metric> getMetrics() throws IOException {
+    public synchronized List<Metric> getMetrics() throws IOException {
         if (!this.isInstanceHealthy()) {
             this.connection.closeConnector();
             throw new IOException("Instance is in a bad state", null);
@@ -525,52 +481,45 @@ public class Instance implements BeanListener{
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
 
         List<Metric> metrics = new ArrayList<Metric>();
-        this.beanAndAttributeLock.lock();
-        try {
-            log.debug("Got the lock");
+        if (isPeriodDue(this.lastRefreshTime, period)) {
+            log.info("Refreshing bean list");
+            this.refreshBeansList(false);
+            this.getMatchingAttributes();
+        }
 
-            if (isPeriodDue(this.lastRefreshTime, period)) {
-                log.info("Refreshing bean list");
-                this.refreshBeansList(false);
-                this.getMatchingAttributes();
-            }
+        Iterator<JmxAttribute> it = matchingAttributes.iterator();
 
-            Iterator<JmxAttribute> it = matchingAttributes.iterator();
+        // increment the lastCollectionTime
+        this.lastCollectionTime = System.currentTimeMillis();
 
-            // increment the lastCollectionTime
-            this.lastCollectionTime = System.currentTimeMillis();
-
-            log.info("Starting Collection of " + matchingAttributes.size() + " attributes");
-            while (it.hasNext()) {
-                JmxAttribute jmxAttr = it.next();
-                try {
-                    List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
-                    metrics.addAll(jmxAttrMetrics);
+        log.info("Starting Collection of " + matchingAttributes.size() + " attributes");
+        while (it.hasNext()) {
+            JmxAttribute jmxAttr = it.next();
+            try {
+                List<Metric> jmxAttrMetrics = jmxAttr.getMetrics();
+                metrics.addAll(jmxAttrMetrics);
+                this.failingAttributes.remove(jmxAttr);
+            } catch (IOException e) {
+                log.warn("Got IOException {}, rethrowing...", e);
+                throw e;
+            } catch (Exception e) {
+                log.warn("Cannot get metrics for attribute: " + jmxAttr, e);
+                if (this.failingAttributes.contains(jmxAttr)) {
+                    log.debug(
+                            "Cannot generate metrics for attribute: "
+                                    + jmxAttr
+                                    + " twice in a row. Removing it from the attribute list");
+                    it.remove();
                     this.failingAttributes.remove(jmxAttr);
-                } catch (IOException e) {
-                    log.warn("Got IOException {}, rethrowing...", e);
-                    throw e;
-                } catch (Exception e) {
-                    log.warn("Cannot get metrics for attribute: " + jmxAttr, e);
-                    if (this.failingAttributes.contains(jmxAttr)) {
-                        log.debug(
-                                "Cannot generate metrics for attribute: "
-                                        + jmxAttr
-                                        + " twice in a row. Removing it from the attribute list");
-                        it.remove();
-                        this.failingAttributes.remove(jmxAttr);
-                        this.metricCountForMatchingAttributes -= jmxAttr.getLastMetricsCount();
-                    } else {
-                        this.failingAttributes.add(jmxAttr);
-                    }
+                    this.metricCountForMatchingAttributes -= jmxAttr.getLastMetricsCount();
+                } else {
+                    this.failingAttributes.add(jmxAttr);
                 }
             }
-
-            long duration = System.currentTimeMillis() - this.lastCollectionTime;
-            log.info("Collection " + matchingAttributes.size() + " matching attributes finished in " + duration + "ms.");
-        } finally {
-            this.beanAndAttributeLock.unlock();
         }
+
+        long duration = System.currentTimeMillis() - this.lastCollectionTime;
+        log.info("Collection " + matchingAttributes.size() + " matching attributes finished in " + duration + "ms.");
         return metrics;
     }
 
@@ -592,11 +541,7 @@ public class Instance implements BeanListener{
         }
     }
 
-    private void addMatchingAttributesForBean(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos) throws IOException {
-        if (!this.beanAndAttributeLock.isHeldByCurrentThread()) {
-            log.error("BAD CONCURRENCY - lock should have been held but was not");
-            throw new IOException("BAD CONC");
-        }
+    private synchronized void addMatchingAttributesForBean(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos) throws IOException {
         boolean metricReachedDisplayed = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -732,49 +677,43 @@ public class Instance implements BeanListener{
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
 
-        this.beanAndAttributeLock.lock();
-        try {
-            this.matchingAttributes.clear();
-            this.failingAttributes.clear();
+        this.matchingAttributes.clear();
+        this.failingAttributes.clear();
 
-            if (!action.equals(AppConfig.ACTION_COLLECT)) {
-                reporter.displayInstanceName(this);
-            }
-
-            for (ObjectName beanName : beans) {
-                if (limitReached) {
-                    log.debug("Limit reached");
-                    if (action.equals(AppConfig.ACTION_COLLECT)) {
-                        break;
-                    }
-                }
-                String className;
-                MBeanAttributeInfo[] attributeInfos;
-                try {
-                    log.debug("Getting bean info for bean: {}", beanName);
-                    MBeanInfo info = connection.getMBeanInfo(beanName);
-
-                    log.debug("Getting class name for bean: {}", beanName);
-                    className = info.getClassName();
-                    log.debug("Getting attributes for bean: {}", beanName);
-                    attributeInfos = info.getAttributes();
-                } catch (IOException e) {
-                    throw e;
-                } catch (Exception e) {
-                    log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
-                    continue;
-                }
-
-                addMatchingAttributesForBean(beanName, className, attributeInfos);
-            }
-            log.info("Found {} matching attributes with {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
-        } finally {
-            this.beanAndAttributeLock.unlock();
+        if (!action.equals(AppConfig.ACTION_COLLECT)) {
+            reporter.displayInstanceName(this);
         }
+
+        for (ObjectName beanName : beans) {
+            if (limitReached) {
+                log.debug("Limit reached");
+                if (action.equals(AppConfig.ACTION_COLLECT)) {
+                    break;
+                }
+            }
+            String className;
+            MBeanAttributeInfo[] attributeInfos;
+            try {
+                log.debug("Getting bean info for bean: {}", beanName);
+                MBeanInfo info = connection.getMBeanInfo(beanName);
+
+                log.debug("Getting class name for bean: {}", beanName);
+                className = info.getClassName();
+                log.debug("Getting attributes for bean: {}", beanName);
+                attributeInfos = info.getAttributes();
+            } catch (IOException e) {
+                throw e;
+            } catch (Exception e) {
+                log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
+                continue;
+            }
+
+            addMatchingAttributesForBean(beanName, className, attributeInfos);
+        }
+        log.info("Found {} matching attributes with {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
     }
 
-    public void beanRegistered(ObjectName beanName) {
-        this.beanAndAttributeLock.lock();
+    public synchronized void beanRegistered(ObjectName beanName) {
         log.debug("Bean registered event. {}", beanName);
         String className;
         MBeanAttributeInfo[] attributeInfos;
@@ -794,30 +733,23 @@ public class Instance implements BeanListener{
             log.warn("Could not connect to get bean attributes or class name: " + e.getMessage());
         } catch (Exception e) {
             log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
-        } finally {
-            log.debug("Bean registration processed. {}", beanName);
-            this.beanAndAttributeLock.unlock();
         }
+        log.debug("Bean registration processed. {}", beanName);
     }
-    public void beanUnregistered(ObjectName mBeanName) {
-        this.beanAndAttributeLock.lock();
-        try {
-            int removedMetrics = 0;
-            int removedAttributes = 0;
-            for (Iterator<JmxAttribute> it = this.matchingAttributes.iterator(); it.hasNext();) {
-                JmxAttribute current = it.next();
-                if (current.getBeanName().compareTo(mBeanName) == 0) {
-                    it.remove();
-                    removedMetrics += current.getLastMetricsCount();
-                    removedAttributes++;
-                }
+    public synchronized void beanUnregistered(ObjectName mBeanName) {
+        int removedMetrics = 0;
+        int removedAttributes = 0;
+        for (Iterator<JmxAttribute> it = this.matchingAttributes.iterator(); it.hasNext();) {
+            JmxAttribute current = it.next();
+            if (current.getBeanName().compareTo(mBeanName) == 0) {
+                it.remove();
+                removedMetrics += current.getLastMetricsCount();
+                removedAttributes++;
             }
-            log.info("Bean unregistered event, removed {} attributes ({} metrics) matching bean {}", removedAttributes, removedMetrics, mBeanName);
-            this.metricCountForMatchingAttributes -= removedMetrics;
-        } finally {
-            log.debug("Bean unregistration processed. {}", mBeanName);
-            this.beanAndAttributeLock.unlock();
         }
+        log.info("Bean unregistered event, removed {} attributes ({} metrics) matching bean {}", removedAttributes, removedMetrics, mBeanName);
+        this.metricCountForMatchingAttributes -= removedMetrics;
+        log.debug("Bean unregistration processed. {}", mBeanName);
     }
 
 
@@ -851,69 +783,64 @@ public class Instance implements BeanListener{
      * Query and refresh the instance's list of beans. Limit the query scope when possible on
      * certain actions, and fallback if necessary.
      */
-    private void refreshBeansList(boolean isInitialQuery) throws IOException {
+    private synchronized void refreshBeansList(boolean isInitialQuery) throws IOException {
         Set<ObjectName> newBeans = new HashSet<>();
         String action = appConfig.getAction();
         boolean limitQueryScopes =
                 !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
-        this.beanAndAttributeLock.lock();
-        try {
-            boolean fullBeanQueryNeeded = false;
-            if (limitQueryScopes) {
-                try {
-                    List<String> beanScopes = getBeansScopes();
-                    for (String scope : beanScopes) {
-                        ObjectName name = new ObjectName(scope);
-                        newBeans.addAll(connection.queryNames(name));
-                    }
-                } catch (Exception e) {
-                    fullBeanQueryNeeded = true;
-                    log.error(
-                            "Unable to compute a common bean scope, querying all beans as a fallback",
-                            e);
+        boolean fullBeanQueryNeeded = false;
+        if (limitQueryScopes) {
+            try {
+                List<String> beanScopes = getBeansScopes();
+                for (String scope : beanScopes) {
+                    ObjectName name = new ObjectName(scope);
+                    newBeans.addAll(connection.queryNames(name));
                 }
+            } catch (Exception e) {
+                fullBeanQueryNeeded = true;
+                log.error(
+                        "Unable to compute a common bean scope, querying all beans as a fallback",
+                        e);
             }
-
-            if (fullBeanQueryNeeded) {
-                newBeans = connection.queryNames(null);
-            }
-            if (this.beanSubscriptionActive && !fullBeanQueryNeeded && !isInitialQuery) {
-                // This code exists to validate the bean-subscription is working properly
-                // If every new bean and de-registered bean properly fires an event, then
-                // this.beans (current set that has been updated via subscription) should
-                // always equal the new set of beans queried (unless it was a full bean query)
-                if (!this.beans.containsAll(newBeans)) {
-                    // Newly queried set of beans contains beans not actively tracked
-                    // ie, maybe a registeredBean subscription msg did not get processed correctly
-                    Set<ObjectName> beansNotSeen = new HashSet<>();
-                    beansNotSeen.addAll(newBeans);
-                    beansNotSeen.removeAll(this.beans);
-
-                    log.error("Bean refresh found {} new beans that were not already tracked via subscription", beansNotSeen.size());
-                    for (ObjectName b : beansNotSeen) {
-                        log.error("New not-tracked bean {}", b);
-                    }
-                }
-                if (!newBeans.containsAll(this.beans)){
-                    // Newly queried set of beans is missing beans that are actively tracked
-                    // ie, maybe a deregisteredBean subscription msg did not get processed correctly
-                    Set<ObjectName> incorrectlyTrackedBeans = new HashSet<>();
-                    incorrectlyTrackedBeans.addAll(this.beans);
-                    incorrectlyTrackedBeans.removeAll(newBeans);
-
-                    log.error("Bean refresh found {} FEWER beans than already tracked via subscription", incorrectlyTrackedBeans.size());
-                    for (ObjectName b : incorrectlyTrackedBeans) {
-                        log.error("Currently tracked bean that not returned from fresh query: {}", b);
-                    }
-                }
-            }
-            this.beans = newBeans;
-            this.lastRefreshTime = System.currentTimeMillis();
-        } finally {
-            this.beanAndAttributeLock.unlock();
         }
+
+        if (fullBeanQueryNeeded) {
+            newBeans = connection.queryNames(null);
+        }
+        if (this.beanSubscriptionActive && !fullBeanQueryNeeded && !isInitialQuery) {
+            // This code exists to validate the bean-subscription is working properly
+            // If every new bean and de-registered bean properly fires an event, then
+            // this.beans (current set that has been updated via subscription) should
+            // always equal the new set of beans queried (unless it was a full bean query)
+            if (!this.beans.containsAll(newBeans)) {
+                // Newly queried set of beans contains beans not actively tracked
+                // ie, maybe a registeredBean subscription msg did not get processed correctly
+                Set<ObjectName> beansNotSeen = new HashSet<>();
+                beansNotSeen.addAll(newBeans);
+                beansNotSeen.removeAll(this.beans);
+
+                log.error("Bean refresh found {} new beans that were not already tracked via subscription", beansNotSeen.size());
+                for (ObjectName b : beansNotSeen) {
+                    log.error("New not-tracked bean {}", b);
+                }
+            }
+            if (!newBeans.containsAll(this.beans)){
+                // Newly queried set of beans is missing beans that are actively tracked
+                // ie, maybe a deregisteredBean subscription msg did not get processed correctly
+                Set<ObjectName> incorrectlyTrackedBeans = new HashSet<>();
+                incorrectlyTrackedBeans.addAll(this.beans);
+                incorrectlyTrackedBeans.removeAll(newBeans);
+
+                log.error("Bean refresh found {} FEWER beans than already tracked via subscription", incorrectlyTrackedBeans.size());
+                for (ObjectName b : incorrectlyTrackedBeans) {
+                    log.error("Currently tracked bean that not returned from fresh query: {}", b);
+                }
+            }
+        }
+        this.beans = newBeans;
+        this.lastRefreshTime = System.currentTimeMillis();
     }
 
     /** True if instance is in a good state to collect metrics */
