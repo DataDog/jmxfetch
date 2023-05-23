@@ -475,7 +475,6 @@ public class Instance implements BeanListener{
         // post initialization and every x seconds thereafter.
         // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
         // specified in the yaml/json config
-        log.debug("getMetrics invoked");
 
         Integer period = (this.initialRefreshTime == this.lastRefreshTime)
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
@@ -500,10 +499,9 @@ public class Instance implements BeanListener{
                 metrics.addAll(jmxAttrMetrics);
                 this.failingAttributes.remove(jmxAttr);
             } catch (IOException e) {
-                log.warn("Got IOException {}, rethrowing...", e);
                 throw e;
             } catch (Exception e) {
-                log.warn("Cannot get metrics for attribute: " + jmxAttr, e);
+                log.debug("Cannot get metrics for attribute: " + jmxAttr, e);
                 if (this.failingAttributes.contains(jmxAttr)) {
                     log.debug(
                             "Cannot generate metrics for attribute: "
@@ -684,7 +682,7 @@ public class Instance implements BeanListener{
             reporter.displayInstanceName(this);
         }
 
-        for (ObjectName beanName : beans) {
+        for (ObjectName beanName : this.beans) {
             if (limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -704,7 +702,7 @@ public class Instance implements BeanListener{
             } catch (IOException e) {
                 throw e;
             } catch (Exception e) {
-                log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
+                log.warn("Cannot get bean attributes or class name: {}", e.getMessage());
                 continue;
             }
 
@@ -743,13 +741,15 @@ public class Instance implements BeanListener{
             JmxAttribute current = it.next();
             if (current.getBeanName().compareTo(mBeanName) == 0) {
                 it.remove();
+                // `getLastMetricsCount` used here instead of `getMetricsCount` because
+                // the bean no longer exists by the time we get this message.
+                // `getMetricsCount` does a live query and therefore will fail
                 removedMetrics += current.getLastMetricsCount();
                 removedAttributes++;
             }
         }
-        log.info("Bean unregistered event, removed {} attributes ({} metrics) matching bean {}", removedAttributes, removedMetrics, mBeanName);
+        log.debug("Bean unregistered, removed {} attributes ({} metrics) matching bean {}", removedAttributes, removedMetrics, mBeanName);
         this.metricCountForMatchingAttributes -= removedMetrics;
-        log.debug("Bean unregistration processed. {}", mBeanName);
     }
 
 
@@ -761,7 +761,6 @@ public class Instance implements BeanListener{
             this.beanSubscriptionActive = true;
             log.info("Subscribed to {} bean scopes successfully!", beanScopes.size());
         } catch (MalformedObjectNameException | InstanceNotFoundException | IOException e) {
-            e.printStackTrace();
             log.warn("Bean subscription failed! Will rely on bean_refresh, ensure it is set "
                     + " to an appropriate value (currently {} seconds). Exception: ",
                     this.refreshBeansPeriod, e);

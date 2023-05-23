@@ -69,7 +69,6 @@ public class TestBeanSubscription extends TestCommon {
             "                - BooleanValue"
         );
 
-        log.info("hello");
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         assertEquals(0, metrics.size());
