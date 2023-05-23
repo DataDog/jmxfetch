@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -27,7 +26,6 @@ import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerDelegate;
 import javax.management.relation.MBeanServerNotificationFilter;
-import javax.management.MBeanServerNotification;
 import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
@@ -69,27 +67,6 @@ public class Connection {
             }
             log.debug("Received connection notification: {} Message: {}",
                  connNotif.getType(), connNotif.getMessage());
-        }
-    }
-
-    private static class BeanNotificationListener implements NotificationListener {
-        private BeanListener bl;
-
-        public BeanNotificationListener(BeanListener bl) {
-            this.bl = bl;
-        }
-        public void handleNotification(Notification notification, Object handback) {
-            if (!(notification instanceof MBeanServerNotification)) {
-                return;
-            }
-            MBeanServerNotification mbs = (MBeanServerNotification) notification;
-            log.debug("MBeanNotification: ts {} seqNum: {} msg: '{}'", mbs.getTimeStamp(), mbs.getSequenceNumber(), mbs.getMessage());
-            ObjectName mBeanName = mbs.getMBeanName();
-            if (mbs.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-                bl.beanRegistered(mBeanName);
-            } else if (mbs.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-                this.bl.beanUnregistered(mBeanName);
-            }
         }
     }
 

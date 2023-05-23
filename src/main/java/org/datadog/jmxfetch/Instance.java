@@ -757,8 +757,6 @@ public class Instance implements BeanListener{
         List<String> beanScopes = this.getBeansScopes();
 
         try {
-            // TODO - Processing a bean subscription event could be slow, which could hold up other subscriptions
-            // Would be better to queue subscription events up and process that queue on a dedicated thread.
             connection.subscribeToBeanScopes(beanScopes, this);
             this.beanSubscriptionActive = true;
             log.info("Subscribed to {} bean scopes successfully!", beanScopes.size());
