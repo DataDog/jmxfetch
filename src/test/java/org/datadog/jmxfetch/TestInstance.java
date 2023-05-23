@@ -19,6 +19,10 @@ import org.junit.Test;
 public class TestInstance extends TestCommon {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger("Test Instance");
 
+    // This delay exists for the subscription thread to recieve the MBeanNotification
+    // and call into `Instance`. Conceptually this is just a Thread.yield()
+    private static int subscriptionDelayMs = 50;
+
     @Test
     public void testMinCollectionInterval() throws Exception {
         registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
@@ -220,89 +224,127 @@ public class TestInstance extends TestCommon {
     /** Tests bean_subscription */
     @Test
     public void testBeanSubscription() throws Exception {
-        // This delay is for the subscription thread to recieve the MBeanNotification
-        // and call into `Instance`. Conceptually this is just a Thread.yield()
-        int subscriptionDelay = 10;
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        // Bean-refresh interval is to to 50s, so the only bean refresh will be
         // initial fetch
         initApplication("jmx_bean_subscription.yaml");
 
         // We do a first collection
         run();
         List<Map<String, Object>> metrics = getMetrics();
+        int numRegisteredAttributes = 0;
 
-        // 13 metrics from java.lang
-        assertEquals(13, metrics.size());
+        assertEquals(numRegisteredAttributes, metrics.size());
 
-        // We register an additional mbean
+        // We register first mbean with 2 matching attributes
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
-        log.info("sleeping before the next collection");
-        Thread.sleep(subscriptionDelay);
+        numRegisteredAttributes += 2;
+
+        Thread.sleep(subscriptionDelayMs);
 
         run();
         metrics = getMetrics();
 
-        // 15 = 13 metrics from java.lang + 2 iteration=one
-        assertEquals(15, metrics.size());
+        assertEquals(numRegisteredAttributes, metrics.size());
 
         // We register additional mbean
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=two");
-        log.info("sleeping before the next collection");
-        Thread.sleep(subscriptionDelay);
+        numRegisteredAttributes += 2;
+        Thread.sleep(subscriptionDelayMs);
 
         // We run a third collection.
         run();
         metrics = getMetrics();
 
-        // 17 = 13 metrics from java.lang + 2 iteration=one + 2 iteration=two
-        assertEquals(17, metrics.size());
+        assertEquals(numRegisteredAttributes, metrics.size());
     }
 
     @Test
     public void testBeanUnsubscription() throws Exception {
-        // This delay is for the subscription thread to recieve the MBeanNotification
-        // and call into `Instance`. Conceptually this is just a Thread.yield()
-        int subscriptionDelay = 200;
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
         // Bean-refresh interval is to to 50s, so the only bean refresh will be
         // initial fetch
         initApplication("jmx_bean_subscription.yaml");
+        int numRegisteredAttributes = 0;
 
         // We do a first collection
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 13 metrics from java.lang
-        assertEquals(13, metrics.size());
+        // Sanity check -- no beans exist yet
+        assertEquals(numRegisteredAttributes, metrics.size());
 
         // We register an additional mbean
         registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
-        log.info("sleeping before the next collection");
-        Thread.sleep(subscriptionDelay);
+        numRegisteredAttributes += 2;
+
+        Thread.sleep(subscriptionDelayMs);
 
         run();
         metrics = getMetrics();
 
-        // 15 = 13 metrics from java.lang + 2 iteration=one
-        assertEquals(15, metrics.size());
+        assertEquals(numRegisteredAttributes, metrics.size());
 
         // We UN-register first mbean
         unregisterMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
-        log.info("sleeping before the next collection");
-        Thread.sleep(subscriptionDelay);
+        numRegisteredAttributes -= 2;
+        Thread.sleep(subscriptionDelayMs);
 
         // We run a third collection.
         run();
         metrics = getMetrics();
 
-        // 13 metrics from java.lang only
         // Note that the collected metrics size is correct even without any special work for bean
         // unregistration as the `iteration=one` metric will fail to be found and simply not be included
-        assertEquals(13, metrics.size());
+        assertEquals(numRegisteredAttributes, metrics.size());
         // Which is why this second check exists, it reflects the running total of metrics
         // collected which is used to determine if new attributes can be added
         Instance i = app.getInstances().get(0);
-        assertEquals(13, i.getCurrentNumberOfMetrics());
+        assertEquals(numRegisteredAttributes, i.getCurrentNumberOfMetrics());
+    }
+
+    @Test
+    public void testBeanSubscriptionAttributeCounting() throws Exception {
+        // This test only looks at the instance's getCurrentNumberOfMetrics as this
+        // should be updated on bean registration/deregistration
+
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        initApplication("jmx_bean_subscription.yaml"); // max returned metrics is 10
+
+        int numRegisteredAttributes = 0;
+        assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
+        numRegisteredAttributes += 2;
+        Thread.sleep(subscriptionDelayMs);
+        assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=two");
+        numRegisteredAttributes += 2;
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=three");
+        numRegisteredAttributes += 2;
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=four");
+        numRegisteredAttributes += 2;
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=five");
+        numRegisteredAttributes += 2;
+
+        Thread.sleep(subscriptionDelayMs * 2); // wait longer bc more beans
+        assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=six");
+        // no change to numRegisteredAttributes as this registration should FAIL due to max number of metrics
+
+        Thread.sleep(subscriptionDelayMs);
+        assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        unregisterMBean(testApp, "org.datadog.jmxfetch.test:iteration=one");
+        numRegisteredAttributes -= 2;
+        Thread.sleep(subscriptionDelayMs);
+        assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
+
+        registerMBean(testApp, "org.datadog.jmxfetch.test:iteration=seven");
+        numRegisteredAttributes += 2;
+        Thread.sleep(subscriptionDelayMs);
+        assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
     }
 }

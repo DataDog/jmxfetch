@@ -4,7 +4,9 @@ instances:
   -   process_name_regex: .*surefire.*
       min_collection_interval: null
       enable_bean_subscription: true
-      refresh_beans: 50
+      collect_default_jvm_metrics: false
+      refresh_beans: 50000
+      max_returned_metrics: 10
       name: jmx_test_instance
       conf:
           - include:
