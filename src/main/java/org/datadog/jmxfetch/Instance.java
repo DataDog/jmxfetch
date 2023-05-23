@@ -22,8 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -820,22 +823,19 @@ public class Instance implements BeanListener{
 
     private void subscribeToBeans() {
         List<String> beanScopes = this.getBeansScopes();
-        BeanSubscriber subscriber = new BeanSubscriber(beanScopes, this.connection, this);
 
         try {
-            new Thread(subscriber).start();
-            this.beanSubscriptionActive = subscriber.subscriptionSuccessful.get(1, SECONDS);
-        } catch (Exception e) {
-            log.warn("Error retrieving bean subscription value, assuming subscription failed. Exception: {}", e);
-            this.beanSubscriptionActive = false;
-        }
-
-        if (this.beanSubscriptionActive) {
+            // TODO - Processing a bean subscription event could be slow, which could hold up other subscriptions
+            // Would be better to queue subscription events up and process that queue on a dedicated thread.
+            connection.subscribeToBeanScopes(beanScopes, this);
+            this.beanSubscriptionActive = true;
             log.info("Subscribed to {} bean scopes successfully!", beanScopes.size());
-        } else {
+        } catch (MalformedObjectNameException | InstanceNotFoundException | IOException e) {
+            e.printStackTrace();
             log.warn("Bean subscription failed! Will rely on bean_refresh, ensure it is set "
-                    + " to an appropriate value (currently {} seconds)",
-                    this.refreshBeansPeriod);
+                    + " to an appropriate value (currently {} seconds). Exception: ",
+                    this.refreshBeansPeriod, e);
+            this.beanSubscriptionActive = false;
         }
     }
 
