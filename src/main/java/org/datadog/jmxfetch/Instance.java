@@ -487,7 +487,6 @@ public class Instance implements BeanTracker {
         // increment the lastCollectionTime
         this.lastCollectionTime = System.currentTimeMillis();
 
-        log.info("Starting Collection of " + matchingAttributes.size() + " attributes");
         while (it.hasNext()) {
             JmxAttribute jmxAttr = it.next();
             try {
@@ -539,9 +538,9 @@ public class Instance implements BeanTracker {
     private synchronized void addMatchingAttributesForBean(
         ObjectName beanName,
         String className,
-        MBeanAttributeInfo[] attributeInfos
+        MBeanAttributeInfo[] attributeInfos,
+        boolean metricReachedPreviouslyDisplayed
     ) throws IOException {
-        boolean metricReachedDisplayed = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
 
@@ -551,11 +550,10 @@ public class Instance implements BeanTracker {
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
                     log.warn("Maximum number of metrics reached.");
                     break;
-                } else if (!metricReachedDisplayed
+                } else if (!metricReachedPreviouslyDisplayed
                         && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
                     reporter.displayMetricReached();
-                    metricReachedDisplayed = true;
                 }
             }
             JmxAttribute jmxAttribute;
@@ -644,9 +642,9 @@ public class Instance implements BeanTracker {
                         if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                                 || action.equals(AppConfig.ACTION_LIST_MATCHING)
                                 || action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                                && !limitReached
+                                && !this.limitReached
                                 || action.equals(AppConfig.ACTION_LIST_LIMITED)
-                                && limitReached) {
+                                && this.limitReached) {
                             reporter.displayMatchingAttributeName(
                                     jmxAttribute,
                                     this.metricCountForMatchingAttributes,
@@ -674,19 +672,19 @@ public class Instance implements BeanTracker {
     }
 
     private void getMatchingAttributes() throws IOException {
-        limitReached = false;
-        Reporter reporter = appConfig.getReporter();
-        String action = appConfig.getAction();
-
         this.matchingAttributes.clear();
         this.failingAttributes.clear();
+        this.limitReached = false;
+
+        Reporter reporter = appConfig.getReporter();
+        String action = appConfig.getAction();
 
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
         }
 
         for (ObjectName beanName : this.beans) {
-            if (limitReached) {
+            if (this.limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
                     break;
@@ -709,7 +707,7 @@ public class Instance implements BeanTracker {
                 continue;
             }
 
-            addMatchingAttributesForBean(beanName, className, attributeInfos);
+            addMatchingAttributesForBean(beanName, className, attributeInfos, limitReached);
         }
         log.info("Found {} matching attributes with {} metrics total",
             matchingAttributes.size(),
@@ -730,7 +728,7 @@ public class Instance implements BeanTracker {
             log.debug("Getting attributes for bean: {}", beanName);
             attributeInfos = info.getAttributes();
 
-            this.addMatchingAttributesForBean(beanName, className, attributeInfos);
+            this.addMatchingAttributesForBean(beanName, className, attributeInfos, false);
             this.beans.add(beanName);
         } catch (IOException e) {
             // Nothing to do, connection issue
