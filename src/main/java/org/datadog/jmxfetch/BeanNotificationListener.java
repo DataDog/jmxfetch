@@ -44,13 +44,16 @@ class BeanNotificationListener implements NotificationListener {
         queue.offer(mbs);
     }
 
-    private void processMBeanServerNotification(MBeanServerNotification mbs) {
-        log.debug("MBeanNotification: ts {} seqNum: {} msg: '{}'", mbs.getTimeStamp(), mbs.getSequenceNumber(), mbs.getMessage());
-        ObjectName mBeanName = mbs.getMBeanName();
-        if (mbs.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-            beanListener.beanRegistered(mBeanName);
-        } else if (mbs.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-            beanListener.beanUnregistered(mBeanName);
+    private void processMBeanServerNotification(MBeanServerNotification notif) {
+        log.debug("MBeanNotification: ts {} seqNum: {} msg: '{}'",
+            notif.getTimeStamp(),
+            notif.getSequenceNumber(),
+            notif.getMessage());
+        ObjectName beanName = notif.getMBeanName();
+        if (notif.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+            beanListener.beanRegistered(beanName);
+        } else if (notif.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
+            beanListener.beanUnregistered(beanName);
         }
     }
 }

@@ -3,35 +3,24 @@ package org.datadog.jmxfetch;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.SocketTimeoutException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
 import javax.management.ListenerNotFoundException;
-import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerDelegate;
-import javax.management.relation.MBeanServerNotificationFilter;
 import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
-import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.relation.MBeanServerNotificationFilter;
 import javax.management.remote.JMXConnectionNotification;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -62,7 +51,8 @@ public class Connection {
             if (connNotif.getType() == JMXConnectionNotification.CLOSED
                     || connNotif.getType() == JMXConnectionNotification.FAILED
                     || connNotif.getType() == JMXConnectionNotification.NOTIFS_LOST) {
-                log.warn("Connection is potentially in a bad state, marking connection issues. {} - {}", connNotif.getType(), connNotif.getMessage());
+                log.warn("Marking connection issues due to {} - {}",
+                     connNotif.getType(), connNotif.getMessage());
                 conn.seenConnectionIssues = true;
             }
             log.debug("Received connection notification: {} Message: {}",
@@ -70,7 +60,9 @@ public class Connection {
         }
     }
 
-    public void subscribeToBeanScopes(List<String> beanScopes, BeanListener bl) throws MalformedObjectNameException, IOException, InstanceNotFoundException{
+    /** Subscribes for bean registration/deregistration events under the specified bean scopes. */
+    public void subscribeToBeanScopes(List<String> beanScopes, BeanListener bl)
+            throws MalformedObjectNameException, IOException, InstanceNotFoundException {
         BeanNotificationListener listener = new BeanNotificationListener(bl);
         for (String scope : beanScopes) {
             ObjectName name = new ObjectName(scope);
@@ -102,7 +94,8 @@ public class Connection {
         mbs = connector.getMBeanServerConnection();
 
         this.connectionNotificationListener = new ConnectionNotificationListener();
-        connector.addConnectionNotificationListener(this.connectionNotificationListener, null, this);
+        connector.addConnectionNotificationListener(
+            this.connectionNotificationListener, null, this);
     }
 
     /** Gets attribute for matching bean and attribute name. */
@@ -120,7 +113,8 @@ public class Connection {
     public void closeConnector() {
         if (connector != null) {
             try {
-                this.connector.removeConnectionNotificationListener(this.connectionNotificationListener);
+                this.connector.removeConnectionNotificationListener(
+                    this.connectionNotificationListener);
                 connector.close();
                 connector = null;
             } catch (IOException | ListenerNotFoundException e) {
@@ -129,7 +123,7 @@ public class Connection {
         }
     }
 
-    /** True if connection has been notified of failure/lost notifications */
+    /** True if connection has been notified of failure/lost notifications. */
     public boolean hasSeenConnectionIssues() {
         return this.seenConnectionIssues;
     }

@@ -6,8 +6,6 @@ import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.yaml.snakeyaml.Yaml;
 
-import static java.util.concurrent.TimeUnit.*;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,10 +28,8 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 @Slf4j
-public class Instance implements BeanListener{
+public class Instance implements BeanListener {
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
                     "long",
@@ -517,7 +513,8 @@ public class Instance implements BeanListener{
         }
 
         long duration = System.currentTimeMillis() - this.lastCollectionTime;
-        log.info("Collection " + matchingAttributes.size() + " matching attributes finished in " + duration + "ms.");
+        log.info("Collection of {} matching attributes finished in {}ms",
+             matchingAttributes.size(), duration);
         return metrics;
     }
 
@@ -539,7 +536,11 @@ public class Instance implements BeanListener{
         }
     }
 
-    private synchronized void addMatchingAttributesForBean(ObjectName beanName, String className, MBeanAttributeInfo[] attributeInfos) throws IOException {
+    private synchronized void addMatchingAttributesForBean(
+        ObjectName beanName,
+        String className,
+        MBeanAttributeInfo[] attributeInfos
+    ) throws IOException {
         boolean metricReachedDisplayed = false;
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
@@ -638,7 +639,7 @@ public class Instance implements BeanListener{
                     if (jmxAttribute.match(conf)) {
                         jmxAttribute.setMatchingConf(conf);
                         this.metricCountForMatchingAttributes += jmxAttribute.getMetricsCount();
-                        log.debug("Added attribute {} from bean {}.", jmxAttribute.toString(), beanName);
+                        log.debug("Added attribute {} from bean {}.", jmxAttribute, beanName);
                         this.matchingAttributes.add(jmxAttribute);
                         if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                                 || action.equals(AppConfig.ACTION_LIST_MATCHING)
@@ -647,7 +648,9 @@ public class Instance implements BeanListener{
                                 || action.equals(AppConfig.ACTION_LIST_LIMITED)
                                 && limitReached) {
                             reporter.displayMatchingAttributeName(
-                                    jmxAttribute, this.metricCountForMatchingAttributes, maxReturnedMetrics);
+                                    jmxAttribute,
+                                    this.metricCountForMatchingAttributes,
+                                    maxReturnedMetrics);
                         }
                         break;
                     }
@@ -708,9 +711,12 @@ public class Instance implements BeanListener{
 
             addMatchingAttributesForBean(beanName, className, attributeInfos);
         }
-        log.info("Found {} matching attributes with {} metrics total", matchingAttributes.size(), this.metricCountForMatchingAttributes);
+        log.info("Found {} matching attributes with {} metrics total",
+            matchingAttributes.size(),
+            this.metricCountForMatchingAttributes);
     }
 
+    /** Adds any matching attributes from the specified bean. */
     public synchronized void beanRegistered(ObjectName beanName) {
         log.debug("Bean registered event. {}", beanName);
         String className;
@@ -734,12 +740,14 @@ public class Instance implements BeanListener{
         }
         log.debug("Bean registration processed. {}", beanName);
     }
-    public synchronized void beanUnregistered(ObjectName mBeanName) {
+
+    /** Removes any matching attributes from the specified bean. */
+    public synchronized void beanUnregistered(ObjectName beanName) {
         int removedMetrics = 0;
         int removedAttributes = 0;
         for (Iterator<JmxAttribute> it = this.matchingAttributes.iterator(); it.hasNext();) {
             JmxAttribute current = it.next();
-            if (current.getBeanName().compareTo(mBeanName) == 0) {
+            if (current.getBeanName().compareTo(beanName) == 0) {
                 it.remove();
                 // `getLastMetricsCount` used here instead of `getMetricsCount` because
                 // the bean no longer exists by the time we get this message.
@@ -748,10 +756,12 @@ public class Instance implements BeanListener{
                 removedAttributes++;
             }
         }
-        log.debug("Bean unregistered, removed {} attributes ({} metrics) matching bean {}", removedAttributes, removedMetrics, mBeanName);
+        log.debug("Bean unregistered, removed {} attributes ({} metrics) matching bean {}",
+            removedAttributes,
+            removedMetrics,
+            beanName);
         this.metricCountForMatchingAttributes -= removedMetrics;
     }
-
 
     private void subscribeToBeans() {
         List<String> beanScopes = this.getBeansScopes();
@@ -818,21 +828,22 @@ public class Instance implements BeanListener{
                 beansNotSeen.addAll(newBeans);
                 beansNotSeen.removeAll(this.beans);
 
-                log.error("Bean refresh found {} new beans that were not already tracked via subscription", beansNotSeen.size());
+                log.error("Bean refresh found {} previously untracked beans", beansNotSeen.size());
                 for (ObjectName b : beansNotSeen) {
                     log.error("New not-tracked bean {}", b);
                 }
             }
-            if (!newBeans.containsAll(this.beans)){
+            if (!newBeans.containsAll(this.beans)) {
                 // Newly queried set of beans is missing beans that are actively tracked
                 // ie, maybe a deregisteredBean subscription msg did not get processed correctly
                 Set<ObjectName> incorrectlyTrackedBeans = new HashSet<>();
                 incorrectlyTrackedBeans.addAll(this.beans);
                 incorrectlyTrackedBeans.removeAll(newBeans);
 
-                log.error("Bean refresh found {} FEWER beans than already tracked via subscription", incorrectlyTrackedBeans.size());
+                log.error("Bean refresh found {} fewer beans than expected",
+                    incorrectlyTrackedBeans.size());
                 for (ObjectName b : incorrectlyTrackedBeans) {
-                    log.error("Currently tracked bean that not returned from fresh query: {}", b);
+                    log.error("Currently tracked bean not returned from fresh query: {}", b);
                 }
             }
         }
@@ -840,7 +851,7 @@ public class Instance implements BeanListener{
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
-    /** True if instance is in a good state to collect metrics */
+    /** True if instance is in a good state to collect metrics. */
     private boolean isInstanceHealthy() {
         // If we have subscription mode on and the connection has either failed or notifications
         // have been lost, then we must consider this instance unhealthy and re-init.

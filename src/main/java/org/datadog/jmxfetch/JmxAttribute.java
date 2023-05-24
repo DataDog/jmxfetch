@@ -260,7 +260,8 @@ public abstract class JmxAttribute {
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException;
 
-    final public List<Metric> getMetrics()
+    /** Returns all metrics tracked by this attribute. */
+    public final List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
         List<Metric> metrics = this.getMetricsImpl();
@@ -289,7 +290,7 @@ public abstract class JmxAttribute {
         }
     }
 
-    /** Gets the most recent collection's metric count */
+    /** Gets the most recent collection's metric count. */
     public int getLastMetricsCount() {
         return this.lastMetricSize;
     }
