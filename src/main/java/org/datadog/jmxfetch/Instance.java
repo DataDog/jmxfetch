@@ -29,7 +29,7 @@ import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
 @Slf4j
-public class Instance implements BeanListener {
+public class Instance implements BeanTracker {
     private static final List<String> SIMPLE_TYPES =
             Arrays.asList(
                     "long",
@@ -717,7 +717,7 @@ public class Instance implements BeanListener {
     }
 
     /** Adds any matching attributes from the specified bean. */
-    public synchronized void beanRegistered(ObjectName beanName) {
+    public synchronized void trackBean(ObjectName beanName) {
         log.debug("Bean registered event. {}", beanName);
         String className;
         MBeanAttributeInfo[] attributeInfos;
@@ -742,7 +742,7 @@ public class Instance implements BeanListener {
     }
 
     /** Removes any matching attributes from the specified bean. */
-    public synchronized void beanUnregistered(ObjectName beanName) {
+    public synchronized void untrackBean(ObjectName beanName) {
         int removedMetrics = 0;
         int removedAttributes = 0;
         for (Iterator<JmxAttribute> it = this.matchingAttributes.iterator(); it.hasNext();) {

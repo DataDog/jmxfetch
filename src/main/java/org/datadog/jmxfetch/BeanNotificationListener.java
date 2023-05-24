@@ -14,9 +14,9 @@ import javax.management.ObjectName;
 @Slf4j
 class BeanNotificationListener implements NotificationListener {
     private final BlockingQueue<MBeanServerNotification> queue;
-    private final BeanListener beanListener;
+    private final BeanTracker beanListener;
 
-    public BeanNotificationListener(final BeanListener bl) {
+    public BeanNotificationListener(final BeanTracker bl) {
         this.beanListener = bl;
         this.queue = new LinkedBlockingQueue<>();
         new Thread(new Runnable() {
@@ -51,9 +51,9 @@ class BeanNotificationListener implements NotificationListener {
             notif.getMessage());
         ObjectName beanName = notif.getMBeanName();
         if (notif.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-            beanListener.beanRegistered(beanName);
+            beanListener.trackBean(beanName);
         } else if (notif.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-            beanListener.beanUnregistered(beanName);
+            beanListener.untrackBean(beanName);
         }
     }
 }

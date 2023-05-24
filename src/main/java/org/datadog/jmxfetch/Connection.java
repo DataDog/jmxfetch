@@ -61,7 +61,7 @@ public class Connection {
     }
 
     /** Subscribes for bean registration/deregistration events under the specified bean scopes. */
-    public void subscribeToBeanScopes(List<String> beanScopes, BeanListener bl)
+    public void subscribeToBeanScopes(List<String> beanScopes, BeanTracker bl)
             throws MalformedObjectNameException, IOException, InstanceNotFoundException {
         BeanNotificationListener listener = new BeanNotificationListener(bl);
         for (String scope : beanScopes) {
