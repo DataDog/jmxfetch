@@ -1,29 +1,33 @@
 Changelog
 =========
-# 0.47.9 /TBC
+# 0.47.9 / 2023-05-25
 
-# 0.47.8 / 2022-04-14
+* [BUGFIX] Fixes thread leak in situations with persistent connection failures [#432][]
+* [BUGFIX] Efficiency improvements when fetching attribute data [#431][]
+* [OTHER] Improves process-attach functionality on modern JDKs [#437][]
+
+# 0.47.8 / 2023-04-14
 
 * [BUGFIX] Changes connection failure detection during bean refresh to be more efficient [#424][]
 
-# 0.47.7 / 2022-04-03
+# 0.47.7 / 2023-04-03
 
 * [FEATURE] Adds config options for statsd client socket buffer size and socket timeout [#420][]
 * [BUGFIX] A bean refresh will now be aborted if a connection error occurs during a bean refresh [#419][]
 
-# 0.47.6 / 2022-03-30
+# 0.47.6 / 2023-03-30
 
 * [FEATURE] Configure DogStatsD client to use blocking IO to reduce data drops with large metric payloads [#416][]
 
-# 0.47.5 / 2022-03-10
+# 0.47.5 / 2023-03-10
 
 * [SECURITY] Bump `snakeyaml` dependency to version `2.0` to mitigate [CVE-2022-1471](https://nvd.nist.gov/vuln/detail/CVE-2022-1471) [#413][]
 
-# 0.47.4 / 2022-02-14
+# 0.47.4 / 2023-02-14
 
 * [BUGFIX] Fixed issue where pulling metrics from `javax.management.openmbean.TabularDataSupport` would not work as it was not recognised as an implementation of `javax.management.openmbean.TabularData` [#409][]
 
-# 0.47.3 / 2022-02-03
+# 0.47.3 / 2023-02-03
 
 * [BUGFIX] Fixed issue where pulling metrics from `javax.management.openmbean.TabularData` would not work if no tags were specified [#406][]
 * [OTHER] Bump `snakeyaml` dependency to version `1.33` [#405][]
@@ -730,6 +734,9 @@ Changelog
 [#419]: https://github.com/DataDog/jmxfetch/issues/419
 [#420]: https://github.com/DataDog/jmxfetch/issues/420
 [#424]: https://github.com/DataDog/jmxfetch/issues/424
+[#431]: https://github.com/DataDog/jmxfetch/issues/431
+[#432]: https://github.com/DataDog/jmxfetch/issues/432
+[#437]: https://github.com/DataDog/jmxfetch/issues/437
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
