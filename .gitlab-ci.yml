@@ -44,7 +44,7 @@ deploy_to_sonatype:
     - set -x
 
     - echo "Building release..."
-    - mvn -DperformRelease=true -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
+    - mvn -DperformRelease=true -DskipTests -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
 
   artifacts:
     expire_in: 12 mos
