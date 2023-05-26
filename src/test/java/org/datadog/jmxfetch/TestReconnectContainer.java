@@ -59,6 +59,7 @@ public class TestReconnectContainer extends TestCommon {
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 1));
 
+    @SuppressWarnings("BanJNDI")
     @Test
     public void testJMXDirectBasic() throws Exception {
         // Connect directly via JMXConnector
@@ -74,6 +75,7 @@ public class TestReconnectContainer extends TestCommon {
         assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
     }
 
+    @SuppressWarnings("BanJNDI")
     @Test
     public void testJMXDirectReconnect() throws Exception {
         // Connect directly via JMXConnector
