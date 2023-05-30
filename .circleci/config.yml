@@ -2,12 +2,12 @@ version: 2
 lint_steps: &lint_steps
   steps:
     - checkout
-    - run: mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests -Dlog4j.configuration=log4j2.travis.properties
+    - run: mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests
 build_steps: &build_steps
   steps:
     - checkout
     - setup_remote_docker
-    - run: mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dlog4j.configurationFile=log4j2.travis.properties -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
+    - run: mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
     - run:
         when: on_fail
         command: for log in target/surefire-reports/*.txt; do  echo "$log ========================" ; cat $log ; done
