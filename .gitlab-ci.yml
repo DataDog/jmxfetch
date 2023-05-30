@@ -1,9 +1,36 @@
 stages:
   - deploy_to_sonatype
   - create_key
+  - run_tests
 
 variables:
   REGISTRY: 486234852809.dkr.ecr.us-east-1.amazonaws.com
+
+# Testing is handled by circleCI for PRs, but we also run maven tests as part of the deploy process
+# This run_tests job is useful for ensuring the tests run fine without any of the deployment bits
+run_tests:
+  stage: run_tests
+
+  rules:
+    - when: manual
+      allow_failure: true
+
+  tags:
+    - "runner:docker"
+
+  services:
+
+  image: maven:3.9.1-eclipse-temurin-8
+
+  script:
+    - echo "Running tests"
+    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
+
+  artifacts:
+    expire_in: 1 mos
+    paths:
+      - ./target/surefire-reports/*.txt
+
 
 # From the tagged repo, push the release artifact
 deploy_to_sonatype:
