@@ -61,7 +61,7 @@ class BeanSpec {
 }
 
 @Slf4j
-public class App 
+public class App
 {
     final static String testDomain = "Bohnanza";
     public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
