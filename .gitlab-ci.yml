@@ -1,6 +1,5 @@
 stages:
   - deploy_to_sonatype
-  - create_key
 
 variables:
   REGISTRY: 486234852809.dkr.ecr.us-east-1.amazonaws.com
@@ -17,63 +16,11 @@ deploy_to_sonatype:
   tags:
     - "runner:docker"
 
-  image: maven:3.9.1-eclipse-temurin-8
+  image: registry.ddbuild.io/docker:20.10.13-gbi-focal
 
   script:
     # Ensure we don't print commands being run to the logs during credential
     # operations
     - set +x
-
-    - echo "Installing AWSCLI..."
-    - apt update
-    - apt install -y python3 python3-pip
-    - python3 -m pip install awscli
-
-    - echo "Fetching Sonatype user..."
-    - export SONATYPE_USER=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.publishing.sonatype_username --with-decryption --query "Parameter.Value" --out text)
-    - echo "Fetching Sonatype password..."
-    - export SONATYPE_PASS=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.publishing.sonatype_password --with-decryption --query "Parameter.Value" --out text)
-
-    - echo "Fetching signing key password..."
-    - export GPG_PASSPHRASE=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.signing.gpg_passphrase --with-decryption --query "Parameter.Value" --out text)
-
-    - echo "Fetching signing key..."
-    - gpg_key=$(aws ssm get-parameter --region us-east-1 --name ci.jmxfetch.signing.gpg_private_key --with-decryption --query "Parameter.Value" --out text)
-    - printf -- "$gpg_key" | gpg --import --batch
-
-    - set -x
-
-    - echo "Building release..."
-    - mvn -DperformRelease=true -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
-
-  artifacts:
-    expire_in: 12 mos
-    paths:
-      - ./target/*.jar
-      - ./target/*.pom
-      - ./target/*.asc
-      - ./target/*.md5
-      - ./target/*.sha1
-      - ./target/*.sha256
-      - ./target/*.sha512
-
-# This job creates the GPG key used to sign the releases
-create_key:
-  stage: create_key
-  when: manual
-
-  tags:
-    - "runner:docker"
-
-  image: $REGISTRY/ci/agent-key-management-tools/gpg:1
-
-  variables:
-    PROJECT_NAME: "jmxfetch"
-
-  script:
-    - /create.sh
-
-  artifacts:
-    expire_in: 13 mos
-    paths:
-      - ./pubkeys/
+    - echo $DOCKER_HOST
+    - sleep 10000
