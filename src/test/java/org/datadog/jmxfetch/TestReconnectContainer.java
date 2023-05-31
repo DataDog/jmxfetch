@@ -16,18 +16,23 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Paths;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 
 
+@Slf4j
 public class TestReconnectContainer extends TestCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
     private JMXServerControlClient controlClient;
+    private static Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(log);
 
     private static boolean isDomainPresent(String domain, MBeanServerConnection mbs) {
         boolean found = false;
@@ -61,6 +66,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectBasic() throws Exception {
+        cont.followOutput(logConsumer);
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
@@ -76,6 +82,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectReconnect() throws Exception {
+        cont.followOutput(logConsumer);
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
@@ -99,6 +106,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException, InterruptedException {
+        cont.followOutput(logConsumer);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -121,6 +129,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchManyMetrics() throws IOException, InterruptedException {
+        cont.followOutput(logConsumer);
         int numBeans = 100;
         int numAttributesPerBean = 4;
 
@@ -149,6 +158,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
+        cont.followOutput(logConsumer);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
