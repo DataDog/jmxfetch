@@ -14,18 +14,17 @@ import javax.management.ObjectName;
 @Slf4j
 class BeanNotificationListener implements NotificationListener {
     private final BlockingQueue<MBeanServerNotification> queue;
-    private final BeanTracker beanListener;
+    private final BeanTracker beanTracker;
 
-    public BeanNotificationListener(final BeanTracker bl) {
-        this.beanListener = bl;
+    public BeanNotificationListener(final BeanTracker bt) {
+        this.beanTracker = bt;
         this.queue = new LinkedBlockingQueue<>();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
-                    MBeanServerNotification mbs;
                     try {
-                        mbs = queue.take();
+                        MBeanServerNotification mbs = queue.take();
                         processMBeanServerNotification(mbs);
                     } catch (InterruptedException e) {
                         // ignore
@@ -51,9 +50,9 @@ class BeanNotificationListener implements NotificationListener {
             notif.getMessage());
         ObjectName beanName = notif.getMBeanName();
         if (notif.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-            beanListener.trackBean(beanName);
+            beanTracker.trackBean(beanName);
         } else if (notif.getType().equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-            beanListener.untrackBean(beanName);
+            beanTracker.untrackBean(beanName);
         }
     }
 }
