@@ -26,6 +26,8 @@ run_tests:
     - echo "Running tests"
     - env
     - DOCKER_HOST=$DOCKER_HOST mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B -X test
+    - ls ./target/surefire-reports/
+    - cat ./target/surefire-reports/*.txt
 
   artifacts:
     expire_in: 1 mos
