@@ -121,7 +121,8 @@ public class App {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                });
+                }).start();
+                log.info("JMX server has started");
                 return;
             }
         }
