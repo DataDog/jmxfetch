@@ -31,7 +31,9 @@ import org.datadog.jmxfetch.reporter.ConsoleReporter;
 public class TestReconnectContainer extends TestCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
+    private static final int supervisorPort = 9092;
     private JMXServerControlClient controlClient;
+    private JMXServerSupervisorClient supervisorClient;
     private static Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(log);
 
     private static boolean isDomainPresent(String domain, MBeanServerConnection mbs) {
@@ -55,18 +57,26 @@ public class TestReconnectContainer extends TestCommon {
     @Before
     public void setup() {
         this.controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
+        this.supervisorClient = new JMXServerSupervisorClient(cont.getHost(), cont.getMappedPort(supervisorPort));
+        cont.followOutput(logConsumer);
+        try {
+            log.info("Setting RMI hostname to {}", cont.getHost());
+            this.supervisorClient.setRmiHostname(cont.getHost());
+        } catch (IOException e) {
+            log.warn("Supervisor call to set rmi hostname failed, tests may fail in some environments, e: ", e);
+        }
     }
 
     @Rule
     public GenericContainer<?> cont = new GenericContainer<>(img)
-        .withExposedPorts(rmiPort, controlPort)
+        .withExposedPorts(rmiPort, controlPort, supervisorPort)
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
+        .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
         .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 1));
 
     @Test
     public void testJMXDirectBasic() throws Exception {
-        cont.followOutput(logConsumer);
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
@@ -82,7 +92,6 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectReconnect() throws Exception {
-        cont.followOutput(logConsumer);
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
@@ -106,7 +115,6 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException, InterruptedException {
-        cont.followOutput(logConsumer);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -129,7 +137,6 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchManyMetrics() throws IOException, InterruptedException {
-        cont.followOutput(logConsumer);
         int numBeans = 100;
         int numAttributesPerBean = 4;
 
@@ -158,7 +165,6 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
-        cont.followOutput(logConsumer);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
