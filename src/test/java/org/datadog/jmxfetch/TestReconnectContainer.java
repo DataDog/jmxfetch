@@ -73,7 +73,7 @@ public class TestReconnectContainer extends TestCommon {
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
-        .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 1));
+        .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 2));
 
     @Test
     public void testJMXDirectBasic() throws Exception {

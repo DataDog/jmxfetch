@@ -69,6 +69,7 @@ public class App {
 
         log.info("Starting JMX subprocess");
         startJMXServer();
+        log.info("IAMREADY");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (running.get()) {
@@ -126,6 +127,5 @@ public class App {
                 return;
             }
         }
-
     }
 }
