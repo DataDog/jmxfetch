@@ -25,7 +25,7 @@ run_tests:
   script:
     - echo "Running tests"
     - export TESTCONTAINERS_RYUK_DISABLED=true
-    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B -X test -Dtest=TestReconnectContainer || true
+    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test -Dtest=TestContainerSanity || true
     - ls ./target/surefire-reports/
     - cat ./target/surefire-reports/*.txt
 
