@@ -15,6 +15,9 @@ import javax.management.remote.JMXServiceURL;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -54,26 +57,36 @@ public class TestReconnectContainer extends TestCommon {
     private static ImageFromDockerfile img = new ImageFromDockerfile()
         .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
 
-    @Before
-    public void setup() {
-        this.controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
-        this.supervisorClient = new JMXServerSupervisorClient(cont.getHost(), cont.getMappedPort(supervisorPort));
-        cont.followOutput(logConsumer);
-        try {
-            log.info("Setting RMI hostname to {}", cont.getHost());
-            this.supervisorClient.setRmiHostname(cont.getHost());
-        } catch (IOException e) {
-            log.warn("Supervisor call to set rmi hostname failed, tests may fail in some environments, e: ", e);
-        }
-    }
 
-    @Rule
+    @Rule(order = 0)
     public GenericContainer<?> cont = new GenericContainer<>(img)
         .withExposedPorts(rmiPort, controlPort, supervisorPort)
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
-        .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 2));
+        .waitingFor(Wait.forHttp("/ready").forPort(supervisorPort).forStatusCode(200));
+
+    @Rule(order = 1)
+    public TestRule setupRule = new TestRule() {
+        @Override
+        public Statement apply(final Statement base, Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
+                    supervisorClient = new JMXServerSupervisorClient(cont.getHost(), cont.getMappedPort(supervisorPort));
+                    cont.followOutput(logConsumer);
+                    try {
+                        log.info("Setting RMI hostname to {}", cont.getHost());
+                        supervisorClient.setRmiHostname(cont.getHost());
+                    } catch (IOException e) {
+                        log.warn("Supervisor call to set rmi hostname failed, tests may fail in some environments, e: ", e);
+                    }
+                    base.evaluate();
+                }
+            };
+        }
+    };
 
     @Test
     public void testJMXDirectBasic() throws Exception {

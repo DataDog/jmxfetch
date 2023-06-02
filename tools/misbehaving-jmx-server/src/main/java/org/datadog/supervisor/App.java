@@ -5,7 +5,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.datadog.Defaults;
+
 import lombok.extern.slf4j.Slf4j;
 
 import io.javalin.*;
@@ -28,7 +35,10 @@ class AppConfig {
 @Slf4j
 public class App {
     private static Process process = null;
+    // marked when OS process is started
     private static AtomicBoolean running = new AtomicBoolean(false);
+    // marked when the JMX server indicates that its ready
+    private static AtomicBoolean started = new AtomicBoolean(false);
     private static final String jmxServerEntrypoint = "org.datadog.misbehavingjmxserver.App";
     private static String selfJarPath;
     private static AppConfig config;
@@ -51,10 +61,7 @@ public class App {
             if (ctx.formParam("rmiHostname") != null) {
                 App.config.rmiHostname = ctx.formParam("rmiHostname");
                 log.info("Setting RMI Hostname to {}. Restarting now...", App.config.rmiHostname);
-                // Restart the process
-                if (process != null) {
-                    process.destroyForcibly().waitFor();
-                }
+                stopJMXServer();
                 try {
                     startJMXServer();
                     ctx.result("Process restarted").status(200);
@@ -63,24 +70,39 @@ public class App {
                 }
             }
         });
+        app.get("/ready", ctx -> {
+            if (started.get()) {
+                ctx.status(200);
+            } else {
+                ctx.status(500);
+            }
+        });
 
         log.info("Supervisor HTTP control interface at :{}", App.config.controlHttpPort);
         app.start(App.config.controlHttpPort);
 
         log.info("Starting JMX subprocess");
         startJMXServer();
-        log.info("IAMREADY");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (running.get()) {
                 log.info("Stopping the sub-process....");
                 try {
-                    process.destroyForcibly().waitFor();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    stopJMXServer();
+                } catch (IOException | InterruptedException e) {
+                    log.error("Encountered error while shutting down JMX server: ", e);
                 }
             }
         }));
+    }
+
+    static void stopJMXServer() throws IOException, InterruptedException {
+        // Restart the process
+        if (process != null) {
+            process.destroyForcibly().waitFor();
+            running.set(false);
+            started.set(false);
+        }
     }
 
     static void startJMXServer() throws IOException {
@@ -98,34 +120,46 @@ public class App {
                     selfJarPath,
                     jmxServerEntrypoint);
         }
-        pb.redirectErrorStream(true);
+        pb.inheritIO();
         process = pb.start();
         running.set(true);
 
-        // Read the output of the child process
-        InputStream inputStream = process.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try {
+            checkForJMXServerReady();
+        } catch (IOException | InterruptedException e) {
+            log.error("Error while waiting for JMX server to be ready: ", e);
+        }
+    }
 
-        String line;
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
+    private static int getJMXServerControlPort() {
+        String env = System.getenv("CONTROL_PORT");
+        if (env == null) {
+            return Defaults.JMXSERVER_CONTROL_PORT;
+        }
+        return Integer.parseInt(env);
+    }
 
-            // Check if the desired string is found
-            if (line.contains("IAMREADY")) {
-                // When subprocess is ready, return from this, but continue re-printing subprocess output
-                new Thread(() -> {
-                    String l;
-                    try {
-                        while ((l = reader.readLine()) != null) {
-                            System.out.println(l);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
-                log.info("JMX server has started");
-                return;
+    private static void checkForJMXServerReady() throws MalformedURLException, IOException, InterruptedException {
+        int delayBetweenAttemptsInMs = 100;
+        int timeoutInMs = 2000;
+        int elapsedMs = 0;
+        URL endpointUrl = new URL("http://localhost:" + getJMXServerControlPort() + "/ready");
+        while (!started.get() && elapsedMs < timeoutInMs) {
+            HttpURLConnection connection = (HttpURLConnection) endpointUrl.openConnection();
+            try {
+                int responseCode = connection.getResponseCode();
+                log.info("JMXServer returned code {}", responseCode);
+                connection.disconnect();
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    log.info("JMX server has started");
+                    started.set(true);
+                }
+            } catch (ConnectException e) {
+                // ignore
             }
+            Thread.sleep(delayBetweenAttemptsInMs);
+            elapsedMs += delayBetweenAttemptsInMs;
         }
     }
 }
