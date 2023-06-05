@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -21,6 +22,11 @@ public class HttpClient {
     private int port;
 
     private static final String USER_AGENT = "Datadog/JMXFetch";
+    // Per javadocs, this is the only version that all compliant JVMs are required to support
+    // I found 'TLS' was the appropriate protocol (will use the latest support TLSv? version)
+    // rather than specifically 'TLSv1' as the docs recommend
+    // https://docs.oracle.com/javase/7/docs/api/javax/net/ssl/SSLContext.html
+    private static final String sslProtocol = System.getProperty("jmxfetch.min_tls_version", "TLS");
 
     public static class HttpResponse {
         private int responseCode;
@@ -76,7 +82,7 @@ public class HttpClient {
                         new TrustManager[] {
                             new X509TrustManager() {
                                 public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                                    return null;
+                                    return new X509Certificate[0];
                                 }
 
                                 public void checkClientTrusted(
@@ -88,10 +94,14 @@ public class HttpClient {
                                         String authType) {}
                             }
                         };
-                sc = SSLContext.getInstance("SSL");
+                sc = SSLContext.getInstance(sslProtocol);
                 sc.init(null, this.dummyTrustManager, new java.security.SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                log.info("Successfully installed dummyTrustManager with {}", sslProtocol);
             } catch (Exception e) {
+                log.error("Error installing dummyTrustManager. Communications with the Agent will "
+                        + "be affected. Agent Status will be unreliable and AutoDiscovery of new "
+                        + "JMX checks will fail. error: ", e);
                 log.debug("session token unavailable - not setting");
                 this.token = "";
             }
