@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -49,6 +50,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Before
     public void setup() {
+        assumeTrue("Skip container tests", System.getProperty("skipContainerTests") == null);
         this.controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
     }
 

@@ -55,6 +55,7 @@ mvn test
 
 Some tests utilize [TestContainers](https://www.testcontainers.org/) which requires a docker client.
 You can rely on the CI to run these, or if you have docker installed on Linux these should work out of the box.
+> If you need to skip these tests, **all tests that rely on containers can be disabled by setting the system property `-DskipContainerTests`**
 
 If you're on macOS or Windows, docker desktop is architected to run a linux VM which then runs all your containers.
 This makes the networking a bit different and you should use the following command to run the tests.

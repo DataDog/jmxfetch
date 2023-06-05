@@ -44,7 +44,9 @@ deploy_to_sonatype:
     - set -x
 
     - echo "Building release..."
-    - mvn -DperformRelease=true -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
+    # container-based tests aren't working in our gitlab CI (only circleCI), so we disable them before release.
+    # Hopefully we can get these running in gitlab during the release process as well
+    - mvn -DperformRelease=true -DskipContainerTests -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
 
   artifacts:
     expire_in: 12 mos
