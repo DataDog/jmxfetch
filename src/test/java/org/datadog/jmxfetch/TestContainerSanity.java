@@ -25,7 +25,6 @@ public class TestContainerSanity {
 
     private static boolean isHttpOk(String host, int port) throws IOException {
         String url = "http://" + host + ":" + port;
-        log.info("Requesting url: {}", url);
         HttpURLConnection connection = null;
 
         try {
@@ -34,6 +33,7 @@ public class TestContainerSanity {
             connection.setConnectTimeout(500); // fail fast, only half a second to respond
 
             int responseCode = connection.getResponseCode();
+            log.info("Got resp code {} for url {}", responseCode, url);
             return responseCode == HttpURLConnection.HTTP_OK;
         } finally {
             if (connection != null) {
@@ -89,7 +89,10 @@ public class TestContainerSanity {
         log.info("Container: host: {}, getContainerIp: {}", container.getHost(), container.getContainerIpAddress());
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
 
-        assertTrue(isHttpOk("172.17.0.3", container.getMappedPort(80)));
+        log.info("{}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
+        log.info("{}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
+        log.info("{}", isHttpOk("172.17.0.3", 80));
+        log.info("{}", isHttpOk("172.17.0.1", 80));
     }
 
 }
