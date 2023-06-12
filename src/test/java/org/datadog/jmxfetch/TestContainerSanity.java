@@ -86,6 +86,7 @@ public class TestContainerSanity {
 
         container.start();
         Thread.sleep(1000);
+        log.info("Container: host: {}, getContainerIp: {}", container.getHost(), container.getContainerIpAddress());
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
 
         assertTrue(isHttpOk(container.getHost(), container.getMappedPort(80)));
