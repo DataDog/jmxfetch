@@ -41,21 +41,22 @@ public class TestContainerSanity {
     @Test
     public void testSimple() throws Exception {
         GenericContainer<?> cont = new GenericContainer<>("strm/helloworld-http")
-            //.withExposedPorts(80)
+            .withExposedPorts(80)
             .waitingFor(Wait.forSuccessfulCommand("hostname"));
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
         cont.start();
         Thread.sleep(2000);
-        log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: NO",
+        log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: {}",
                 cont.getNetworkMode(),
                 cont.getContainerId(),
                 cont.getHost(),
-                //cont.getMappedPort(80),
+                cont.getMappedPort(80),
                 cont.getExposedPorts());
 
         log.info("Bindings: {}", cont.getPortBindings());
         InspectContainerResponse ic = cont.getDockerClient().inspectContainerCmd(cont.getContainerId()).exec();
         log.info("Inspect container: {}", ic);
+        cont.waitingFor(Wait.forListeningPort());
         assertTrue(isHttpOk(cont.getHost(), 80));
 
         cont.close();
