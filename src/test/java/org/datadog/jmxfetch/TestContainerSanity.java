@@ -89,7 +89,7 @@ public class TestContainerSanity {
         log.info("Container: host: {}, getContainerIp: {}", container.getHost(), container.getContainerIpAddress());
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
 
-        assertTrue(isHttpOk(container.getHost(), container.getMappedPort(80)));
+        assertTrue(isHttpOk("172.17.0.3", container.getMappedPort(80)));
     }
 
 }
