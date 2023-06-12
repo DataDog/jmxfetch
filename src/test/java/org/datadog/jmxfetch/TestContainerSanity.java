@@ -81,9 +81,13 @@ public class TestContainerSanity {
         // Start the container using the built image
         GenericContainer container = new GenericContainer<>(simpleHttpPortEighty)
                 .withExposedPorts(80)
-                .waitingFor(Wait.forHttp("/").forStatusCode(200));
+                .waitingFor(Wait.forSuccessfulCommand("hostname"));
+                //.waitingFor(Wait.forHttp("/").forStatusCode(200));
 
         container.start();
+        Thread.sleep(1000);
+        log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
+
         assertTrue(isHttpOk(container.getHost(), container.getMappedPort(80)));
     }
 
