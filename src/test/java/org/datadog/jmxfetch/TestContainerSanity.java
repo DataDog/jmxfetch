@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -13,12 +14,14 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 
 import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
 @Slf4j
 public class TestContainerSanity {
+
 
     private static boolean isHttpOk(String host, int port) throws IOException {
         String url = "http://" + host + ":" + port;
@@ -61,6 +64,27 @@ public class TestContainerSanity {
         assertTrue(isHttpOk(cont.getHost(), 80));
 
         cont.close();
+    }
+
+
+    @Test
+    public void testExposedPort() throws Exception {
+        ImageFromDockerfile simpleHttpPortEighty = new ImageFromDockerfile("eighty", false)
+                .withDockerfileFromBuilder( builder -> {
+                    builder
+                        .from("python:3-buster")
+                        .expose(80)
+                        .entryPoint("python3", "-m", "http.server", "80")
+                        .build();
+                    });
+
+        // Start the container using the built image
+        GenericContainer container = new GenericContainer<>(simpleHttpPortEighty)
+                .withExposedPorts(80)
+                .waitingFor(Wait.forHttp("/").forStatusCode(200));
+
+        container.start();
+        assertTrue(isHttpOk(container.getHost(), container.getMappedPort(80)));
     }
 
 }
