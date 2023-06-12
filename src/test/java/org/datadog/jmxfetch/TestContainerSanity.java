@@ -13,6 +13,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import com.github.dockerjava.api.command.InspectContainerCmd;
+
 @Slf4j
 public class TestContainerSanity {
 
@@ -40,8 +42,9 @@ public class TestContainerSanity {
             .withExposedPorts(80);
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
         Thread.sleep(1000);
-        Network n = cont.getNetwork();
-        log.info("Network mode: {}, id: {}", cont.getNetworkMode(), n.getId());
+        log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: {}", cont.getNetworkMode(), cont.getHost(), cont.getMappedPort(80), cont.getExposedPorts());
+        InspectContainerCmd ic = cont.getDockerClient().inspectContainerCmd(cont.getContainerId());
+        log.info("Inspect container: {}", ic);
         cont.waitingFor(Wait.forListeningPort());
         assertTrue(isHttpOk(cont.getHost(), cont.getMappedPort(80)));
 
