@@ -22,6 +22,7 @@ public class TestContainerSanity {
 
     private static boolean isHttpOk(String host, int port) throws IOException {
         String url = "http://" + host + ":" + port;
+        log.info("Requesting url: {}", url);
         HttpURLConnection connection = null;
 
         try {
