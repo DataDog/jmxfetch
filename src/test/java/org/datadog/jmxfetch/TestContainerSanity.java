@@ -45,6 +45,8 @@ public class TestContainerSanity {
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
         cont.start();
         Thread.sleep(2000);
+        cont.addExposedPort(80);
+        Thread.sleep(500);
         log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: {}", cont.getNetworkMode(), cont.getHost(), cont.getMappedPort(80), cont.getExposedPorts());
         InspectContainerCmd ic = cont.getDockerClient().inspectContainerCmd(cont.getContainerId());
         log.info("Inspect container: {}", ic);
