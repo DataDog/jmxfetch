@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 
 import com.github.dockerjava.api.command.InspectContainerCmd;
 
@@ -39,7 +40,8 @@ public class TestContainerSanity {
     @Test
     public void testSimple() throws Exception {
         GenericContainer<?> cont = new GenericContainer<>("strm/helloworld-http")
-            .withExposedPorts(80);
+            .withExposedPorts(80)
+            .waitingFor(Wait.forSuccessfulCommand("hostname"));
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
         cont.start();
         Thread.sleep(2000);
