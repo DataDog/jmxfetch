@@ -11,7 +11,6 @@ import java.net.URL;
 import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.Network.NetworkImpl;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 @Slf4j
@@ -41,8 +40,8 @@ public class TestContainerSanity {
             .withExposedPorts(80);
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
         Thread.sleep(1000);
-        NetworkImpl n = (NetworkImpl) cont.getNetwork();
-        log.info("Network mode: {}, id: {}, driver: {}, name: {}", cont.getNetworkMode(), n.getId(), n.getDriver(), n.getName());
+        Network n = cont.getNetwork();
+        log.info("Network mode: {}, id: {}", cont.getNetworkMode(), n.getId());
         cont.waitingFor(Wait.forListeningPort());
         assertTrue(isHttpOk(cont.getHost(), cont.getMappedPort(80)));
 
