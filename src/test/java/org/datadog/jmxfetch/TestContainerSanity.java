@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -35,6 +36,10 @@ public class TestContainerSanity {
             int responseCode = connection.getResponseCode();
             log.info("Got resp code {} for url {}", responseCode, url);
             return responseCode == HttpURLConnection.HTTP_OK;
+
+        } catch (ConnectException e) {
+            log.error("Connection Failure: ", e);
+            return false;
         } finally {
             if (connection != null) {
                 connection.disconnect();
