@@ -41,7 +41,8 @@ public class TestContainerSanity {
         GenericContainer<?> cont = new GenericContainer<>("strm/helloworld-http")
             .withExposedPorts(80);
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
-        Thread.sleep(1000);
+        cont.start();
+        Thread.sleep(2000);
         log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: {}", cont.getNetworkMode(), cont.getHost(), cont.getMappedPort(80), cont.getExposedPorts());
         InspectContainerCmd ic = cont.getDockerClient().inspectContainerCmd(cont.getContainerId());
         log.info("Inspect container: {}", ic);
