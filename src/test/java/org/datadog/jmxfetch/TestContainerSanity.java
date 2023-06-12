@@ -46,11 +46,11 @@ public class TestContainerSanity {
             //.waitingFor(Wait.forHttp("/").forPort(80).forStatusCode(200));
         cont.start();
         Thread.sleep(2000);
-        log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: {}",
+        log.info("Network mode: {}, id: {}, host: {}, mappedPort(80): {}, exposedPorts: NO",
                 cont.getNetworkMode(),
                 cont.getContainerId(),
                 cont.getHost(),
-                cont.getMappedPort(80),
+                //cont.getMappedPort(80),
                 cont.getExposedPorts());
 
         log.info("Bindings: {}", cont.getPortBindings());
