@@ -88,11 +88,12 @@ public class TestContainerSanity {
         Thread.sleep(1000);
         log.info("Container: host: {}, getContainerIp: {}", container.getHost(), container.getContainerIpAddress());
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
+        log.info(" exec ip addr: ", container.execInContainer("ip", "addr"));
 
-        log.info("{}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
-        log.info("{}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
-        log.info("{}", isHttpOk("172.17.0.3", 80));
-        log.info("{}", isHttpOk("172.17.0.1", 80));
+        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
+        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
+        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.3", 80));
+        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.1", 80));
     }
 
 }
