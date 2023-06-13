@@ -17,28 +17,27 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
-import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
 @Slf4j
 public class TestContainerSanity {
 
 
-    private static boolean isHttpOk(String host, int port) throws IOException {
+    private static boolean isHttpOk(String host, int port) {
         String url = "http://" + host + ":" + port;
         HttpURLConnection connection = null;
 
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(500); // fail fast, only half a second to respond
+            connection.setConnectTimeout(1000);
 
             int responseCode = connection.getResponseCode();
             log.info("Got resp code {} for url {}", responseCode, url);
             return responseCode == HttpURLConnection.HTTP_OK;
 
-        } catch (ConnectException e) {
-            log.error("Connection Failure: ", e);
+        } catch (IOException e) {
+            log.error("IO Exception Failure: ", e);
             return false;
         } finally {
             if (connection != null) {
@@ -93,7 +92,7 @@ public class TestContainerSanity {
         Thread.sleep(1000);
         log.info("Container: host: {}, getContainerIp: {}", container.getHost(), container.getContainerIpAddress());
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
-        log.info(" exec ip addr: ", container.execInContainer("ip", "addr"));
+        log.info(" exec ip addr: {}", container.execInContainer("ip", "addr"));
 
         log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
         log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
