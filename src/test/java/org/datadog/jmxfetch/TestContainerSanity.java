@@ -63,7 +63,7 @@ public class TestContainerSanity {
         InspectContainerResponse ic = cont.getDockerClient().inspectContainerCmd(cont.getContainerId()).exec();
         log.info("Inspect container: {}", ic);
         cont.waitingFor(Wait.forListeningPort());
-        assertTrue(isHttpOk(cont.getHost(), 80));
+        assertTrue(isHttpOk(cont.getHost(),""+80));
 
         cont.close();
     }
