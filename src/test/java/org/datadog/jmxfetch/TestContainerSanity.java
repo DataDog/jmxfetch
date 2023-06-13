@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 
 import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -20,6 +21,8 @@ import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports.Binding;
 
 @Slf4j
 public class TestContainerSanity {
@@ -112,7 +115,15 @@ public class TestContainerSanity {
         log.info("Container Network Settings: {}", container.getContainerInfo().getNetworkSettings().toString());
         log.info("Container Port Configuration: {}", container.getContainerInfo().getNetworkSettings().getPorts().toString());
         log.info("HostConfig Port Bindings: {}", container.getContainerInfo().getHostConfig().getPortBindings());
-        log.info("HostConfig Port Bindings (getBindings): {}", container.getContainerInfo().getHostConfig().getPortBindings().getBindings());
+
+        for (Map.Entry<ExposedPort, Binding[]> entry : container.getContainerInfo().getHostConfig().getPortBindings().getBindings().entrySet()) {
+            ExposedPort key = entry.getKey();
+            Binding[] value = entry.getValue();
+            log.info("For ExposedPort {}, there are {} bindings:", key, value.length);
+            for (Binding b: value) {
+                log.info("Binding: ", b.getHostPortSpec());
+            }
+        }
         String mappedPort = ""+container.getMappedPort(originalPort);
 
         String[][] hostPortTuples = {
