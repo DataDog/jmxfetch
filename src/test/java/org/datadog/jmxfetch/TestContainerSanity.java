@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -87,10 +89,22 @@ public class TestContainerSanity {
         container.start();
         Thread.sleep(1000);
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
-        log.info(" exec ip addr: {}", container.execInContainer("ip", "addr"));
+        log.info("exec ip addr: {}", container.execInContainer("ip", "addr"));
         String ipAddress = container.getContainerInfo().getNetworkSettings().getIpAddress();
         log.info("Container: getHost(): {}, getContainerIp(): {}, ipAddress: {}", container.getHost(), container.getContainerIpAddress(), ipAddress);
 
+        Process process = Runtime.getRuntime().exec("ip addr");
+
+        // Read the output of the command
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            System.out.println(line);
+        }
+
+        // Wait for the command to complete
+        int exitCode = process.waitFor();
+        System.out.println("'ip addr' Command exited with code: " + exitCode);
 
         String mappedPort = ""+container.getMappedPort(80);
 
