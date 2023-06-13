@@ -23,7 +23,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 public class TestContainerSanity {
 
 
-    private static boolean isHttpOk(String host, int port) {
+    private static boolean isHttpOk(String host, String port) {
         String url = "http://" + host + ":" + port;
         HttpURLConnection connection = null;
 
@@ -33,12 +33,9 @@ public class TestContainerSanity {
             connection.setConnectTimeout(1000);
 
             int responseCode = connection.getResponseCode();
-            log.info("Got resp code {} for url {}", responseCode, url);
             return responseCode == HttpURLConnection.HTTP_OK;
 
         } catch (IOException e) {
-            log.error("IO Exception Failure: ", e);
-            log.info("Got failure for url {}", url);
             return false;
         } finally {
             if (connection != null) {
@@ -95,11 +92,22 @@ public class TestContainerSanity {
         log.info("Container: getHost(): {}, getContainerIp(): {}, ipAddress: {}", container.getHost(), container.getContainerIpAddress(), ipAddress);
 
 
+        String mappedPort = ""+container.getMappedPort(80);
 
-        log.info("CHECK 1 {}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
-        log.info("CHECK 2 {}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
-        log.info("CHECK 3 {}", isHttpOk("172.17.0.3", 80)); // THIS ONE WORKS
-        log.info("CHECK 4 {}", isHttpOk("172.17.0.1", 80));
+        String[][] hostPortTuples = {
+            { "172.17.0.3", mappedPort},
+            { "172.17.0.1", mappedPort},
+            { "172.17.0.3", ""+80},
+            { "172.17.0.1", ""+80},
+            { ipAddress, ""+mappedPort},
+            { ipAddress, ""+80},
+            { container.getHost(), ""+mappedPort}, // according to docs, this is the winner
+            { container.getHost(), ""+80}
+        };
+
+        for (String[] tuple : hostPortTuples) {
+            log.info("Check against {}:{} is: {}", tuple[0], tuple[1], isHttpOk(tuple[0], tuple[1]));
+        }
     }
 
 }
