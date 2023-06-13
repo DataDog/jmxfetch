@@ -106,6 +106,7 @@ public class TestContainerSanity {
         int exitCode = process.waitFor();
         System.out.println("'ip addr' Command exited with code: " + exitCode);
 
+        log.info(container.getContainerInfo().getNetworkSettings().toString());
         String mappedPort = ""+container.getMappedPort(80);
 
         String[][] hostPortTuples = {

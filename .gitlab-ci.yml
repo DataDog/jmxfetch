@@ -24,6 +24,8 @@ run_tests:
 
   script:
     - echo "Running tests"
+    - apt update
+    - apt install -y iproute2
     - export TESTCONTAINERS_RYUK_DISABLED=true
     - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test -Dtest=TestContainerSanity#testExposedPort || true
     - ls ./target/surefire-reports/
