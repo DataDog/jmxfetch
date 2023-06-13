@@ -95,18 +95,20 @@ public class TestContainerSanity {
         String mappedPort = ""+container.getMappedPort(80);
 
         String[][] hostPortTuples = {
-            { "172.17.0.3", mappedPort},
-            { "172.17.0.1", mappedPort},
-            { "172.17.0.3", ""+80},
-            { "172.17.0.1", ""+80},
-            { ipAddress, ""+mappedPort},
-            { ipAddress, ""+80},
-            { container.getHost(), ""+mappedPort}, // according to docs, this is the winner
-            { container.getHost(), ""+80}
+            { "hardcoded+mapped"   , "172.17.0.3"        , mappedPort}    ,
+            { "hardcoded+mapped"   , "172.17.0.1"        , mappedPort}    ,
+            { "hardcoded+original" , "172.17.0.3"        , ""+80}         ,
+            { "hardcoded+original" , "172.17.0.1"        , ""+80}         ,
+            { "ip+original"        , ipAddress           , ""+mappedPort} ,
+            { "ip+original"        , ipAddress           , ""+80}         ,
+            { "getHost+mapped"     , container.getHost() , ""+mappedPort} , // according to docs , this is the winner
+            { "getHost+original"   , container.getHost() , ""+80},
+            { "localhost+mapped"     , "localhost", ""+mappedPort} ,
+            { "localhost+original"   , "localhost", ""+80}
         };
 
         for (String[] tuple : hostPortTuples) {
-            log.info("Check against {}:{} is: {}", tuple[0], tuple[1], isHttpOk(tuple[0], tuple[1]));
+            log.info("Check against {}:{} ({}) is: {}", tuple[1], tuple[2], tuple[0], isHttpOk(tuple[1], tuple[2]));
         }
     }
 
