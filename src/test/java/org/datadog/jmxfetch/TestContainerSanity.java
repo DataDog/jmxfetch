@@ -38,6 +38,7 @@ public class TestContainerSanity {
 
         } catch (IOException e) {
             log.error("IO Exception Failure: ", e);
+            log.info("Got failure for url {}", url);
             return false;
         } finally {
             if (connection != null) {
@@ -73,7 +74,7 @@ public class TestContainerSanity {
 
     @Test
     public void testExposedPort() throws Exception {
-        ImageFromDockerfile simpleHttpPortEighty = new ImageFromDockerfile("eighty", false)
+        ImageFromDockerfile image = new ImageFromDockerfile()
                 .withDockerfileFromBuilder( builder -> {
                     builder
                         .from("python:3-buster")
@@ -82,22 +83,23 @@ public class TestContainerSanity {
                         .build();
                     });
 
-        // Start the container using the built image
-        GenericContainer container = new GenericContainer<>(simpleHttpPortEighty)
+        GenericContainer container = new GenericContainer<>(image)
                 .withExposedPorts(80)
                 .waitingFor(Wait.forSuccessfulCommand("hostname"));
-                //.waitingFor(Wait.forHttp("/").forStatusCode(200));
 
         container.start();
         Thread.sleep(1000);
-        log.info("Container: host: {}, getContainerIp: {}", container.getHost(), container.getContainerIpAddress());
         log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
         log.info(" exec ip addr: {}", container.execInContainer("ip", "addr"));
+        String ipAddress = container.getContainerInfo().getNetworkSettings().getIpAddress();
+        log.info("Container: getHost(): {}, getContainerIp(): {}, ipAddress: {}", container.getHost(), container.getContainerIpAddress(), ipAddress);
 
-        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
-        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
-        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.3", 80));
-        log.info("HTTP OK CHECK {}", isHttpOk("172.17.0.1", 80));
+
+
+        log.info("CHECK 1 {}", isHttpOk("172.17.0.3", container.getMappedPort(80)));
+        log.info("CHECK 2 {}", isHttpOk("172.17.0.1", container.getMappedPort(80)));
+        log.info("CHECK 3 {}", isHttpOk("172.17.0.3", 80)); // THIS ONE WORKS
+        log.info("CHECK 4 {}", isHttpOk("172.17.0.1", 80));
     }
 
 }
