@@ -73,17 +73,19 @@ public class TestContainerSanity {
 
     @Test
     public void testExposedPort() throws Exception {
+        int originalPort = 80;
+        String strOriginalPort = "" + originalPort;
         ImageFromDockerfile image = new ImageFromDockerfile()
                 .withDockerfileFromBuilder( builder -> {
                     builder
                         .from("python:3-buster")
-                        .expose(80)
-                        .entryPoint("python3", "-m", "http.server", "80")
+                        .expose(originalPort)
+                        .entryPoint("python3", "-m", "http.server", strOriginalPort)
                         .build();
                     });
 
         GenericContainer container = new GenericContainer<>(image)
-                .withExposedPorts(80)
+                .withExposedPorts(originalPort)
                 .waitingFor(Wait.forSuccessfulCommand("hostname"));
 
         container.start();
@@ -98,6 +100,7 @@ public class TestContainerSanity {
         // Read the output of the command
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
+        System.out.println("IP ADDR output follows:");
         while ((line = reader.readLine()) != null) {
             System.out.println(line);
         }
@@ -106,20 +109,17 @@ public class TestContainerSanity {
         int exitCode = process.waitFor();
         System.out.println("'ip addr' Command exited with code: " + exitCode);
 
-        log.info(container.getContainerInfo().getNetworkSettings().toString());
-        String mappedPort = ""+container.getMappedPort(80);
+        log.info("Container Network Settings: {}", container.getContainerInfo().getNetworkSettings().toString());
+        log.info("Container Port Configuration: {}", container.getContainerInfo().getNetworkSettings().getPorts().toString());
+        String mappedPort = ""+container.getMappedPort(originalPort);
 
         String[][] hostPortTuples = {
-            { "hardcoded+mapped"   , "172.17.0.3"        , mappedPort}    ,
-            { "hardcoded+mapped"   , "172.17.0.1"        , mappedPort}    ,
-            { "hardcoded+original" , "172.17.0.3"        , ""+80}         ,
-            { "hardcoded+original" , "172.17.0.1"        , ""+80}         ,
-            { "ip+original"        , ipAddress           , ""+mappedPort} ,
-            { "ip+original"        , ipAddress           , ""+80}         ,
-            { "getHost+mapped"     , container.getHost() , ""+mappedPort} , // according to docs , this is the winner
-            { "getHost+original"   , container.getHost() , ""+80},
-            { "localhost+mapped"     , "localhost", ""+mappedPort} ,
-            { "localhost+original"   , "localhost", ""+80}
+            { "container IP + mapped"   , ipAddress           , mappedPort}      ,
+            { "container IP + original" , ipAddress           , strOriginalPort} ,
+            { "getHost + mapped"        , container.getHost() , mappedPort}      , // according to docs , this is the winner
+            { "getHost + original"      , container.getHost() , strOriginalPort} ,
+            { "localhost + mapped"      , "localhost"         , mappedPort}      ,
+            { "localhost + original"    , "localhost"         , strOriginalPort}
         };
 
         for (String[] tuple : hostPortTuples) {
