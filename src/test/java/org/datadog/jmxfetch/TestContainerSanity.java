@@ -111,6 +111,8 @@ public class TestContainerSanity {
 
         log.info("Container Network Settings: {}", container.getContainerInfo().getNetworkSettings().toString());
         log.info("Container Port Configuration: {}", container.getContainerInfo().getNetworkSettings().getPorts().toString());
+        log.info("HostConfig Port Bindings: {}", container.getContainerInfo().getHostConfig().getPortBindings());
+        log.info("HostConfig Port Bindings (getBindings): {}", container.getContainerInfo().getHostConfig().getPortBindings().getBindings());
         String mappedPort = ""+container.getMappedPort(originalPort);
 
         String[][] hostPortTuples = {
