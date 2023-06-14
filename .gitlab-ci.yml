@@ -24,7 +24,6 @@ run_tests:
       # explicitly disable tls to avoid docker startup interruption
       command: ["--tls=false"]
 
-
   variables:
     # Instruct Testcontainers to use the daemon of DinD, use port 2375 for non-tls connections.
     DOCKER_HOST: "tcp://docker:2375"
@@ -36,6 +35,7 @@ run_tests:
   image: maven:3.9.1-eclipse-temurin-8
 
   script:
+    - set +x
     - echo "Running tests"
     - apt update
     - apt install -y iproute2 ca-certificates curl gnupg lsb-release iptables
