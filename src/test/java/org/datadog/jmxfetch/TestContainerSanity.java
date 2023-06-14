@@ -118,6 +118,7 @@ public class TestContainerSanity {
         printCmdOutput("docker info");
         printCmdOutput("docker inspect " + containerId);
         printCmdOutput("docker port " + containerId);
+        printCmdOutput("iptables -t nat -L -n");
 
         log.info("Container Network Settings: {}", container.getContainerInfo().getNetworkSettings().toString());
         log.info("Container Port Configuration: {}", container.getContainerInfo().getNetworkSettings().getPorts().toString());
