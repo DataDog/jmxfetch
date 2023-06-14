@@ -18,12 +18,10 @@ run_tests:
   tags:
     - "runner:docker"
 
-  variables:
-    TESTCONTAINERS_RYUK_DISABLED: true
-
   image: maven:3.9.1-eclipse-temurin-8
 
   script:
+    - export TESTCONTAINERS_RYUK_DISABLED=true
     - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test '-Dtest=TestReconnectContainer#testJMX*' || true
     - ls ./target/surefire-reports/
     - cat ./target/surefire-reports/*.txt
