@@ -26,36 +26,36 @@ test:
     - container_id=$(docker run -P -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
     - container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
     - echo "Making a request to the container via $container_ip, this works"
-    - curl http://$container_ip
+    - curl -m 30 http://$container_ip
     - echo "Making a request to the container via host port mapping ($host_mapped_url)"
     - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
-    - curl http://$host_mapped_url
+    - curl -m 30 http://$host_mapped_url
     - gateway_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}:{{range $port, $bindings := .NetworkSettings.Ports}}{{(index $bindings 0).HostPort}}{{end}}' $container_id)
-    - curl http://$gateway_mapped_url
+    - curl -m 30 http://$gateway_mapped_url
 
     # Next, lets try explicitly binding the exposed port to a fixed host port
     - echo "Creating container http server with exposed ports published to fixed host port"
     - container_id=$(docker run -p 7777:80 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
     - docker inspect -f '{{range .NetworkSettings.Ports}}{{json .}}{{end}}' $container_id
     - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
-    - curl http://$host_mapped_url
+    - curl -m 30 http://$host_mapped_url
     - gateway_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}:{{range $port, $bindings := .NetworkSettings.Ports}}{{(index $bindings 0).HostPort}}{{end}}' $container_id)
-    - curl http://$gateway_mapped_url
+    - curl -m 30 http://$gateway_mapped_url
 
     # Next, lets try explicitly binding the exposed port to the port 0 (https://github.com/docker/for-mac/issues/5588)
     - echo "Creating container http server with exposed ports published to host port 0 (should trigger auto-allocate behavior)"
     - container_id=$(docker run -p 0:80 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
     - docker inspect -f '{{range .NetworkSettings.Ports}}{{json .}}{{end}}' $container_id
     - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
-    - curl http://$host_mapped_url
+    - curl -m 30 http://$host_mapped_url
     - gateway_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}:{{range $port, $bindings := .NetworkSettings.Ports}}{{(index $bindings 0).HostPort}}{{end}}' $container_id)
-    - curl http://$gateway_mapped_url
+    - curl -m 30 http://$gateway_mapped_url
 
     # Next, lets try explicitly binding the exposed port to an auto port
     - echo "Creating container http server with exposed ports published to auto port"
     - container_id=$(docker run -p :80 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
     - docker inspect -f '{{range .NetworkSettings.Ports}}{{json .}}{{end}}' $container_id
     - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
-    - curl http://$host_mapped_url
+    - curl -m 30 http://$host_mapped_url
     - gateway_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}:{{range $port, $bindings := .NetworkSettings.Ports}}{{(index $bindings 0).HostPort}}{{end}}' $container_id)
-    - curl http://$gateway_mapped_url
+    - curl -m 30 http://$gateway_mapped_url
