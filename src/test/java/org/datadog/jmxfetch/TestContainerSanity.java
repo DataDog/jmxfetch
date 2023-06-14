@@ -27,6 +27,21 @@ import com.github.dockerjava.api.model.Ports.Binding;
 @Slf4j
 public class TestContainerSanity {
 
+    private static void printCmdOutput(String cmd) throws IOException, InterruptedException {
+        Process process = Runtime.getRuntime().exec(cmd);
+
+        // Read the output of the command
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
+        log.info("cmd '{}' output follows:", cmd);
+        while ((line = reader.readLine()) != null) {
+            System.out.println(line);
+        }
+
+        // Wait for the command to complete
+        int exitCode = process.waitFor();
+        log.info("cmd '{}' exited with code: ", cmd, exitCode);
+    }
 
     private static boolean isHttpOk(String host, String port) {
         String url = "http://" + host + ":" + port;
@@ -93,24 +108,16 @@ public class TestContainerSanity {
 
         container.start();
         Thread.sleep(1000);
-        log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(container.getContainerId()).exec());
+        String containerId = container.getContainerId();
+        log.info("Inspect container: {}", container.getDockerClient().inspectContainerCmd(containerId).exec());
         log.info("exec ip addr: {}", container.execInContainer("ip", "addr"));
         String ipAddress = container.getContainerInfo().getNetworkSettings().getIpAddress();
         log.info("Container: getHost(): {}, getContainerIp(): {}, ipAddress: {}", container.getHost(), container.getContainerIpAddress(), ipAddress);
 
-        Process process = Runtime.getRuntime().exec("ip addr");
-
-        // Read the output of the command
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        System.out.println("IP ADDR output follows:");
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
-        }
-
-        // Wait for the command to complete
-        int exitCode = process.waitFor();
-        System.out.println("'ip addr' Command exited with code: " + exitCode);
+        printCmdOutput("ip addr");
+        printCmdOutput("docker info");
+        printCmdOutput("docker inspect " + containerId);
+        printCmdOutput("docker port " + containerId);
 
         log.info("Container Network Settings: {}", container.getContainerInfo().getNetworkSettings().toString());
         log.info("Container Port Configuration: {}", container.getContainerInfo().getNetworkSettings().getPorts().toString());
@@ -121,7 +128,10 @@ public class TestContainerSanity {
             Binding[] value = entry.getValue();
             log.info("For ExposedPort {}, there are {} bindings:", key, value.length);
             for (Binding b: value) {
-                log.info("Binding: ", b.getHostPortSpec());
+                // these are allowed to be null which means that the host can assign them
+                log.info("hostPortSpec: {}", b.getHostPortSpec());
+                log.info("getHostIp: {}", b.getHostIp());
+                log.info("rawValues: {}", b.getRawValues().toString());
             }
         }
         String mappedPort = ""+container.getMappedPort(originalPort);
