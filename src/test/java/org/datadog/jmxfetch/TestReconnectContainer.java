@@ -133,16 +133,17 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException, InterruptedException {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
             "instances:",
             "    -   name: jmxint_container",
-            "        host: " + cont.getHost(),
+            "        host: " + ipAddress,
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
-            "        port: " + cont.getMappedPort(rmiPort),
+            "        port: " + rmiPort,
             "        conf:",
             "          - include:",
             "              domain: Bohnanza"
@@ -155,6 +156,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchManyMetrics() throws IOException, InterruptedException {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         int numBeans = 100;
         int numAttributesPerBean = 4;
 
@@ -166,10 +168,10 @@ public class TestReconnectContainer extends TestCommon {
             "",
             "instances:",
             "    -   name: jmxint_container",
-            "        host: " + cont.getHost(),
+            "        host: " + ipAddress,
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
-            "        port: " + cont.getMappedPort(rmiPort),
+            "        port: " + rmiPort,
             "        conf:",
             "          - include:",
             "              domain: " + testDomain
@@ -183,16 +185,17 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
             "instances:",
             "    -   name: jmxint_container",
-            "        host: " + cont.getHost(),
+            "        host: " + ipAddress,
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
-            "        port: " + cont.getMappedPort(rmiPort),
+            "        port: " + rmiPort,
             "        conf:",
             "          - include:",
             "              domain: Bohnanza"
