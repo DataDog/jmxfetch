@@ -64,7 +64,9 @@ public class TestReconnectContainer extends TestCommon {
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
-        .waitingFor(Wait.forHttp("/ready").forPort(supervisorPort).forStatusCode(200));
+        .waitingFor(Wait.forLogMessage(".*JMX server has started.*", 1));
+        // TODO switch to a http ready check, but need to be able to address container by container IP, not gateway/docker-host
+        //.waitingFor(Wait.forHttp("/ready").forPort(supervisorPort).forStatusCode(200));
 
     @Rule(order = 1)
     public TestRule setupRule = new TestRule() {
@@ -73,12 +75,13 @@ public class TestReconnectContainer extends TestCommon {
             return new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
-                    supervisorClient = new JMXServerSupervisorClient(cont.getHost(), cont.getMappedPort(supervisorPort));
+                    String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+                    controlClient = new JMXServerControlClient(ipAddress, controlPort);
+                    supervisorClient = new JMXServerSupervisorClient(ipAddress, supervisorPort);
                     cont.followOutput(logConsumer);
                     try {
-                        log.info("Setting RMI hostname to {}", cont.getHost());
-                        supervisorClient.setRmiHostname(cont.getHost());
+                        log.info("Setting RMI hostname to {}", ipAddress);
+                        supervisorClient.setRmiHostname(ipAddress);
                     } catch (IOException e) {
                         log.warn("Supervisor call to set rmi hostname failed, tests may fail in some environments, e: ", e);
                     }
@@ -90,10 +93,11 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectBasic() throws Exception {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), cont.getMappedPort(rmiPort)
+            ipAddress, rmiPort
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
@@ -105,10 +109,11 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectReconnect() throws Exception {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), cont.getMappedPort(rmiPort)
+            ipAddress, rmiPort
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);

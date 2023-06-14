@@ -18,36 +18,13 @@ run_tests:
   tags:
     - "runner:docker"
 
-  # DinD service is required for Testcontainers
-  services:
-    - name: docker:dind
-      alias: docker
-      # explicitly disable tls to avoid docker startup interruption
-      command: ["--tls=false"]
-
   variables:
-    # Instruct Testcontainers to use the daemon of DinD, use port 2375 for non-tls connections.
-    DOCKER_HOST: "tcp://docker:2375"
-    # Instruct Docker not to start over TLS.
-    DOCKER_TLS_CERTDIR: ""
-    # Improve performance with overlayfs.
-    DOCKER_DRIVER: overlay2
+    TESTCONTAINERS_RYUK_DISABLED: true
 
   image: maven:3.9.1-eclipse-temurin-8
 
   script:
-    - set +x
-    - echo "Running tests"
-    - apt update
-    - apt install -y iproute2 ca-certificates curl gnupg lsb-release iptables
-    - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-    - apt update
-    - apt install --yes docker-ce-cli
-    - docker info
-
-    - export TESTCONTAINERS_RYUK_DISABLED=true
-    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test -Dtest=TestContainerSanity#testExposedPort || true
+    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test '-Dtest=TestReconnectContainer#testJMX*' || true
     - ls ./target/surefire-reports/
     - cat ./target/surefire-reports/*.txt
 
