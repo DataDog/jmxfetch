@@ -19,15 +19,34 @@ test:
   image: registry.ddbuild.io/docker:20.10.13-gbi-focal
 
   script:
-    # Ensure we don't print commands being run to the logs during credential
-    # operations
-    - set +x
-    - echo "Creating container http server"
+    - set -x
+    # First container is created with exposed ports auto-published to host via -P
+    - echo "Creating container http server with exposed ports auto-published"
     - container_id=$(docker run -P -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
-    - echo "Call the http server from this container"
     - container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
-    # Works when addressing the container IP directly
+    - echo "Making a request to the container via $container_ip, this works"
     - curl http://$container_ip
-    # When using the automatically assigned port, it fails to connect
+    - echo "Making a request to the container via host port mapping ($host_mapped_url), this fails"
+    - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
+    - curl http://$host_mapped_url
+
+    # Next, lets try explicitly binding the exposed port to a fixed host port
+    - echo "Creating container http server with exposed ports published to fixed host port"
+    - container_id=$(docker run -p 7777:80 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - echo "Making a request to the container via host port mapping ($host_mapped_url), this should work"
+    - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
+    - curl http://$host_mapped_url
+
+    # Next, lets try explicitly binding the exposed port to the port 0 (https://github.com/docker/for-mac/issues/5588)
+    - echo "Creating container http server with exposed ports published to fixed host port"
+    - container_id=$(docker run -p 0:80 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - echo "Making a request to the container via host port mapping ($host_mapped_url), this should work"
+    - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
+    - curl http://$host_mapped_url
+
+    # Next, lets try explicitly binding the exposed port to an auto port
+    - echo "Creating container http server with exposed ports published to fixed host port"
+    - container_id=$(docker run -p :80 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - echo "Making a request to the container via host port mapping ($host_mapped_url), this should work"
     - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
     - curl http://$host_mapped_url
