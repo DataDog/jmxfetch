@@ -90,10 +90,11 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectBasic() throws Exception {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), cont.getMappedPort(rmiPort)
+            ipAddress, rmiPort
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
