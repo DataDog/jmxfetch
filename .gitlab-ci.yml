@@ -22,5 +22,12 @@ deploy_to_sonatype:
     # Ensure we don't print commands being run to the logs during credential
     # operations
     - set +x
-    - echo $DOCKER_HOST
-    - sleep 10000
+    - echo "Creating container http server"
+    - container_id=$(docker run -P -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - echo "Call the http server from this container"
+    - container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
+    - # Works when addressing the container IP directly
+    - curl http://$container_ip
+    - # When using the automatically assigned port, it fails to connect
+    - host_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Ports}}{{range .}}{{println .HostIp .HostPort}}{{end}}{{end}}' $container_id | tr ' ' ':' | head -n 1)
+    - curl http://$host_mapped_url
