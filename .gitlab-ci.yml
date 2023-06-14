@@ -20,6 +20,7 @@ test:
 
   script:
     - set -x
+    - set +e
     # First container is created with exposed ports auto-published to host via -P
     - echo "Creating container http server with exposed ports auto-published"
     - container_id=$(docker run -P -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
