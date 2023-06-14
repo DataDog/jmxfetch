@@ -34,7 +34,7 @@ run_tests:
 
     - export TESTCONTAINERS_RYUK_DISABLED=true
     #- export TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
-    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test -Dtest=TestReconnectContainer#testJMX || true
+    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test '-Dtest=TestReconnectContainer#testJMX*' || true
     - ls ./target/surefire-reports/
     - cat ./target/surefire-reports/*.txt
 
