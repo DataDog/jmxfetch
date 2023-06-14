@@ -27,20 +27,24 @@ import com.github.dockerjava.api.model.Ports.Binding;
 @Slf4j
 public class TestContainerSanity {
 
-    private static void printCmdOutput(String cmd) throws IOException, InterruptedException {
-        Process process = Runtime.getRuntime().exec(cmd);
+    private static void printCmdOutput(String cmd) {
+        try {
+            Process process = Runtime.getRuntime().exec(cmd);
 
-        // Read the output of the command
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        log.info("cmd '{}' output follows:", cmd);
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
+            // Read the output of the command
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            log.info("cmd '{}' output follows:", cmd);
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            // Wait for the command to complete
+            int exitCode = process.waitFor();
+            log.info("cmd '{}' exited with code: ", cmd, exitCode);
+        } catch (IOException | InterruptedException e) {
+            log.error("cmd '{}'' failed with error: {}", e.getMessage());
         }
-
-        // Wait for the command to complete
-        int exitCode = process.waitFor();
-        log.info("cmd '{}' exited with code: ", cmd, exitCode);
     }
 
     private static boolean isHttpOk(String host, String port) {
