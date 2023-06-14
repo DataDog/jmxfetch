@@ -1,9 +1,38 @@
 stages:
   - deploy_to_sonatype
   - create_key
+  - run_tests
 
 variables:
   REGISTRY: 486234852809.dkr.ecr.us-east-1.amazonaws.com
+  # ryuk is a privileged container started by testcontainers which cleans up containers at the end of testing
+  # It is not necessary if the docker env cleans itself up (which I'm assuming gitlab 'runner:docker' runners do)
+  TESTCONTAINERS_RYUK_DISABLED: "true"
+
+
+# Testing is handled by circleCI for PRs, but we also run maven tests as part of the deploy process
+# This run_tests job is useful for ensuring the tests run fine without any of the deployment bits
+run_tests:
+  stage: run_tests
+
+  rules:
+    - when: manual
+      allow_failure: true
+
+  tags:
+    - "runner:docker"
+
+  image: maven:3.9.1-eclipse-temurin-8
+
+  script:
+    - export TESTCONTAINERS_RYUK_DISABLED=true
+    - mvn -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
+
+  artifacts:
+    expire_in: 1 mos
+    paths:
+      - ./target/surefire-reports/*.txt
+
 
 # From the tagged repo, push the release artifact
 deploy_to_sonatype:

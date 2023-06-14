@@ -15,19 +15,29 @@ import javax.management.remote.JMXServiceURL;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Paths;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 
 
+@Slf4j
 public class TestReconnectContainer extends TestCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
+    private static final int supervisorPort = 9092;
     private JMXServerControlClient controlClient;
+    private JMXServerSupervisorClient supervisorClient;
+    private static Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(log);
 
     private static boolean isDomainPresent(String domain, MBeanServerConnection mbs) {
         boolean found = false;
@@ -47,24 +57,47 @@ public class TestReconnectContainer extends TestCommon {
     private static ImageFromDockerfile img = new ImageFromDockerfile()
         .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
 
-    @Before
-    public void setup() {
-        this.controlClient = new JMXServerControlClient(cont.getHost(), cont.getMappedPort(controlPort));
-    }
 
-    @Rule
+    @Rule(order = 0)
     public GenericContainer<?> cont = new GenericContainer<>(img)
-        .withExposedPorts(rmiPort, controlPort)
+        .withExposedPorts(rmiPort, controlPort, supervisorPort)
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
-        .waitingFor(Wait.forLogMessage(".*IAMREADY.*", 1));
+        .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
+        .waitingFor(Wait.forLogMessage(".*JMX server has started.*", 1));
+        // TODO switch to a http ready check, but need to be able to address container by container IP, not gateway/docker-host
+        //.waitingFor(Wait.forHttp("/ready").forPort(supervisorPort).forStatusCode(200));
+
+    @Rule(order = 1)
+    public TestRule setupRule = new TestRule() {
+        @Override
+        public Statement apply(final Statement base, Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+                    controlClient = new JMXServerControlClient(ipAddress, controlPort);
+                    supervisorClient = new JMXServerSupervisorClient(ipAddress, supervisorPort);
+                    cont.followOutput(logConsumer);
+                    try {
+                        log.info("Setting RMI hostname to {}", ipAddress);
+                        supervisorClient.setRmiHostname(ipAddress);
+                    } catch (IOException e) {
+                        log.warn("Supervisor call to set rmi hostname failed, tests may fail in some environments, e: ", e);
+                    }
+                    base.evaluate();
+                }
+            };
+        }
+    };
 
     @Test
     public void testJMXDirectBasic() throws Exception {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), cont.getMappedPort(rmiPort)
+            ipAddress, rmiPort
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
@@ -76,10 +109,11 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXDirectReconnect() throws Exception {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         // Connect directly via JMXConnector
         String remoteJmxServiceUrl = String.format(
             "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi",
-            cont.getHost(), cont.getMappedPort(rmiPort)
+            ipAddress, rmiPort
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
@@ -99,16 +133,17 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException, InterruptedException {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
             "instances:",
             "    -   name: jmxint_container",
-            "        host: " + cont.getHost(),
+            "        host: " + ipAddress,
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
-            "        port: " + cont.getMappedPort(rmiPort),
+            "        port: " + rmiPort,
             "        conf:",
             "          - include:",
             "              domain: Bohnanza"
@@ -121,6 +156,7 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchManyMetrics() throws IOException, InterruptedException {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         int numBeans = 100;
         int numAttributesPerBean = 4;
 
@@ -132,10 +168,10 @@ public class TestReconnectContainer extends TestCommon {
             "",
             "instances:",
             "    -   name: jmxint_container",
-            "        host: " + cont.getHost(),
+            "        host: " + ipAddress,
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
-            "        port: " + cont.getMappedPort(rmiPort),
+            "        port: " + rmiPort,
             "        conf:",
             "          - include:",
             "              domain: " + testDomain
@@ -149,16 +185,17 @@ public class TestReconnectContainer extends TestCommon {
 
     @Test
     public void testJMXFetchReconnect() throws IOException, InterruptedException {
+        String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
             "",
             "instances:",
             "    -   name: jmxint_container",
-            "        host: " + cont.getHost(),
+            "        host: " + ipAddress,
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
-            "        port: " + cont.getMappedPort(rmiPort),
+            "        port: " + rmiPort,
             "        conf:",
             "          - include:",
             "              domain: Bohnanza"
