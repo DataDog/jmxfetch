@@ -2,8 +2,7 @@ init_config:
 
 instances:
   -   process_name_regex: .*surefire.*
-      empty_default_hostname: true
-      name: jmx_test_no_hostname
+      name: jmx_test_default_hostname
       tags:
         - jmx:fetch
       conf:
