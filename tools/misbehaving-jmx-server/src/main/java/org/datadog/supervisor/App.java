@@ -32,6 +32,10 @@ class AppConfig {
     }
 }
 
+class SupervisorInitSpec {
+    public String rmiHostname;
+}
+
 @Slf4j
 public class App {
     private static Process process = null;
@@ -57,19 +61,35 @@ public class App {
 
         Javalin app = Javalin.create();
 
-        app.post("/config/", ctx -> {
-            if (ctx.formParam("rmiHostname") != null) {
-                App.config.rmiHostname = ctx.formParam("rmiHostname");
-                log.info("Setting RMI Hostname to {}. Restarting now...", App.config.rmiHostname);
-                stopJMXServer();
-                try {
-                    startJMXServer();
-                    ctx.result("Process restarted").status(200);
-                } catch (Exception e) {
-                    ctx.result("Error restarting process: " + e.getMessage()).status(500);
-                }
+        app.post("/init/", ctx -> {
+            SupervisorInitSpec initSpec;
+            try {
+                initSpec = ctx.bodyAsClass(SupervisorInitSpec.class);
+            } catch (Exception e) {
+                log.error("JSON Deserialization error: ", e);
+                ctx.status(400).result("Invalid JSON format");
+                return;
+            }
+            App.config.rmiHostname = initSpec.rmiHostname;
+
+            log.info("Got initialization settings, setting RMI Hostname to {}. Starting JMX Server now...", App.config.rmiHostname);
+            try {
+                startJMXServer();
+                ctx.result("Init Completed. JMX Server is running").status(200);
+            } catch (Exception e) {
+                ctx.result("Error starting JMX Server: " + e.getMessage()).status(500);
             }
         });
+
+        app.events(event -> {
+            event.serverStarting(() -> {
+                log.info("Supervisor HTTP control interface starting at :{}", App.config.controlHttpPort);
+            });
+            event.serverStarted(() -> {
+                log.info("Supervisor HTTP Server Started. Waiting for initialization payload POST to /init");
+            });
+        });
+
         app.get("/ready", ctx -> {
             if (started.get()) {
                 ctx.status(200);
@@ -78,13 +98,11 @@ public class App {
             }
         });
 
-        log.info("Supervisor HTTP control interface at :{}", App.config.controlHttpPort);
+
         app.start(App.config.controlHttpPort);
 
-        log.info("Starting JMX subprocess");
-        startJMXServer();
-
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            app.stop();
             if (running.get()) {
                 log.info("Stopping the sub-process....");
                 try {
@@ -97,7 +115,6 @@ public class App {
     }
 
     static void stopJMXServer() throws IOException, InterruptedException {
-        // Restart the process
         if (process != null) {
             process.destroyForcibly().waitFor();
             running.set(false);
@@ -106,25 +123,18 @@ public class App {
     }
 
     static void startJMXServer() throws IOException {
-        ProcessBuilder pb;
-        if (App.config.rmiHostname != null) {
-            pb = new ProcessBuilder("java",
-                    "-cp",
-                    selfJarPath,
-                    jmxServerEntrypoint,
-                    "--rmi-host",
-                    App.config.rmiHostname);
-        } else {
-            pb = new ProcessBuilder("java",
-                    "-cp",
-                    selfJarPath,
-                    jmxServerEntrypoint);
-        }
+        ProcessBuilder pb = new ProcessBuilder("java",
+            "-cp",
+            selfJarPath,
+            jmxServerEntrypoint,
+            "--rmi-host",
+            App.config.rmiHostname);
         pb.inheritIO();
         process = pb.start();
         running.set(true);
 
         try {
+            // Block until the JMXServer is ready
             checkForJMXServerReady();
         } catch (IOException | InterruptedException e) {
             log.error("Error while waiting for JMX server to be ready: ", e);

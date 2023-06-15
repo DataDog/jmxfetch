@@ -60,13 +60,10 @@ public class TestReconnectContainer extends TestCommon {
 
     @Rule(order = 0)
     public GenericContainer<?> cont = new GenericContainer<>(img)
-        .withExposedPorts(rmiPort, controlPort, supervisorPort)
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
-        .waitingFor(Wait.forLogMessage(".*JMX server has started.*", 1));
-        // TODO switch to a http ready check, but need to be able to address container by container IP, not gateway/docker-host
-        //.waitingFor(Wait.forHttp("/ready").forPort(supervisorPort).forStatusCode(200));
+        .waitingFor(Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1));
 
     @Rule(order = 1)
     public TestRule setupRule = new TestRule() {
@@ -80,8 +77,8 @@ public class TestReconnectContainer extends TestCommon {
                     supervisorClient = new JMXServerSupervisorClient(ipAddress, supervisorPort);
                     cont.followOutput(logConsumer);
                     try {
-                        log.info("Setting RMI hostname to {}", ipAddress);
-                        supervisorClient.setRmiHostname(ipAddress);
+                        log.info("Initializing JMX Server with RMI hostname {}", ipAddress);
+                        supervisorClient.initializeJMXServer(ipAddress);
                     } catch (IOException e) {
                         log.warn("Supervisor call to set rmi hostname failed, tests may fail in some environments, e: ", e);
                     }
