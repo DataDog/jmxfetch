@@ -1,7 +1,7 @@
 stages:
   - deploy_to_sonatype
   - create_key
-  - run_tests
+  - run_unit_tests
 
 variables:
   REGISTRY: 486234852809.dkr.ecr.us-east-1.amazonaws.com
@@ -11,9 +11,9 @@ variables:
 
 
 # Testing is handled by circleCI for PRs, but we also run maven tests as part of the deploy process
-# This run_tests job is useful for ensuring the tests run fine without any of the deployment bits
-run_tests:
-  stage: run_tests
+# This run_unit_tests job is useful for ensuring the tests run fine without any of the deployment bits
+run_unit_tests:
+  stage: run_unit_tests
 
   rules:
     - when: manual
