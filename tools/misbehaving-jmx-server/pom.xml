@@ -87,7 +87,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>org.datadog.supervisor.App</mainClass>
+                <mainClass>org.datadog.misbehavingjmxserver.App</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>
