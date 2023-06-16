@@ -7,8 +7,8 @@ to intentionally cause connection issues.
 
 ## Implementation
 - `org.datadog.misbehavingjmxserver.App` is a JMX server exposing custom mbeans
-as well as an HTTP control interface to allow injection of network errors. Main class for the jar
-- `org.datadog.supervisor.App` is the entrypoint for the JAR and its job is to wait for
+as well as an HTTP control interface to allow injection of network errors. Entrypoint class for the jar.
+- `org.datadog.supervisor.App` is a secondary class (non-entrypoint) for the JAR and its job is to wait for
 a secondary `init` payload that contains the correct RMI Hostname. It is designed for use in a container where you may not know the hostname before starting the container.
 
 ## Build
