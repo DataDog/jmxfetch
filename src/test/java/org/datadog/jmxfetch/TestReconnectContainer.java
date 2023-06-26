@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -12,7 +13,6 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -98,10 +98,10 @@ public class TestReconnectContainer extends TestCommon {
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
-        JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
-        MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
-
-        assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
+        try (JMXConnector conn = JMXConnectorFactory.connect(jmxUrl)) {
+            MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
+            assertTrue(isDomainPresent("Bohnanza", mBeanServerConnection));
+        }
     }
 
     @Test
@@ -114,18 +114,19 @@ public class TestReconnectContainer extends TestCommon {
         );
 
         JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
-        JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
-        MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
+        try (JMXConnector conn = JMXConnectorFactory.connect(jmxUrl)) {
+            MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
 
-        assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
+            assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
 
-        this.controlClient.jmxCutNetwork();
+            this.controlClient.jmxCutNetwork();
 
-        assertEquals(false, isDomainPresent("Bohnanza", mBeanServerConnection));
+            assertEquals(false, isDomainPresent("Bohnanza", mBeanServerConnection));
 
-        this.controlClient.jmxRestoreNetwork();
+            this.controlClient.jmxRestoreNetwork();
 
-        assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
+            assertEquals(true, isDomainPresent("Bohnanza", mBeanServerConnection));
+        }
     }
 
     @Test

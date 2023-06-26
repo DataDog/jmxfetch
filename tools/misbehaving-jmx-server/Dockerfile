@@ -23,5 +23,15 @@ WORKDIR /app
 # Copy the JAR file from the Maven image to the final image
 COPY  --from=build /app/target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar .
 
+# Default ports
+EXPOSE 1099
+EXPOSE 8080
+EXPOSE 8088
+
+# Used for testcontainers
+EXPOSE 9090
+EXPOSE 9091
+EXPOSE 9092
+
 # Run the supervisor class from the jar
-CMD ["java", "-cp", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar", "org.datadog.supervisor.App"]
+CMD ["java", "-Dsun.management.jmxremote.level=FINEST", "-Dsun.management.jmxremote.handlers=java.util.logging.ConsoleHandler", "-Djava.util.logging.ConsoleHandler.level=FINEST", "-cp", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar", "org.datadog.supervisor.App"]

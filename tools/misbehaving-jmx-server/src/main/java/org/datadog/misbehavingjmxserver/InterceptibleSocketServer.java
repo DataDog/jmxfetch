@@ -13,8 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 class InterceptibleSocketServer extends ServerSocket {
-    private List<Socket> acceptedSockets;
-    private AtomicBoolean closed;
+    private final List<Socket> acceptedSockets;
+    private final AtomicBoolean closed;
 
     public InterceptibleSocketServer(int port) throws IOException {
         super(port);
@@ -41,21 +41,31 @@ class InterceptibleSocketServer extends ServerSocket {
             socket.close();
             throw new IOException("JMX Network is closed, try again later");
         }
-        log.debug("Accepted socket localPort {} port {} localAddress {} inetAddress {}", socket.getLocalPort(), socket.getPort(), socket.getLocalAddress(), socket.getInetAddress(), socket.getRemoteSocketAddress());
+        log.debug("Accepted socket localPort {} port {} localAddress {} inetAddress {} remoteSocketAddress {}",
+            socket.getLocalPort(),
+            socket.getPort(),
+            socket.getLocalAddress(),
+            socket.getInetAddress(),
+            socket.getRemoteSocketAddress());
         acceptedSockets.add(socket);
         return socket;
     }
     
     public void setClosed(boolean closed) {
         this.closed.set(closed);
-        log.debug("[{}] Socket server is now {}", this.toString(), closed);
+        log.debug("[{}] Socket server is now {}", this, closed);
     }
 
     public int closeAcceptedSockets() {
         int closed = 0;
         for (Socket socket : acceptedSockets) {
             try {
-                log.debug("Closing socket localPort {} port {} localAddress {} inetAddress {}", socket.getLocalPort(), socket.getPort(), socket.getLocalAddress(), socket.getInetAddress(), socket.getRemoteSocketAddress());
+                log.debug("Accepted socket localPort {} port {} localAddress {} inetAddress {} remoteSocketAddress {}",
+                    socket.getLocalPort(),
+                    socket.getPort(),
+                    socket.getLocalAddress(),
+                    socket.getInetAddress(),
+                    socket.getRemoteSocketAddress());
                 socket.close();
                 closed++;
             } catch (IOException e) {
