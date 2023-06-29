@@ -21,7 +21,20 @@ test:
   script:
     - set -x
     - set +e
-    # First container is created with exposed ports auto-published to host via -P
+
+    # Trying out using a name via DNS resolution
+    - echo "Creating container http server with name 'srv' and no ports exposed"
+    - container_id=$(docker run --name srv -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - curl -m 30 http://srv
+
+    # Trying out using a name via DNS resolution using custom bridge network
+    - echo "Creating container http server with name 'srvv' on network 'mynetwork' and no ports exposed"
+    - docker create network mynetwork
+    - container_id=$(docker run --network mynetwork --name srvv -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - curl -m 30 http://srvv
+    - docker run --rm --network mynetwork --name mycurl curlimages/curl http://srvv
+
+    # container is created with exposed ports auto-published to host via -P
     - echo "Creating container http server with exposed ports auto-published"
     - container_id=$(docker run -P -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
     - container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
@@ -59,15 +72,3 @@ test:
     - curl -m 30 http://$host_mapped_url
     - gateway_mapped_url=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}:{{range $port, $bindings := .NetworkSettings.Ports}}{{(index $bindings 0).HostPort}}{{end}}' $container_id)
     - curl -m 30 http://$gateway_mapped_url
-
-    # Trying out using a name via DNS resolution
-    - echo "Creating container http server with name 'srv' and no ports exposed"
-    - container_id=$(docker run --name srv -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
-    - curl -m 30 http://srv
-
-    # Trying out using a name via DNS resolution using custom bridge network
-    - echo "Creating container http server with name 'srv' on network 'mynetwork' and no ports exposed"
-    - docker create network mynetwork
-    - container_id=$(docker run --network mynetwork --name srv -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
-    - curl -m 30 http://srv
-    - docker run --rm --name mycurl curlimages/curl "curl http://srv"
