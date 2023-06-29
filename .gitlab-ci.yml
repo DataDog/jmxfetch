@@ -22,6 +22,12 @@ test:
     - set -x
     - set +e
 
+    # Using a custom network with manual IP allocation
+    - echo "Creating container http server with name 'srv' and no ports exposed"
+    - docker network create --subnet=172.18.0.0/16 mystaticnetwork
+    - container_id=$(docker run --network mystaticnetwork --ip 172.18.0.33 -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
+    - curl -m 30 http://172.18.0.33
+
     # Trying out using a name via DNS resolution
     - echo "Creating container http server with name 'srv' and no ports exposed"
     - container_id=$(docker run --name srv -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
