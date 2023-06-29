@@ -29,7 +29,7 @@ test:
 
     # Trying out using a name via DNS resolution using custom bridge network
     - echo "Creating container http server with name 'srvv' on network 'mynetwork' and no ports exposed"
-    - docker create network mynetwork
+    - docker network create mynetwork
     - container_id=$(docker run --network mynetwork --name srvv -d strm/helloworld-http@sha256:bd44b0ca80c26b5eba984bf498a9c3bab0eb1c59d30d8df3cb2c073937ee4e45)
     - curl -m 30 http://srvv
     - docker run --rm --network mynetwork --name mycurl curlimages/curl http://srvv
