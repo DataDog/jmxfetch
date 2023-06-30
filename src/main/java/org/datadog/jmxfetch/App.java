@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,6 +84,8 @@ public class App {
     private final AppConfig appConfig;
     private HttpClient client;
 
+    private ScheduledThreadPoolExecutor beanCollectorThreadPool;
+
     /**
      * Main method for backwards compatibility in case someone is launching process by class
      * instead of by jar IE: java -classpath jmxfetch.jar org.datadog.jmxfetch.App
@@ -115,6 +118,12 @@ public class App {
                     this.appConfig.getIpcHost(), this.appConfig.getIpcPort(), false);
         }
         this.configs = getConfigs(this.appConfig);
+
+        //set up bean collection
+        System.out.println("Bean collection setup");
+        beanCollectorThreadPool = new ScheduledThreadPoolExecutor(1);
+        Runnable beanCollectorTask = new BeanCollector();
+        beanCollectorThreadPool.scheduleAtFixedRate(beanCollectorTask, 5, 10,TimeUnit.SECONDS);
     }
 
     /**
@@ -356,6 +365,7 @@ public class App {
             // Exit on exit file trigger...
             if (this.appConfig.getExitWatcher().shouldExit()) {
                 log.info("Exit file detected: stopping JMXFetch.");
+                beanCollectorThreadPool.shutdown();
                 return;
             }
 
