@@ -155,8 +155,13 @@ public class App {
         // set up the config status
         this.appConfig.updateStatus();
 
-        // Adding another shutdown hook for App related tasks
-        Runtime.getRuntime().addShutdownHook(new AppShutdownHook(this));
+        try {
+            // Adding another shutdown hook for App related tasks
+            Runtime.getRuntime().addShutdownHook(new AppShutdownHook(this));
+        } catch (IllegalStateException illegalStateException) {
+            // this exception is thrown if shutdown is already happening when the hook is added
+            return 0;
+        }
 
         // Get config from the ipc endpoint for "list_*" actions
         if (!action.equals(AppConfig.ACTION_COLLECT)) {

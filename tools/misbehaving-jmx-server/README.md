@@ -6,19 +6,25 @@ to intentionally cause connection issues.
 - cut and restore the TCP network connections between the JMX server and any clients attached
 
 ## Implementation
-`org.datadog.misbehavingjmxserver` is a JMX server exposing custom mbeans
-as well as an HTTP control interface to allow injection of network errors.
+- `org.datadog.misbehavingjmxserver.App` is a JMX server exposing custom mbeans
+as well as an HTTP control interface to allow injection of network errors. Entrypoint class for the jar.
+- `org.datadog.supervisor.App` is a secondary class (non-entrypoint) for the JAR and its job is to wait for
+a secondary `init` payload that contains the correct RMI Hostname. It is designed for use in a container where you may not know the hostname before starting the container.
 
 ## Build
 `mvn clean compile assembly:single`
 
-## Run
+## Run standalone JMX server
 `java -jar target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar`
+
+## Run with supervisor
+`java -cp target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar org.datadog.supervisor.App`
 
 ## Configure
 - `RMI_PORT` - RMI port for jmx failure server to use (default 1099)
 - `RMI_HOST` - hostname for JMX to listen on (default localhost)
 - `CONTROL_PORT` - HTTP control port (default 8080)
+- `SUPERVISOR_PORT` - HTTP control port for the supervisor process (if using) (default 8088)
 
 To enable debug logging, set the system property `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug`.
 This can be done in the Dockerfile `CMD` if running in a container
@@ -29,16 +35,19 @@ For extra debug logging around RMI systems, try any/all of the following:
 - `-Dsun.rmi.transport.logLevel=verbose`
 - `-Dsun.rmi.transport.tcp.logLevel=verbose`
 
-## HTTP Control Actions
+## HTTP Control Actions (jmx-server)
 - POST `/cutNetwork` - Denies any requests to create a new socket (ie, no more connections will be 'accept'ed) and then closes existing TCP sockets
 - POST `/restoreNetwork` - Allows new sockets to be created
 - GET `/beans/:domain` - Retrieves a list of bean names that are currently registered under the given domain. The length of this array should be exactly the number of beans under that domain
 - POST `/beans/:domain` - Declares how many 4-attribute beans should exist with this domain. Beans will either be created or destroyed to reach the desired amount. Payload should be JSON with a single key: `numDesiredBeans`.
 
+## HTTP Control Actions (supervisor)
+- POST `/init` - Provides `rmiHostname` to be used by jmx-server. jmx server will not be listening until this init payload is sent
+
 ## Docker
 ```
 $ docker build -t misbehaving-jmx-server .
-$ docker run --rm -p :1099 misbehaving-jmx-server 
+$ docker run --rm -p :1099 misbehaving-jmx-server
 ```
 
 Can connect via jmxterm ` java -jar ~/jmxterm-1.0.2-uber.jar --url localhost:<rmi port>`
@@ -61,10 +70,10 @@ $ docker run \
 --rm \
 -p 1099:1099 \
 --label "com.datadoghq.ad.checks"='{"misbehaving":{"init_config":{"is_jmx":true},"instances":[{"host":"%%host%%","port":"1099","collect_default_jvm_metrics":false,"max_returned_metrics":300000,"conf":[{"include":{"domain":"Bohnanza"}}]}]}}' \
-misbehaving-jmx-server 
+misbehaving-jmx-server
 ```
 
-The Agent will auto discover the container and begin to collect metrics from it. 
+The Agent will auto discover the container and begin to collect metrics from it.
 
 ### Using Docker Compose
 

@@ -66,14 +66,35 @@ public class TestInstance extends TestCommon {
         run();
 
         List<Map<String, Object>> metrics = getMetrics();
-        assertEquals(28, metrics.size());
+        assertEquals(14, metrics.size());
         for (Map<String, Object> metric : metrics) {
             String[] tags = (String[]) metric.get("tags");
             this.assertHostnameTags(Arrays.asList(tags));
         }
 
         List<Map<String, Object>> serviceChecks = getServiceChecks();
-        assertEquals(4, serviceChecks.size());
+        assertEquals(2, serviceChecks.size());
+        for (Map<String, Object> sc : serviceChecks) {
+            String[] tags = (String[]) sc.get("tags");
+            this.assertHostnameTags(Arrays.asList(tags));
+        }
+    }
+
+    @Test
+    public void testBaselineDefaultHostname() throws Exception {
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+        initApplication("jmx_baseline_default_hostname.yaml");
+        run();
+
+        List<Map<String, Object>> metrics = getMetrics();
+        assertEquals(14, metrics.size());
+        for (Map<String, Object> metric : metrics) {
+            String[] tags = (String[]) metric.get("tags");
+            this.assertHostnameTags(Arrays.asList(tags));
+        }
+
+        List<Map<String, Object>> serviceChecks = getServiceChecks();
+        assertEquals(2, serviceChecks.size());
         for (Map<String, Object> sc : serviceChecks) {
             String[] tags = (String[]) sc.get("tags");
             this.assertHostnameTags(Arrays.asList(tags));
