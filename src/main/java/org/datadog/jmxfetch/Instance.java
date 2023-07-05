@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
@@ -270,10 +271,18 @@ public class Instance implements BeanTracker {
         this.enableBeanSubscription = enableBeanSubscription != null && enableBeanSubscription;
 
         // Global override for enabling bean subscription on all instances
-        String enableSubscriptionOverride = System.getenv("DD_JMXFETCH_ENABLE_BEAN_SUBSCRIPTION");
-        if (enableSubscriptionOverride != null && enableSubscriptionOverride.equalsIgnoreCase("true")) {
+        String enableSubscriptionOverride = System.getenv("DD_JMXFETCH_SUBSCRIPTION_ENABLED");
+        if (enableSubscriptionOverride != null
+                && enableSubscriptionOverride.equalsIgnoreCase("true")) {
             this.enableBeanSubscription = true;
         }
+        String subscriptionCoinFlip = System.getenv("DD_JMXFETCH_SUBSCRIPTION_FLIPCOIN");
+        if (subscriptionCoinFlip != null && subscriptionCoinFlip.equalsIgnoreCase("true")) {
+            Random rd = new Random();
+            boolean enabled = rd.nextBoolean();
+            this.enableBeanSubscription = enabled;
+        }
+        log.info("JMXFetch Subscription mode enabled={}", this.enableBeanSubscription);
         this.beanSubscriptionActive = false;
     }
 
@@ -518,13 +527,16 @@ public class Instance implements BeanTracker {
         }
 
         long duration = System.currentTimeMillis() - this.lastCollectionTime;
-        log.info("Collection of {} matching attributes finished in {}ms",
-             matchingAttributes.size(), duration);
+        log.info("Collection finished in {}ms. MatchingAttributes={} CollectedMetrics={}",
+             duration, matchingAttributes.size(), metrics.size());
         return metrics;
     }
 
     /** Returns whather or not the given period has elapsed since reference time. */
     public boolean isPeriodDue(long refTime, Integer refPeriod) {
+        if (this.beanSubscriptionActive) {
+            return false;
+        }
         if ((System.currentTimeMillis() - refTime) / 1000 < refPeriod) {
             return false;
         } else {
