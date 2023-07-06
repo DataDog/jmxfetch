@@ -4,7 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
+import org.datadog.jmxfetch.util.BeanJavaApp;
+import org.datadog.jmxfetch.util.BeanManager;
 import org.yaml.snakeyaml.Yaml;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,8 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -70,7 +77,8 @@ public class Instance {
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
-
+    private static final BeanManager beanManager = new BeanManager();
+    
     private static final ThreadLocal<Yaml> YAML =
         new ThreadLocal<Yaml>() {
             @Override
@@ -103,6 +111,7 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
+    private BeanJavaApp JMXbean;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -257,6 +266,19 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
+        //create bean to track data of this instance
+        JMXbean = beanManager.createJMXBean(this);
+    }
+
+    public void updateBeanInfo()throws Exception {
+        if (JMXbean != null){
+            refreshBeansList();
+            getMatchingAttributes();
+            JMXbean.setBeanCount(beans.size());
+            JMXbean.setAttributeCount(matchingAttributes.size());
+            JMXbean.setMetricCount(getMetrics().size());
+        }
+
     }
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {

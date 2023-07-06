@@ -457,6 +457,7 @@ public class App {
 
             for (Instance instance : this.instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
+                instance.updateBeanInfo();
             }
 
             if (!this.collectionProcessor.ready()) {
