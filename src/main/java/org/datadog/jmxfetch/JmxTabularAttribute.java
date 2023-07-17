@@ -38,7 +38,8 @@ public class JmxTabularAttribute extends JmxSubAttribute {
             Connection connection,
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
-            boolean emptyDefaultHostname) {
+            boolean emptyDefaultHostname,
+            boolean mBeanRemoveQuotes) {
         super(
                 attribute,
                 beanName,
@@ -49,7 +50,8 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 serviceNameProvider,
                 instanceTags,
                 false,
-                emptyDefaultHostname);
+                emptyDefaultHostname,
+                mBeanRemoveQuotes);
         subAttributeList = new HashMap<String, List<String>>();
     }
 

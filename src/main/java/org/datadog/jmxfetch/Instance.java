@@ -103,6 +103,7 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
+    private Boolean mBeanRemoveQuotes;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -210,6 +211,12 @@ public class Instance {
         if (initConfig != null) {
             this.serviceCheckPrefix = (String) initConfig.get("service_check_prefix");
         }
+
+        this.mBeanRemoveQuotes = (Boolean) instanceMap.get("mbean_remove_quotes");
+        if(this.mBeanRemoveQuotes == null) {
+            this.mBeanRemoveQuotes = false;
+        }
+
 
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
@@ -578,7 +585,8 @@ public class Instance {
                                 serviceNameProvider,
                                 tags,
                                 cassandraAliasing,
-                                emptyDefaultHostname);
+                                emptyDefaultHostname,
+                                mBeanRemoveQuotes);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -596,7 +604,8 @@ public class Instance {
                                 connection,
                                 serviceNameProvider,
                                 tags,
-                                emptyDefaultHostname);
+                                emptyDefaultHostname,
+                                mBeanRemoveQuotes);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -614,7 +623,8 @@ public class Instance {
                                 connection,
                                 serviceNameProvider,
                                 tags,
-                                emptyDefaultHostname);
+                                emptyDefaultHostname,
+                                mBeanRemoveQuotes);
                 } else {
                     try {
                         log.debug(

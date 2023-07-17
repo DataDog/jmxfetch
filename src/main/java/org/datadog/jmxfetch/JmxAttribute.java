@@ -62,6 +62,7 @@ public abstract class JmxAttribute {
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
+    private boolean mBeanRemoveQuotes;
 
     JmxAttribute(
             MBeanAttributeInfo attribute,
@@ -73,7 +74,8 @@ public abstract class JmxAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
-            boolean emptyDefaultHostname) {
+            boolean emptyDefaultHostname,
+            boolean mBeanRemoveQuotes) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.className = className;
@@ -84,6 +86,7 @@ public abstract class JmxAttribute {
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
         this.serviceNameProvider = serviceNameProvider;
+        this.mBeanRemoveQuotes = mBeanRemoveQuotes;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -100,7 +103,7 @@ public abstract class JmxAttribute {
                 getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
-        this.defaultTagsList = sanitizeParameters(beanParametersList);
+        this.defaultTagsList = sanitizeInstanceParameters(sanitizeParameters(beanParametersList));
         if (emptyDefaultHostname) {
             this.defaultTagsList.add("host:");
         }
@@ -190,6 +193,19 @@ public abstract class JmxAttribute {
 
         return beanTags;
     }
+
+    private List<String> sanitizeInstanceParameters(List<String> beanParametersList) {
+        List<String> instanceTagsList = new ArrayList<String>(beanParametersList.size());
+        for (String beanParameter : beanParametersList) {
+            if (mBeanRemoveQuotes == true) {
+                log.info("Removing quotes on bean with parameter: " + beanParameter);
+                beanParameter = beanParameter.replace("\"","");
+            }
+            instanceTagsList.add(beanParameter);
+        }
+        return instanceTagsList;
+    }
+
 
     /**
      * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
