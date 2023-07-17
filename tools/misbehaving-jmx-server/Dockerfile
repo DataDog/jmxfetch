@@ -24,4 +24,4 @@ WORKDIR /app
 COPY  --from=build /app/target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar .
 
 # Set the command to run the JAR file
-CMD ["java", "-jar", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar"]
+CMD ["java", "-jar", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar","-cp","8081","-rp","1098"]

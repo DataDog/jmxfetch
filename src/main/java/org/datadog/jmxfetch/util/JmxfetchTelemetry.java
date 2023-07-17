@@ -1,18 +1,17 @@
 package org.datadog.jmxfetch.util;
 
+import org.datadog.jmxfetch.Instance;
 
-public class BeanJavaApp implements BeanJavaAppMBean {
+public class JmxfetchTelemetry implements JmxfetchTelemetryMBean {
     
 private int beanCount;
 private int attributeCount;
 private int metricCount;
-private String instance;
 
-    public BeanJavaApp(){
+    public JmxfetchTelemetry(Instance instance){
         beanCount = 0;
         attributeCount = 0;
         metricCount = 0;
-        instance = "none";
     }
 
     public int getBeanCount(){
@@ -27,10 +26,7 @@ private String instance;
         return metricCount;
     }
 
-    public String getInstance(){
-        return instance;
-    }
-
+  
     public void setBeanCount(int count){
         beanCount = count;
     }
@@ -43,8 +39,5 @@ private String instance;
         metricCount = count;
     }
 
-    public void setInstance(String name){
-        instance = name;
-    }
 
 }

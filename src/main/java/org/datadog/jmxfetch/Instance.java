@@ -4,9 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
-import org.datadog.jmxfetch.util.BeanJavaApp;
-import org.datadog.jmxfetch.util.BeanManager;
+import org.datadog.jmxfetch.util.JmxfetchTelemetry;
 import org.yaml.snakeyaml.Yaml;
+
 
 
 import java.io.File;
@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,11 +25,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -77,7 +81,6 @@ public class Instance {
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
-    private static final BeanManager beanManager = new BeanManager();
     
     private static final ThreadLocal<Yaml> YAML =
         new ThreadLocal<Yaml>() {
@@ -111,7 +114,9 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
-    private BeanJavaApp JMXbean;
+    private JmxfetchTelemetry JMXbean;
+    private ObjectName JMXbean_name;
+    private MBeanServer mbs;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -266,20 +271,49 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
-        //create bean to track data of this instance
-        JMXbean = beanManager.createJMXBean(this);
+
+        JMXbean = createJMXBean();
     }
 
-    public void updateBeanInfo()throws Exception {
-        if (JMXbean != null){
-            refreshBeansList();
-            getMatchingAttributes();
-            JMXbean.setBeanCount(beans.size());
-            JMXbean.setAttributeCount(matchingAttributes.size());
-            JMXbean.setMetricCount(getMetrics().size());
+    private ObjectName getObjName(String domain,String instance) throws MalformedObjectNameException {
+        //return new ObjectName(domain + ":name=" + name);
+        return new ObjectName(domain + ":target_instance=" + escape(instance));
+        //return new ObjectName(domain + ":name=" + ObjectName.quote(escape(instance)));
+        //return new ObjectName(domain, "name", escape(instance));
+    }
+
+    public String escape(String inputString){
+        final String[] metaCharacters = {"*","?"};
+    
+        for (int i = 0 ; i < metaCharacters.length ; i++){
+            if(inputString.contains(metaCharacters[i])){
+                inputString = inputString.replace(metaCharacters[i],"\\"+ metaCharacters[i]);
+            }
+        }
+        inputString = "\"" + inputString + "\"";
+        log.info("sanatized target_name is: " + inputString);
+        return inputString;
+    }
+
+    private JmxfetchTelemetry createJMXBean(){
+        mbs =  ManagementFactory.getPlatformMBeanServer();
+        JmxfetchTelemetry bean = new JmxfetchTelemetry(this);
+        log.info("Created jmx bean for instance: " + this.getCheckName());
+
+     try {
+                JMXbean_name = getObjName("JMXFetch" , this.getName());
+                mbs.registerMBean(bean,JMXbean_name);
+                log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
+
+        } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+                    log.warn("Could not register bean for instance: " + this.getCheckName());
+                    e.printStackTrace();
         }
 
+        log.info("The bean we are setting is: " + bean.toString());
+        return bean;
     }
+
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
         Object directInstance = configInstance.get(JVM_DIRECT);
@@ -475,7 +509,7 @@ public class Instance {
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
 
         if (isPeriodDue(this.lastRefreshTime, period)) {
-            log.info("Refreshing bean list");
+            log.info("Refreshing bean list for" + this.getCheckName());
             this.refreshBeansList();
             this.getMatchingAttributes();
         }
@@ -507,6 +541,16 @@ public class Instance {
                 }
             }
         }
+        JMXbean.setBeanCount(beans.size());
+        JMXbean.setAttributeCount(matchingAttributes.size());
+        JMXbean.setMetricCount(metrics.size());
+        log.info("There are " + mbs.getMBeanCount() + "total beans currrently registered");
+        try {
+            log.info("updating jmx bean for instance" + this.getName() +  " with bean: " + mbs.getObjectInstance(JMXbean_name).toString());
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+        log.info("Updated jmx bean for instance: " + this.getCheckName() + "for bean " + JMXbean.toString() +" With beans=" + JMXbean.getBeanCount() + " attr=" + JMXbean.getAttributeCount() + " metrics=" + JMXbean.getMetricCount());
         return metrics;
     }
 
@@ -728,7 +772,7 @@ public class Instance {
         }
 
         this.beans = (this.beans.isEmpty()) ? connection.queryNames(null) : this.beans;
-        this.lastRefreshTime = System.currentTimeMillis();
+        this.lastRefreshTime = System.currentTimeMillis(); 
     }
 
     /** Returns a string array listing the service check tags. */
@@ -795,8 +839,18 @@ public class Instance {
         return this.limitReached;
     }
 
+    private void cleanBean(){
+        try {
+            mbs.unregisterMBean(JMXbean_name);
+            log.info("Successfully unregistered bean for instance: " + this.getCheckName());
+        } catch (MBeanRegistrationException|InstanceNotFoundException e) {
+            log.warn("Unable to unregister bean for instance: " + this.getCheckName());
+        }
+    }
+
     /** Clean up config and close connection. */
     public void cleanUp() {
+        cleanBean();
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
@@ -809,7 +863,7 @@ public class Instance {
      * */
     public synchronized void cleanUpAsync() {
         appConfig = null;
-
+        cleanBean();
         class AsyncCleaner implements Runnable {
             Connection conn;
 

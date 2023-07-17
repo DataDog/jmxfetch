@@ -1,6 +1,6 @@
 package org.datadog.jmxfetch.util;
 
-public interface BeanJavaAppMBean {
+public interface JmxfetchTelemetryMBean {
     
     int getBeanCount();
 
@@ -8,5 +8,4 @@ public interface BeanJavaAppMBean {
 
     int getMetricCount();
 
-    String getInstance();
 }
