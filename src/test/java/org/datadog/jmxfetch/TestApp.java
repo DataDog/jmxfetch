@@ -83,8 +83,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 16 = 15 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(16, metrics.size());
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
 
         List<String> tags =
                 Arrays.asList(
@@ -111,8 +111,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 16 = 15 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(16, metrics.size());
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(14, metrics.size());
 
         List<String> tags =
                 Arrays.asList(
