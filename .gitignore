@@ -12,7 +12,7 @@ target/*
 .idea
 .vscode
 *.iml
-.pom.xml
+pom.xml
 *.ucls
 
 *.png
