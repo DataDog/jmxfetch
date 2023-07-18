@@ -198,8 +198,11 @@ public abstract class JmxAttribute {
         List<String> instanceTagsList = new ArrayList<String>(beanParametersList.size());
         for (String beanParameter : beanParametersList) {
             if (mBeanRemoveQuotes == true) {
-                log.info("Removing quotes on bean with parameter: " + beanParameter);
+                String oldBeanParamater = beanParameter;
                 beanParameter = beanParameter.replace("\"","");
+                if (!oldBeanParamater.equals(beanParameter)){
+                    log.info("Removing quotes on bean with parameter: " + oldBeanParamater);
+                }
             }
             instanceTagsList.add(beanParameter);
         }

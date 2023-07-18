@@ -70,6 +70,34 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 6);
     }
 
+    /** Tag metrics with MBeans parameters with mbean_remove_quotes option enabled. */
+    @Test
+    public void testBeanTagsRemoveQuotes() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=");
+        initApplication("jmx_bean_tags_remove_quotes.yaml");
+
+        // Collecting metrics
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 16 = 15 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(16, metrics.size());
+
+        List<String> tags =
+                Arrays.asList(
+                        "type:SimpleTestJavaApp",
+                        "scope:CoolScope",
+                        "instance:jmx_test_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test",
+                        "bean_host:localhost",
+                        "component");
+
+        assertMetric("this.is.100", tags, 6);
+    }
+
     /** Generate metric aliases from a `alias_match` regular expression. */
     @Test
     public void testRegexpAliasing() throws Exception {
