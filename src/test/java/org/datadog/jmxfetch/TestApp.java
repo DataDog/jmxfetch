@@ -70,7 +70,7 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 6);
     }
 
-    /** Tag metrics with MBeans parameters with mbean_remove_quotes option enabled. */
+    /** Tag metrics with MBeans parameters with normalize_bean_param_tags option enabled. */
     @Test
     public void testBeanTagsNormalizeParams() throws Exception {
         // We expose a few metrics through JMX
@@ -93,6 +93,34 @@ public class TestApp extends TestCommon {
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "bean_host:localhost",
+                        "component");
+
+        assertMetric("this.is.100", tags, 6);
+    }
+
+    /** Tag metrics with MBeans parameters with normalize_bean_param_tags option disabled. */
+    @Test
+    public void testBeanTagsDontNormalizeParams() throws Exception {
+        // We expose a few metrics through JMX
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=");
+        initApplication("jmx_bean_tags_dont_normalize_params.yaml");
+
+        // Collecting metrics
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 16 = 15 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        assertEquals(16, metrics.size());
+
+        List<String> tags =
+                Arrays.asList(
+                        "type:\"SimpleTestJavaApp\"",
+                        "scope:\"CoolScope\"",
+                        "instance:jmx_test_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test",
+                        "bean_host:\"localhost\"",
                         "component");
 
         assertMetric("this.is.100", tags, 6);

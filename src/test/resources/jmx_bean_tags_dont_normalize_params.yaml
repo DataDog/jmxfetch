@@ -1,0 +1,18 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        conf:
+            - include:
+               bean: org.datadog.jmxfetch.test:type="SimpleTestJavaApp",scope="Co|olScope",host="localhost",component=
+               attribute:
+                    ShouldBe100:
+                        metric_type: gauge
+                        alias: this.is.100
+            - include:
+               bean: org.datadog.jmxfetch.test:type=WrongType,scope=WrongScope,host=localhost,component=
+               attribute:
+                    Hashmap.thisis0:
+                        metric_type: gauge
+                        alias: bean.parameters.should.not.match
