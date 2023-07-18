@@ -62,7 +62,7 @@ public abstract class JmxAttribute {
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
-    private boolean mBeanRemoveQuotes;
+    private boolean normalizeBeanParamTags;
 
     JmxAttribute(
             MBeanAttributeInfo attribute,
@@ -75,7 +75,7 @@ public abstract class JmxAttribute {
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             boolean emptyDefaultHostname,
-            boolean mBeanRemoveQuotes) {
+            boolean normalizeBeanParamTags) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.className = className;
@@ -86,7 +86,7 @@ public abstract class JmxAttribute {
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
         this.serviceNameProvider = serviceNameProvider;
-        this.mBeanRemoveQuotes = mBeanRemoveQuotes;
+        this.normalizeBeanParamTags = normalizeBeanParamTags;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -103,7 +103,7 @@ public abstract class JmxAttribute {
                 getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
-        this.defaultTagsList = sanitizeInstanceParameters(sanitizeParameters(beanParametersList));
+        this.defaultTagsList = normalizeInstanceParameters(sanitizeParameters(beanParametersList));
         if (emptyDefaultHostname) {
             this.defaultTagsList.add("host:");
         }
@@ -194,10 +194,10 @@ public abstract class JmxAttribute {
         return beanTags;
     }
 
-    private List<String> sanitizeInstanceParameters(List<String> beanParametersList) {
+    private List<String> normalizeInstanceParameters(List<String> beanParametersList) {
         List<String> instanceTagsList = new ArrayList<String>(beanParametersList.size());
         for (String beanParameter : beanParametersList) {
-            if (mBeanRemoveQuotes == true) {
+            if (normalizeBeanParamTags == true) {
                 String oldBeanParamater = beanParameter;
                 beanParameter = beanParameter.replace("\"","");
                 if (!oldBeanParamater.equals(beanParameter)){

@@ -103,7 +103,7 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
-    private Boolean mBeanRemoveQuotes;
+    private Boolean normalizeBeanParamTags;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -212,9 +212,9 @@ public class Instance {
             this.serviceCheckPrefix = (String) initConfig.get("service_check_prefix");
         }
 
-        this.mBeanRemoveQuotes = (Boolean) instanceMap.get("mbean_remove_quotes");
-        if(this.mBeanRemoveQuotes == null) {
-            this.mBeanRemoveQuotes = false;
+        this.normalizeBeanParamTags = (Boolean) instanceMap.get("normalize_bean_param_tags");
+        if(this.normalizeBeanParamTags == null) {
+            this.normalizeBeanParamTags = false;
         }
 
 
@@ -586,7 +586,7 @@ public class Instance {
                                 tags,
                                 cassandraAliasing,
                                 emptyDefaultHostname,
-                                mBeanRemoveQuotes);
+                                normalizeBeanParamTags);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -605,7 +605,7 @@ public class Instance {
                                 serviceNameProvider,
                                 tags,
                                 emptyDefaultHostname,
-                                mBeanRemoveQuotes);
+                                normalizeBeanParamTags);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -624,7 +624,7 @@ public class Instance {
                                 serviceNameProvider,
                                 tags,
                                 emptyDefaultHostname,
-                                mBeanRemoveQuotes);
+                                normalizeBeanParamTags);
                 } else {
                     try {
                         log.debug(

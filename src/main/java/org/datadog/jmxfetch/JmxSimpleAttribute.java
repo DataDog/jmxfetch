@@ -29,7 +29,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             Boolean emptyDefaultHostname,
-            Boolean mBeanRemoveQuotes) {
+            Boolean normalizeBeanParamTags) {
         super(
                 attribute,
                 beanName,
@@ -41,7 +41,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 instanceTags,
                 cassandraAliasing,
                 emptyDefaultHostname,
-                mBeanRemoveQuotes);
+                normalizeBeanParamTags);
     }
 
     @Override

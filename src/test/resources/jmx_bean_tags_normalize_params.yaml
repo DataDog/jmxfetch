@@ -16,4 +16,4 @@ instances:
                     Hashmap.thisis0:
                         metric_type: gauge
                         alias: bean.parameters.should.not.match
-        mbean_remove_quotes: true
+        normalize_bean_param_tags: true

@@ -31,7 +31,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname,
-            boolean mBeanRemoveQuotes) {
+            boolean normalizeBeanParamTags) {
         super(
                 attribute,
                 beanName,
@@ -43,7 +43,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
                 instanceTags,
                 false,
                 emptyDefaultHostname,
-                mBeanRemoveQuotes);
+                normalizeBeanParamTags);
     }
 
     private void populateSubAttributeList(Object attributeValue) {

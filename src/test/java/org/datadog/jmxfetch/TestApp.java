@@ -72,12 +72,12 @@ public class TestApp extends TestCommon {
 
     /** Tag metrics with MBeans parameters with mbean_remove_quotes option enabled. */
     @Test
-    public void testBeanTagsRemoveQuotes() throws Exception {
+    public void testBeanTagsNormalizeParams() throws Exception {
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=");
-        initApplication("jmx_bean_tags_remove_quotes.yaml");
+        initApplication("jmx_bean_tags_normalize_params.yaml");
 
         // Collecting metrics
         run();
