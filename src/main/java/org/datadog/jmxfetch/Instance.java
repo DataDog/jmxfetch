@@ -213,7 +213,7 @@ public class Instance {
         }
 
         this.normalizeBeanParamTags = (Boolean) instanceMap.get("normalize_bean_param_tags");
-        if(this.normalizeBeanParamTags == null) {
+        if (this.normalizeBeanParamTags == null) {
             this.normalizeBeanParamTags = false;
         }
 

@@ -200,7 +200,7 @@ public abstract class JmxAttribute {
             if (normalizeBeanParamTags == true) {
                 String oldBeanParamater = beanParameter;
                 beanParameter = beanParameter.replace("\"","");
-                if (!oldBeanParamater.equals(beanParameter)){
+                if (!oldBeanParamater.equals(beanParameter)) {
                     log.info("Removing quotes on bean with parameter: " + oldBeanParamater);
                 }
             }
