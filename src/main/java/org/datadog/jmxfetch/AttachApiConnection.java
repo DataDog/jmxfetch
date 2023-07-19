@@ -88,13 +88,14 @@ public class AttachApiConnection extends Connection {
     } */
 
     private void loadJmxAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {
+        log.info("Current java version: " + System.getProperty("java.version") );
         try {
                 Method method = com.sun.tools.attach.VirtualMachine
                     .class.getMethod("startLocalManagementAgent");
                 log.info("Found startLocalManagementAgent API, attempting to use it.");
                 method.invoke(vm);
         } catch (NoSuchMethodException noMethodE) {
-            log.warn("startLocalManagementAgent method not found, must be on java 7 or 8", noMethodE);
+            log.warn("startLocalManagementAgent method not found, must be on java 7", noMethodE);
             String agent =
                 vm.getSystemProperties().getProperty("java.home")
                         + File.separator
