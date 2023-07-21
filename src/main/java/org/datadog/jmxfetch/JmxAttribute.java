@@ -103,7 +103,7 @@ public abstract class JmxAttribute {
                 getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
-        this.defaultTagsList = normalizeInstanceParameters(sanitizeParameters(beanParametersList));
+        this.defaultTagsList = sanitizeParameters(beanParametersList);
         if (emptyDefaultHostname) {
             this.defaultTagsList.add("host:");
         }
@@ -194,31 +194,20 @@ public abstract class JmxAttribute {
         return beanTags;
     }
 
-    private List<String> normalizeInstanceParameters(List<String> beanParametersList) {
-        List<String> instanceTagsList = new ArrayList<String>(beanParametersList.size());
-        for (String beanParameter : beanParametersList) {
-            if (normalizeBeanParamTags == true) {
-                String oldBeanParamater = beanParameter;
-                beanParameter = beanParameter.replace("\"","");
-                if (!oldBeanParamater.equals(beanParameter)) {
-                    log.info("Removing quotes on bean with parameter: " + oldBeanParamater);
-                }
-            }
-            instanceTagsList.add(beanParameter);
-        }
-        return instanceTagsList;
-    }
-
-
     /**
      * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
      * existing tags - Remove illegal characters
      */
-    private static List<String> sanitizeParameters(List<String> beanParametersList) {
+    private List<String> sanitizeParameters(List<String> beanParametersList) {
         List<String> defaultTagsList = new ArrayList<String>(beanParametersList.size());
         for (String rawBeanParameter : beanParametersList) {
             // Remove `|` characters
             String beanParameter = rawBeanParameter.replace("|", "");
+
+            // Remove `"` characters
+            if(normalizeBeanParamTags == true) {
+                beanParameter = beanParameter.replace("\"","");
+            }
 
             // 'host' parameter is renamed to 'bean_host'
             if (beanParameter.startsWith("host:")) {
