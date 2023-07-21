@@ -65,7 +65,8 @@ public class AttachApiConnection extends Connection {
     // ref https://bugs.openjdk.org/browse/JDK-8179063
     private void loadJmxAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {
         try {
-            Method method = com.sun.tools.attach.VirtualMachine.class.getMethod("startLocalManagementAgent");
+            Method method = com.sun.tools.attach.VirtualMachine
+                .class.getMethod("startLocalManagementAgent");
             log.info("Found startLocalManagementAgent API, attempting to use it.");
             method.invoke(vm);
         } catch (NoSuchMethodException noMethodE) {
