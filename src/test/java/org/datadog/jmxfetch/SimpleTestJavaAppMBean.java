@@ -8,36 +8,37 @@ import javax.management.openmbean.TabularDataSupport;
 
 public interface SimpleTestJavaAppMBean {
 
-    int getShouldBe100();
+  int getShouldBe100();
 
-    Double getShouldBe1000();
+  Double getShouldBe1000();
 
-    int getShouldBeCounter();
+  int getShouldBeCounter();
 
-    String getShouldBeConverted();
+  String getShouldBeConverted();
 
-    String getShouldBeDefaulted();
+  String getShouldBeDefaulted();
 
-    boolean getShouldBeBoolean();
+  boolean getShouldBeBoolean();
 
-    Map<String, Integer> getHashmap();
+  Map<String, Integer> getHashmap();
 
-    AtomicInteger getAtomic42();
+  AtomicInteger getAtomic42();
 
-    AtomicLong getAtomic4242();
+  AtomicLong getAtomic4242();
 
-    Object getObject1337();
+  Object getObject1337();
 
-    Number getNumberBig();
+  Number getNumberBig();
 
-    Long getLong42424242();
+  Long getLong42424242();
 
-    Integer getInt424242();
+  Integer getInt424242();
 
-    float getPrimitiveFloat();
+  float getPrimitiveFloat();
 
-    Float getInstanceFloat();
+  Float getInstanceFloat();
 
-    TabularData getTabulardata();
-    TabularDataSupport getTabularDataSupport();
+  TabularData getTabulardata();
+
+  TabularDataSupport getTabularDataSupport();
 }

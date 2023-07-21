@@ -5,7 +5,7 @@ import org.datadog.jmxfetch.ExitWatcher;
 
 public class ExitWatcherConverter implements IStringConverter<ExitWatcher> {
 
-    public ExitWatcher convert(String value) {
-        return new ExitWatcher(value);
-    }
+  public ExitWatcher convert(String value) {
+    return new ExitWatcher(value);
+  }
 }
