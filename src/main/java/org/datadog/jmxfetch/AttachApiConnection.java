@@ -59,8 +59,9 @@ public class AttachApiConnection extends Connection {
     }
 
     // management-agent.jar has been removed in java 8+
-    // Once JMXFetch drops java 7 support, this should be simplified to simply invoke vm.startLocalManagementAgent
-    // vm.startLocalManagementAgent is accessible in java 8 if tools.jar is added to the classpath and java 9+ by default 
+    // Once JMXFetch drops java 7 support, this should be simplified to simply invoke 
+    // vm.startLocalManagementAgent which is accessible in java 8 if tools.jar is added 
+    // to the classpath and java 9+ by default 
     // ref https://bugs.openjdk.org/browse/JDK-8179063
     private void loadJmxAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {
         try {
