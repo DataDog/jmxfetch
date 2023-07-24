@@ -4,38 +4,38 @@ import org.datadog.jmxfetch.Instance;
 
 public class JmxfetchTelemetry implements JmxfetchTelemetryMBean {
     
-private int beanCount;
-private int attributeCount;
-private int metricCount;
+    private int beanCount;
+    private int attributeCount;
+    private int metricCount;
 
-    public JmxfetchTelemetry(Instance instance){
+    public JmxfetchTelemetry(Instance instance) {
         beanCount = 0;
         attributeCount = 0;
         metricCount = 0;
     }
 
-    public int getBeanCount(){
+    public int getBeanCount() {
         return beanCount;
     }
 
-    public int getAttributeCount(){
+    public int getAttributeCount() {
         return attributeCount;
     }
 
-    public int getMetricCount(){
+    public int getMetricCount() {
         return metricCount;
     }
 
   
-    public void setBeanCount(int count){
+    public void setBeanCount(int count) {
         beanCount = count;
     }
 
-    public void setAttributeCount(int count){
+    public void setAttributeCount(int count) {
         attributeCount = count;
     }
 
-    public void setMetricCount(int count){
+    public void setMetricCount(int count) {
         metricCount = count;
     }
 

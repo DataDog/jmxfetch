@@ -114,8 +114,8 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
-    private JmxfetchTelemetry JMXbean;
-    private ObjectName JMXbean_name;
+    private JmxfetchTelemetry jmxBean;
+    private ObjectName jmxBeanName;
     private MBeanServer mbs;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
@@ -272,7 +272,7 @@ public class Instance {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
-        JMXbean = createJMXBean();
+        jmxBean = createJmxBean();
     }
 
     private ObjectName getObjName(String domain,String instance) throws MalformedObjectNameException {
@@ -282,11 +282,11 @@ public class Instance {
         //return new ObjectName(domain, "name", escape(instance));
     }
 
-    public String escape(String inputString){
+    private String escape(String inputString) {
         final String[] metaCharacters = {"*","?"};
     
-        for (int i = 0 ; i < metaCharacters.length ; i++){
-            if(inputString.contains(metaCharacters[i])){
+        for (int i = 0 ; i < metaCharacters.length ; i++) {
+            if (inputString.contains(metaCharacters[i])) {
                 inputString = inputString.replace(metaCharacters[i],"\\"+ metaCharacters[i]);
             }
         }
@@ -295,19 +295,19 @@ public class Instance {
         return inputString;
     }
 
-    private JmxfetchTelemetry createJMXBean(){
+    private JmxfetchTelemetry createJmxBean() {
         mbs =  ManagementFactory.getPlatformMBeanServer();
         JmxfetchTelemetry bean = new JmxfetchTelemetry(this);
         log.info("Created jmx bean for instance: " + this.getCheckName());
 
-     try {
-                JMXbean_name = getObjName("JMXFetch" , this.getName());
-                mbs.registerMBean(bean,JMXbean_name);
-                log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
+        try {
+            jmxBeanName = getObjName("JMXFetch" , this.getName());
+            mbs.registerMBean(bean,jmxBeanName);
+            log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
 
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-                    log.warn("Could not register bean for instance: " + this.getCheckName());
-                    e.printStackTrace();
+            log.warn("Could not register bean for instance: " + this.getCheckName());
+            e.printStackTrace();
         }
 
         log.info("The bean we are setting is: " + bean.toString());
@@ -541,16 +541,16 @@ public class Instance {
                 }
             }
         }
-        JMXbean.setBeanCount(beans.size());
-        JMXbean.setAttributeCount(matchingAttributes.size());
-        JMXbean.setMetricCount(metrics.size());
+        jmxBean.setBeanCount(beans.size());
+        jmxBean.setAttributeCount(matchingAttributes.size());
+        jmxBean.setMetricCount(metrics.size());
         log.info("There are " + mbs.getMBeanCount() + "total beans currrently registered");
         try {
-            log.info("updating jmx bean for instance" + this.getName() +  " with bean: " + mbs.getObjectInstance(JMXbean_name).toString());
+            log.info("updating jmx bean for instance" + this.getName() +  " with bean: " + mbs.getObjectInstance(jmxBeanName).toString());
         } catch (Exception e) {
             // TODO: handle exception
         }
-        log.info("Updated jmx bean for instance: " + this.getCheckName() + "for bean " + JMXbean.toString() +" With beans=" + JMXbean.getBeanCount() + " attr=" + JMXbean.getAttributeCount() + " metrics=" + JMXbean.getMetricCount());
+        log.info("Updated jmx bean for instance: " + this.getCheckName() + "for bean " + jmxBean.toString() + " With beans=" + jmxBean.getBeanCount() + " attr=" + jmxBean.getAttributeCount() + " metrics=" + jmxBean.getMetricCount());
         return metrics;
     }
 
@@ -839,11 +839,11 @@ public class Instance {
         return this.limitReached;
     }
 
-    private void cleanBean(){
+    private void cleanBean() {
         try {
-            mbs.unregisterMBean(JMXbean_name);
+            mbs.unregisterMBean(jmxBeanName);
             log.info("Successfully unregistered bean for instance: " + this.getCheckName());
-        } catch (MBeanRegistrationException|InstanceNotFoundException e) {
+        } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             log.warn("Unable to unregister bean for instance: " + this.getCheckName());
         }
     }
