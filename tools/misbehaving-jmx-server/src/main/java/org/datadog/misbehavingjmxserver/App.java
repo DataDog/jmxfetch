@@ -83,6 +83,9 @@ public class App
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
         RMISocketFactory.setSocketFactory(customRMISocketFactory);
 
+        // Explicitly set rmi server host, seems to be issues with the default on our corp computers host MacOS
+        System.setProperty("java.rmi.server.hostname", config.rmiHost);
+        
         // Initialize RMI registry at same port as the jmx service
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
 

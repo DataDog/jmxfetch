@@ -223,7 +223,7 @@
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <!-- required for tests in jdk9+ ref https://bugs.openjdk.org/browse/JDK-8180425 -->
-                    <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
+                    <argLine>-Djdk.attach.allowAttachSelf=true -Djava.rmi.server.hostname=localhost</argLine>
                 </configuration>
             </plugin>
             <plugin>
