@@ -276,23 +276,7 @@ public class Instance {
     }
 
     private ObjectName getObjName(String domain,String instance) throws MalformedObjectNameException {
-        //return new ObjectName(domain + ":name=" + name);
-        return new ObjectName(domain + ":target_instance=" + escape(instance));
-        //return new ObjectName(domain + ":name=" + ObjectName.quote(escape(instance)));
-        //return new ObjectName(domain, "name", escape(instance));
-    }
-
-    private String escape(String inputString) {
-        final String[] metaCharacters = {"*","?"};
-
-        for (int i = 0 ; i < metaCharacters.length ; i++) {
-            if (inputString.contains(metaCharacters[i])) {
-                inputString = inputString.replace(metaCharacters[i],"\\" + metaCharacters[i]);
-            }
-        }
-        inputString = ObjectName.quote(inputString);
-        log.info("sanatized target_name is: " + inputString);
-        return inputString;
+        return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
     private JmxfetchTelemetry createJmxBean() {
