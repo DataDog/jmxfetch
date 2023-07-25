@@ -23,5 +23,5 @@ WORKDIR /app
 # Copy the JAR file from the Maven image to the final image
 COPY  --from=build /app/target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar .
 
-# Set the command to run the JAR file
-CMD ["java", "-jar", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar"]
+# Run the supervisor class from the jar
+CMD ["java", "-cp", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar", "org.datadog.supervisor.App"]
