@@ -81,7 +81,7 @@ public class Instance {
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
-    
+
     private static final ThreadLocal<Yaml> YAML =
         new ThreadLocal<Yaml>() {
             @Override
@@ -284,13 +284,13 @@ public class Instance {
 
     private String escape(String inputString) {
         final String[] metaCharacters = {"*","?"};
-    
+
         for (int i = 0 ; i < metaCharacters.length ; i++) {
             if (inputString.contains(metaCharacters[i])) {
-                inputString = inputString.replace(metaCharacters[i],"\\"+ metaCharacters[i]);
+                inputString = inputString.replace(metaCharacters[i],"\\" + metaCharacters[i]);
             }
         }
-        inputString = "\"" + inputString + "\"";
+        inputString = ObjectName.quote(inputString);
         log.info("sanatized target_name is: " + inputString);
         return inputString;
     }
@@ -306,7 +306,7 @@ public class Instance {
             log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
 
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean for instance: " + this.getCheckName());
+            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
             e.printStackTrace();
         }
 
@@ -772,7 +772,7 @@ public class Instance {
         }
 
         this.beans = (this.beans.isEmpty()) ? connection.queryNames(null) : this.beans;
-        this.lastRefreshTime = System.currentTimeMillis(); 
+        this.lastRefreshTime = System.currentTimeMillis();
     }
 
     /** Returns a string array listing the service check tags. */
@@ -839,7 +839,7 @@ public class Instance {
         return this.limitReached;
     }
 
-    private void cleanBean() {
+    private void cleanupTelemetryBean() {
         try {
             mbs.unregisterMBean(jmxBeanName);
             log.info("Successfully unregistered bean for instance: " + this.getCheckName());
@@ -850,7 +850,7 @@ public class Instance {
 
     /** Clean up config and close connection. */
     public void cleanUp() {
-        cleanBean();
+        cleanupTelemetryBean();
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
@@ -863,7 +863,7 @@ public class Instance {
      * */
     public synchronized void cleanUpAsync() {
         appConfig = null;
-        cleanBean();
+        cleanupTelemetryBean();
         class AsyncCleaner implements Runnable {
             Connection conn;
 

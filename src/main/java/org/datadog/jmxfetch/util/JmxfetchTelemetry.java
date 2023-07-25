@@ -2,6 +2,7 @@ package org.datadog.jmxfetch.util;
 
 import org.datadog.jmxfetch.Instance;
 
+/** jmxfetch telemetry JMX MBean */
 public class JmxfetchTelemetry implements JmxfetchTelemetryMBean {
     
     private int beanCount;
