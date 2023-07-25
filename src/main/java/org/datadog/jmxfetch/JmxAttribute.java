@@ -205,7 +205,7 @@ public abstract class JmxAttribute {
             String beanParameter = rawBeanParameter.replace("|", "");
 
             // Remove `"` characters
-            if(normalizeBeanParamTags == true) {
+            if (normalizeBeanParamTags == true) {
                 beanParameter = beanParameter.replace("\"","");
             }
 
