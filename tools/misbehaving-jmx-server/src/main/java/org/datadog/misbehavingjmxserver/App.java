@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -28,16 +29,18 @@ import com.beust.jcommander.Parameter;
 import io.javalin.*;
 import lombok.extern.slf4j.Slf4j;
 
+import org.datadog.Defaults;
+
 class AppConfig {
     // RMI Port is used for both registry and the JMX service
     @Parameter(names = {"--rmi-port", "-rp"})
-    public int rmiPort = 1099;
+    public int rmiPort = Defaults.JMXSERVER_RMI_PORT;
 
     @Parameter(names = {"--rmi-host", "-rh"})
-    public String rmiHost = "localhost";
+    public String rmiHost = Defaults.JMXSERVER_RMI_INTERFACE;
 
-    @Parameter(names = {"--control-port", "-cp"})
-    public int controlPort = 8080;
+    // Can only be set via env var
+    public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
 
     public void overrideFromEnv() {
         String val;
@@ -61,8 +64,9 @@ class BeanSpec {
 }
 
 @Slf4j
-public class App 
+public class App
 {
+    private static boolean started = false;
     final static String testDomain = "Bohnanza";
     public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
     {
@@ -102,6 +106,14 @@ public class App
         mbs.registerMBean(mbean, mbeanName);
 
         Javalin controlServer = Javalin.create();
+
+        controlServer.get("/ready", ctx -> {
+            if (started) {
+                ctx.status(200);
+            } else {
+                ctx.status(500);
+            }
+        });
 
         controlServer.post("/cutNetwork", ctx -> {
             customRMISocketFactory.setClosed(true);
@@ -153,7 +165,7 @@ public class App
         JMXConnectorServer connector = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
 
         connector.start();
-        log.info("IAMREADY");
+        started = true;
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {

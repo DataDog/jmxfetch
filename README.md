@@ -28,7 +28,7 @@ In order to generate the jar artifact, simply run the ```mvn clean compile assem
 
 The distribution will be created under ```target/```.
 
-Once the jar is created, you can update the one in the Datadog Agent repo.
+To use this jar in the Agent, see [these docs](https://github.com/DataDog/datadog-agent/blob/main/docs/dev/checks/jmxfetch.md).
 
 ## Coding standards
 
@@ -45,6 +45,12 @@ mvn checkstyle::check
 
 JMXFetch uses [Lombok](https://projectlombok.org/) to modify classes and generate additional code at runtime.
 You may need to [enable annotation processors](https://projectlombok.org/setup/overview) to compile in your IDE.
+
+## Useful Developer Settings
+### Enabling file line numbers in log messages
+If you set the system property `-Djmxfetch.filelinelogging=true`, this will enable all log output to
+include the line number which emitted a given log.
+
 
 ## Testing
 
