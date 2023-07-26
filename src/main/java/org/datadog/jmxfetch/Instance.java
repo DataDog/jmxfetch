@@ -531,7 +531,8 @@ public class Instance {
         jmxBean.setMetricCount(metrics.size());
         log.debug("Updated jmx bean for instance: " + this.getCheckName() + " for bean: "
                 + jmxBean.toString() + " With number of beans = " + jmxBean.getBeanCount()
-                        + " attributes = " + jmxBean.getAttributeCount() + " metrics =" + jmxBean.getMetricCount());
+                        + " attributes = " + jmxBean.getAttributeCount()
+                                + " metrics =" + jmxBean.getMetricCount());
         return metrics;
     }
 
