@@ -194,10 +194,11 @@ public abstract class JmxAttribute {
         return beanTags;
     }
 
-    private String unquote (String beanParameter) {
+    private String unquote(String beanParameter) {
         int valueIndex = beanParameter.indexOf(':') + 1;
         try {
-            return beanParameter.substring(0,valueIndex) + ObjectName.unquote(beanParameter.substring(valueIndex));
+            return beanParameter.substring(0,valueIndex)
+            + ObjectName.unquote(beanParameter.substring(valueIndex));
         } catch (IllegalArgumentException e) {
             return beanParameter;
         }

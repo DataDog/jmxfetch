@@ -78,7 +78,8 @@ public class TestApp extends TestCommon {
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
-                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=,target_instance="+ObjectName.quote(".*example.process.regex.*"));
+                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=,target_instance="
+                + ObjectName.quote(".*example.process.regex.*"));
         initApplication("jmx_bean_tags_normalize_params.yaml");
 
         // Collecting metrics
@@ -107,7 +108,8 @@ public class TestApp extends TestCommon {
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
-                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=,target_instance="+ObjectName.quote(".*example.process.regex.*"));
+                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=,target_instance="
+                + ObjectName.quote(".*example.process.regex.*"));
         initApplication("jmx_bean_tags_dont_normalize_params.yaml");
 
         // Collecting metrics
