@@ -281,7 +281,7 @@ public class Instance {
 
     private JmxfetchTelemetry createJmxBean() {
         mbs =  ManagementFactory.getPlatformMBeanServer();
-        JmxfetchTelemetry bean = new JmxfetchTelemetry(this);
+        JmxfetchTelemetry bean = new JmxfetchTelemetry();
         log.info("Created jmx bean for instance: " + this.getCheckName());
 
         try {

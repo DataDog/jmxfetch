@@ -1,15 +1,14 @@
 package org.datadog.jmxfetch.util;
 
-import org.datadog.jmxfetch.Instance;
 
 /** jmxfetch telemetry JMX MBean */
 public class JmxfetchTelemetry implements JmxfetchTelemetryMBean {
-    
+
     private int beanCount;
     private int attributeCount;
     private int metricCount;
 
-    public JmxfetchTelemetry(Instance instance) {
+    public JmxfetchTelemetry() {
         beanCount = 0;
         attributeCount = 0;
         metricCount = 0;
@@ -27,7 +26,7 @@ public class JmxfetchTelemetry implements JmxfetchTelemetryMBean {
         return metricCount;
     }
 
-  
+
     public void setBeanCount(int count) {
         beanCount = count;
     }
