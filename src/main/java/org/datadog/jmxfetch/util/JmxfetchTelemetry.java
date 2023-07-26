@@ -1,13 +1,14 @@
 package org.datadog.jmxfetch.util;
 
 
-/** jmxfetch telemetry JMX MBean */
+/** Jmxfetch telemetry JMX MBean. */
 public class JmxfetchTelemetry implements JmxfetchTelemetryMBean {
 
     private int beanCount;
     private int attributeCount;
     private int metricCount;
 
+    /** Jmxfetch telemetry bean constructor. */
     public JmxfetchTelemetry() {
         beanCount = 0;
         attributeCount = 0;

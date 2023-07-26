@@ -275,7 +275,8 @@ public class Instance {
         jmxBean = createJmxBean();
     }
 
-    private ObjectName getObjName(String domain,String instance) throws MalformedObjectNameException {
+    private ObjectName getObjName(String domain,String instance)
+            throws MalformedObjectNameException {
         return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
@@ -289,7 +290,8 @@ public class Instance {
             mbs.registerMBean(bean,jmxBeanName);
             log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
 
-        } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+        } catch (MalformedObjectNameException | InstanceAlreadyExistsException |
+                MBeanRegistrationException | NotCompliantMBeanException e) {
             log.warn("Could not register bean for instance: " + this.getCheckName(),e);
             e.printStackTrace();
         }
@@ -528,13 +530,9 @@ public class Instance {
         jmxBean.setBeanCount(beans.size());
         jmxBean.setAttributeCount(matchingAttributes.size());
         jmxBean.setMetricCount(metrics.size());
-        log.info("There are " + mbs.getMBeanCount() + "total beans currrently registered");
-        try {
-            log.info("updating jmx bean for instance" + this.getName() +  " with bean: " + mbs.getObjectInstance(jmxBeanName).toString());
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-        log.info("Updated jmx bean for instance: " + this.getCheckName() + "for bean " + jmxBean.toString() + " With beans=" + jmxBean.getBeanCount() + " attr=" + jmxBean.getAttributeCount() + " metrics=" + jmxBean.getMetricCount());
+        log.debug("Updated jmx bean for instance: " + this.getCheckName() + "for bean "
+                + jmxBean.toString() + " With beans=" + jmxBean.getBeanCount() + " attr="
+                        + jmxBean.getAttributeCount() + " metrics=" + jmxBean.getMetricCount());
         return metrics;
     }
 
