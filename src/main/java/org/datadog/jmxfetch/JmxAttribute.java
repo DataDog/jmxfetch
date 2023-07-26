@@ -194,6 +194,15 @@ public abstract class JmxAttribute {
         return beanTags;
     }
 
+    private String unquote (String beanParameter) {
+        int valueIndex = beanParameter.indexOf(':') + 1;
+        try{
+            return beanParameter.substring(0,valueIndex) + ObjectName.unquote(beanParameter.substring(valueIndex));
+        }catch(IllegalArgumentException e){
+            return beanParameter;
+        }
+    }
+
     /**
      * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
      * existing tags - Remove illegal characters
@@ -204,9 +213,9 @@ public abstract class JmxAttribute {
             // Remove `|` characters
             String beanParameter = rawBeanParameter.replace("|", "");
 
-            // Remove `"` characters
+            // Unquote bean parameters that have been quoted and escaped by ObjectName.quote()
             if (normalizeBeanParamTags == true) {
-                beanParameter = beanParameter.replace("\"","");
+                beanParameter = unquote(beanParameter);
             }
 
             // 'host' parameter is renamed to 'bean_host'
