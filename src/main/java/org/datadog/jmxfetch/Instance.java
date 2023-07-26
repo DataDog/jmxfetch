@@ -283,20 +283,19 @@ public class Instance {
     private JmxfetchTelemetry createJmxBean() {
         mbs =  ManagementFactory.getPlatformMBeanServer();
         JmxfetchTelemetry bean = new JmxfetchTelemetry();
-        log.info("Created jmx bean for instance: " + this.getCheckName());
+        log.debug("Created jmx bean for instance: " + this.getCheckName());
 
         try {
             jmxBeanName = getObjName("JMXFetch" , this.getName());
             mbs.registerMBean(bean,jmxBeanName);
-            log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
+            log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName());
 
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException
                 | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
+            log.debug("Could not register bean for instance: " + this.getCheckName(),e);
             e.printStackTrace();
         }
 
-        log.info("The bean we are setting is: " + bean.toString());
         return bean;
     }
 
@@ -495,7 +494,7 @@ public class Instance {
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
 
         if (isPeriodDue(this.lastRefreshTime, period)) {
-            log.info("Refreshing bean list for" + this.getCheckName());
+            log.info("Refreshing bean list for " + this.getCheckName());
             this.refreshBeansList();
             this.getMatchingAttributes();
         }
@@ -530,9 +529,9 @@ public class Instance {
         jmxBean.setBeanCount(beans.size());
         jmxBean.setAttributeCount(matchingAttributes.size());
         jmxBean.setMetricCount(metrics.size());
-        log.debug("Updated jmx bean for instance: " + this.getCheckName() + "for bean "
-                + jmxBean.toString() + " With beans=" + jmxBean.getBeanCount() + " attr="
-                        + jmxBean.getAttributeCount() + " metrics=" + jmxBean.getMetricCount());
+        log.debug("Updated jmx bean for instance: " + this.getCheckName() + " for bean: "
+                + jmxBean.toString() + " With number of beans = " + jmxBean.getBeanCount()
+                        + " attributes = " + jmxBean.getAttributeCount() + " metrics =" + jmxBean.getMetricCount());
         return metrics;
     }
 
@@ -824,9 +823,9 @@ public class Instance {
     private void cleanupTelemetryBean() {
         try {
             mbs.unregisterMBean(jmxBeanName);
-            log.info("Successfully unregistered bean for instance: " + this.getCheckName());
+            log.debug("Successfully unregistered bean for instance: " + this.getCheckName());
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
-            log.warn("Unable to unregister bean for instance: " + this.getCheckName());
+            log.debug("Unable to unregister bean for instance: " + this.getCheckName());
         }
     }
 

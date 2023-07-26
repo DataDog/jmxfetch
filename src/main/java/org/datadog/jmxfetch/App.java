@@ -169,7 +169,6 @@ public class App {
         }
 
         // Initiate JMX Connections, get attributes that match the yaml configuration
-        log.info("init called");
         this.init(false);
 
         // We don't want to loop if the action is list_* as it's just used for display information
@@ -390,13 +389,11 @@ public class App {
                         }
                     }
                     boolean result = processAutoDiscovery(buffer);
-                    log.info("setReinit called with value = " + result);
                     this.setReinit(result);
                 }
 
                 if (this.appConfig.remoteEnabled()) {
                     boolean result = getJsonConfigs();
-                    log.info("setReinit called with value = " + result);
                     this.setReinit(result);
                 }
             } catch (IOException e) {
@@ -633,7 +630,6 @@ public class App {
         }
 
         this.adPipeConfigs.put(name, config);
-        log.info("setReinit called with value = true");
         this.setReinit(true);
 
         return true;
