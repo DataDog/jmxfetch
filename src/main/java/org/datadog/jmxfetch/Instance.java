@@ -290,8 +290,8 @@ public class Instance {
             mbs.registerMBean(bean,jmxBeanName);
             log.info("Succesfully registered jmx bean for instance: " + this.getCheckName());
 
-        } catch (MalformedObjectNameException | InstanceAlreadyExistsException |
-                MBeanRegistrationException | NotCompliantMBeanException e) {
+        } catch (MalformedObjectNameException | InstanceAlreadyExistsException
+                | MBeanRegistrationException | NotCompliantMBeanException e) {
             log.warn("Could not register bean for instance: " + this.getCheckName(),e);
             e.printStackTrace();
         }
