@@ -198,7 +198,7 @@ public abstract class JmxAttribute {
         int valueIndex = beanParameter.indexOf(':') + 1;
         try {
             return beanParameter.substring(0,valueIndex)
-            + ObjectName.unquote(beanParameter.substring(valueIndex));
+                    + ObjectName.unquote(beanParameter.substring(valueIndex));
         } catch (IllegalArgumentException e) {
             return beanParameter;
         }
