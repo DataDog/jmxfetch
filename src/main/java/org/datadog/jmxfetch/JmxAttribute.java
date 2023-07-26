@@ -196,9 +196,9 @@ public abstract class JmxAttribute {
 
     private String unquote (String beanParameter) {
         int valueIndex = beanParameter.indexOf(':') + 1;
-        try{
+        try {
             return beanParameter.substring(0,valueIndex) + ObjectName.unquote(beanParameter.substring(valueIndex));
-        }catch(IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             return beanParameter;
         }
     }

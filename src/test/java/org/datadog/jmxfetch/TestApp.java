@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.ObjectName;
+
 import org.junit.Test;
 
 public class TestApp extends TestCommon {
@@ -76,7 +78,7 @@ public class TestApp extends TestCommon {
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
-                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=");
+                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=,target_instance="+ObjectName.quote(".*example.process.regex.*"));
         initApplication("jmx_bean_tags_normalize_params.yaml");
 
         // Collecting metrics
@@ -93,9 +95,10 @@ public class TestApp extends TestCommon {
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "bean_host:localhost",
-                        "component");
+                        "component",
+                        "target_instance:.*example.process.regex.*");
 
-        assertMetric("this.is.100", tags, 6);
+        assertMetric("this.is.100", tags, 7);
     }
 
     /** Tag metrics with MBeans parameters with normalize_bean_param_tags option disabled. */
@@ -104,7 +107,7 @@ public class TestApp extends TestCommon {
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
-                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=");
+                "org.datadog.jmxfetch.test:type=\"SimpleTestJavaApp\",scope=\"Co|olScope\",host=\"localhost\",component=,target_instance="+ObjectName.quote(".*example.process.regex.*"));
         initApplication("jmx_bean_tags_dont_normalize_params.yaml");
 
         // Collecting metrics
@@ -121,9 +124,10 @@ public class TestApp extends TestCommon {
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "bean_host:\"localhost\"",
-                        "component");
+                        "component",
+                        "target_instance:\".\\*example.process.regex.\\*\"");
 
-        assertMetric("this.is.100", tags, 6);
+        assertMetric("this.is.100", tags, 7);
     }
 
     /** Generate metric aliases from a `alias_match` regular expression. */
