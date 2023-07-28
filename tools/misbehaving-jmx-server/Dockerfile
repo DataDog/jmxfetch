@@ -8,6 +8,8 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:resolve
 
+COPY configs/ /app/configs/
+
 # Copy the source code and build the JAR file
 COPY src/ /app/src/
 RUN mvn clean package assembly:single
@@ -24,4 +26,5 @@ WORKDIR /app
 COPY  --from=build /app/target/misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar .
 
 # Run the supervisor class from the jar
-CMD ["java", "-cp", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar", "org.datadog.supervisor.App"]
+# CMD ["java", "-cp", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar", "org.datadog.supervisor.App"]
+CMD ["java", "-jar", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar"]
