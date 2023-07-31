@@ -1,0 +1,11 @@
+init_config:
+  is_jmx: true
+  java_options: "-Djdk.attach.allowAttachSelf=true"
+
+instances:
+  -   process_name_regex: .*org.datadog.jmxfetch.App.*
+      name: jmxfetch_telemetry_test
+      collect_default_jvm_metrics: true
+      new_gc_metrics: true
+      tags:
+      - jmx:fetch
