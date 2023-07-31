@@ -46,10 +46,10 @@ class AppConfig {
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
 
     @Parameter(names = {"--bean-count", "-bc"})
-    public int bean_count;
+    public int bean_count = -1;
 
     @Parameter(names = {"--bean-domain", "-bd"})
-    public String domain;
+    public String domain = "not_set";
 
     public void overrideFromEnv() {
         String val;
@@ -101,7 +101,7 @@ class AppConfig {
         }
     }
 
-    public Map<String, Object> getConfig () throws IOException {
+    public Map<String, Object> getConfig () {
         File f = new File("configs/", "benchmark_config.yaml");
         String yamlPath = f.getAbsolutePath();
         try{
@@ -145,15 +145,15 @@ public class App
                 .build();
 
         try {
-            int temp_bean_count = config.bean_count;
-            String temp_domain = config.domain;
+            //int temp_bean_count = config.bean_count;
+            //String temp_domain = config.domain;
             jCommander.parse(args);
-            if (config.bean_count != temp_bean_count){
-                System.out.println("updated bean_count from cli: " + config.bean_count);
-            }
-            if (!config.domain.equals(temp_domain)){
-                System.out.println("updated domain from cli: " + config.domain);
-            }
+            //if (config.bean_count != temp_bean_count){
+            //    System.out.println("updated bean_count from cli: " + config.bean_count);
+            //}
+            //if (!config.domain.equals(temp_domain)){
+            //    System.out.println("updated domain from cli: " + config.domain);
+            //}
             config.overrideFromEnv();
         } catch (Exception e) {
             jCommander.usage();
@@ -166,7 +166,8 @@ public class App
         RMISocketFactory.setSocketFactory(customRMISocketFactory);
 
         // Explicitly set RMI hostname to specified argument value
-        System.setProperty("java.rmi.server.hostname", config.rmiHost);
+        // This sometimes breaks containers it seems
+        //System.setProperty("java.rmi.server.hostname", config.rmiHost);
 
         // Initialize RMI registry at same port as the jmx service
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
