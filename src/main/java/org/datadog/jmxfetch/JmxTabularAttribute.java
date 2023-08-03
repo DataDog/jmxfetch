@@ -142,14 +142,17 @@ public class JmxTabularAttribute extends JmxSubAttribute {
         for (Map.Entry<String, List<String>> entry : subAttributeList.entrySet()) {
             String dataKey = entry.getKey();
             List<String> subSub = entry.getValue();
+            log.info("CALEB1: key is " + dataKey + " Val is " + subSub);
             for (String metricKey : subSub) {
                 String alias = getAlias(metricKey);
                 String metricType = getMetricType(metricKey);
+                log.info("CALEB2");
                 String[] tags = getTags(dataKey, metricKey); // /!| Cannot be cached as is
                 Metric metric = new Metric(alias, metricType, tags, checkName);
+                log.info("CALEB3");
                 double value = castToDouble(getValue(dataKey, metricKey), null);
                 metric.setValue(value);
-
+                log.info("CALEB4");
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new ArrayList<Metric>());
@@ -160,6 +163,7 @@ public class JmxTabularAttribute extends JmxSubAttribute {
 
         List<Metric> metrics = new ArrayList<Metric>(subMetrics.keySet().size());
         for (String key : subMetrics.keySet()) {
+            log.info("CALEB5: " + key);
             // only add explicitly included metrics
             if (getAttributesFor(key) != null) {
                 metrics.addAll(sortAndFilter(key, subMetrics.get(key)));

@@ -33,6 +33,9 @@ import io.javalin.*;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.Defaults;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.Yaml;
+
 
 class AppConfig {
     // RMI Port is used for both registry and the JMX service
@@ -45,11 +48,10 @@ class AppConfig {
     // Can only be set via env var
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
 
-    @Parameter(names = {"--bean-count", "-bc"})
-    public int bean_count = -1;
+    @Parameter(names = {"--config-path", "-cfp"})
+    public String config_path = "configs/benchmark_config.yaml";
 
-    @Parameter(names = {"--bean-domain", "-bd"})
-    public String domain = "not_set";
+    public AppSpec appSpec;
 
     public void overrideFromEnv() {
         String val;
@@ -65,101 +67,112 @@ class AppConfig {
         if (val != null) {
             this.controlPort = Integer.parseInt(val);
         }
-        val = System.getenv("BEAN_COUNT");
+        val = System.getenv("CONFIG_PATH");
         if (val != null) {
-            this.bean_count = Integer.parseInt(val);
-            System.out.println("updated bean_count from env: " + bean_count);
-        }
-        val = System.getenv("BEAN_DOMAIN");
-        if (val != null) {
-            this.domain = val;
-            System.out.println("updated domain from env: " + domain);
+            this.config_path = val;
+            System.out.println("updated config_path from env: " + config_path);
         }
     }
 
     public void initConfig() throws IOException {
-        Map<String, Object> jmxConfig = getConfig();
-        if (jmxConfig != null){
-            System.out.println("jmx config file looks like: " + jmxConfig);
+        appSpec = getConfig();
+        if (appSpec != null){
+            System.out.println("AppSpec is: " + appSpec);
         } else {
-            System.out.println("jmx config file not found");
+            System.out.println("AppSpec is null");
             return;
         }
 
-        int beans_val;
-        beans_val = (Integer) jmxConfig.get("bean_count");
-        if (beans_val != 0) {
-            this.bean_count = beans_val;
-            System.out.println("updated bean_count from config: " + bean_count);
-        }
-
-        String domain_val;
-        domain_val = (String) jmxConfig.get("domain");
-        if (domain_val != null) {
-            this.domain = domain_val;
-            System.out.println("updated domain from config: " + domain);
-        }
     }
 
-    public Map<String, Object> getConfig () {
-        File f = new File("configs/", "benchmark_config.yaml");
+    public AppSpec getConfig () {
+        File f = new File(config_path);
         String yamlPath = f.getAbsolutePath();
         try{
             FileInputStream yamlInputStream = new FileInputStream(yamlPath);
-            YamlParser fileConfig = new YamlParser(yamlInputStream);
-            List<Map<String, Object>> configs =
-                    ((List<Map<String, Object>>) fileConfig.getGenConfig());
-            for (Map<String, Object> conf : configs) {
-                if (conf.get("jmx") != null) {
-                    System.out.println("found a jmx config");
-                    return (Map<String, Object>) (conf.get("jmx"));
-                }
-            }
+            Yaml yaml = new Yaml(new Constructor(AppSpec.class));
+            AppSpec test = yaml.load(yamlInputStream);
+            return test;
         } catch (FileNotFoundException e) {
             System.out.println("could not find your config file at " + yamlPath);
             return null;
         }
-
-        System.out.println("could not find jmx config in " + yamlPath);
-        return null;
     }
 }
 
+class AppSpec {
+    public Map<String,BeanSpec> domains;
+
+    @Override
+    public String toString(){
+        String result = "AppSpec:\n";
+        for (Map.Entry<String,BeanSpec> entry: domains.entrySet()){
+            result += "Domain: " + entry.getKey() + entry.getValue().toString() + "\n";
+        }
+        return result;
+    }
+}
 class BeanSpec {
-    public int numDesiredBeans;
+    public int bean_count;
+    public int attribute_count;
+    public int tabular_count;
+    public int composite_count;
+
+    //public BeanSpec(int bean_count, int attribute_count, int tabular_count, int composite_count){
+    //    this.bean_count = bean_count;
+    //    this.attribute_count = attribute_count;
+    //    this.tabular_count = tabular_count;
+    //    this.composite_count = composite_count;
+   // }
+
+    @Override
+    public String toString(){
+        return  "\n\tbean_count: " + bean_count +
+        "\n\tattribute_count: " + attribute_count +
+        "\n\ttabular_count: " + tabular_count +
+        "\n\tcomposite_count: " + composite_count;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof BeanSpec)) {
+            return false;
+        }
+
+        BeanSpec b = (BeanSpec) o;
+        // We ignore the bean_counts when comparing two BeanSpecs as this doesnt impact
+        // the actual composition of the beans created just how many
+        return attribute_count == b.attribute_count &&
+        tabular_count == b.tabular_count &&
+        composite_count == b.composite_count;
+    }
 }
 
 @Slf4j
 public class App
 {
     private static boolean started = false;
-    final static String testDomain = "Bohnanza";
     public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
     {
         AppConfig config = new AppConfig();
-
-        config.initConfig();
 
         JCommander jCommander = JCommander.newBuilder()
                 .addObject(config)
                 .build();
 
         try {
-            //int temp_bean_count = config.bean_count;
-            //String temp_domain = config.domain;
             jCommander.parse(args);
-            //if (config.bean_count != temp_bean_count){
-            //    System.out.println("updated bean_count from cli: " + config.bean_count);
-            //}
-            //if (!config.domain.equals(temp_domain)){
-            //    System.out.println("updated domain from cli: " + config.domain);
-            //}
             config.overrideFromEnv();
         } catch (Exception e) {
             jCommander.usage();
             System.exit(1);
         }
-        System.out.println("final init: bean_count = " + config.bean_count + " , bean_domain = " + config.domain);
+        //get bean count and properties from config file
+        config.initConfig();
 
         InterruptibleRMISocketFactory customRMISocketFactory = new InterruptibleRMISocketFactory();
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
@@ -167,25 +180,24 @@ public class App
 
         // Explicitly set RMI hostname to specified argument value
         // This sometimes breaks containers it seems
-        //System.setProperty("java.rmi.server.hostname", config.rmiHost);
+        if (config.rmiHost.equals("localhost")){
+            //means we are not in container so can set rmi.server.hostname
+            System.setProperty("java.rmi.server.hostname", config.rmiHost);
+        } else {
+            System.out.println("Didnt set java.rmi.server.host");
+        }
 
         // Initialize RMI registry at same port as the jmx service
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        MetricDAO mDao = new MetricDAO();
-        mDao.runTickLoop();
+        BeanManager bm = new BeanManager(mbs);
 
-        BeanManager bm = new BeanManager(mbs, mDao);
-
-        //set up initial beans
-        bm.setMBeanState(config.domain, config.bean_count);
-
-        // Register single static bean under known domain
-        ObjectName mbeanName = new ObjectName(testDomain + ":name=MyMBean");
-        SingleAttributeMetricMBean mbean = new SingleAttributeMetric(mDao);
-        mbs.registerMBean(mbean, mbeanName);
+        //set up initial beans for all the domains found in config file
+        for (Map.Entry<String,BeanSpec> entry: config.appSpec.domains.entrySet()){
+            bm.setMBeanState(entry.getKey(), entry.getValue());
+        }
 
         Javalin controlServer = Javalin.create();
 
@@ -209,7 +221,7 @@ public class App
 
         controlServer.get("/beans/{domain}", ctx -> {
             String domain = ctx.pathParam("domain");
-            Optional<List<FourAttributeMetric>> bs = bm.getMBeanState(domain);
+            Optional<List<DynamicMBeanMetrics>> bs = bm.getMBeanState(domain);
             if (bs.isPresent()) {
                 List<String> metricNames = bs.get().stream().map(metric -> metric.name).collect(Collectors.toList());
 
@@ -231,7 +243,7 @@ public class App
             }
 
             // This should block until the mbeanserver reaches the desired state
-            bm.setMBeanState(domain, beanSpec.numDesiredBeans);
+            bm.setMBeanState(domain, beanSpec);
 
             ctx.status(200).result("Received bean request for domain: " + domain);
         });

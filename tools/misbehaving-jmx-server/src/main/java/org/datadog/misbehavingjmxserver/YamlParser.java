@@ -22,7 +22,7 @@ class YamlParser {
         return parsedYaml;
     }
 
-    public Object getGenConfig() {
-        return parsedYaml.get("generator");
+    public Object getYamlDomains() {
+        return parsedYaml.get("domains");
     }
 }
