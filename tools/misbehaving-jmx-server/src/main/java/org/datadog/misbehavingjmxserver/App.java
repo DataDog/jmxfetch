@@ -153,14 +153,9 @@ public class App
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
         RMISocketFactory.setSocketFactory(customRMISocketFactory);
 
-        // Explicitly set RMI hostname to specified argument value
-        // This sometimes breaks containers it seems
-        if (config.rmiHost.equals("localhost")){
-            //means we are not in container so can set rmi.server.hostname
-            System.setProperty("java.rmi.server.hostname", config.rmiHost);
-        } else {
-            System.out.println("Didnt set java.rmi.server.host");
-        }
+        // Uncomment this to be able to access jmx server on MacOS
+        // System.setProperty("java.rmi.server.hostname", config.rmiHost);
+
 
         // Initialize RMI registry at same port as the jmx service
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
