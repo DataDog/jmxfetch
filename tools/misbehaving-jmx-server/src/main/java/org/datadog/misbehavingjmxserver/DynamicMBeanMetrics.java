@@ -118,37 +118,31 @@ public class DynamicMBeanMetrics implements DynamicMBean {
     }
 
     public TabularData getTabularData(int numCompInTab) throws OpenDataException {
-        String[] itemNames = {"Name", "Value"};
-        String[] itemDescriptions = {"Attribute Name", "Attribute Value"};
-        OpenType<?>[] itemTypes = {SimpleType.STRING, SimpleType.INTEGER};
+        String[] itemNames = {"Id", "Value"};
+        String[] itemDescriptions = {"Attribute Id", "Attribute Value"};
+        OpenType<?>[] itemTypes = {SimpleType.INTEGER, SimpleType.INTEGER};
 
         CompositeType rowType = new CompositeType("AttributeRow", "Attribute Row", itemNames, itemDescriptions, itemTypes);
 
-        TabularType tabularType = new TabularType("AttributeTable", "Table of Attributes", rowType, new String[]{"Name"});
+        TabularType tabularType = new TabularType("AttributeTable", "Table of Attributes", rowType, new String[]{"Id"});
 
         TabularDataSupport tabularData = new TabularDataSupport(tabularType);
 
-        Map<String, Object> compositeData = new HashMap<>();
+        Map<Object, Object> compositeData = new HashMap<>();
 
         RandomIdentifier idGen = new RandomIdentifier();
 
         for (int i = 1; i <= numCompInTab; i++){
-            compositeData.put("Composite" + String.valueOf(i) + "-" + idGen.generateIdentifier(), i);
+            compositeData.put(i, i*10);
         }
 
         // Add dummy data to the TabularData
-        //int compCounter = 0;
-        for (Map.Entry<String, Object> entry : compositeData.entrySet()) {
-            //if (compCounter == numCompInTab) {
-            //    return tabularData;
-            //}
-            String attributeName = entry.getKey();
+        for (Map.Entry<Object, Object> entry : compositeData.entrySet()) {
+            Object attributeId = entry.getKey();
             Object attributeValue = entry.getValue();
 
-            CompositeData row = new CompositeDataSupport(rowType, new String[]{"Name", "Value"}, new Object[]{attributeName, attributeValue});
+            CompositeData row = new CompositeDataSupport(rowType, new String[]{"Id", "Value"}, new Object[]{attributeId, attributeValue});
             tabularData.put(row);
-            //compCounter++;
-
         }
 
         return tabularData;

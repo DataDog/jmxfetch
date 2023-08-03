@@ -77,7 +77,7 @@ class AppConfig {
     public void initConfig() throws IOException {
         appSpec = getConfig();
         if (appSpec != null){
-            System.out.println("AppSpec is: " + appSpec);
+            System.out.println("AppSpec from " + config_path + " is:\n" + appSpec);
         } else {
             System.out.println("AppSpec is null");
             return;
@@ -105,7 +105,7 @@ class AppSpec {
 
     @Override
     public String toString(){
-        String result = "AppSpec:\n";
+        String result = "";
         for (Map.Entry<String,BeanSpec> entry: domains.entrySet()){
             result += "Domain: " + entry.getKey() + entry.getValue().toString() + "\n";
         }
@@ -118,37 +118,12 @@ class BeanSpec {
     public int tabular_count;
     public int composite_count;
 
-    //public BeanSpec(int bean_count, int attribute_count, int tabular_count, int composite_count){
-    //    this.bean_count = bean_count;
-    //    this.attribute_count = attribute_count;
-    //    this.tabular_count = tabular_count;
-    //    this.composite_count = composite_count;
-   // }
-
     @Override
     public String toString(){
-        return  "\n\tbean_count: " + bean_count +
-        "\n\tattribute_count: " + attribute_count +
-        "\n\ttabular_count: " + tabular_count +
-        "\n\tcomposite_count: " + composite_count;
-    }
-
-    @Override
-    public boolean equals(Object o){
-        if (o == this) {
-            return true;
-        }
-
-        if (!(o instanceof BeanSpec)) {
-            return false;
-        }
-
-        BeanSpec b = (BeanSpec) o;
-        // We ignore the bean_counts when comparing two BeanSpecs as this doesnt impact
-        // the actual composition of the beans created just how many
-        return attribute_count == b.attribute_count &&
-        tabular_count == b.tabular_count &&
-        composite_count == b.composite_count;
+        return  "\n\t-bean_count: " + bean_count +
+        "\n\t-attribute_count: " + attribute_count +
+        "\n\t-tabular_count: " + tabular_count +
+        "\n\t-composite_count: " + composite_count;
     }
 }
 
