@@ -20,16 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanManager {
     private final MBeanServer mBeanServer;
     private final Map<String, List<DynamicMBeanMetrics>> registeredBeans;
-    private final BeanSpec resetBeanSpec;
-    private Map<String,BeanSpec> domainStateMap;
-
-
 
     public BeanManager(MBeanServer mBeanServer) {
         this.mBeanServer = mBeanServer;
         this.registeredBeans = new HashMap<>();
-        this.domainStateMap = new HashMap<String,BeanSpec>();
-        resetBeanSpec = new BeanSpec();
     }
 
     private ObjectName getObjName(String domain, DynamicMBeanMetrics metric) throws MalformedObjectNameException {
