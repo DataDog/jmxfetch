@@ -34,11 +34,11 @@ public class BeanManager {
     public void clearDomainBeans(String beanDomain){
         List<DynamicMBeanMetrics> beansList = this.registeredBeans.getOrDefault(beanDomain,new ArrayList<DynamicMBeanMetrics>());
         int size = beansList.size();
-        for (int i = 0; i< size; i++){
+
+        for (int i = 0; i < size; i++){
             DynamicMBeanMetrics metric = beansList.get(0);
             try {
                 ObjectName obj = getObjName(beanDomain, metric);
-                System.out.println("unregestered a bean in domain: " + beanDomain + "with name " + obj);
                 this.mBeanServer.unregisterMBean(obj);
                 beansList.remove(0);
             } catch (MBeanRegistrationException | InstanceNotFoundException | MalformedObjectNameException e) {
