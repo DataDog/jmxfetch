@@ -22,7 +22,7 @@ pull request.
 
 ## Building from source
 
-JMXFetch uses [Maven](http://maven.apache.org) for its build system. The repo contains a [Maven Wrapper](https://maven.apache.org/wrapper/) so no need to download and install Maven.
+JMXFetch uses [Maven](http://maven.apache.org) for its build system. The repo contains a [Maven Wrapper](https://maven.apache.org/wrapper/), so you don't need to download and install Maven.
 
 In order to generate the JAR artifact, run the `./mvnw clean compile assembly:single` command in the cloned directory.
 
