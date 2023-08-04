@@ -33,12 +33,6 @@ import io.javalin.*;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.Defaults;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.TypeDescription;
-import org.yaml.snakeyaml.introspector.PropertyUtils;
-import org.yaml.snakeyaml.introspector.BeanAccess;
-import org.yaml.snakeyaml.representer.Representer;
 
 @Slf4j
 class AppConfig {
@@ -88,7 +82,6 @@ class AppConfig {
         } catch (FileNotFoundException e) {
             log.warn("Could not find your config file at " + yamlPath);
             jmxDomainConfigurations = null;
-            log.warn("JmxDomainConfigurations is null");
         }
     }
 }
@@ -97,13 +90,13 @@ class JmxDomainConfigurations {
     public Map<String,BeanSpec> domains;
 
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder result = new StringBuilder();
         if (domains != null) {
-            for (Map.Entry<String,BeanSpec> entry: domains.entrySet()){
-            result.append("Domain: " + entry.getKey() + entry.getValue().toString() + "\n");
+            for (Map.Entry<String,BeanSpec> entry: domains.entrySet()) {
+                result.append("Domain: " + entry.getKey() + entry.getValue().toString() + "\n");
             }
-        }else{
+        } else {
             return "No valid domain configurations";
         }
 
@@ -116,19 +109,19 @@ class BeanSpec {
     public int tabularAttributeCount;
     public int compositeValuesPerTabularAttribute;
 
-    public BeanSpec(){
+    public BeanSpec() {
 
     }
 
-    public BeanSpec(int beanCount, int scalarAttributeCount, int tabularAttributeCount, int compositeValuesPerTabularAttribute){
-        this.beanCount=beanCount;
-        this.scalarAttributeCount=scalarAttributeCount;
-        this.tabularAttributeCount=tabularAttributeCount;
-        this.compositeValuesPerTabularAttribute=compositeValuesPerTabularAttribute;
+    public BeanSpec(int beanCount, int scalarAttributeCount, int tabularAttributeCount, int compositeValuesPerTabularAttribute) {
+        this.beanCount = beanCount;
+        this.scalarAttributeCount = scalarAttributeCount;
+        this.tabularAttributeCount = tabularAttributeCount;
+        this.compositeValuesPerTabularAttribute = compositeValuesPerTabularAttribute;
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return  "\n\t-beanCount: " + beanCount +
         "\n\t-scalarAttributeCount: " + scalarAttributeCount +
         "\n\t-tabularAttributeCount: " + tabularAttributeCount +
@@ -156,7 +149,6 @@ public class App
             jCommander.usage();
             System.exit(1);
         }
-        //get bean count and properties from config file
         config.readConfigFileOnDisk();
 
         InterruptibleRMISocketFactory customRMISocketFactory = new InterruptibleRMISocketFactory();
@@ -174,8 +166,8 @@ public class App
         BeanManager bm = new BeanManager(mbs, mDao);
 
         // Set up test domain
-        BeanSpec testDomaiBeanSpec = new BeanSpec(1, 1, 0, 0);
-        bm.setMBeanState(testDomain, testDomaiBeanSpec);
+        BeanSpec testDomainBeanSpec = new BeanSpec(1, 1, 0, 0);
+        bm.setMBeanState(testDomain, testDomainBeanSpec);
 
         // Set up initial beans for all the domains found in config file
         for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()){
