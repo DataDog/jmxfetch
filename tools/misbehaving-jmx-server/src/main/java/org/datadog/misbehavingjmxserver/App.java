@@ -170,7 +170,7 @@ public class App
         bm.setMBeanState(testDomain, testDomainBeanSpec);
 
         // Set up initial beans for all the domains found in config file
-        for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()){
+        for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()) {
             bm.setMBeanState(entry.getKey(), entry.getValue());
         }
 
