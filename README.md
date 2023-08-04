@@ -161,7 +161,7 @@ java -jar jmxfetch-0.48.0-SNAPSHOT-jar-with-dependencies.jar --help
 
 ## Updating Maven Wrapper
 
-To upgrade the Maven Wrapper you just need to run
+To upgrade the Maven Wrapper, you need to run:
 
 ```
 ./mvn wrapper:wrapper -Dmaven=<Maven Version X.Y.Z>
