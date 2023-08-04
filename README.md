@@ -32,9 +32,9 @@ To use this JAR in the Agent, see [these docs](https://github.com/DataDog/datado
 
 ### Note
 
-If you want build all the jars for JMXFetch you need to use an older JDK like JDK 8.
-At the moment there is an issue where the build can't find `javadoc command` on modern JDKs.
-The quickest way to build these jars is to use Docker:
+If you want build all the JAR files for JMXFetch, you need to use an older JDK version like JDK 8.
+There is a known issue where the build can't find `javadoc command` on modern JDKs.
+The quickest way to build these JAR files is to use Docker:
 
 ```
 docker run -it --rm \
