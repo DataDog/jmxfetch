@@ -24,7 +24,7 @@ pull request.
 
 JMXFetch uses [Maven](http://maven.apache.org) for its build system. The repo contains a [Maven Wrapper](https://maven.apache.org/wrapper/) so no need to download and install Maven.
 
-In order to generate the jar artifact, simply run the ```./mvnw clean compile assembly:single``` command in the cloned directory.
+In order to generate the JAR artifact, run the `./mvnw clean compile assembly:single` command in the cloned directory.
 
 The distribution will be created under ```target/```.
 
