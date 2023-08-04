@@ -14,28 +14,40 @@ import javax.management.openmbean.TabularType;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DynamicMBeanMetrics implements DynamicMBean {
     public final String name;
     private Map<String, Object> attributes = new HashMap<>();
+    private final MetricDAO metricsDAO;
+    private int numCompPerTabular;
 
-    public DynamicMBeanMetrics(final String name, int numAttributes, int numTabulars, int numCompPerTabular) {
+    public DynamicMBeanMetrics(final String name, int numAttributes, int numTabulars, int numCompPerTabular, final MetricDAO metricsDAO) {
         this.name = name;
+        this.metricsDAO = metricsDAO;
+        this.numCompPerTabular = numCompPerTabular;
+
         // Add dummy attributes during object initialization
         for (int i = 1; i <= numAttributes; i++){
-            attributes.put("Attribute" + String.valueOf(i), i);
+            attributes.put("Attribute" + String.valueOf(i), getSimpleAttributeValue(i));
         }
 
         for (int i = 1; i <= numTabulars; i++) {
             try {
 
-                attributes.put("Tabular" + String.valueOf(i),getTabularData(numCompPerTabular));
+                attributes.put("Tabular" + String.valueOf(i),getTabularData());
             } catch (Exception e) {
-                System.out.println("Tabular" + String.valueOf(i) + " didnt work");
+                log.warn("Tabular" + String.valueOf(i) + " didnt work");
                 e.printStackTrace();
             }
         }
 
+    }
+
+    // Returns current value of metricsDAO counter plus the attribute number for some variation in values
+    public Number getSimpleAttributeValue(int i){
+        return (Number) (this.metricsDAO.getNumberValue().intValue() + i);
     }
 
     @Override
@@ -89,7 +101,7 @@ public class DynamicMBeanMetrics implements DynamicMBean {
     @Override
     public Object invoke(String actionName, Object[] params, String[] signature)
             throws MBeanException, ReflectionException {
-        throw new UnsupportedOperationException("Not supported in this example.");
+        throw new UnsupportedOperationException("Not supported in misbehaving-jmx-server.");
     }
 
     @Override
@@ -98,7 +110,6 @@ public class DynamicMBeanMetrics implements DynamicMBean {
         int i = 0;
         for (Map.Entry<String, Object> entry : attributes.entrySet()) {
             String name = entry.getKey();
-            //System.out.println("Key is " + name + " Val is " + String.valueOf(entry.getValue()));
             String type = entry.getValue().getClass().getName();
             String description = "Dummy attribute " + name;
             boolean isReadable = true;
@@ -117,34 +128,52 @@ public class DynamicMBeanMetrics implements DynamicMBean {
         );
     }
 
-    public TabularData getTabularData(int numCompInTab) throws OpenDataException {
+    public TabularData getTabularData() {
         String[] itemNames = {"Id", "Value"};
         String[] itemDescriptions = {"Attribute Id", "Attribute Value"};
         OpenType<?>[] itemTypes = {SimpleType.INTEGER, SimpleType.INTEGER};
 
-        CompositeType rowType = new CompositeType("AttributeRow", "Attribute Row", itemNames, itemDescriptions, itemTypes);
+        try {
+            CompositeType rowType = new CompositeType("AttributeRow", "Attribute Row", itemNames, itemDescriptions, itemTypes);
 
-        TabularType tabularType = new TabularType("AttributeTable", "Table of Attributes", rowType, new String[]{"Id"});
+            TabularType tabularType = new TabularType("AttributeTable", "Table of Attributes", rowType, new String[]{"Id"});
 
-        TabularDataSupport tabularData = new TabularDataSupport(tabularType);
+            TabularDataSupport tabularData = new TabularDataSupport(tabularType);
 
-        Map<Object, Object> compositeData = new HashMap<>();
+            Map<Object, Object> compositeData = new HashMap<>();
 
-        RandomIdentifier idGen = new RandomIdentifier();
+            for (int i = 1; i <= numCompPerTabular; i++){
+                compositeData.put(i, getSimpleAttributeValue(i));
+            }
 
-        for (int i = 1; i <= numCompInTab; i++){
-            compositeData.put(i, i*10);
+            // Add dummy data to the TabularData
+            for (Map.Entry<Object, Object> entry : compositeData.entrySet()) {
+                Object attributeId = entry.getKey();
+                Object attributeValue = entry.getValue();
+
+                CompositeData row = new CompositeDataSupport(rowType, new String[]{"Id", "Value"}, new Object[]{attributeId, attributeValue});
+                tabularData.put(row);
+            }
+
+            return tabularData;
+        } catch ( OpenDataException  e) {
+            log.warn("Unable to create TabularData", e);
+            return null;
         }
-
-        // Add dummy data to the TabularData
-        for (Map.Entry<Object, Object> entry : compositeData.entrySet()) {
-            Object attributeId = entry.getKey();
-            Object attributeValue = entry.getValue();
-
-            CompositeData row = new CompositeDataSupport(rowType, new String[]{"Id", "Value"}, new Object[]{attributeId, attributeValue});
-            tabularData.put(row);
-        }
-
-        return tabularData;
     }
+
+    public void updateBeanAttributes() {
+        log.debug("Updating attribute values for " + this.name);
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+            if (entry.getValue() instanceof Integer) {
+                int attrNum = entry.getKey().charAt(entry.getKey().length() - 1) - '0';
+                attributes.put(entry.getKey(), getSimpleAttributeValue(attrNum));
+            }
+            if(entry.getValue() instanceof TabularDataSupport){
+                attributes.put(entry.getKey(), getTabularData());
+            }
+        }
+    }
+
+
 }

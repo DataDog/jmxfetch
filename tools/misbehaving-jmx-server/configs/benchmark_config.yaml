@@ -1,13 +1,13 @@
 domains:
     test_1:
-        bean_count: 5
-        attribute_count: 2
-        tabular_count: 3
-        composite_count: 4
+        beanCount: 4
+        scalarAttributeCount: 5
+        tabularAttributeCount: 1
+        compositeValuesPerTabularAttribute: 2
     test_2:
-        bean_count: 1
-        attribute_count: 1
-        tabular_count: 1
-        composite_count: 1
+        beanCount: 10
+        scalarAttributeCount: 0
+        tabularAttributeCount: 5
+        compositeValuesPerTabularAttribute: 10
 
 

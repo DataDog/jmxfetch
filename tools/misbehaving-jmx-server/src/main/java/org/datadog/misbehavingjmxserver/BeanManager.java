@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
+
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,10 +24,16 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanManager {
     private final MBeanServer mBeanServer;
     private final Map<String, List<DynamicMBeanMetrics>> registeredBeans;
+    private final MetricDAO mDao;
+    static final long ATTRIBUTE_REFRESH_INTERVAL = 10;
+    private final ScheduledExecutorService executor;
 
-    public BeanManager(MBeanServer mBeanServer) {
+    public BeanManager(MBeanServer mBeanServer, MetricDAO mDao) {
         this.mBeanServer = mBeanServer;
         this.registeredBeans = new HashMap<>();
+        this.mDao = mDao;
+        this.executor = Executors.newSingleThreadScheduledExecutor();
+        runAttributeUpdateLoop();
     }
 
     private ObjectName getObjName(String domain, DynamicMBeanMetrics metric) throws MalformedObjectNameException {
@@ -42,8 +52,7 @@ public class BeanManager {
                 this.mBeanServer.unregisterMBean(obj);
                 beansList.remove(0);
             } catch (MBeanRegistrationException | InstanceNotFoundException | MalformedObjectNameException e) {
-                log.warn("Could not unregister bean");
-                e.printStackTrace();
+                log.warn("Could not unregister bean {} for domain {}", metric.name, beanDomain, e);
             }
         }
         registeredBeans.put(beanDomain, new ArrayList<DynamicMBeanMetrics>());
@@ -54,16 +63,16 @@ public class BeanManager {
         RandomIdentifier idGen = new RandomIdentifier();
         ArrayList<DynamicMBeanMetrics> beansList = new ArrayList<DynamicMBeanMetrics>();
 
-        for (int i = 0; i < domainSpec.bean_count; i++) {
-            DynamicMBeanMetrics metric = new DynamicMBeanMetrics("Bean-" + idGen.generateIdentifier(), domainSpec.attribute_count, domainSpec.tabular_count, domainSpec.composite_count);
+        for (int i = 0; i < domainSpec.beanCount; i++) {
+            DynamicMBeanMetrics metric = new DynamicMBeanMetrics("Bean-" + idGen.generateIdentifier(), domainSpec.scalarAttributeCount,
+                    domainSpec.tabularAttributeCount, domainSpec.compositeValuesPerTabularAttribute, mDao);
             try {
                 ObjectName obj = getObjName(beanDomain, metric);
                 log.debug("Registering bean with ObjectName: {}", obj);
                 this.mBeanServer.registerMBean(metric, obj);
                 beansList.add(metric);
             } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException | MalformedObjectNameException e) {
-                log.error("Could not add bean {} for domain {}", metric.name, beanDomain);
-                e.printStackTrace();
+                log.warn("Could not add bean {} for domain {}", metric.name, beanDomain, e);
             }
         }
         registeredBeans.put(beanDomain, beansList);
@@ -74,4 +83,22 @@ public class BeanManager {
     public Optional<List<DynamicMBeanMetrics>> getMBeanState(String domain) {
         return Optional.ofNullable(registeredBeans.get(domain));
     }
+
+    public void Do() {
+        for (Map.Entry<String,List<DynamicMBeanMetrics>> beanDomainEntry : registeredBeans.entrySet()) {
+            List<DynamicMBeanMetrics> beansList = beanDomainEntry.getValue();
+            for (DynamicMBeanMetrics bean: beansList){
+                bean.updateBeanAttributes();
+            }
+        }
+    }
+
+    void runAttributeUpdateLoop() {
+        Runnable task = () -> {
+            this.Do();
+        };
+        executor.scheduleAtFixedRate(task, 0, ATTRIBUTE_REFRESH_INTERVAL, TimeUnit.SECONDS);
+    }
+
+
 }

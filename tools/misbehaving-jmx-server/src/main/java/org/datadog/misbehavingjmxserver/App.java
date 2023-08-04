@@ -35,8 +35,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.Defaults;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.TypeDescription;
+import org.yaml.snakeyaml.introspector.PropertyUtils;
+import org.yaml.snakeyaml.introspector.BeanAccess;
+import org.yaml.snakeyaml.representer.Representer;
 
-
+@Slf4j
 class AppConfig {
     // RMI Port is used for both registry and the JMX service
     @Parameter(names = {"--rmi-port", "-rp"})
@@ -51,7 +55,7 @@ class AppConfig {
     @Parameter(names = {"--config-path", "-cfp"})
     public String config_path = "configs/benchmark_config.yaml";
 
-    public AppSpec appSpec;
+    public JmxDomainConfigurations jmxDomainConfigurations;
 
     public void overrideFromEnv() {
         String val;
@@ -70,60 +74,54 @@ class AppConfig {
         val = System.getenv("CONFIG_PATH");
         if (val != null) {
             this.config_path = val;
-            System.out.println("updated config_path from env: " + config_path);
         }
     }
 
-    public void initConfig() throws IOException {
-        appSpec = getConfig();
-        if (appSpec != null){
-            System.out.println("AppSpec from " + config_path + " is:\n" + appSpec);
-        } else {
-            System.out.println("AppSpec is null");
-            return;
-        }
-
-    }
-
-    public AppSpec getConfig () {
+    public void readConfigFileOnDisk () {
         File f = new File(config_path);
         String yamlPath = f.getAbsolutePath();
         try{
             FileInputStream yamlInputStream = new FileInputStream(yamlPath);
-            Yaml yaml = new Yaml(new Constructor(AppSpec.class));
-            AppSpec test = yaml.load(yamlInputStream);
-            return test;
+            Yaml yaml = new Yaml(new Constructor(JmxDomainConfigurations.class));
+            jmxDomainConfigurations = yaml.load(yamlInputStream);
+            log.info("JmxDomainConfigurations read from " + config_path + " is:\n" + jmxDomainConfigurations);
         } catch (FileNotFoundException e) {
-            System.out.println("could not find your config file at " + yamlPath);
-            return null;
+            log.warn("Could not find your config file at " + yamlPath);
+            jmxDomainConfigurations = null;
+            log.warn("JmxDomainConfigurations is null");
         }
     }
 }
 
-class AppSpec {
+class JmxDomainConfigurations {
     public Map<String,BeanSpec> domains;
 
     @Override
     public String toString(){
-        String result = "";
-        for (Map.Entry<String,BeanSpec> entry: domains.entrySet()){
-            result += "Domain: " + entry.getKey() + entry.getValue().toString() + "\n";
+        StringBuilder result = new StringBuilder();
+        if (domains != null) {
+            for (Map.Entry<String,BeanSpec> entry: domains.entrySet()){
+            result.append("Domain: " + entry.getKey() + entry.getValue().toString() + "\n");
+            }
+        }else{
+            return "No valid domain configurations";
         }
-        return result;
+
+        return result.toString();
     }
 }
 class BeanSpec {
-    public int bean_count;
-    public int attribute_count;
-    public int tabular_count;
-    public int composite_count;
+    public int beanCount;
+    public int scalarAttributeCount;
+    public int tabularAttributeCount;
+    public int compositeValuesPerTabularAttribute;
 
     @Override
     public String toString(){
-        return  "\n\t-bean_count: " + bean_count +
-        "\n\t-attribute_count: " + attribute_count +
-        "\n\t-tabular_count: " + tabular_count +
-        "\n\t-composite_count: " + composite_count;
+        return  "\n\t-beanCount: " + beanCount +
+        "\n\t-scalarAttributeCount: " + scalarAttributeCount +
+        "\n\t-tabularAttributeCount: " + tabularAttributeCount +
+        "\n\t-compositeValuesPerTabularAttribute: " + compositeValuesPerTabularAttribute;
     }
 }
 
@@ -147,7 +145,7 @@ public class App
             System.exit(1);
         }
         //get bean count and properties from config file
-        config.initConfig();
+        config.readConfigFileOnDisk();
 
         InterruptibleRMISocketFactory customRMISocketFactory = new InterruptibleRMISocketFactory();
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
@@ -156,16 +154,18 @@ public class App
         // Uncomment this to be able to access jmx server on MacOS
         // System.setProperty("java.rmi.server.hostname", config.rmiHost);
 
-
         // Initialize RMI registry at same port as the jmx service
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        BeanManager bm = new BeanManager(mbs);
+        MetricDAO mDao = new MetricDAO();
+        mDao.runTickLoop();
+
+        BeanManager bm = new BeanManager(mbs, mDao);
 
         //set up initial beans for all the domains found in config file
-        for (Map.Entry<String,BeanSpec> entry: config.appSpec.domains.entrySet()){
+        for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()){
             bm.setMBeanState(entry.getKey(), entry.getValue());
         }
 
