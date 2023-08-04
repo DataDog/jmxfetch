@@ -45,7 +45,6 @@ public class DynamicMBeanMetrics implements DynamicMBean {
 
     }
 
-    // Returns current value of metricsDAO counter plus the attribute number for some variation in values
     public Number getSimpleAttributeValue() {
         return this.metricsDAO.getNumberValue();
     }
