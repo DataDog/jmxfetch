@@ -30,7 +30,7 @@ public class DynamicMBeanMetrics implements DynamicMBean {
 
         // Add dummy attributes during object initialization
         for (int i = 1; i <= numAttributes; i++){
-            attributes.put("Attribute" + String.valueOf(i), getSimpleAttributeValue(i));
+            attributes.put("Attribute" + String.valueOf(i), getSimpleAttributeValue());
         }
 
         for (int i = 1; i <= numTabulars; i++) {
@@ -46,8 +46,8 @@ public class DynamicMBeanMetrics implements DynamicMBean {
     }
 
     // Returns current value of metricsDAO counter plus the attribute number for some variation in values
-    public Number getSimpleAttributeValue(int i){
-        return (Number) (this.metricsDAO.getNumberValue().intValue() + i);
+    public Number getSimpleAttributeValue() {
+        return this.metricsDAO.getNumberValue();
     }
 
     @Override
@@ -143,7 +143,7 @@ public class DynamicMBeanMetrics implements DynamicMBean {
             Map<Object, Object> compositeData = new HashMap<>();
 
             for (int i = 1; i <= numCompPerTabular; i++){
-                compositeData.put(i, getSimpleAttributeValue(i));
+                compositeData.put(i, getSimpleAttributeValue());
             }
 
             // Add dummy data to the TabularData
@@ -166,8 +166,7 @@ public class DynamicMBeanMetrics implements DynamicMBean {
         log.debug("Updating attribute values for " + this.name);
         for (Map.Entry<String, Object> entry : attributes.entrySet()) {
             if (entry.getValue() instanceof Integer) {
-                int attrNum = entry.getKey().charAt(entry.getKey().length() - 1) - '0';
-                attributes.put(entry.getKey(), getSimpleAttributeValue(attrNum));
+                attributes.put(entry.getKey(), getSimpleAttributeValue());
             }
             if(entry.getValue() instanceof TabularDataSupport){
                 attributes.put(entry.getKey(), getTabularData());
