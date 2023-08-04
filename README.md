@@ -28,7 +28,7 @@ In order to generate the jar artifact, simply run the ```./mvnw clean compile as
 
 The distribution will be created under ```target/```.
 
-To use this jar in the Agent, see [these docs](https://github.com/DataDog/datadog-agent/blob/main/docs/dev/checks/jmxfetch.md).
+To use this JAR in the Agent, see [these docs](https://github.com/DataDog/datadog-agent/blob/main/docs/dev/checks/jmxfetch.md).
 
 ### Note
 
