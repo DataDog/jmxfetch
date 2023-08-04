@@ -116,6 +116,17 @@ class BeanSpec {
     public int tabularAttributeCount;
     public int compositeValuesPerTabularAttribute;
 
+    public BeanSpec(){
+
+    }
+
+    public BeanSpec(int beanCount, int scalarAttributeCount, int tabularAttributeCount, int compositeValuesPerTabularAttribute){
+        this.beanCount=beanCount;
+        this.scalarAttributeCount=scalarAttributeCount;
+        this.tabularAttributeCount=tabularAttributeCount;
+        this.compositeValuesPerTabularAttribute=compositeValuesPerTabularAttribute;
+    }
+
     @Override
     public String toString(){
         return  "\n\t-beanCount: " + beanCount +
@@ -129,6 +140,7 @@ class BeanSpec {
 public class App
 {
     private static boolean started = false;
+    final static String testDomain = "Bohnanza";
     public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
     {
         AppConfig config = new AppConfig();
@@ -164,7 +176,11 @@ public class App
 
         BeanManager bm = new BeanManager(mbs, mDao);
 
-        //set up initial beans for all the domains found in config file
+        // Set up test domain
+        BeanSpec testDomaiBeanSpec = new BeanSpec(1, 1, 0, 0);
+        bm.setMBeanState(testDomain, testDomaiBeanSpec);
+
+        // Set up initial beans for all the domains found in config file
         for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()){
             bm.setMBeanState(entry.getKey(), entry.getValue());
         }
