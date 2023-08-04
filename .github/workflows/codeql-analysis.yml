@@ -46,7 +46,7 @@ jobs:
         java-package: jdk
 
     - name: Build with Maven
-      run: mvn clean compile assembly:single
+      run: ./mvnw clean compile assembly:single
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2

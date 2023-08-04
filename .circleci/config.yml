@@ -2,12 +2,12 @@ version: 2
 lint_steps: &lint_steps
   steps:
     - checkout
-    - run: mvn verify -B -Dhttps.protocols=TLSv1.2 -DskipTests
+    - run: ./mvnw verify -B -Dhttps.protocols=TLSv1.2 -DskipTests
 build_steps: &build_steps
   steps:
     - checkout
     - setup_remote_docker
-    - run: mvn test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
+    - run: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
     - run:
         when: on_fail
         command: for log in target/surefire-reports/*.txt; do  echo "$log ========================" ; cat $log ; done
@@ -15,11 +15,11 @@ build_steps: &build_steps
 jobs:
   lint_openjdk8:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:8.0
     <<: *lint_steps
   test_openjdk8:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:8.0
     <<: *build_steps
   test_openjdk11:
     docker:
