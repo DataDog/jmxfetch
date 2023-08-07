@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/DataDog/jmxfetch.png?branch=master)](https://travis-ci.com/DataDog/jmxfetch)
+[![Build Status](https://circleci.com/gh/DataDog/jmxfetch.svg?style=svg)](https://app.circleci.com/pipelines/github/DataDog/jmxfetch)
 
 # [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
 
@@ -41,7 +41,7 @@ docker run -it --rm \
     --name my-maven-project \
     -v "$(pwd)":/usr/src/app \
     -w /usr/src/app \
-    eclipse-temurin:8u382-b05-jdk ./mvnw -DskipTests clean package
+    eclipse-temurin:8-jdk ./mvnw -DskipTests clean package
 ```
 
 ## Coding standards
@@ -156,7 +156,7 @@ otherwise the subsequent publishes will fail.
 
 ```
 Get help on usage:
-java -jar jmxfetch-0.48.0-SNAPSHOT-jar-with-dependencies.jar --help
+java -jar jmxfetch-0.47.10-SNAPSHOT-jar-with-dependencies.jar --help
 ```
 
 ## Updating Maven Wrapper
