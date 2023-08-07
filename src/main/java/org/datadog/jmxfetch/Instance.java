@@ -529,7 +529,6 @@ public class Instance {
         instanceTelemetryBean.setAttributeCount(matchingAttributes.size());
         instanceTelemetryBean.setMetricCount(metrics.size());
         log.debug("Updated jmx bean for instance: " + this.getCheckName()
-                + " for bean: " + instanceTelemetryBean.toString()
                 + " With number of beans = " + instanceTelemetryBean.getBeanCount()
                 + " attributes = " + instanceTelemetryBean.getAttributeCount()
                 + " metrics = " + instanceTelemetryBean.getMetricCount());
