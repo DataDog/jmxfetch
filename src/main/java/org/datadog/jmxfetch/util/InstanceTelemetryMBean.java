@@ -1,7 +1,7 @@
 package org.datadog.jmxfetch.util;
 
-public interface JmxfetchTelemetryMBean {
-    
+public interface InstanceTelemetryMBean {
+
     int getBeanCount();
 
     int getAttributeCount();

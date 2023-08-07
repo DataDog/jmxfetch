@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
-import org.datadog.jmxfetch.util.JmxfetchTelemetry;
+import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.yaml.snakeyaml.Yaml;
 
 
@@ -114,8 +114,8 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
-    private JmxfetchTelemetry jmxBean;
-    private ObjectName jmxBeanName;
+    private InstanceTelemetry instanceTelemetryBean;
+    private ObjectName instanceTelemetryBeanName;
     private MBeanServer mbs;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
@@ -272,7 +272,7 @@ public class Instance {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
-        jmxBean = createJmxBean();
+        instanceTelemetryBean = createJmxBean();
     }
 
     private ObjectName getObjName(String domain,String instance)
@@ -280,20 +280,19 @@ public class Instance {
         return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
-    private JmxfetchTelemetry createJmxBean() {
+    private InstanceTelemetry createJmxBean() {
         mbs =  ManagementFactory.getPlatformMBeanServer();
-        JmxfetchTelemetry bean = new JmxfetchTelemetry();
+        InstanceTelemetry bean = new InstanceTelemetry();
         log.debug("Created jmx bean for instance: " + this.getCheckName());
 
         try {
-            jmxBeanName = getObjName("JMXFetch" , this.getName());
-            mbs.registerMBean(bean,jmxBeanName);
+            instanceTelemetryBeanName = getObjName("JMXFetch" , this.getName());
+            mbs.registerMBean(bean,instanceTelemetryBeanName);
             log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName());
 
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException
                 | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.debug("Could not register bean for instance: " + this.getCheckName(),e);
-            e.printStackTrace();
+            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
         }
 
         return bean;
@@ -526,13 +525,14 @@ public class Instance {
                 }
             }
         }
-        jmxBean.setBeanCount(beans.size());
-        jmxBean.setAttributeCount(matchingAttributes.size());
-        jmxBean.setMetricCount(metrics.size());
-        log.debug("Updated jmx bean for instance: " + this.getCheckName() + " for bean: "
-                + jmxBean.toString() + " With number of beans = " + jmxBean.getBeanCount()
-                        + " attributes = " + jmxBean.getAttributeCount()
-                                + " metrics =" + jmxBean.getMetricCount());
+        instanceTelemetryBean.setBeanCount(beans.size());
+        instanceTelemetryBean.setAttributeCount(matchingAttributes.size());
+        instanceTelemetryBean.setMetricCount(metrics.size());
+        log.debug("Updated jmx bean for instance: " + this.getCheckName()
+                + " for bean: " + instanceTelemetryBean.toString()
+                + " With number of beans = " + instanceTelemetryBean.getBeanCount()
+                + " attributes = " + instanceTelemetryBean.getAttributeCount()
+                + " metrics = " + instanceTelemetryBean.getMetricCount());
         return metrics;
     }
 
@@ -823,7 +823,7 @@ public class Instance {
 
     private void cleanupTelemetryBean() {
         try {
-            mbs.unregisterMBean(jmxBeanName);
+            mbs.unregisterMBean(instanceTelemetryBeanName);
             log.debug("Successfully unregistered bean for instance: " + this.getCheckName());
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             log.debug("Unable to unregister bean for instance: " + this.getCheckName());
