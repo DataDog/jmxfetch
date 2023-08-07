@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/DataDog/jmxfetch.png?branch=master)](https://travis-ci.com/DataDog/jmxfetch)
+[![Build Status](https://circleci.com/gh/DataDog/jmxfetch.svg?style=svg)](https://app.circleci.com/pipelines/github/DataDog/jmxfetch)
 
 # [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
 
