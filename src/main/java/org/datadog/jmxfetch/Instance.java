@@ -250,15 +250,6 @@ public class Instance {
             }
         }
 
-        if (this.initConfig != null) {
-            Boolean jmxfetchTelemetry = (Boolean) this.initConfig.get("jmxfetch_telemetry");
-            if (jmxfetchTelemetry != null && jmxfetchTelemetry) {
-                loadDefaultConfig("jmxfetch_telemetry.yaml");
-            } else {
-                log.info("jmxfetch_telemetry is false - not collecting jmxfetch telemetry");
-            }
-        }
-
 
         Boolean collectDefaultJvmMetrics = (Boolean) instanceMap.get("collect_default_jvm_metrics");
         if (collectDefaultJvmMetrics == null || collectDefaultJvmMetrics) {
