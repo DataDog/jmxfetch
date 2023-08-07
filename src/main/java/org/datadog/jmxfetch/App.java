@@ -650,6 +650,7 @@ public class App {
 
     private void loadFileConfigs(final AppConfig config, final Map<String, YamlParser> configs) {
         final List<String> fileList = config.getYamlFileList();
+        log.info("CALEB: loadFileConfigs list is " + fileList);
         if (fileList != null) {
             for (final String fileName : fileList) {
                 final File file = new File(config.getConfdDirectory(), fileName);
@@ -670,6 +671,7 @@ public class App {
     private void loadResourceConfigs(
             final AppConfig config, final Map<String, YamlParser> configs) {
         final List<String> resourceConfigList = config.getInstanceConfigResources();
+        log.info("CALEB: loadResourceConfigs list is " + resourceConfigList);
         if (resourceConfigList != null) {
             final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (final String resourceName : resourceConfigList) {
