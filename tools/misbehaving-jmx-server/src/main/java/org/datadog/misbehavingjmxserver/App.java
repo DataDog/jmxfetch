@@ -31,6 +31,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import io.javalin.*;
 import lombok.extern.slf4j.Slf4j;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 import org.datadog.Defaults;
 
@@ -173,8 +175,10 @@ public class App
         bm.setMBeanState(testDomain, testDomainBeanSpec);
 
         // Set up initial beans for all the domains found in config file
-        for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()) {
-            bm.setMBeanState(entry.getKey(), entry.getValue());
+        if (config.jmxDomainConfigurations != null){
+            for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()) {
+                bm.setMBeanState(entry.getKey(), entry.getValue());
+            }
         }
 
         Javalin controlServer = Javalin.create();
