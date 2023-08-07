@@ -24,6 +24,8 @@ public class ConnectionFactory {
 
         if (connectionParams.get(PROCESS_NAME_REGEX) != null) {
             try {
+                // AttachNotSupportedException is accessible in java 7 and 8 through tools.jar 
+                // and java 9+ by default
                 Class.forName("com.sun.tools.attach.AttachNotSupportedException");
             } catch (ClassNotFoundException e) {
                 throw new IOException(

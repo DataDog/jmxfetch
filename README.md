@@ -22,13 +22,27 @@ pull request.
 
 ## Building from source
 
-JMXFetch uses [Maven](http://maven.apache.org) for its build system.
+JMXFetch uses [Maven](http://maven.apache.org) for its build system. The repo contains a [Maven Wrapper](https://maven.apache.org/wrapper/), so you don't need to download and install Maven.
 
-In order to generate the jar artifact, simply run the ```mvn clean compile assembly:single``` command in the cloned directory.
+In order to generate the JAR artifact, run the `./mvnw clean compile assembly:single` command in the cloned directory.
 
 The distribution will be created under ```target/```.
 
-To use this jar in the Agent, see [these docs](https://github.com/DataDog/datadog-agent/blob/main/docs/dev/checks/jmxfetch.md).
+To use this JAR in the Agent, see [these docs](https://github.com/DataDog/datadog-agent/blob/main/docs/dev/checks/jmxfetch.md).
+
+### Note
+
+If you want build all the JAR files for JMXFetch, you need to use an older JDK version like JDK 8.
+There is a known issue where the build can't find `javadoc command` on modern JDKs.
+The quickest way to build these JAR files is to use Docker:
+
+```
+docker run -it --rm \
+    --name my-maven-project \
+    -v "$(pwd)":/usr/src/app \
+    -w /usr/src/app \
+    eclipse-temurin:8u382-b05-jdk ./mvnw -DskipTests clean package
+```
 
 ## Coding standards
 
@@ -36,7 +50,7 @@ JMXFetch uses [Checkstyle](http://checkstyle.sourceforge.net/) with [Google Java
 
 To perform a `Checkstyle` analysis and outputs violations, run:
 ```
-mvn checkstyle::check
+./mvnw checkstyle::check
 ```
 
 `Checkstyle` analysis is automatically executed prior to compiling the code, testing.
@@ -56,7 +70,7 @@ include the line number which emitted a given log.
 
 To run unit test, issue the following command:
 ```
-mvn test
+./mvnw test
 ```
 
 Some tests utilize [TestContainers](https://www.testcontainers.org/) which requires a docker client.
@@ -66,7 +80,7 @@ If you're on macOS or Windows, docker desktop is architected to run a linux VM w
 This makes the networking a bit different and you should use the following command to run the tests.
 
 ```
-docker run -it --rm -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker.sock maven:3.8-eclipse-temurin-8 mvn test
+docker run -it --rm -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker.sock eclipse-temurin:8-jdk ./mvnw test
 ```
 
 This version runs the maven jmxfetch tests within a container as well, which works as long as the `TEST_CONTAINERS_HOST_OVERRIDE` env var is set.
@@ -127,7 +141,7 @@ export SONATYPE_PASS="<Password for Nexus admin from previous step>"
 ```
 - Run the deploy with the appropriate `skipStaging` flag:
 ```sh
-mvn -DskipTests -DskipStaging=true -DperformRelease=true --settings settings.xml clean deploy
+./mvnw -DskipTests -DskipStaging=true -DperformRelease=true --settings settings.xml clean deploy
 ```
 
 If you do this correctly, the artifact will be available in the Nexus container at
@@ -144,3 +158,22 @@ otherwise the subsequent publishes will fail.
 Get help on usage:
 java -jar jmxfetch-0.48.0-SNAPSHOT-jar-with-dependencies.jar --help
 ```
+
+## Updating Maven Wrapper
+
+To upgrade the Maven Wrapper, you need to run:
+
+```
+./mvn wrapper:wrapper -Dmaven=<Maven Version X.Y.Z>
+```
+
+The easiest way to regenerate the wrapper files (`mvnw`, `mvnw.cmd`, `.mvn/wrapper/maven-wrapper.jar` and `.mvn/wrapper/maven-wrapper.properties`) is to use Docker:
+
+```
+docker run -it --rm \
+    --name my-maven-project \
+    -v "$(pwd)":/usr/src/app \
+    -w /usr/src/app maven:3 mvn wrapper:wrapper -Dmaven=<Maven Version X.Y.Z>
+```
+
+Leave out the `-Dmaven=<Maven Version X.Y.Z>` to get the latest version of Maven.

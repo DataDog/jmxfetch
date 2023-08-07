@@ -59,31 +59,32 @@ public class AttachApiConnection extends Connection {
     }
 
     // management-agent.jar has been removed in java 8+
-    // Once JMXFetch drops java7 support, this should be simplified to simply invoke
-    // vm.startLocalManagementAgent
+    // Once JMXFetch drops java 7 support, this should be simplified to simply invoke 
+    // vm.startLocalManagementAgent which is accessible in java 8 if tools.jar is added 
+    // to the classpath and java 9+ by default 
     // ref https://bugs.openjdk.org/browse/JDK-8179063
     private void loadJmxAgent(com.sun.tools.attach.VirtualMachine vm) throws IOException {
-        String agent =
-                vm.getSystemProperties().getProperty("java.home")
-                        + File.separator
-                        + "lib"
-                        + File.separator
-                        + "management-agent.jar";
         try {
-            vm.loadAgent(agent);
-        } catch (Exception e) {
-            log.warn("Error initializing JMX agent from management-agent.jar", e);
-
+            Method method = com.sun.tools.attach.VirtualMachine
+                .class.getMethod("startLocalManagementAgent");
+            log.info("Found startLocalManagementAgent API, attempting to use it.");
+            method.invoke(vm);
+        } catch (NoSuchMethodException noMethodE) {
+            log.warn("startLocalManagementAgent method not found, must be on java 7", noMethodE);
+            String agent = vm.getSystemProperties().getProperty("java.home")
+                + File.separator
+                + "lib"
+                + File.separator
+                + "management-agent.jar";
             try {
-                Method method = com.sun.tools.attach.VirtualMachine
-                    .class.getMethod("startLocalManagementAgent");
-                log.info("Found startLocalManagementAgent API, attempting to use it.");
-                method.invoke(vm);
-            } catch (NoSuchMethodException noMethodE) {
-                log.warn("startLocalManagementAgent method not found, must be on java7", noMethodE);
-            } catch (Exception reflectionE) {
-                log.warn("Error invoking the startLocalManagementAgent method", reflectionE);
+                vm.loadAgent(agent);
+            } catch (Exception e) {
+                log.warn("Error initializing JMX agent from management-agent.jar", e);
             }
+        } catch (Exception reflectionE) {
+            log.warn("Error invoking the startLocalManagementAgent method", reflectionE);
         }
+        
+        
     }
 }
