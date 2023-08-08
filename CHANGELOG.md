@@ -2,7 +2,7 @@ Changelog
 =========
 # 0.47.10 / 2023-08-07
 
-* [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context and 'TLS' as min protocol version used in the `dummyTrustManager` [#436][] 
+* [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` [#436][] 
 * [BUGFIX] Fixed issue race condition where an exception is thrown if the Agent hasn't finished initialising before JMXFetch starts to shut down [#449][]
 * [OTHER] Update management agent logic and comments for java 7 vs 8 vs 9 [#457][]
 
