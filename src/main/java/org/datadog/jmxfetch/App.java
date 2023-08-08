@@ -62,6 +62,7 @@ public class App {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
     private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
+    private static final String INSTANCE_TELEMETRY_NAME = "jmxfetch_telemetry";
 
     private static final ByteArraySearcher CONFIG_TERM_SEARCHER
             = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
@@ -650,7 +651,6 @@ public class App {
 
     private void loadFileConfigs(final AppConfig config, final Map<String, YamlParser> configs) {
         final List<String> fileList = config.getYamlFileList();
-        log.info("CALEB: loadFileConfigs list is " + fileList);
         if (fileList != null) {
             for (final String fileName : fileList) {
                 final File file = new File(config.getConfdDirectory(), fileName);
@@ -671,7 +671,6 @@ public class App {
     private void loadResourceConfigs(
             final AppConfig config, final Map<String, YamlParser> configs) {
         final List<String> resourceConfigList = config.getInstanceConfigResources();
-        log.info("CALEB: loadResourceConfigs list is " + resourceConfigList);
         if (resourceConfigList != null) {
             final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (final String resourceName : resourceConfigList) {
@@ -695,6 +694,20 @@ public class App {
                 }
             }
         }
+    }
+
+    private void addInstanceTelemetryCheck (){
+        String additionalConfigs = "{\"configs\":{\"" + INSTANCE_TELEMETRY_NAME + "\":{\"check_name\":\"jmxfetch_telemetry1\",\"init_config\":{\"is_jmx\":true},\"instances\":[{\"collect_default_jvm_metrics\":true,\"name\":\"jmxfetch_telemetry2\",\"conf\":[{\"include\":{\"domain\":\"jmxFetch\"}}],\"new_gc_metrics\":true,\"process_name_regex\":\".*org.datadog.jmxfetch.App.*\",\"tags\":[\"jmx:fetch\"]}]}}}";
+        byte[] utf8 = additionalConfigs.getBytes(UTF_8);
+        try {
+            InputStream jsonInputStream = new ByteArrayInputStream(utf8);
+            JsonParser parser = new JsonParser(jsonInputStream);
+            Map<String, Object> additionalJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
+            adJsonConfigs.put(INSTANCE_TELEMETRY_NAME,additionalJsonConfigs.get(INSTANCE_TELEMETRY_NAME));
+        } catch (IOException e) {
+            log.warn("Unable to configure jmxfetch_telemetry check",e);
+        }
+
     }
 
     private boolean getJsonConfigs() {
@@ -731,6 +744,26 @@ public class App {
                 for (String checkName : adJsonConfigs.keySet()) {
                     log.debug("received config for check '" + checkName + "'");
                 }
+
+                if(appConfig.getInstanceTelemetry()) {
+                    // Remove jmxfetch_telemetry check if it is the only remaining jmxfetch check
+                    if (adJsonConfigs.size() == 1) {
+                        if(adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)){
+                            log.info("jmxfetch_telemetry is the only remaining check configured, removing now");
+                            adJsonConfigs.remove(INSTANCE_TELEMETRY_NAME);
+                        }
+                    }
+                    // If we have at least one check and jmxfetch_telemetry isnt already added lets add it
+                    if (adJsonConfigs.size() >= 1){
+                        if(!adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)){
+                            log.info("Adding jmxfetch instance telemetry to list of configured checks");
+                            addInstanceTelemetryCheck();
+                        }
+                    }
+                }
+
+
+
             }
         } catch (JsonProcessingException e) {
             log.error("error processing JSON response: " + e);
@@ -868,7 +901,7 @@ public class App {
                 }
 
                 // Create a new Instance object
-                log.info("Instantiating instance for: {}", name);
+                log.info("Instantiating configs instance for: {}", name);
                 final Instance instance =
                         instantiate(
                                 configInstance,
