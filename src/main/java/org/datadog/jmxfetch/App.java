@@ -696,14 +696,14 @@ public class App {
         }
     }
 
-    private void addInstanceTelemetryCheck (){
-        String additionalConfigs = "{\"configs\":{\"" + INSTANCE_TELEMETRY_NAME + "\":{\"check_name\":\"jmxfetch_telemetry1\",\"init_config\":{\"is_jmx\":true},\"instances\":[{\"collect_default_jvm_metrics\":true,\"name\":\"jmxfetch_telemetry2\",\"conf\":[{\"include\":{\"domain\":\"jmxFetch\"}}],\"new_gc_metrics\":true,\"process_name_regex\":\".*org.datadog.jmxfetch.App.*\",\"tags\":[\"jmx:fetch\"]}]}}}";
-        byte[] utf8 = additionalConfigs.getBytes(UTF_8);
+    private void addInstanceTelemetryCheck() {
+        String extraConfigs = "{\"configs\":{\"" + INSTANCE_TELEMETRY_NAME + "\":{\"check_name\":\"jmxfetch_telemetry1\",\"init_config\":{\"is_jmx\":true},\"instances\":[{\"collect_default_jvm_metrics\":true,\"name\":\"jmxfetch_telemetry2\",\"conf\":[{\"include\":{\"domain\":\"jmxFetch\"}}],\"new_gc_metrics\":true,\"process_name_regex\":\".*org.datadog.jmxfetch.App.*\",\"tags\":[\"jmx:fetch\"]}]}}}";
+        byte[] utf8 = extraConfigs.getBytes(UTF_8);
         try {
             InputStream jsonInputStream = new ByteArrayInputStream(utf8);
             JsonParser parser = new JsonParser(jsonInputStream);
-            Map<String, Object> additionalJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
-            adJsonConfigs.put(INSTANCE_TELEMETRY_NAME,additionalJsonConfigs.get(INSTANCE_TELEMETRY_NAME));
+            Map<String, Object> extraJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
+            adJsonConfigs.put(INSTANCE_TELEMETRY_NAME,extraJsonConfigs.get(INSTANCE_TELEMETRY_NAME));
         } catch (IOException e) {
             log.warn("Unable to configure jmxfetch_telemetry check",e);
         }
@@ -745,18 +745,18 @@ public class App {
                     log.debug("received config for check '" + checkName + "'");
                 }
 
-                if(appConfig.getInstanceTelemetry()) {
+                if (appConfig.getInstanceTelemetry()) {
                     // Remove jmxfetch_telemetry check if it is the only remaining jmxfetch check
                     if (adJsonConfigs.size() == 1) {
-                        if(adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)){
-                            log.info("jmxfetch_telemetry is the only remaining check configured, removing now");
+                        if (adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)){
+                            log.info("jmxfetch_telemetry is the only check, removing now");
                             adJsonConfigs.remove(INSTANCE_TELEMETRY_NAME);
                         }
                     }
-                    // If we have at least one check and jmxfetch_telemetry isnt already added lets add it
-                    if (adJsonConfigs.size() >= 1){
-                        if(!adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)){
-                            log.info("Adding jmxfetch instance telemetry to list of configured checks");
+                    // If we have at least one check and jmxfetch_telemetry isnt already added, add it
+                    if (adJsonConfigs.size() >= 1) {
+                        if (!adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)) {
+                            log.info("Adding jmxfetch instance telemetry to configured checks");
                             addInstanceTelemetryCheck();
                         }
                     }
