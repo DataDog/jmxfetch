@@ -38,8 +38,7 @@ public class DynamicMBeanMetrics implements DynamicMBean {
 
                 attributes.put("Tabular" + String.valueOf(i),getTabularData());
             } catch (Exception e) {
-                log.warn("Tabular" + String.valueOf(i) + " didnt work");
-                e.printStackTrace();
+                log.warn("Tabular" + String.valueOf(i) + " threw an exception: ", e);
             }
         }
 

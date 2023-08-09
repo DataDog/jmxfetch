@@ -19,9 +19,14 @@ public class JMXServerControlClient extends JMXServerClient{
 
     }
 
-    public void createMBeans(String domain, int numDesiredBeans) throws IOException {
+    public void createMBeans(String domain, int numDesiredBeans, int scalarAttributeCount,
+            int tabularAttributeCount, int compositeValuesPerTabularAttribute) throws IOException {
+
         String endpoint = "/beans/" + domain;
-        String jsonPayload = "{\"beanCount\": " + numDesiredBeans + ", \"scalarAttributeCount\": 4, \"tabularAttributeCount\": 0, \"compositeValuesPerTabularAttribute\": 0" + "}";
+        String jsonPayload = "{\"beanCount\": " + numDesiredBeans
+                + ", \"scalarAttributeCount\": " + scalarAttributeCount
+                + ", \"tabularAttributeCount\": " + tabularAttributeCount
+                + ", \"compositeValuesPerTabularAttribute\": " + compositeValuesPerTabularAttribute + "}";
         sendPostRequestWithPayload(endpoint, jsonPayload);
     }
 
