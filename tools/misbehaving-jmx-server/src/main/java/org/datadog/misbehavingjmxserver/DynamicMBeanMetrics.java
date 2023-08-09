@@ -9,6 +9,15 @@ import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+import javax.management.MBeanInfo;
+import javax.management.DynamicMBean;
+import javax.management.MBeanAttributeInfo;
 
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
