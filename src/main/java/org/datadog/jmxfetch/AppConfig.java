@@ -123,10 +123,10 @@ public class AppConfig {
     private boolean statsdTelemetry;
 
     @Parameter(
-            names = {"--instance_telemetry", "-it"},
-            description = "Enable jmxfetch instance telemetry reporting",
+            names = {"--jmxfetch_telemetry", "-jt"},
+            description = "Enable additional jmxfetch telemetry reporting",
             required = false)
-    private boolean instanceTelemetry;
+    private boolean jmxfetchTelemetry;
 
     @Parameter(
             names = {"--statsd_queue_size", "-sq"},
@@ -417,8 +417,8 @@ public class AppConfig {
         return statsdTelemetry;
     }
 
-    public boolean getInstanceTelemetry() {
-        return instanceTelemetry;
+    public boolean getJmxfetchTelemetry() {
+        return jmxfetchTelemetry;
     }
 
     public int getStatsdQueueSize() {

@@ -898,15 +898,13 @@ public class App {
             }
         }
 
-        if (appConfig.getInstanceTelemetry()) {
-            // If we have at least one check add jmxfetch_telemetry check
-            if (newInstances.size() >= 1) {
-                log.info("Adding jmxfetch instance telemetry check");
-                final Instance instance = instantiate(getInstanceTelemetryInstanceConfig(),
-                         getInstanceTelemetryInitConfig(), "jmxfetch_telemetry_check",
-                         this.appConfig);
-                newInstances.add(instance);
-            }
+        // Enables jmxfetch telemetry if there are other checks active and it's been enabled
+        if (appConfig.getJmxfetchTelemetry() && newInstances.size() >= 1) {
+            log.info("Adding jmxfetch telemetry check");
+            final Instance instance = instantiate(getTelemetryInstanceConfig(),
+                        getTelemetryInitConfig(), "jmxfetch_telemetry_check",
+                        this.appConfig);
+            newInstances.add(instance);
         }
 
         final List<InstanceTask<Void>> instanceInitTasks =
@@ -957,13 +955,13 @@ public class App {
         }
     }
 
-    private Map<String,Object> getInstanceTelemetryInitConfig() {
+    private Map<String,Object> getTelemetryInitConfig() {
         Map<String,Object> config = new HashMap<String,Object>();
         config.put("is_jmx",true);
         return config;
     }
 
-    private Map<String,Object> getInstanceTelemetryInstanceConfig() {
+    private Map<String,Object> getTelemetryInstanceConfig() {
         Map<String,Object> config = new HashMap<String,Object>();
         config.put("name","jmxfetch_telemetry_instance");
         config.put("collect_default_jvm_metrics",true);
