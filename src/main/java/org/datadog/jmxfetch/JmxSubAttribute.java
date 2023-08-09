@@ -21,7 +21,8 @@ abstract class JmxSubAttribute extends JmxAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
-            boolean emptyDefaultHostname) {
+            boolean emptyDefaultHostname,
+            boolean normalizeBeanParamTags) {
         super(
                 attribute,
                 beanName,
@@ -32,7 +33,8 @@ abstract class JmxSubAttribute extends JmxAttribute {
                 serviceNameProvider,
                 instanceTags,
                 cassandraAliasing,
-                emptyDefaultHostname);
+                emptyDefaultHostname,
+                normalizeBeanParamTags);
     }
 
     public Metric getCachedMetric(String name) {
