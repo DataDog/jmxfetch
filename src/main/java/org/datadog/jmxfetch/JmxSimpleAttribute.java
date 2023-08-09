@@ -28,7 +28,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
-            Boolean emptyDefaultHostname) {
+            Boolean emptyDefaultHostname,
+            Boolean normalizeBeanParamTags) {
         super(
                 attribute,
                 beanName,
@@ -39,7 +40,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 serviceNameProvider,
                 instanceTags,
                 cassandraAliasing,
-                emptyDefaultHostname);
+                emptyDefaultHostname,
+                normalizeBeanParamTags);
     }
 
     @Override
