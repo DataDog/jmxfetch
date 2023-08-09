@@ -1,6 +1,5 @@
 package org.datadog.misbehavingjmxserver;
 
-import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
