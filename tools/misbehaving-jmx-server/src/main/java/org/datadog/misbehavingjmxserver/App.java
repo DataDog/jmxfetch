@@ -49,7 +49,7 @@ class AppConfig {
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
 
     @Parameter(names = {"--config-path", "-cfp"})
-    public String config_path = "./misbehaving_jmx_config.yaml";
+    public String config_path = "./misbehaving-jmx-domains-config.yaml";
 
     public JmxDomainConfigurations jmxDomainConfigurations;
 
