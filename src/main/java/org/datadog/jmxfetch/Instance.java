@@ -117,6 +117,7 @@ public class Instance {
     private InstanceTelemetry instanceTelemetryBean;
     private ObjectName instanceTelemetryBeanName;
     private MBeanServer mbs;
+    private Boolean normalizeBeanParamTags;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -224,6 +225,12 @@ public class Instance {
         if (initConfig != null) {
             this.serviceCheckPrefix = (String) initConfig.get("service_check_prefix");
         }
+
+        this.normalizeBeanParamTags = (Boolean) instanceMap.get("normalize_bean_param_tags");
+        if (this.normalizeBeanParamTags == null) {
+            this.normalizeBeanParamTags = false;
+        }
+
 
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
@@ -625,7 +632,8 @@ public class Instance {
                                 serviceNameProvider,
                                 tags,
                                 cassandraAliasing,
-                                emptyDefaultHostname);
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -643,7 +651,8 @@ public class Instance {
                                 connection,
                                 serviceNameProvider,
                                 tags,
-                                emptyDefaultHostname);
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -661,7 +670,8 @@ public class Instance {
                                 connection,
                                 serviceNameProvider,
                                 tags,
-                                emptyDefaultHostname);
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
                 } else {
                     try {
                         log.debug(
