@@ -388,11 +388,13 @@ public class App {
                             System.arraycopy(minibuff, 0, buffer, oldLen, len);
                         }
                     }
-                    this.setReinit(processAutoDiscovery(buffer));
+                    boolean result = processAutoDiscovery(buffer);
+                    this.setReinit(result);
                 }
 
                 if (this.appConfig.remoteEnabled()) {
-                    this.setReinit(getJsonConfigs());
+                    boolean result = getJsonConfigs();
+                    this.setReinit(result);
                 }
             } catch (IOException e) {
                 log.warn(
