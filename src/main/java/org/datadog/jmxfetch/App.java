@@ -867,7 +867,7 @@ public class App {
                 }
 
                 // Create a new Instance object
-                log.info("Instantiating configs instance for: {}", name);
+                log.info("Instantiating instance for: {}", name);
                 final Instance instance =
                         instantiate(
                                 configInstance,

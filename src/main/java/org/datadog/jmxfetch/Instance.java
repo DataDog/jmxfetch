@@ -250,7 +250,6 @@ public class Instance {
             }
         }
 
-
         Boolean collectDefaultJvmMetrics = (Boolean) instanceMap.get("collect_default_jvm_metrics");
         if (collectDefaultJvmMetrics == null || collectDefaultJvmMetrics) {
             loadDefaultConfig("default-jmx-metrics.yaml");
