@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -62,7 +63,6 @@ public class App {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String COLLECTION_POOL_NAME = "jmxfetch-collectionPool";
     private static final String RECOVERY_POOL_NAME = "jmxfetch-recoveryPool";
-    private static final String INSTANCE_TELEMETRY_NAME = "jmxfetch_telemetry";
 
     private static final ByteArraySearcher CONFIG_TERM_SEARCHER
             = new ByteArraySearcher(App.AD_CONFIG_TERM.getBytes());
@@ -696,20 +696,6 @@ public class App {
         }
     }
 
-    private void addInstanceTelemetryCheck() {
-        String extraConfigs = "{\"configs\":{\"" + INSTANCE_TELEMETRY_NAME + "\":{\"check_name\":\"jmxfetch_telemetry1\",\"init_config\":{\"is_jmx\":true},\"instances\":[{\"collect_default_jvm_metrics\":true,\"name\":\"jmxfetch_telemetry2\",\"conf\":[{\"include\":{\"domain\":\"jmxFetch\"}}],\"new_gc_metrics\":true,\"process_name_regex\":\".*org.datadog.jmxfetch.App.*\",\"tags\":[\"jmx:fetch\"]}]}}}";
-        byte[] utf8 = extraConfigs.getBytes(UTF_8);
-        try {
-            InputStream jsonInputStream = new ByteArrayInputStream(utf8);
-            JsonParser parser = new JsonParser(jsonInputStream);
-            Map<String, Object> extraJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
-            adJsonConfigs.put(INSTANCE_TELEMETRY_NAME,extraJsonConfigs.get(INSTANCE_TELEMETRY_NAME));
-        } catch (IOException e) {
-            log.warn("Unable to configure jmxfetch_telemetry check",e);
-        }
-
-    }
-
     private boolean getJsonConfigs() {
         HttpClient.HttpResponse response;
         boolean update = false;
@@ -744,26 +730,6 @@ public class App {
                 for (String checkName : adJsonConfigs.keySet()) {
                     log.debug("received config for check '" + checkName + "'");
                 }
-
-                if (appConfig.getInstanceTelemetry()) {
-                    // Remove jmxfetch_telemetry check if it is the only remaining jmxfetch check
-                    if (adJsonConfigs.size() == 1) {
-                        if (adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)){
-                            log.info("jmxfetch_telemetry is the only check, removing now");
-                            adJsonConfigs.remove(INSTANCE_TELEMETRY_NAME);
-                        }
-                    }
-                    // If we have at least one check and jmxfetch_telemetry isnt already added, add it
-                    if (adJsonConfigs.size() >= 1) {
-                        if (!adJsonConfigs.containsKey(INSTANCE_TELEMETRY_NAME)) {
-                            log.info("Adding jmxfetch instance telemetry to configured checks");
-                            addInstanceTelemetryCheck();
-                        }
-                    }
-                }
-
-
-
             }
         } catch (JsonProcessingException e) {
             log.error("error processing JSON response: " + e);
@@ -932,6 +898,17 @@ public class App {
             }
         }
 
+        if (appConfig.getInstanceTelemetry()) {
+            // If we have at least one check add jmxfetch_telemetry check
+            if (newInstances.size() >= 1) {
+                log.info("Adding jmxfetch instance telemetry check");
+                final Instance instance = instantiate(getInstanceTelemetryInstanceConfig(),
+                         getInstanceTelemetryInitConfig(), "jmxfetch_telemetry_check",
+                         this.appConfig);
+                newInstances.add(instance);
+            }
+        }
+
         final List<InstanceTask<Void>> instanceInitTasks =
                 new ArrayList<>(newInstances.size());
         for (Instance instance : newInstances) {
@@ -978,6 +955,34 @@ public class App {
             // NADA
             log.warn("Critical issue initializing instances: " + e);
         }
+    }
+
+    private Map<String,Object> getInstanceTelemetryInitConfig() {
+        Map<String,Object> config = new HashMap<String,Object>();
+        config.put("is_jmx",true);
+        return config;
+    }
+
+    private Map<String,Object> getInstanceTelemetryInstanceConfig() {
+        Map<String,Object> config = new HashMap<String,Object>();
+        config.put("name","jmxfetch_telemetry_instance");
+        config.put("collect_default_jvm_metrics",true);
+        config.put("new_gc_metrics",true);
+        config.put("process_name_regex",".*org.datadog.jmxfetch.App.*");
+
+        List<Object> conf = new ArrayList<Object>();
+        Map<String,Object> confMap = new HashMap<String,Object>();
+        Map<String,Object> includeMap = new HashMap<String,Object>();
+        includeMap.put("domain","jmxfetch");
+        confMap.put("include", includeMap);
+        conf.add(confMap);
+        config.put("conf",conf);
+
+        List<String> tags = new ArrayList<String>();
+        tags.add("jmx:fetch");
+        config.put("tags", tags);
+
+        return config;
     }
 
     static TaskStatusHandler processRecoveryResults(
