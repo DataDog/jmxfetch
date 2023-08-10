@@ -40,7 +40,7 @@ a secondary `init` payload that contains the correct RMI Hostname. It is designe
 Beans in a given domain must all have the same structure, so updating these values with the HTTP Control Server erases all beans and recreates them to the set beanCount with the same number of attributes per bean.
 
 ## Configuration File
-Using the command line options `--config-path` or `-cfp` you can provide a path to a yaml configuration file to create beans automatically upon the start of misbehaving-jmx-server.
+Using the command line options `--config-path` or `-cfp` you can provide a path to a YAML configuration file to create beans automatically upon the start of misbehaving-jmx-server.
 An example file can be found at `misbehaving-jmx-domains-config.yaml`.
 
 
