@@ -37,7 +37,7 @@ a secondary `init` payload that contains the correct RMI Hostname. It is designe
 - `scalarAttributeCount` - Defines the number of simple attributes in all beans for a given domain
 - `tabularAttributeCount` - Defines the number of tabular attributes in each bean for a given domain
 - `compositeValuesPerTabularAttribute` - Defines the number of rows of data per tabular attribute
-Note, beans in a given domain must all have the same structure, so updating these values with the HTTP Control Server will erase all beans and recreate them to the set beanCount with the same number of attributes per bean.
+Beans in a given domain must all have the same structure, so updating these values with the HTTP Control Server erases all beans and recreates them to the set beanCount with the same number of attributes per bean.
 
 ## Configuration File
 Using the command line options `--config-path` or `-cfp` you can provide a path to a yaml configuration file to create beans automatically upon the start of misbehaving-jmx-server.
