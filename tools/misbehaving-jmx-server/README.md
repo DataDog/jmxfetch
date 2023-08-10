@@ -30,7 +30,7 @@ a secondary `init` payload that contains the correct RMI Hostname. It is designe
 - POST `/cutNetwork` - Denies any requests to create a new socket (ie, no more connections will be 'accept'ed) and then closes existing TCP sockets
 - POST `/restoreNetwork` - Allows new sockets to be created
 - GET `/beans/:domain` - Retrieves a list of bean names that are currently registered under the given domain. The length of this array should be exactly the number of beans under that domain
-- POST `/beans/:domain` - Declares how many beans should exist with this domain. Beans will either be created or destroyed to reach the desired amount. Payload should be JSON with 4 keys: `beanCount`,`scalarAttributeCount`,`tabularAttributeCount`,`compositeValuesPerTabularAttribute`.
+- POST `/beans/:domain` - Declares how many beans should exist with this domain. Beans are either created or destroyed to reach the desired amount. Payload should be JSON with four keys: `beanCount`,`scalarAttributeCount`,`tabularAttributeCount`,`compositeValuesPerTabularAttribute`.
 
 ## Bean Configuration
 - `beanCount` - Declares how many beans should be present in a specfic domain
