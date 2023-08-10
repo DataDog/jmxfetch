@@ -4,17 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
-import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.yaml.snakeyaml.Yaml;
-
-
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,15 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -114,10 +103,6 @@ public class Instance {
     private AppConfig appConfig;
     private Boolean cassandraAliasing;
     private boolean emptyDefaultHostname;
-    private InstanceTelemetry instanceTelemetryBean;
-    private ObjectName instanceTelemetryBeanName;
-    private MBeanServer mbs;
-    private Boolean normalizeBeanParamTags;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -226,12 +211,6 @@ public class Instance {
             this.serviceCheckPrefix = (String) initConfig.get("service_check_prefix");
         }
 
-        this.normalizeBeanParamTags = (Boolean) instanceMap.get("normalize_bean_param_tags");
-        if (this.normalizeBeanParamTags == null) {
-            this.normalizeBeanParamTags = false;
-        }
-
-
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
         this.cassandraAliasing = (Boolean) instanceMap.get("cassandra_aliasing");
@@ -278,33 +257,7 @@ public class Instance {
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
-
-        instanceTelemetryBean = createJmxBean();
     }
-
-    private ObjectName getObjName(String domain,String instance)
-            throws MalformedObjectNameException {
-        return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
-    }
-
-    private InstanceTelemetry createJmxBean() {
-        mbs =  ManagementFactory.getPlatformMBeanServer();
-        InstanceTelemetry bean = new InstanceTelemetry();
-        log.debug("Created jmx bean for instance: " + this.getCheckName());
-
-        try {
-            instanceTelemetryBeanName = getObjName("JMXFetch" , this.getName());
-            mbs.registerMBean(bean,instanceTelemetryBeanName);
-            log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName());
-
-        } catch (MalformedObjectNameException | InstanceAlreadyExistsException
-                | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
-        }
-
-        return bean;
-    }
-
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
         Object directInstance = configInstance.get(JVM_DIRECT);
@@ -500,7 +453,7 @@ public class Instance {
             ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
 
         if (isPeriodDue(this.lastRefreshTime, period)) {
-            log.info("Refreshing bean list for " + this.getCheckName());
+            log.info("Refreshing bean list");
             this.refreshBeansList();
             this.getMatchingAttributes();
         }
@@ -532,13 +485,6 @@ public class Instance {
                 }
             }
         }
-        instanceTelemetryBean.setBeanCount(beans.size());
-        instanceTelemetryBean.setAttributeCount(matchingAttributes.size());
-        instanceTelemetryBean.setMetricCount(metrics.size());
-        log.debug("Updated jmx bean for instance: " + this.getCheckName()
-                + " With number of beans = " + instanceTelemetryBean.getBeanCount()
-                + " attributes = " + instanceTelemetryBean.getAttributeCount()
-                + " metrics = " + instanceTelemetryBean.getMetricCount());
         return metrics;
     }
 
@@ -632,8 +578,7 @@ public class Instance {
                                 serviceNameProvider,
                                 tags,
                                 cassandraAliasing,
-                                emptyDefaultHostname,
-                                normalizeBeanParamTags);
+                                emptyDefaultHostname);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -651,8 +596,7 @@ public class Instance {
                                 connection,
                                 serviceNameProvider,
                                 tags,
-                                emptyDefaultHostname,
-                                normalizeBeanParamTags);
+                                emptyDefaultHostname);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
@@ -670,8 +614,7 @@ public class Instance {
                                 connection,
                                 serviceNameProvider,
                                 tags,
-                                emptyDefaultHostname,
-                                normalizeBeanParamTags);
+                                emptyDefaultHostname);
                 } else {
                     try {
                         log.debug(
@@ -830,18 +773,8 @@ public class Instance {
         return this.limitReached;
     }
 
-    private void cleanupTelemetryBean() {
-        try {
-            mbs.unregisterMBean(instanceTelemetryBeanName);
-            log.debug("Successfully unregistered bean for instance: " + this.getCheckName());
-        } catch (MBeanRegistrationException | InstanceNotFoundException e) {
-            log.debug("Unable to unregister bean for instance: " + this.getCheckName());
-        }
-    }
-
     /** Clean up config and close connection. */
     public void cleanUp() {
-        cleanupTelemetryBean();
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
@@ -854,7 +787,7 @@ public class Instance {
      * */
     public synchronized void cleanUpAsync() {
         appConfig = null;
-        cleanupTelemetryBean();
+
         class AsyncCleaner implements Runnable {
             Connection conn;
 

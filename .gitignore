@@ -12,6 +12,7 @@ target/*
 .idea
 .vscode
 *.iml
+
 *.ucls
 
 *.png
