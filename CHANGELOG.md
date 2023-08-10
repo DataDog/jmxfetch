@@ -1,5 +1,7 @@
 Changelog
 =========
+# Next / TBD
+
 # 0.47.10 / 2023-08-10
 
 * [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` (configurable using the flag `jmxfetch.min_tls_version`, e.g. `-Djmxfetch.min_tls_version=TLS`) [#436][] 
