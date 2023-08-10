@@ -62,7 +62,6 @@ public abstract class JmxAttribute {
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
-    private boolean normalizeBeanParamTags;
 
     JmxAttribute(
             MBeanAttributeInfo attribute,
@@ -74,8 +73,7 @@ public abstract class JmxAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
-            boolean emptyDefaultHostname,
-            boolean normalizeBeanParamTags) {
+            boolean emptyDefaultHostname) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.className = className;
@@ -86,7 +84,6 @@ public abstract class JmxAttribute {
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
         this.serviceNameProvider = serviceNameProvider;
-        this.normalizeBeanParamTags = normalizeBeanParamTags;
 
         // A bean name is formatted like that:
         // org.apache.cassandra.db:type=Caches,keyspace=system,cache=HintsColumnFamilyKeyCache
@@ -195,33 +192,14 @@ public abstract class JmxAttribute {
     }
 
     /**
-     * Wrapper for javax.management.ObjectName.unqoute that removes quotes from the bean parameter
-     * value if possible. If not, it hits the catch block and returns the original parameter.
-     */
-    private String unquote(String beanParameter) {
-        int valueIndex = beanParameter.indexOf(':') + 1;
-        try {
-            return beanParameter.substring(0,valueIndex)
-                    + ObjectName.unquote(beanParameter.substring(valueIndex));
-        } catch (IllegalArgumentException e) {
-            return beanParameter;
-        }
-    }
-
-    /**
      * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
      * existing tags - Remove illegal characters
      */
-    private List<String> sanitizeParameters(List<String> beanParametersList) {
+    private static List<String> sanitizeParameters(List<String> beanParametersList) {
         List<String> defaultTagsList = new ArrayList<String>(beanParametersList.size());
         for (String rawBeanParameter : beanParametersList) {
             // Remove `|` characters
             String beanParameter = rawBeanParameter.replace("|", "");
-
-            // Unquote bean parameters that have been quoted and escaped by ObjectName.quote()
-            if (normalizeBeanParamTags == true) {
-                beanParameter = unquote(beanParameter);
-            }
 
             // 'host' parameter is renamed to 'bean_host'
             if (beanParameter.startsWith("host:")) {

@@ -30,8 +30,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             Connection connection,
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
-            boolean emptyDefaultHostname,
-            boolean normalizeBeanParamTags) {
+            boolean emptyDefaultHostname) {
         super(
                 attribute,
                 beanName,
@@ -42,8 +41,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
                 serviceNameProvider,
                 instanceTags,
                 false,
-                emptyDefaultHostname,
-                normalizeBeanParamTags);
+                emptyDefaultHostname);
     }
 
     private void populateSubAttributeList(Object attributeValue) {
