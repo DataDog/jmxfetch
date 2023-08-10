@@ -1,5 +1,9 @@
 Changelog
 =========
+# Next / TBD
+
+* [FEATURE] Adds a configurable jmxfetch telemetry check to improve jmxfetch observability [#467][]
+
 # 0.47.9 / 2023-05-25
 
 * [BUGFIX] Fixes thread leak in situations with persistent connection failures [#432][]
@@ -737,6 +741,7 @@ Changelog
 [#431]: https://github.com/DataDog/jmxfetch/issues/431
 [#432]: https://github.com/DataDog/jmxfetch/issues/432
 [#437]: https://github.com/DataDog/jmxfetch/issues/437
+[#467]: https://github.com/DataDog/jmxfetch/issues/467
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia

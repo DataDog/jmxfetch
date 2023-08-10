@@ -977,7 +977,6 @@ public class App {
         config.put("conf",conf);
 
         List<String> tags = new ArrayList<String>();
-        tags.add("jmx:fetch");
         config.put("tags", tags);
 
         return config;
