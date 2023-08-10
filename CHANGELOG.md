@@ -2,6 +2,8 @@ Changelog
 =========
 # Next / TBD
 
+* [FEATURE] Added an option to enable removal of extra quotation marks during tag extraction from Java management beans' parameters/attributes [#469][]
+
 # 0.47.10 / 2023-08-10
 
 * [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` (configurable using the flag `jmxfetch.min_tls_version`, e.g. `-Djmxfetch.min_tls_version=TLS`) [#436][] 
@@ -748,6 +750,7 @@ Changelog
 [#437]: https://github.com/DataDog/jmxfetch/issues/437
 [#457]: https://github.com/DataDog/jmxfetch/issues/457
 [#449]: https://github.com/DataDog/jmxfetch/issues/449
+[#469]: https://github.com/DataDog/jmxfetch/pull/469
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
