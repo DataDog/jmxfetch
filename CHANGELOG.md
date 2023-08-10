@@ -1,5 +1,11 @@
 Changelog
 =========
+# 0.47.10 / 2023-08-10
+
+* [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` (configurable using the flag `jmxfetch.min_tls_version`, e.g. `-Djmxfetch.min_tls_version=TLS`) [#436][] 
+* [BUGFIX] Fixed issue race condition where an exception is thrown if the Agent hasn't finished initializing before JMXFetch starts to shut down [#449][]
+* [OTHER] Update management agent logic and comments for Java 7 vs 8 vs 9 [#457][]
+
 # 0.47.9 / 2023-05-25
 
 * [BUGFIX] Fixes thread leak in situations with persistent connection failures [#432][]
@@ -736,7 +742,10 @@ Changelog
 [#424]: https://github.com/DataDog/jmxfetch/issues/424
 [#431]: https://github.com/DataDog/jmxfetch/issues/431
 [#432]: https://github.com/DataDog/jmxfetch/issues/432
+[#436]: https://github.com/DataDog/jmxfetch/issues/436
 [#437]: https://github.com/DataDog/jmxfetch/issues/437
+[#457]: https://github.com/DataDog/jmxfetch/issues/457
+[#449]: https://github.com/DataDog/jmxfetch/issues/449
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
