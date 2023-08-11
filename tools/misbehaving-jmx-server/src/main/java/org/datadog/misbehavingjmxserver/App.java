@@ -75,7 +75,7 @@ class AppConfig {
 
     public void readConfigFileOnDisk () {
         File f = new File(config_path);
-        String yamlPath = f.getAbsolutePath();
+        String yamlPath = f.getPath();
         try{
             FileInputStream yamlInputStream = new FileInputStream(yamlPath);
             Yaml yaml = new Yaml(new Constructor(JmxDomainConfigurations.class));
