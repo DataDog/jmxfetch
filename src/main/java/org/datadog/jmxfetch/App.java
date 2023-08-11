@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -899,6 +900,15 @@ public class App {
             }
         }
 
+        // Enables jmxfetch telemetry if there are other checks active and it's been enabled
+        if (appConfig.getJmxfetchTelemetry() && newInstances.size() >= 1) {
+            log.info("Adding jmxfetch telemetry check");
+            final Instance instance = instantiate(getTelemetryInstanceConfig(),
+                        getTelemetryInitConfig(), "jmxfetch_telemetry_check",
+                        this.appConfig);
+            newInstances.add(instance);
+        }
+
         final List<InstanceTask<Void>> instanceInitTasks =
                 new ArrayList<>(newInstances.size());
         for (Instance instance : newInstances) {
@@ -945,6 +955,33 @@ public class App {
             // NADA
             log.warn("Critical issue initializing instances: " + e);
         }
+    }
+
+    private Map<String,Object> getTelemetryInitConfig() {
+        Map<String,Object> config = new HashMap<String,Object>();
+        config.put("is_jmx",true);
+        return config;
+    }
+
+    private Map<String,Object> getTelemetryInstanceConfig() {
+        Map<String,Object> config = new HashMap<String,Object>();
+        config.put("name","jmxfetch_telemetry_instance");
+        config.put("collect_default_jvm_metrics",true);
+        config.put("new_gc_metrics",true);
+        config.put("process_name_regex",".*org.datadog.jmxfetch.App.*");
+
+        List<Object> conf = new ArrayList<Object>();
+        Map<String,Object> confMap = new HashMap<String,Object>();
+        Map<String,Object> includeMap = new HashMap<String,Object>();
+        includeMap.put("domain","jmxfetch");
+        confMap.put("include", includeMap);
+        conf.add(confMap);
+        config.put("conf",conf);
+
+        List<String> tags = new ArrayList<String>();
+        config.put("tags", tags);
+
+        return config;
     }
 
     static TaskStatusHandler processRecoveryResults(

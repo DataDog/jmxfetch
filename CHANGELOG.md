@@ -2,6 +2,7 @@ Changelog
 =========
 # Next / TBD
 
+* [FEATURE] Adds a configurable jmxfetch telemetry check to improve jmxfetch observability [#467][]
 * [FEATURE] Added an option to enable removal of extra quotation marks during tag extraction from Java management beans' parameters/attributes [#469][]
 
 # 0.47.10 / 2023-08-10
@@ -748,9 +749,10 @@ Changelog
 [#432]: https://github.com/DataDog/jmxfetch/issues/432
 [#436]: https://github.com/DataDog/jmxfetch/issues/436
 [#437]: https://github.com/DataDog/jmxfetch/issues/437
+[#467]: https://github.com/DataDog/jmxfetch/issues/467
 [#457]: https://github.com/DataDog/jmxfetch/issues/457
 [#449]: https://github.com/DataDog/jmxfetch/issues/449
-[#469]: https://github.com/DataDog/jmxfetch/pull/469
+[#469]: https://github.com/DataDog/jmxfetch/issues/469
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia

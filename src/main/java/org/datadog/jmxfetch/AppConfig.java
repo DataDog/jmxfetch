@@ -123,6 +123,12 @@ public class AppConfig {
     private boolean statsdTelemetry;
 
     @Parameter(
+            names = {"--jmxfetch_telemetry", "-jt"},
+            description = "Enable additional jmxfetch telemetry reporting",
+            required = false)
+    private boolean jmxfetchTelemetry;
+
+    @Parameter(
             names = {"--statsd_queue_size", "-sq"},
             description = "Maximum number of unprocessed messages in the StatsD client queue.",
             validateWith = PositiveIntegerValidator.class,
@@ -409,6 +415,10 @@ public class AppConfig {
 
     public boolean getStatsdTelemetry() {
         return statsdTelemetry;
+    }
+
+    public boolean getJmxfetchTelemetry() {
+        return jmxfetchTelemetry;
     }
 
     public int getStatsdQueueSize() {
