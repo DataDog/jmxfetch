@@ -158,7 +158,7 @@ public class TestReconnectContainer extends TestCommon {
         int numAttributesPerBean = 4;
 
         String testDomain = "test-domain";
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",

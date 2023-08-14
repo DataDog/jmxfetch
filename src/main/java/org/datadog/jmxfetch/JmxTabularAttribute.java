@@ -151,7 +151,6 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 Metric metric = new Metric(alias, metricType, tags, checkName);
                 double value = castToDouble(getValue(dataKey, metricKey), null);
                 metric.setValue(value);
-
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new ArrayList<Metric>());
