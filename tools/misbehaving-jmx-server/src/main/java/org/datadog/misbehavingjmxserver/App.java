@@ -1,6 +1,9 @@
 package org.datadog.misbehavingjmxserver;
 
 import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -28,9 +31,12 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import io.javalin.*;
 import lombok.extern.slf4j.Slf4j;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 import org.datadog.Defaults;
 
+@Slf4j
 class AppConfig {
     // RMI Port is used for both registry and the JMX service
     @Parameter(names = {"--rmi-port", "-rp"})
@@ -41,6 +47,11 @@ class AppConfig {
 
     // Can only be set via env var
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
+
+    @Parameter(names = {"--config-path", "-cfp"})
+    public String config_path = "./misbehaving-jmx-domains-config.yaml";
+
+    public JmxDomainConfigurations jmxDomainConfigurations;
 
     public void overrideFromEnv() {
         String val;
@@ -56,11 +67,68 @@ class AppConfig {
         if (val != null) {
             this.controlPort = Integer.parseInt(val);
         }
+        val = System.getenv("CONFIG_PATH");
+        if (val != null) {
+            this.config_path = val;
+        }
+    }
+
+    public void readConfigFileOnDisk () {
+        File f = new File(config_path);
+        String yamlPath = f.getPath();
+        try{
+            FileInputStream yamlInputStream = new FileInputStream(yamlPath);
+            Yaml yaml = new Yaml(new Constructor(JmxDomainConfigurations.class));
+            jmxDomainConfigurations = yaml.load(yamlInputStream);
+            log.info("JmxDomainConfigurations read from " + config_path + " is:\n" + jmxDomainConfigurations);
+        } catch (FileNotFoundException e) {
+            log.warn("Could not find your config file at " + yamlPath);
+            jmxDomainConfigurations = null;
+        }
     }
 }
 
+class JmxDomainConfigurations {
+    public Map<String,BeanSpec> domains;
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        if (domains != null) {
+            for (Map.Entry<String,BeanSpec> entry: domains.entrySet()) {
+                result.append("Domain: " + entry.getKey() + entry.getValue().toString() + "\n");
+            }
+        } else {
+            return "No valid domain configurations";
+        }
+
+        return result.toString();
+    }
+}
 class BeanSpec {
-    public int numDesiredBeans;
+    public int beanCount;
+    public int scalarAttributeCount;
+    public int tabularAttributeCount;
+    public int compositeValuesPerTabularAttribute;
+
+    public BeanSpec() {
+
+    }
+
+    public BeanSpec(int beanCount, int scalarAttributeCount, int tabularAttributeCount, int compositeValuesPerTabularAttribute) {
+        this.beanCount = beanCount;
+        this.scalarAttributeCount = scalarAttributeCount;
+        this.tabularAttributeCount = tabularAttributeCount;
+        this.compositeValuesPerTabularAttribute = compositeValuesPerTabularAttribute;
+    }
+
+    @Override
+    public String toString() {
+        return  "\n\t-beanCount: " + beanCount +
+        "\n\t-scalarAttributeCount: " + scalarAttributeCount +
+        "\n\t-tabularAttributeCount: " + tabularAttributeCount +
+        "\n\t-compositeValuesPerTabularAttribute: " + compositeValuesPerTabularAttribute;
+    }
 }
 
 @Slf4j
@@ -71,6 +139,7 @@ public class App
     public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
     {
         AppConfig config = new AppConfig();
+
         JCommander jCommander = JCommander.newBuilder()
                 .addObject(config)
                 .build();
@@ -82,6 +151,7 @@ public class App
             jCommander.usage();
             System.exit(1);
         }
+        config.readConfigFileOnDisk();
 
         InterruptibleRMISocketFactory customRMISocketFactory = new InterruptibleRMISocketFactory();
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
@@ -89,7 +159,7 @@ public class App
 
         // Explicitly set RMI hostname to specified argument value
         System.setProperty("java.rmi.server.hostname", config.rmiHost);
-        
+
         // Initialize RMI registry at same port as the jmx service
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
 
@@ -100,10 +170,16 @@ public class App
 
         BeanManager bm = new BeanManager(mbs, mDao);
 
-        // Register single static bean under known domain
-        ObjectName mbeanName = new ObjectName(testDomain + ":name=MyMBean");
-        SingleAttributeMetricMBean mbean = new SingleAttributeMetric(mDao);
-        mbs.registerMBean(mbean, mbeanName);
+        // Set up test domain
+        BeanSpec testDomainBeanSpec = new BeanSpec(1, 1, 0, 0);
+        bm.setMBeanState(testDomain, testDomainBeanSpec);
+
+        // Set up initial beans for all the domains found in config file
+        if (config.jmxDomainConfigurations != null){
+            for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()) {
+                bm.setMBeanState(entry.getKey(), entry.getValue());
+            }
+        }
 
         Javalin controlServer = Javalin.create();
 
@@ -127,7 +203,7 @@ public class App
 
         controlServer.get("/beans/{domain}", ctx -> {
             String domain = ctx.pathParam("domain");
-            Optional<List<FourAttributeMetric>> bs = bm.getMBeanState(domain);
+            Optional<List<DynamicMBeanMetrics>> bs = bm.getMBeanState(domain);
             if (bs.isPresent()) {
                 List<String> metricNames = bs.get().stream().map(metric -> metric.name).collect(Collectors.toList());
 
@@ -149,7 +225,7 @@ public class App
             }
 
             // This should block until the mbeanserver reaches the desired state
-            bm.setMBeanState(domain, beanSpec.numDesiredBeans);
+            bm.setMBeanState(domain, beanSpec);
 
             ctx.status(200).result("Received bean request for domain: " + domain);
         });
