@@ -293,7 +293,7 @@ public class Instance {
         log.debug("Created jmx bean for instance: " + this.getCheckName());
 
         try {
-            instanceTelemetryBeanName = getObjName("JMXFetch" , this.getName());
+            instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(), this.getName());
             mbs.registerMBean(bean,instanceTelemetryBeanName);
             log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName()
                     + " with ObjectName = " + instanceTelemetryBeanName);

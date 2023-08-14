@@ -58,6 +58,8 @@ public class AppConfig {
     private static final int DEFAULT_RECONNECTION_TO_S = 60;
     private static final int DEFAULT_STATSD_QUEUE_SIZE = 4096;
 
+    private static final String JMXFETCH_TELEMETRY_DOMAIN = "jmx_fetch";
+
     private Reporter reporter;
 
     @Parameter(
@@ -419,6 +421,10 @@ public class AppConfig {
 
     public boolean getJmxfetchTelemetry() {
         return jmxfetchTelemetry;
+    }
+
+    public String getJmxfetchTelemetryDomain() {
+        return JMXFETCH_TELEMETRY_DOMAIN;
     }
 
     public int getStatsdQueueSize() {

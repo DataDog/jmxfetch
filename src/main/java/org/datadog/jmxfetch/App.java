@@ -974,7 +974,7 @@ public class App {
         List<Object> conf = new ArrayList<Object>();
         Map<String,Object> confMap = new HashMap<String,Object>();
         Map<String,Object> includeMap = new HashMap<String,Object>();
-        includeMap.put("domain","JMXFetch");
+        includeMap.put("domain",appConfig.getJmxfetchTelemetryDomain());
         confMap.put("include", includeMap);
         conf.add(confMap);
         config.put("conf",conf);
