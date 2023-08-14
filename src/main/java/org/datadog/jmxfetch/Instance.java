@@ -296,7 +296,7 @@ public class Instance {
             instanceTelemetryBeanName = getObjName("JMXFetch" , this.getName());
             mbs.registerMBean(bean,instanceTelemetryBeanName);
             log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName()
-                    + " with ObjectName= " + instanceTelemetryBeanName);
+                    + " with ObjectName = " + instanceTelemetryBeanName);
 
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException
                 | MBeanRegistrationException | NotCompliantMBeanException e) {
