@@ -279,7 +279,10 @@ public class Instance {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
-        instanceTelemetryBean = createJmxBean();
+        if (appConfig.getJmxfetchTelemetry()){
+            instanceTelemetryBean = createJmxBean();
+        }
+
     }
 
     private ObjectName getObjName(String domain,String instance)
@@ -841,7 +844,9 @@ public class Instance {
 
     /** Clean up config and close connection. */
     public void cleanUp() {
-        cleanupTelemetryBean();
+        if (appConfig.getJmxfetchTelemetry()){
+            cleanupTelemetryBean();
+        }
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
@@ -854,7 +859,9 @@ public class Instance {
      * */
     public synchronized void cleanUpAsync() {
         appConfig = null;
-        cleanupTelemetryBean();
+        if (appConfig.getJmxfetchTelemetry()){
+            cleanupTelemetryBean();
+        }
         class AsyncCleaner implements Runnable {
             Connection conn;
 
