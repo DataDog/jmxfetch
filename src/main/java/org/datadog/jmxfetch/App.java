@@ -969,11 +969,12 @@ public class App {
         config.put("collect_default_jvm_metrics",true);
         config.put("new_gc_metrics",true);
         config.put("process_name_regex",".*org.datadog.jmxfetch.App.*");
+        config.put("normalize_bean_param_tags",true);
 
         List<Object> conf = new ArrayList<Object>();
         Map<String,Object> confMap = new HashMap<String,Object>();
         Map<String,Object> includeMap = new HashMap<String,Object>();
-        includeMap.put("domain","jmxfetch");
+        includeMap.put("domain","JMXFetch");
         confMap.put("include", includeMap);
         conf.add(confMap);
         config.put("conf",conf);
