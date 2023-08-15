@@ -534,12 +534,12 @@ public class Instance {
                 }
             }
         }
-        instanceTelemetryBean.setBeanCount(beans.size());
-        instanceTelemetryBean.setAttributeCount(matchingAttributes.size());
+        instanceTelemetryBean.setBeansFetched(beans.size());
+        instanceTelemetryBean.setTopLevelAttributeCount(matchingAttributes.size());
         instanceTelemetryBean.setMetricCount(metrics.size());
         log.debug("Updated jmx bean for instance: " + this.getCheckName()
-                + " With number of beans = " + instanceTelemetryBean.getBeanCount()
-                + " attributes = " + instanceTelemetryBean.getAttributeCount()
+                + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
+                + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
                 + " metrics = " + instanceTelemetryBean.getMetricCount());
         return metrics;
     }
