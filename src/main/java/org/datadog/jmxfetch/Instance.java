@@ -479,7 +479,11 @@ public class Instance {
     @Override
     public String toString() {
         if (isDirectInstance(instanceMap)) {
-            return "jvm_direct";
+            if (this.instanceMap.get("name") != null) {
+                return "jvm_direct - name: `" + (String) this.instanceMap.get("name") + "`";
+            } else {
+                return "jvm_direct";
+            }
         } else if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
             return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
         } else if (this.instanceMap.get("name") != null) {
