@@ -2,9 +2,9 @@ package org.datadog.jmxfetch.util;
 
 public interface InstanceTelemetryMBean {
 
-    int getBeanCount();
+    int getBeansFetched();
 
-    int getAttributeCount();
+    int getTopLevelAttributeCount();
 
     int getMetricCount();
 
