@@ -1,4 +1,4 @@
-[![Build Status](https://circleci.com/gh/DataDog/jmxfetch.svg?style=svg)](https://app.circleci.com/pipelines/github/DataDog/jmxfetch)
+[![Project Map](https://sourcespy.com/shield.svg)](https://sourcespy.com/github/datadogjmxfetch/)
 
 # [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
 
@@ -11,7 +11,7 @@ It is called by the Datadog Agent (https://github.com/Datadog/datadog-agent) and
 
 First of all and most importantly, **thank you** for sharing.
 
-If you want to submit code, please fork this repository and submit pull requests against the `master` branch.
+If you want to submit code, please fork this repository and submit pull requests against the `master` branch. For a general project overview refer to [build, module, dependency and other diagrams](https://sourcespy.com/github/datadogjmxfetch/).
 
 Please note that the Agent is licensed for simplicity's sake
 under a simplified BSD license, as indicated in the `LICENSE` file.
