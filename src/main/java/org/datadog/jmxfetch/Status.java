@@ -2,6 +2,8 @@ package org.datadog.jmxfetch;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
+
+import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.datadog.jmxfetch.util.MetadataHelper;
 import org.yaml.snakeyaml.Yaml;
 
@@ -14,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.management.ObjectName;
 
 @Slf4j
 public class Status {
@@ -73,7 +77,9 @@ public class Status {
             int metricCount,
             int serviceCheckCount,
             String message,
-            String status) {
+            String status,
+            InstanceTelemetry instanceTelemetryBean,
+            ObjectName instanceTelemetryBeanName) {
         addStats(
                 checkName,
                 instance,
@@ -81,7 +87,9 @@ public class Status {
                 serviceCheckCount,
                 message,
                 status,
-                INITIALIZED_CHECKS);
+                INITIALIZED_CHECKS,
+                instanceTelemetryBean,
+                instanceTelemetryBeanName);
     }
 
     public void addErrorStats(int errors) {
@@ -96,7 +104,9 @@ public class Status {
             int serviceCheckCount,
             String message,
             String status,
-            String key) {
+            String key,
+            InstanceTelemetry instanceTelemetryBean,
+            ObjectName instanceTelemetryBeanName) {
         List<Map<String, Object>> checkStats;
         Map<String, Object> initializedChecks;
         initializedChecks = (Map<String, Object>) this.instanceStats.get(key);
@@ -117,6 +127,14 @@ public class Status {
         if (serviceCheckCount != -1) {
             instStats.put("service_check_count", serviceCheckCount);
         }
+        if (instanceTelemetryBean != null){
+            Map<String, Object> instanceTelemetryBeanStats = new HashMap<String, Object>();
+            instanceTelemetryBeanStats.put("name", instanceTelemetryBeanName.toString());
+            instanceTelemetryBeanStats.put("beans_fetched_count", instanceTelemetryBean.getBeansFetched());
+            instanceTelemetryBeanStats.put("bean_attribute_count", instanceTelemetryBean.getTopLevelAttributeCount());
+            instanceTelemetryBeanStats.put("bean_metric_count", instanceTelemetryBean.getMetricCount());
+            instStats.put("instanceTelemetryBean", instanceTelemetryBeanStats);
+        }
         instStats.put("message", message);
         instStats.put("status", status);
         checkStats.add(instStats);
@@ -125,7 +143,7 @@ public class Status {
     }
 
     public void addInitFailedCheck(String checkName, String message, String status) {
-        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS);
+        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS, null, null);
     }
 
     private String generateYaml() {

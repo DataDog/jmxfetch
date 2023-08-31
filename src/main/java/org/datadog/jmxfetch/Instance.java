@@ -827,6 +827,14 @@ public class Instance {
         return this.maxReturnedMetrics;
     }
 
+    public InstanceTelemetry getInstanceTelemetryBean() {
+        return this.instanceTelemetryBean;
+    }
+
+    public ObjectName getInstanceTelemetryBeanName() {
+        return this.instanceTelemetryBeanName;
+    }
+
     /** Returns whether or not the instance has reached the maximum bean collection limit. */
     public boolean isLimitReached() {
         return this.limitReached;
