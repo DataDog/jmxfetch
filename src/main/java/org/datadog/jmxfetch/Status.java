@@ -78,8 +78,7 @@ public class Status {
             int serviceCheckCount,
             String message,
             String status,
-            InstanceTelemetry instanceTelemetryBean,
-            ObjectName instanceTelemetryBeanName) {
+            InstanceTelemetry instanceTelemetryBean) {
         addStats(
                 checkName,
                 instance,
@@ -88,8 +87,7 @@ public class Status {
                 message,
                 status,
                 INITIALIZED_CHECKS,
-                instanceTelemetryBean,
-                instanceTelemetryBeanName);
+                instanceTelemetryBean);
     }
 
     public void addErrorStats(int errors) {
@@ -105,8 +103,7 @@ public class Status {
             String message,
             String status,
             String key,
-            InstanceTelemetry instanceTelemetryBean,
-            ObjectName instanceTelemetryBeanName) {
+            InstanceTelemetry instanceTelemetryBean) {
         List<Map<String, Object>> checkStats;
         Map<String, Object> initializedChecks;
         initializedChecks = (Map<String, Object>) this.instanceStats.get(key);
@@ -128,12 +125,9 @@ public class Status {
             instStats.put("service_check_count", serviceCheckCount);
         }
         if (instanceTelemetryBean != null){
-            Map<String, Object> instanceTelemetryBeanStats = new HashMap<String, Object>();
-            instanceTelemetryBeanStats.put("name", instanceTelemetryBeanName.toString());
-            instanceTelemetryBeanStats.put("beans_fetched_count", instanceTelemetryBean.getBeansFetched());
-            instanceTelemetryBeanStats.put("bean_attribute_count", instanceTelemetryBean.getTopLevelAttributeCount());
-            instanceTelemetryBeanStats.put("bean_metric_count", instanceTelemetryBean.getMetricCount());
-            instStats.put("instanceTelemetryBean", instanceTelemetryBeanStats);
+            instStats.put("bean_count", instanceTelemetryBean.getBeansFetched());
+            instStats.put("attribute_count", instanceTelemetryBean.getTopLevelAttributeCount());
+            instStats.put("bean_metric_count", instanceTelemetryBean.getMetricCount());
         }
         instStats.put("message", message);
         instStats.put("status", status);
@@ -143,7 +137,7 @@ public class Status {
     }
 
     public void addInitFailedCheck(String checkName, String message, String status) {
-        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS, null, null);
+        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS, null);
     }
 
     private String generateYaml() {

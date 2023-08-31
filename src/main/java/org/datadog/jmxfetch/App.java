@@ -756,7 +756,7 @@ public class App {
         stats.addInstanceStats(
                 checkName, instance.getName(),
                 metricCount, reporter.getServiceCheckCount(checkName),
-                message, status, instance.getInstanceTelemetryBean(), instance.getInstanceTelemetryBeanName());
+                message, status, instance.getInstanceTelemetryBean());
         if (reporter.getHandler() != null) {
             stats.addErrorStats(reporter.getHandler().getErrors());
         }
