@@ -13,7 +13,6 @@ import org.datadog.jmxfetch.tasks.TaskStatusHandler;
 import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
-import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.datadog.jmxfetch.util.LogLevel;
 import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;

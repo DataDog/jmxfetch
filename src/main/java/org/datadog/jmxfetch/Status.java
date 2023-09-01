@@ -17,8 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.ObjectName;
-
 @Slf4j
 public class Status {
 
@@ -124,10 +122,11 @@ public class Status {
         if (serviceCheckCount != -1) {
             instStats.put("service_check_count", serviceCheckCount);
         }
-        if (instanceTelemetryBean != null){
-            instStats.put("bean_count", instanceTelemetryBean.getBeansFetched());
-            instStats.put("attribute_count", instanceTelemetryBean.getTopLevelAttributeCount());
-            instStats.put("bean_metric_count", instanceTelemetryBean.getMetricCount());
+        if (instanceTelemetryBean != null) {
+            instStats.put("instance_bean_count", instanceTelemetryBean.getBeansFetched());
+            instStats.put("instance_attribute_count", 
+                          instanceTelemetryBean.getTopLevelAttributeCount());
+            instStats.put("instance_metric_count", instanceTelemetryBean.getMetricCount());
         }
         instStats.put("message", message);
         instStats.put("status", status);
