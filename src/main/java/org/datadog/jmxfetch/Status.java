@@ -130,6 +130,9 @@ public class Status {
         }
         instStats.put("message", message);
         instStats.put("status", status);
+        // NOTE: jmxfetch template must be updated for any new keys in order for them
+        // to show up in the datadog-agent status
+        // https://github.com/DataDog/datadog-agent/blob/main/pkg/status/templates/jmxfetch.tmpl
         checkStats.add(instStats);
         initializedChecks.put(checkName, checkStats);
         this.instanceStats.put(key, initializedChecks);

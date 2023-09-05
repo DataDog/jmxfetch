@@ -139,7 +139,6 @@ public class TestCommon {
             params.add(5, "/foo"); // could be anything we're stubbing it out
             params.add(6, "--sd_enabled");
         }
-        params.add("--jmxfetch_telemetry");
         new JCommander(appConfig, params.toArray(new String[params.size()]));
 
         if (sdEnabled) {
