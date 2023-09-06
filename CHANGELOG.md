@@ -754,6 +754,7 @@ Changelog
 [#457]: https://github.com/DataDog/jmxfetch/issues/457
 [#449]: https://github.com/DataDog/jmxfetch/issues/449
 [#469]: https://github.com/DataDog/jmxfetch/issues/469
+[#477]: https://github.com/DataDog/jmxfetch/issues/477
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
