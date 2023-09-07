@@ -4,6 +4,7 @@ Changelog
 
 * [FEATURE] Adds a configurable jmxfetch telemetry check to improve jmxfetch observability [#467][]
 * [FEATURE] Added an option to enable removal of extra quotation marks during tag extraction from Java management beans' parameters/attributes [#469][]
+* [FEATURE] Updated status bean to report JMX Telemetry to Agent status [#477][]
 
 # 0.47.10 / 2023-08-10
 
@@ -753,6 +754,7 @@ Changelog
 [#457]: https://github.com/DataDog/jmxfetch/issues/457
 [#449]: https://github.com/DataDog/jmxfetch/issues/449
 [#469]: https://github.com/DataDog/jmxfetch/issues/469
+[#477]: https://github.com/DataDog/jmxfetch/issues/477
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
