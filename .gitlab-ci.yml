@@ -22,7 +22,7 @@ run_unit_tests:
   tags:
     - "runner:docker"
 
-  image: 464622532012.dkr.ecr.us-east-1.amazonaws.com/images/mirror/eclipse-temurin:8-jdk
+  image: registry.ddbuild.io/images/mirror/eclipse-temurin:8-jdk
 
   script:
     - ./mvnw -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
