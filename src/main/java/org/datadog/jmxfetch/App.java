@@ -968,7 +968,7 @@ public class App {
         config.put("name","jmxfetch_telemetry_instance");
         config.put("collect_default_jvm_metrics",true);
         config.put("new_gc_metrics",true);
-        config.put("process_name_regex",".*org.datadog.jmxfetch.App.*");
+        config.put("jvm_direct",true);
         config.put("normalize_bean_param_tags",true);
 
         List<Object> conf = new ArrayList<Object>();
