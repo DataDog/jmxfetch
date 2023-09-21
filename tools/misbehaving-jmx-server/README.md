@@ -52,9 +52,18 @@ There are a couple of ways you can get the Agent to pull metrics from this test 
 Copy `misbehaving-jmxfetch-conf.yaml` to `/etc/datadog-agent/conf.d/` and just run the `with-dependencies` jar created by Maven.
 You will need to restart the Agent to pick up the config.
 
+### Using Docker Compose
+
+```shell
+$ docker compose up
+```
+
+The Agent will auto discover the container and begin to collect metrics from it.
+
 ### Using Docker
 
-After building the `misbehaving-jmx-server` you can simply run:
+If your container's IP is directly
+accessible by your Agent, you can use the following run command and use AD.
 
 ```shell
 $ docker run \
@@ -66,10 +75,7 @@ misbehaving-jmx-server
 
 The Agent will auto discover the container and begin to collect metrics from it.
 
-### Using Docker Compose
+Note that this implicitly sets the `RMI_HOSTNAME` to `localhost` which is where
+the host port mapping comes into play. If this is giving you trouble, consider
+using the docker-compose setup above.
 
-```shell
-$ docker compose up
-```
-
-The Agent will auto discover the container and begin to collect metrics from it.
