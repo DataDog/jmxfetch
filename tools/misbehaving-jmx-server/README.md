@@ -63,7 +63,7 @@ The Agent will auto discover the container and begin to collect metrics from it.
 ### Using Docker
 
 If your container's IP is directly
-accessible by your Agent, you can use the following run command and use AD.
+accessible by your Agent, you can use the following `run` command and use AD.
 
 ```shell
 $ docker run \
