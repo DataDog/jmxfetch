@@ -77,5 +77,5 @@ The Agent will auto discover the container and begin to collect metrics from it.
 
 Note that this implicitly sets the `RMI_HOSTNAME` to `localhost` which is where
 the host port mapping comes into play. If this is giving you trouble, consider
-using the docker-compose setup above.
+using the [docker-compose setup](#using-docker-compose).
 
