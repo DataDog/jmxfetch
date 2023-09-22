@@ -58,7 +58,7 @@ You will need to restart the Agent to pick up the config.
 $ docker compose up
 ```
 
-The Agent will auto discover the container and begin to collect metrics from it.
+The Agent will auto-discover the container and begin to collect metrics from it.
 
 ### Using Docker
 
