@@ -2,13 +2,15 @@ Changelog
 =========
 # Next / TBD
 
+# 0.48.0 / 2023-09-26
+
 * [FEATURE] Adds a configurable jmxfetch telemetry check to improve jmxfetch observability [#467][]
 * [FEATURE] Added an option to enable removal of extra quotation marks during tag extraction from Java management beans' parameters/attributes [#469][]
 * [FEATURE] Updated status bean to report JMX Telemetry to Agent status [#477][]
 
 # 0.47.10 / 2023-08-10
 
-* [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` (configurable using the flag `jmxfetch.min_tls_version`, e.g. `-Djmxfetch.min_tls_version=TLS`) [#436][] 
+* [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. The TLS of the HTTP client used can now be configured, extra logging has been added around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` (configurable using the flag `jmxfetch.min_tls_version`, e.g. `-Djmxfetch.min_tls_version=TLS`) [#436][]
 * [BUGFIX] Fixed issue race condition where an exception is thrown if the Agent hasn't finished initializing before JMXFetch starts to shut down [#449][]
 * [OTHER] Update management agent logic and comments for Java 7 vs 8 vs 9 [#457][]
 
