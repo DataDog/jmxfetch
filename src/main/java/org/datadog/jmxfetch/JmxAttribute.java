@@ -28,18 +28,17 @@ public abstract class JmxAttribute {
 
     protected static final String ALIAS = "alias";
     protected static final String METRIC_TYPE = "metric_type";
-    private static final List<String> EXCLUDED_BEAN_PARAMS =
-            Arrays.asList(
-                    "domain",
-                    "domain_regex",
-                    "bean_name",
-                    "bean",
-                    "bean_regex",
-                    "class",
-                    "class_regex",
-                    "attribute",
-                    "exclude_tags",
-                    "tags");
+    private static final List<String> EXCLUDED_BEAN_PARAMS = Arrays.asList(
+            "domain",
+            "domain_regex",
+            "bean_name",
+            "bean",
+            "bean_regex",
+            "class",
+            "class_regex",
+            "attribute",
+            "exclude_tags",
+            "tags");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
@@ -50,13 +49,12 @@ public abstract class JmxAttribute {
     private Connection connection;
     private ObjectName beanName;
     private String domain;
-    private String className;
-    private String beanStringName;
+    protected String className;
+    protected String beanStringName;
     private ServiceNameProvider serviceNameProvider;
     private Map<String, String> beanParameters;
     private String attributeName;
-    private Map<String, Map<Object, Object>> valueConversions =
-            new HashMap<String, Map<Object, Object>>();
+    private Map<String, Map<Object, Object>> valueConversions = new HashMap<String, Map<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
     private List<String> defaultTagsList;
@@ -99,8 +97,7 @@ public abstract class JmxAttribute {
         this.domain = domain;
 
         Map<String, String> beanParametersHash = getBeanParametersHash(beanParameters);
-        List<String> beanParametersList =
-                getBeanParametersList(instanceName, beanParametersHash, instanceTags);
+        List<String> beanParametersList = getBeanParametersList(instanceName, beanParametersHash, instanceTags);
 
         this.beanParameters = beanParametersHash;
         this.defaultTagsList = sanitizeParameters(beanParametersList);
@@ -115,7 +112,7 @@ public abstract class JmxAttribute {
         if (include != null) {
 
             for (String excludedTagName : include.getExcludeTags()) {
-                for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext(); ) {
+                for (Iterator<String> it = this.defaultTagsList.iterator(); it.hasNext();) {
                     String tag = it.next();
                     if (tag.startsWith(excludedTagName + ":")) {
                         it.remove();
@@ -195,13 +192,15 @@ public abstract class JmxAttribute {
     }
 
     /**
-     * Wrapper for javax.management.ObjectName.unqoute that removes quotes from the bean parameter
-     * value if possible. If not, it hits the catch block and returns the original parameter.
+     * Wrapper for javax.management.ObjectName.unqoute that removes quotes from the
+     * bean parameter
+     * value if possible. If not, it hits the catch block and returns the original
+     * parameter.
      */
     private String unquote(String beanParameter) {
         int valueIndex = beanParameter.indexOf(':') + 1;
         try {
-            return beanParameter.substring(0,valueIndex)
+            return beanParameter.substring(0, valueIndex)
                     + ObjectName.unquote(beanParameter.substring(valueIndex));
         } catch (IllegalArgumentException e) {
             return beanParameter;
@@ -209,7 +208,8 @@ public abstract class JmxAttribute {
     }
 
     /**
-     * Sanitize MBean parameter names and values, i.e. - Rename parameter names conflicting with
+     * Sanitize MBean parameter names and values, i.e. - Rename parameter names
+     * conflicting with
      * existing tags - Remove illegal characters
      */
     private List<String> sanitizeParameters(List<String> beanParametersList) {
@@ -218,7 +218,8 @@ public abstract class JmxAttribute {
             // Remove `|` characters
             String beanParameter = rawBeanParameter.replace("|", "");
 
-            // Unquote bean parameters that have been quoted and escaped by ObjectName.quote()
+            // Unquote bean parameters that have been quoted and escaped by
+            // ObjectName.quote()
             if (normalizeBeanParamTags == true) {
                 beanParameter = unquote(beanParameter);
             }
@@ -278,15 +279,18 @@ public abstract class JmxAttribute {
 
     public abstract List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
-                    ReflectionException, IOException;
+            ReflectionException, IOException;
 
     /**
-     * An abstract function implemented in the inherited classes JmxSimpleAttribute and
+     * An abstract function implemented in the inherited classes JmxSimpleAttribute
+     * and
      * JmxComplexAttribute.
      *
-     * @param conf Configuration a Configuration object that will be used to check if the Jmx
-     *     Attribute match this configuration
-     * @return a boolean that tells if the attribute matches the configuration or not
+     * @param conf Configuration a Configuration object that will be used to check
+     *             if the Jmx
+     *             Attribute match this configuration
+     * @return a boolean that tells if the attribute matches the configuration or
+     *         not
      */
     public abstract boolean match(Configuration conf);
 
@@ -296,7 +300,7 @@ public abstract class JmxAttribute {
             return this.getMetrics().size();
         } catch (Exception e) {
             log.warn("Unable to get metrics from " + beanStringName + " - "
-                                                + attributeName + ": " + e.toString());
+                    + attributeName + ": " + e.toString());
             return 0;
         }
     }
@@ -304,8 +308,13 @@ public abstract class JmxAttribute {
     /** Gets the JMX Attribute info value. Makes a call through the connection */
     Object getJmxValue()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
-                    ReflectionException, IOException {
-        return this.connection.getAttribute(this.beanName, this.attribute.getName());
+            ReflectionException, IOException {
+        Object o = this.connection.getAttribute(this.beanName, this.attribute.getName());
+        if (o == null) {
+            log.error("Tried to retrieve beanName {} and attribute name {}, but got null.", this.beanName,
+                    this.attribute.getName());
+        }
+        return o;
     }
 
     boolean matchDomain(Configuration conf) {
@@ -320,13 +329,11 @@ public abstract class JmxAttribute {
                 conf.getExclude().getDomainRegex());
     }
 
-
     boolean matchClassName(Configuration conf) {
         return includeMatchName(className,
                 conf.getInclude().getClassName(),
                 conf.getInclude().getClassNameRegex());
     }
-
 
     boolean excludeMatchClassName(Configuration conf) {
         return excludeMatchName(className,
@@ -466,16 +473,14 @@ public abstract class JmxAttribute {
 
     @SuppressWarnings("unchecked")
     Map<Object, Object> getValueConversions(String field) {
-        String fullAttributeName =
-                (field != null)
-                        ? (getAttribute().getName() + "." + field)
-                        : (getAttribute().getName());
+        String fullAttributeName = (field != null)
+                ? (getAttribute().getName() + "." + field)
+                : (getAttribute().getName());
         if (valueConversions.get(fullAttributeName) == null) {
             Object includedAttribute = matchingConf.getInclude().getAttribute();
             if (includedAttribute instanceof Map<?, ?>) {
-                Map<String, Map<Object, Object>> attribute =
-                        ((Map<String, Map<String, Map<Object, Object>>>) includedAttribute)
-                                .get(fullAttributeName);
+                Map<String, Map<Object, Object>> attribute = ((Map<String, Map<String, Map<Object, Object>>>) includedAttribute)
+                        .get(fullAttributeName);
 
                 if (attribute != null) {
                     valueConversions.put(fullAttributeName, attribute.get("values"));
@@ -503,8 +508,10 @@ public abstract class JmxAttribute {
         this.addAdditionalTags();
         // - filter out excluded tags
         this.applyTagsBlackList();
-        // Add the service tag(s) - comes last because if the service tag is blacklisted as
-        // a JmxAttribute tag, we still want to include the service specified in the config.
+        // Add the service tag(s) - comes last because if the service tag is blacklisted
+        // as
+        // a JmxAttribute tag, we still want to include the service specified in the
+        // config.
         this.addServiceTags();
     }
 
@@ -519,23 +526,25 @@ public abstract class JmxAttribute {
     /**
      * Get attribute alias.
      *
-     * <p>In order, tries to: * Use `alias_match` to generate an alias with a regular expression *
-     * Use `alias` directly * Create an generic alias prefixed with user's `metric_prefix`
+     * <p>
+     * In order, tries to: * Use `alias_match` to generate an alias with a regular
+     * expression *
+     * Use `alias` directly * Create an generic alias prefixed with user's
+     * `metric_prefix`
      * preference or default to `jmx`
      *
-     * <p>Argument(s): * (Optional) `field` `Null` for `JmxSimpleAttribute`.
+     * <p>
+     * Argument(s): * (Optional) `field` `Null` for `JmxSimpleAttribute`.
      */
     protected String getAlias(String field) {
         String alias = null;
         Filter include = getMatchingConf().getInclude();
         Map<String, Object> conf = getMatchingConf().getConf();
-        String fullAttributeName =
-                (field != null)
-                        ? (getAttribute().getName() + "." + field)
-                        : (getAttribute().getName());
+        String fullAttributeName = (field != null)
+                ? (getAttribute().getName() + "." + field)
+                : (getAttribute().getName());
         if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
+            Map<String, Map<String, String>> attribute = (Map<String, Map<String, String>>) (include.getAttribute());
             alias = getUserAlias(attribute, fullAttributeName);
         }
         if (alias == null) {
@@ -556,10 +565,13 @@ public abstract class JmxAttribute {
     /**
      * Metric name aliasing specific to Cassandra.
      *
-     * <p>* (Default) `cassandra_aliasing` == False. Legacy aliasing: drop `org.apache` prefix. *
+     * <p>
+     * * (Default) `cassandra_aliasing` == False. Legacy aliasing: drop `org.apache`
+     * prefix. *
      * `cassandra_aliasing` == True Comply with CASSANDRA-4009
      *
-     * <p>More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+     * <p>
+     * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
      */
     private String getCassandraAlias() {
         if (renameCassandraMetrics()) {
@@ -571,14 +583,16 @@ public abstract class JmxAttribute {
             }
             return "cassandra." + metricName + "." + attributeName;
         }
-        // Deprecated Cassandra metric.  Remove domain prefix.
+        // Deprecated Cassandra metric. Remove domain prefix.
         return getDomain().replace("org.apache.", "") + "." + getAttributeName();
     }
 
     /**
      * Retrieve user defined alias. Substitute regular expression named groups.
      *
-     * <p>Example: ``` bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz attribute: toto: alias:
+     * <p>
+     * Example: ``` bean: org.datadog.jmxfetch.test:foo=Bar,qux=Baz attribute: toto:
+     * alias:
      * my.metric.$foo.$attribute ``` returns a metric name `my.metric.bar.toto`
      */
     private String getUserAlias(Map<String, Map<String, String>> attribute,
@@ -594,7 +608,8 @@ public abstract class JmxAttribute {
         alias = alias.replace("$attribute", fullAttributeName);
         alias = alias.replace("$domain", domain);
         if (alias.contains("$value")) {
-            // getJmxValue() hits the JMX target (potentially through remote network connection),
+            // getJmxValue() hits the JMX target (potentially through remote network
+            // connection),
             // so only call it if needed.
             try {
                 alias = alias.replace("$value", getJmxValue().toString());
@@ -628,10 +643,8 @@ public abstract class JmxAttribute {
         if (include != null) {
             Object includeAttribute = include.getAttribute();
             if (includeAttribute instanceof Map<?, ?>) {
-                Map<String, List<String>> attributeParams =
-                        ((Map<String, Map<String, List<String>>>)
-                                        includeAttribute)
-                                .get(attributeName);
+                Map<String, List<String>> attributeParams = ((Map<String, Map<String, List<String>>>) includeAttribute)
+                        .get(attributeName);
                 if (attributeParams != null) {
                     List<String> yamlTags = attributeParams.get("tags");
                     if (yamlTags != null) {
@@ -672,8 +685,7 @@ public abstract class JmxAttribute {
                 : attributeName;
         Filter include = getMatchingConf().getInclude();
         if (include.getAttribute() instanceof Map<?, ?>) {
-            Map<String, Map<String, String>> attribute =
-                    (Map<String, Map<String, String>>) (include.getAttribute());
+            Map<String, Map<String, String>> attribute = (Map<String, Map<String, String>>) (include.getAttribute());
             Map<String, String> attrInfo = attribute.get(name);
             localMetricType = attrInfo.get(METRIC_TYPE);
             if (localMetricType == null) {

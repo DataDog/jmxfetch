@@ -34,27 +34,26 @@ public class AppConfig {
     public static final String ACTION_LIST_LIMITED = "list_limited_attributes";
     public static final String ACTION_HELP = "help";
     public static final String ACTION_VERSION = "version";
-    public static final HashSet<String> ACTIONS =
-            new HashSet<String>(
-                    Arrays.asList(
-                            ACTION_COLLECT,
-                            ACTION_LIST_EVERYTHING,
-                            ACTION_LIST_COLLECTED,
-                            ACTION_LIST_MATCHING,
-                            ACTION_LIST_WITH_METRICS,
-                            ACTION_LIST_WITH_RATE_METRICS,
-                            ACTION_LIST_NOT_MATCHING,
-                            ACTION_LIST_LIMITED,
-                            ACTION_HELP,
-                            ACTION_VERSION,
-                            ACTION_LIST_JVMS));
+    public static final HashSet<String> ACTIONS = new HashSet<String>(
+            Arrays.asList(
+                    ACTION_COLLECT,
+                    ACTION_LIST_EVERYTHING,
+                    ACTION_LIST_COLLECTED,
+                    ACTION_LIST_MATCHING,
+                    ACTION_LIST_WITH_METRICS,
+                    ACTION_LIST_WITH_RATE_METRICS,
+                    ACTION_LIST_NOT_MATCHING,
+                    ACTION_LIST_LIMITED,
+                    ACTION_HELP,
+                    ACTION_VERSION,
+                    ACTION_LIST_JVMS));
 
     private static final String AD_WIN_PIPE_PATH = "\\\\.\\pipe\\";
     private static final String AD_PIPE_NAME = "dd-auto_discovery";
     private static final String AD_LAUNCH_FILE = "jmx.launch";
 
     private static final int DEFAULT_THREAD_POOL_SIZE = 3;
-    private static final int DEFAULT_COLLECTION_TO_S = 60;
+    private static final int DEFAULT_COLLECTION_TO_S = 60000;
     private static final int DEFAULT_RECONNECTION_TO_S = 60;
     private static final int DEFAULT_STATSD_QUEUE_SIZE = 4096;
 
@@ -62,68 +61,46 @@ public class AppConfig {
 
     private Reporter reporter;
 
-    @Parameter(
-            names = {"--help", "-h"},
-            description = "Display this help page",
-            help = true)
+    @Parameter(names = { "--help", "-h" }, description = "Display this help page", help = true)
     private boolean help;
 
-    @Parameter(
-            names = {"--version", "-v"},
-            description = "Display the version number and exit",
-            help = true)
+    @Parameter(names = { "--version", "-v" }, description = "Display the version number and exit", help = true)
     private boolean version;
 
-    @Parameter(
-            names = {"--log_level", "-L"},
-            description = "Level of verbosity",
-            validateWith = LogLevelValidator.class,
-            required = false)
+    @Parameter(names = { "--log_level",
+            "-L" }, description = "Level of verbosity", validateWith = LogLevelValidator.class, required = false)
     @Builder.Default
     private String logLevel = "INFO";
 
-    @Parameter(
-            names = {"--log_location", "-l"},
-            description = "Absolute path of the log file (default to null = no logging)",
-            required = false)
+    @Parameter(names = { "--log_location",
+            "-l" }, description = "Absolute path of the log file (default to null = no logging)", required = false)
     private String logLocation;
 
-    @Parameter(
-            names = {"--log_format_rfc3339"},
-            description = "Logs using the RFC3339 format for dates",
-            required = false)
+    @Parameter(names = {
+            "--log_format_rfc3339" }, description = "Logs using the RFC3339 format for dates", required = false)
     @Builder.Default
     private boolean logFormatRfc3339 = false;
 
-    @Parameter(
-            names = {"--conf_directory", "-D"},
-            description = "Absolute path to the conf.d directory",
-            required = false)
+    @Parameter(names = { "--conf_directory",
+            "-D" }, description = "Absolute path to the conf.d directory", required = false)
     private String confdDirectory;
 
-    @Parameter(
-            names = {"--tmp_directory", "-T"},
-            description = "Absolute path to a temporary directory",
-            required = false)
+    @Parameter(names = { "--tmp_directory",
+            "-T" }, description = "Absolute path to a temporary directory", required = false)
     @Builder.Default
     private String tmpDirectory = "/tmp";
 
-    @Parameter(
-            names = {"--reporter", "-r"},
-            description =
-                    "Reporter to use: should be either \"statsd:[STATSD_HOST][STATSD_PORT]\", "
-                     + "\"statsd:unix://[STATSD_UNIX_SOCKET_PATH]\", "
-                     + "\"console\" or \"json\"",
-            validateWith = ReporterValidator.class,
-            required = true)
+    @Parameter(names = { "--reporter",
+            "-r" }, description = "Reporter to use: should be either \"statsd:[STATSD_HOST][STATSD_PORT]\", "
+                    + "\"statsd:unix://[STATSD_UNIX_SOCKET_PATH]\", "
+                    + "\"console\" or \"json\"", validateWith = ReporterValidator.class, required = true)
     private String reporterString;
 
-    @Parameter(
-            names = {"--statsd_telemetry", "-st"},
-            description = "Enable StatsD client telemetry reporting",
-            required = false)
+    @Parameter(names = { "--statsd_telemetry",
+            "-st" }, description = "Enable StatsD client telemetry reporting", required = false)
     private boolean statsdTelemetry;
 
+<<<<<<< HEAD
     @Parameter(
             names = {"--jmxfetch_telemetry", "-jt"},
             description = "Enable additional jmxfetch telemetry reporting",
@@ -135,130 +112,87 @@ public class AppConfig {
             description = "Maximum number of unprocessed messages in the StatsD client queue.",
             validateWith = PositiveIntegerValidator.class,
             required = false)
+=======
+    @Parameter(names = { "--statsd_queue_size",
+            "-sq" }, description = "Maximum number of unprocessed messages in the StatsD client queue.", validateWith = PositiveIntegerValidator.class, required = false)
+>>>>>>> dfc4cd0 (Add support for CompositeDataSupport and corresponding tests)
     @Builder.Default
     private int statsdQueueSize = DEFAULT_STATSD_QUEUE_SIZE;
 
-    @Parameter(
-           names = {"--statsd_nonblocking"},
-           description = "Use non-blocking mode when sending metrics via statsd",
-           required = false)
+    @Parameter(names = {
+            "--statsd_nonblocking" }, description = "Use non-blocking mode when sending metrics via statsd", required = false)
     @Builder.Default
     private boolean statsdNonBlocking = false;
 
-    @Parameter(
-           names = {"--statsd_buffer_size"},
-           description = "Configure the statsd socket buffer size (in bytes)",
-           validateWith = PositiveIntegerValidator.class,
-           required = false)
+    @Parameter(names = {
+            "--statsd_buffer_size" }, description = "Configure the statsd socket buffer size (in bytes)", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int statsdBufferSize = 0;
 
-    @Parameter(
-           names = {"--statsd_socket_timeout"},
-           description = "Configure the statsd socket timeout (in milliseconds)",
-           validateWith = PositiveIntegerValidator.class,
-           required = false)
+    @Parameter(names = {
+            "--statsd_socket_timeout" }, description = "Configure the statsd socket timeout (in milliseconds)", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int statsdSocketTimeout = 0;
 
-    @Parameter(
-            names = {"--check", "-c"},
-            description = "Yaml file name to read (must be in the confd directory)",
-            required = false,
-            variableArity = true)
+    @Parameter(names = { "--check",
+            "-c" }, description = "Yaml file name to read (must be in the confd directory)", required = false, variableArity = true)
     private List<String> yamlFileList;
 
-    @Parameter(
-            names = {"--check_period", "-p"},
-            description = "Sleeping time during two iterations in ms",
-            validateWith = PositiveIntegerValidator.class,
-            required = false)
+    @Parameter(names = { "--check_period",
+            "-p" }, description = "Sleeping time during two iterations in ms", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int checkPeriod = 15000;
 
-    @Parameter(
-            names = {"--thread_pool_size", "-t"},
-            description = "The size of the thread pool",
-            validateWith = PositiveIntegerValidator.class,
-            required = false)
+    @Parameter(names = { "--thread_pool_size",
+            "-t" }, description = "The size of the thread pool", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
-    @Parameter(
-            names = {"--reconnection_thread_pool_size", "-u"},
-            description = "The size of the reconnection thread pool",
-            validateWith = PositiveIntegerValidator.class,
-            required = false)
+    @Parameter(names = { "--reconnection_thread_pool_size",
+            "-u" }, description = "The size of the reconnection thread pool", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int reconnectionThreadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 
-    @Parameter(
-            names = {"--collection_timeout", "-x"},
-            description = "The concurrent collection timeout in seconds",
-            validateWith = PositiveIntegerValidator.class,
-            required = false)
+    @Parameter(names = { "--collection_timeout",
+            "-x" }, description = "The concurrent collection timeout in seconds", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int collectionTimeout = DEFAULT_COLLECTION_TO_S;
 
-    @Parameter(
-            names = {"--reconnection_timeout", "-y"},
-            description = "The reconnection timeout in seconds",
-            validateWith = PositiveIntegerValidator.class,
-            required = false)
+    @Parameter(names = { "--reconnection_timeout",
+            "-y" }, description = "The reconnection timeout in seconds", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int reconnectionTimeout = DEFAULT_RECONNECTION_TO_S;
 
-    @Parameter(
-            names = {"--ad_enabled", "--sd_enabled", "-w"},
-            description = "Enable Auto Discovery.",
-            required = false)
+    @Parameter(names = { "--ad_enabled", "--sd_enabled",
+            "-w" }, description = "Enable Auto Discovery.", required = false)
     @Builder.Default
     private boolean adEnabled = false;
 
-    @Parameter(
-            names = {"--ad_pipe", "--sd_pipe", "-P"},
-            description = "Auto Discovery pipe name.",
-            required = false)
+    @Parameter(names = { "--ad_pipe", "--sd_pipe", "-P" }, description = "Auto Discovery pipe name.", required = false)
     @Builder.Default
     private String adPipe = AD_PIPE_NAME;
 
-    @Parameter(
-            names = {"--status_location", "-s"},
-            description =
-                    "Absolute path of the status file. (default to null = no status file written)",
-            required = false)
+    @Parameter(names = { "--status_location",
+            "-s" }, description = "Absolute path of the status file. (default to null = no status file written)", required = false)
     private String statusLocation;
 
-    @Parameter(
-            names = {"--exit_file_location", "-e"},
-            description =
-                    "Absolute path of the trigger file to watch to exit. "
-                            + "(default to null = no exit on file)",
-            converter = ExitWatcherConverter.class,
-            required = false)
+    @Parameter(names = { "--exit_file_location",
+            "-e" }, description = "Absolute path of the trigger file to watch to exit. "
+                    + "(default to null = no exit on file)", converter = ExitWatcherConverter.class, required = false)
     @Builder.Default
     private ExitWatcher exitWatcher = new ExitWatcher();
 
-    @Parameter(
-            description =
-                    "Action to take, should be in [help, version, collect, "
-                    + "list_everything, list_collected_attributes, list_matching_attributes, "
-                    + "list_with_metrics, list_with_rate_metrics, list_not_matching_attributes, "
-                    + "list_limited_attributes, list_jvms]",
-            required = true)
+    @Parameter(description = "Action to take, should be in [help, version, collect, "
+            + "list_everything, list_collected_attributes, list_matching_attributes, "
+            + "list_with_metrics, list_with_rate_metrics, list_not_matching_attributes, "
+            + "list_limited_attributes, list_jvms]", required = true)
     private List<String> action;
 
-    @Parameter(
-            names = {"--ipc_host", "-H"},
-            description = "IPC host",
-            required = false)
+    @Parameter(names = { "--ipc_host", "-H" }, description = "IPC host", required = false)
     private String ipcHost;
 
-    @Parameter(
-            names = {"--ipc_port", "-I"},
-            description = "IPC port",
-            validateWith = PositiveIntegerValidator.class,
-            required = false)
+    @Parameter(names = { "--ipc_port",
+            "-I" }, description = "IPC port", validateWith = PositiveIntegerValidator.class, required = false)
     @Builder.Default
     private int ipcPort = 0;
 
@@ -270,35 +204,47 @@ public class AppConfig {
     private boolean targetDirectInstances = false;
 
     /**
-     * Boolean setting to determine whether internal executors are launched as daemons or not.
-     * This is useful when JMXFetch is embedded in a client app, e.g. for the java tracer,
-     * so that the client app's exit doesn't block on the termination of these internal threads.
+     * Boolean setting to determine whether internal executors are launched as
+     * daemons or not.
+     * This is useful when JMXFetch is embedded in a client app, e.g. for the java
+     * tracer,
+     * so that the client app's exit doesn't block on the termination of these
+     * internal threads.
      */
     @Builder.Default
     private boolean daemon = false;
 
     /**
-     * Boolean setting to determine whether JMXFetch is embedded in a client app, e.g. for the java
-     * tracer. This setting is uncoupled from daemon one, even though very similar. This setting
-     * is used to reduce number of threads used by assuming the JMX connection will be local.
+     * Boolean setting to determine whether JMXFetch is embedded in a client app,
+     * e.g. for the java
+     * tracer. This setting is uncoupled from daemon one, even though very similar.
+     * This setting
+     * is used to reduce number of threads used by assuming the JMX connection will
+     * be local.
      */
     @Builder.Default
     private boolean embedded = false;
 
     // This is used by things like APM agent to provide configuration from resources
     private List<String> instanceConfigResources;
-    // This is used by things like APM agent to provide metric configuration from resources
+    // This is used by things like APM agent to provide metric configuration from
+    // resources
     private List<String> metricConfigResources;
-    // This is used by things like APM agent to provide metric configuration from files
+    // This is used by things like APM agent to provide metric configuration from
+    // files
     private List<String> metricConfigFiles;
-    // This is used by things like APM agent to provide global override for 1st bean refresh period
+    // This is used by things like APM agent to provide global override for 1st bean
+    // refresh period
     private Integer initialRefreshBeansPeriod;
-    // This is used by things like APM agent to provide global override for bean refresh period
+    // This is used by things like APM agent to provide global override for bean
+    // refresh period
     private Integer refreshBeansPeriod;
-    // This is used by things like APM agent to provide tags that should be set with all metrics
+    // This is used by things like APM agent to provide tags that should be set with
+    // all metrics
     private Map<String, String> globalTags;
     /**
-     * This is used by things like APM agent to provide a custom ServiceNameProvider that should be
+     * This is used by things like APM agent to provide a custom ServiceNameProvider
+     * that should be
      * used for all Instances.
      */
     private ServiceNameProvider serviceNameProvider;
@@ -306,7 +252,10 @@ public class AppConfig {
     @Builder.Default
     private Status status = new Status();
 
-    /** Updates the status and returns a boolean describing if the status was indeed updated.. */
+    /**
+     * Updates the status and returns a boolean describing if the status was indeed
+     * updated..
+     */
     public boolean updateStatus() {
         if (statusLocation != null) {
             status = new Status(statusLocation);

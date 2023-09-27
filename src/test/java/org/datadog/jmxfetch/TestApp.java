@@ -29,17 +29,16 @@ public class TestApp extends TestCommon {
         // Run the collection
         run();
 
-        List<String> tags =
-                Arrays.asList(
-                        "type:SimpleTestJavaApp",
-                        "scope:CoolScope",
-                        "instance:jmx_test_instance",
-                        "jmx_domain:org.datadog.jmxfetch.test",
-                        "bean_host:localhost",
-                        "component",
-                        "hosttag:localhost",
-                        "nonExistantTag:$2",
-                        "nonRegexTag:value");
+        List<String> tags = Arrays.asList(
+                "type:SimpleTestJavaApp",
+                "scope:CoolScope",
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "bean_host:localhost",
+                "component",
+                "hosttag:localhost",
+                "nonExistantTag:$2",
+                "nonRegexTag:value");
 
         assertMetric("this.is.100", tags, 9);
     }
@@ -57,17 +56,17 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml
+        // config file
         assertEquals(14, metrics.size());
 
-        List<String> tags =
-                Arrays.asList(
-                        "type:SimpleTestJavaApp",
-                        "scope:CoolScope",
-                        "instance:jmx_test_instance",
-                        "jmx_domain:org.datadog.jmxfetch.test",
-                        "bean_host:localhost",
-                        "component");
+        List<String> tags = Arrays.asList(
+                "type:SimpleTestJavaApp",
+                "scope:CoolScope",
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "bean_host:localhost",
+                "component");
 
         assertMetric("this.is.100", tags, 6);
     }
@@ -149,12 +148,11 @@ public class TestApp extends TestCommon {
         assertEquals(17, metrics.size());
 
         // Metric aliases are generated from `alias_match`
-        List<String> tags =
-                Arrays.asList(
-                        "jmx_domain:org.datadog.jmxfetch.test",
-                        "instance:jmx_test_instance",
-                        "foo:Bar",
-                        "qux:Baz");
+        List<String> tags = Arrays.asList(
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "instance:jmx_test_instance",
+                "foo:Bar",
+                "qux:Baz");
 
         assertMetric("this.is.100.bar.baz", tags, 4);
         assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
@@ -163,7 +161,8 @@ public class TestApp extends TestCommon {
     }
 
     /**
-     * Test that specifying no alias on an attribute defined with a detailed hashmap works and picks
+     * Test that specifying no alias on an attribute defined with a detailed hashmap
+     * works and picks
      * up a valid default alias
      */
     @Test
@@ -182,21 +181,22 @@ public class TestApp extends TestCommon {
         assertEquals(14, metrics.size());
 
         // Metric aliases are generated from `alias_match`
-        List<String> tags =
-                Arrays.asList(
-                        "jmx_domain:org.datadog.jmxfetch.test",
-                        "instance:jmx_test_instance",
-                        "foo:Bar",
-                        "qux:Baz");
+        List<String> tags = Arrays.asList(
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "instance:jmx_test_instance",
+                "foo:Bar",
+                "qux:Baz");
 
         assertMetric("jmx.org.datadog.jmxfetch.test.should_be100", tags, 4);
     }
 
     /**
-     * Check JMXFetch Cassandra metric aliasing logic, i.e. compliant with CASSANDRA-4009 when
+     * Check JMXFetch Cassandra metric aliasing logic, i.e. compliant with
+     * CASSANDRA-4009 when
      * `cassandra_aliasing` flag is enabled, or default.
      *
-     * <p>More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
+     * <p>
+     * More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
      */
     @Test
     public void testCassandraBean() throws Exception {
@@ -210,29 +210,28 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 14 = 2*13 metrics from java.lang + 2*1 metric explicitly defined in the yaml config file
+        // 14 = 2*13 metrics from java.lang + 2*1 metric explicitly defined in the yaml
+        // config file
         assertEquals(28, metrics.size());
 
         // Assert compliancy with CASSANDRA-4009
-        List<String> tags =
-                Arrays.asList(
-                        "type:ColumnFamily",
-                        "keyspace:MyKeySpace",
-                        "ColumnFamily:MyColumnFamily",
-                        "jmx_domain:org.apache.cassandra.metrics",
-                        "instance:jmx_first_instance");
+        List<String> tags = Arrays.asList(
+                "type:ColumnFamily",
+                "keyspace:MyKeySpace",
+                "ColumnFamily:MyColumnFamily",
+                "jmx_domain:org.apache.cassandra.metrics",
+                "instance:jmx_first_instance");
 
         assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
 
         // Default behavior
-        tags =
-                Arrays.asList(
-                        "type:ColumnFamily",
-                        "scope:MyColumnFamily",
-                        "keyspace:MyKeySpace",
-                        "jmx_domain:org.apache.cassandra.metrics",
-                        "instance:jmx_second_instance",
-                        "name:PendingTasks");
+        tags = Arrays.asList(
+                "type:ColumnFamily",
+                "scope:MyColumnFamily",
+                "keyspace:MyKeySpace",
+                "jmx_domain:org.apache.cassandra.metrics",
+                "instance:jmx_second_instance",
+                "name:PendingTasks");
 
         assertMetric("cassandra.metrics.should_be1000", tags, 6);
     }
@@ -249,16 +248,16 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml
+        // config file
         assertEquals(14, metrics.size());
 
-        List<String> tags =
-                Arrays.asList(
-                        "type:ColumnFamilies",
-                        "keyspace:MyKeySpace",
-                        "columnfamily:MyColumnFamily",
-                        "jmx_domain:org.apache.cassandra.db",
-                        "instance:jmx_test_instance");
+        List<String> tags = Arrays.asList(
+                "type:ColumnFamilies",
+                "keyspace:MyKeySpace",
+                "columnfamily:MyColumnFamily",
+                "jmx_domain:org.apache.cassandra.db",
+                "instance:jmx_test_instance");
 
         assertMetric("cassandra.db.should_be100", tags, 5);
     }
@@ -291,7 +290,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly
+        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1
+        // implicitly
         // defined in the exclude section
         assertEquals(14, metrics.size());
     }
@@ -311,7 +311,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly
+        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined -
+        // 1 implicitly
         // defined in exclude section
         assertEquals(15, metrics.size());
     }
@@ -347,16 +348,20 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1 implicitly
+        // First filter 14 = 13 metrics from java.lang + 2 metrics explicitly define- 1
+        // implicitly
         // defined in the exclude section
         assertEquals(14, metrics.size());
     }
 
     @Test
     public void testClassRegex() throws Exception {
-        class SimpleTestJavaAppIncludeMe extends SimpleTestJavaApp { }
-        class SimpleTestJavaAppIncludeMeToo extends SimpleTestJavaApp { }
-        class SimpleTestJavaAppIncludeMeNotMeX extends SimpleTestJavaApp { }
+        class SimpleTestJavaAppIncludeMe extends SimpleTestJavaApp {
+        }
+        class SimpleTestJavaAppIncludeMeToo extends SimpleTestJavaApp {
+        }
+        class SimpleTestJavaAppIncludeMeNotMeX extends SimpleTestJavaApp {
+        }
 
         // We expose a few metrics through JMX
         registerMBean(new SimpleTestJavaAppIncludeMe(), "org.datadog.jmxfetch.includeme:type=AType");
@@ -370,7 +375,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined - 1 implicitly
+        // First filter 15 = 13 metrics from java.lang + 3 metrics explicitly defined -
+        // 1 implicitly
         // defined in exclude section
         assertEquals(15, metrics.size());
     }
@@ -419,7 +425,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // First filter 13 = 13 metrics from java.lang + 2 metrics explicitly defined - 2 explicitly
+        // First filter 13 = 13 metrics from java.lang + 2 metrics explicitly defined -
+        // 2 explicitly
         // defined
         assertEquals(13, metrics.size());
     }
@@ -525,8 +532,7 @@ public class TestApp extends TestCommon {
         List<Map<String, Object>> metrics = getMetrics();
 
         // We test for the presence and the value of the metrics we want to collect
-        List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
+        List<String> commonTags = Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
 
         // 15 = 13 metrics from java.lang + the 3 collected (gauge and histogram)
         assertEquals(16, metrics.size());
@@ -539,7 +545,8 @@ public class TestApp extends TestCommon {
         run();
         metrics = getMetrics();
 
-        // 16 = 13 metrics from java.lang + the 4 collected (gauge, histogram and counter)
+        // 16 = 13 metrics from java.lang + the 4 collected (gauge, histogram and
+        // counter)
         assertEquals(17, metrics.size());
         assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
         assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
@@ -560,8 +567,7 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
-        List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "jmx_domain:org.datadog.jmxfetch.test");
+        List<String> commonTags = Arrays.asList("instance:jmx_test_instance", "jmx_domain:org.datadog.jmxfetch.test");
 
         // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
         assertEquals(15, metrics.size());
@@ -584,9 +590,8 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
-        List<String> commonTags =
-                Arrays.asList("instance:jmx_test_service_override_instance",
-                        "jmx_domain:org.datadog.jmxfetch.test","service:test");
+        List<String> commonTags = Arrays.asList("instance:jmx_test_service_override_instance",
+                "jmx_domain:org.datadog.jmxfetch.test", "service:test");
 
         // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
         assertEquals(15, metrics.size());
@@ -609,16 +614,15 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
-        List<String> commonTags =
-                Arrays.asList(
-                        "instance:jmx_test_instance",
-                        "jmx_domain:org.datadog.jmxfetch.test",
-                        "type:SimpleTestJavaApp",
-                        "name:testName",
-                        "simple:SimpleTestJavaApp",
-                        "raw_value:value",
-                        "unknown_tag:$does-not-exist",
-                        "multiple:SimpleTestJavaApp-testName");
+        List<String> commonTags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp",
+                "name:testName",
+                "simple:SimpleTestJavaApp",
+                "raw_value:value",
+                "unknown_tag:$does-not-exist",
+                "multiple:SimpleTestJavaApp-testName");
 
         // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
         assertEquals(15, metrics.size());
@@ -642,14 +646,14 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 29 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
+        // 29 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting +
+        // 9 gauges
         // implicitly collected
         // + 1 multi-value, see jmx.yaml in the test/resources folder
         assertEquals(30, metrics.size());
 
         // We test for the presence and the value of the metrics we want to collect
-        List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
+        List<String> commonTags = Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
 
         assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 8);
         assertMetric(
@@ -675,7 +679,8 @@ public class TestApp extends TestCommon {
         // We run a second collection. The counter should now be present
         run();
         metrics = getMetrics();
-        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
+        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting +
+        // 9 gauges
         // implicitly collected
         // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
         assertEquals(32, metrics.size());
@@ -714,7 +719,8 @@ public class TestApp extends TestCommon {
 
         run();
         metrics = getMetrics();
-        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting + 9 gauges
+        // 31 = 13 metrics from java.lang + the 6 gauges we are explicitly collecting +
+        // 9 gauges
         // implicitly collected
         // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
         assertEquals(32, metrics.size());
@@ -759,14 +765,14 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 29 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
+        // 29 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting +
+        // 9 gauges
         // implicitly collected
         // + 2 multi-value, see jmx.yaml in the test/resources folder
         assertEquals(29, metrics.size());
 
         // We test for the presence and the value of the metrics we want to collect
-        List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
+        List<String> commonTags = Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
 
         assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 8);
         assertMetric(
@@ -791,7 +797,8 @@ public class TestApp extends TestCommon {
         // We run a second collection. The counter should now be present
         run();
         metrics = getMetrics();
-        // 30 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
+        // 30 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting +
+        // 9 gauges
         // implicitly collected
         // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
         assertEquals(31, metrics.size());
@@ -877,7 +884,7 @@ public class TestApp extends TestCommon {
     public void testAppCount() throws Exception {
         // We expose a few metrics through JMX
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        registerMBean( testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
 
         initApplication("jmx_count.yaml");
 
@@ -892,7 +899,8 @@ public class TestApp extends TestCommon {
         assertEquals(14, metrics.size());
         assertMetric("test.counter", 0, Collections.<String>emptyList(), 3);
 
-        // For the 3rd collection we increment the count to 5 so we should get a +5 delta
+        // For the 3rd collection we increment the count to 5 so we should get a +5
+        // delta
         testApp.incrementCounter(5);
         run();
         metrics = getMetrics();
@@ -909,7 +917,7 @@ public class TestApp extends TestCommon {
     public void testAppCounterRate() throws Exception {
         // We expose a few metrics through JMX
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        registerMBean( testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
 
         initApplication("jmx_counter_rate.yaml");
 
@@ -926,7 +934,8 @@ public class TestApp extends TestCommon {
         assertMetric("test.rate", 0, Collections.<String>emptyList(), 3);
 
         Thread.sleep(5000);
-        // For the 3rd collection we increment the count to 5 so we should get a +5 delta
+        // For the 3rd collection we increment the count to 5 so we should get a +5
+        // delta
         testApp.incrementCounter(5);
         run();
         metrics = getMetrics();
@@ -939,7 +948,7 @@ public class TestApp extends TestCommon {
 
     /**
      * Test JMX Service Discovery.
-     * */
+     */
     @Test
     public void testServiceDiscovery() throws Exception {
         // We expose a few metrics through JMX
@@ -957,50 +966,47 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
+        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml
+        // config file
         assertEquals(63, metrics.size());
 
         List<String> tags = Arrays.asList(
-            "type:SimpleTestJavaApp",
-            "scope:CoolScope",
-            "instance:jmx_test_instance",
-            "jmx_domain:org.datadog.jmxfetch.test",
-            "bean_host:localhost",
-            "component"
-        );
+                "type:SimpleTestJavaApp",
+                "scope:CoolScope",
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "bean_host:localhost",
+                "component");
 
         assertMetric("this.is.100", tags, 6);
 
         // Assert compliancy with CASSANDRA-4009
-        tags =
-                Arrays.asList(
-                        "type:ColumnFamily",
-                        "keyspace:MyKeySpace",
-                        "ColumnFamily:MyColumnFamily",
-                        "jmx_domain:org.apache.cassandra.metrics",
-                        "instance:jmx_first_instance");
+        tags = Arrays.asList(
+                "type:ColumnFamily",
+                "keyspace:MyKeySpace",
+                "ColumnFamily:MyColumnFamily",
+                "jmx_domain:org.apache.cassandra.metrics",
+                "instance:jmx_first_instance");
 
         assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
 
         // Default behavior
-        tags =
-                Arrays.asList(
-                        "type:ColumnFamily",
-                        "scope:MyColumnFamily",
-                        "keyspace:MyKeySpace",
-                        "jmx_domain:org.apache.cassandra.metrics",
-                        "instance:jmx_second_instance",
-                        "name:PendingTasks");
+        tags = Arrays.asList(
+                "type:ColumnFamily",
+                "scope:MyColumnFamily",
+                "keyspace:MyKeySpace",
+                "jmx_domain:org.apache.cassandra.metrics",
+                "instance:jmx_second_instance",
+                "name:PendingTasks");
 
         assertMetric("cassandra.metrics.should_be1000", tags, 6);
 
         // Metric aliases are generated from `alias_match`
-        tags =
-                Arrays.asList(
-                        "jmx_domain:org.datadog.jmxfetch.test",
-                        "instance:jmx_test_instance",
-                        "foo:Bar",
-                        "qux:Baz");
+        tags = Arrays.asList(
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "instance:jmx_test_instance",
+                "foo:Bar",
+                "qux:Baz");
 
         assertMetric("this.is.100.bar.baz", tags, 4);
         assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
@@ -1027,12 +1033,14 @@ public class TestApp extends TestCommon {
 
         assertEquals(35, metrics.size());
 
-        // 2(jmx_alias_match)  + 1 (jmx_sd_pipe_longname discards one)
+        // 2(jmx_alias_match) + 1 (jmx_sd_pipe_longname discards one)
         assertEquals(2, instances.size());
     }
 
-    /** Test that when a metric fails to be fetched and there is no default for
-     *  it, that metric is ignored while others still get fetched */
+    /**
+     * Test that when a metric fails to be fetched and there is no default for
+     * it, that metric is ignored while others still get fetched
+     */
     @Test
     public void testMetricError() throws Exception {
         // We expose a few metrics through JMX
@@ -1051,13 +1059,13 @@ public class TestApp extends TestCommon {
         List<String> tags = Arrays.asList(
                 "instance:jmx_test_instance",
                 "jmx_domain:org.datadog.jmxfetch.test",
-                "type:SimpleTestJavaApp"
-        );
+                "type:SimpleTestJavaApp");
 
         assertMetric("jmx.org.datadog.jmxfetch.test.should_be100", 100.0, tags, -1);
 
         assertCoverage();
     }
+
     @Test
     public void testTabularDataTagless() throws Exception {
         // We expose a few metrics through JMX
@@ -1078,13 +1086,13 @@ public class TestApp extends TestCommon {
                 "instance:jmx_test_instance",
                 "jmx_domain:org.datadog.jmxfetch.test",
                 "type:SimpleTestJavaApp",
-                "newTag:test"
-        );
+                "newTag:test");
 
         assertMetric("multiattr.foo_tagless", 1.0, tags, -1);
 
         assertCoverage();
     }
+
     @Test
     public void testTabularDataTagged() throws Exception {
         // We expose a few metrics through JMX
@@ -1107,10 +1115,36 @@ public class TestApp extends TestCommon {
                 "type:SimpleTestJavaApp",
                 "foo:1",
                 "toto:tata",
-                "newTag:test"
-        );
+                "newTag:test");
 
         assertMetric("multiattr.foo_tagged", 1.0, tags, -1);
+
+        assertCoverage();
+    }
+
+    @Test
+    public void testNestedCompositeData() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        initApplication("jmx_composite_data.yaml");
+
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        assertEquals(1, metrics.size());
+
+        List<String> tags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp",
+                "env:stage",
+                "newTag:test");
+
+        // ALMOST THERE
+        assertMetric("one_level_int", 42, tags, -1);
 
         assertCoverage();
     }

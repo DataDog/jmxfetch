@@ -3,6 +3,9 @@ package org.datadog.jmxfetch;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 
@@ -39,5 +42,10 @@ public interface SimpleTestJavaAppMBean {
     Float getInstanceFloat();
 
     TabularData getTabulardata();
+
     TabularDataSupport getTabularDataSupport();
+
+    CompositeData getNestedCompositeData();
+
+    CompositeDataSupport getNestedCompositeDataSupport();
 }

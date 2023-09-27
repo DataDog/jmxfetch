@@ -43,6 +43,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final TabularDataSupport tabulardata;
     private final CompositeType compositetype;
 
+    private final CompositeDataSupport nestedCompositeData;
+
     SimpleTestJavaApp() {
         hashmap.put("thisis0", 0);
         hashmap.put("thisis10", 10);
@@ -50,9 +52,12 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         hashmap.put("shouldBeDefaulted", 0);
         compositetype = buildCompositeType();
         tabulardata = buildTabularType();
+
         if (tabulardata != null) {
             tabulardata.put(buildCompositeData(1));
         }
+
+        nestedCompositeData = buildNestedCompositeData();
     }
 
     public int getShouldBe100() {
@@ -136,9 +141,8 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private TabularDataSupport buildTabularType() {
         try {
             CompositeType rowType = buildCompositeType();
-            TabularType tabularType =
-                    new TabularType(
-                            "myTabularType", "My tabular type", rowType, new String[] {"foo"});
+            TabularType tabularType = new TabularType(
+                    "myTabularType", "My tabular type", rowType, new String[] { "foo" });
             return new TabularDataSupport(tabularType);
         } catch (OpenDataException e) {
             return null;
@@ -150,22 +154,65 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
             return new CompositeType(
                     "myCompositeType",
                     "My composite type",
-                    new String[] {"foo", "bar", "toto"},
+                    new String[] { "foo", "bar", "toto" },
                     new String[] {
-                        "Description of `foo`", "Description of `bar`", "Description of `toto`"
+                            "Description of `foo`", "Description of `bar`", "Description of `toto`"
                     },
-                    new OpenType[] {SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING});
+                    new OpenType[] { SimpleType.STRING, SimpleType.INTEGER, SimpleType.STRING });
         } catch (OpenDataException e) {
             return null;
         }
+    }
+
+    private CompositeDataSupport buildNestedCompositeData() {
+        try {
+            // Define the inner CompositeData
+            String[] innerNames = { "aLong", "aDouble", "aString" };
+            Object[] innerValues = { 123456L, 123.456, "Test String" };
+            OpenType<?>[] innerTypes = { SimpleType.LONG, SimpleType.DOUBLE, SimpleType.STRING };
+
+            CompositeType innerType = new CompositeType(
+                    "InnerType",
+                    "Description for Inner CompositeData",
+                    innerNames,
+                    innerNames,
+                    innerTypes);
+
+            CompositeData innerComposite = new CompositeDataSupport(innerType, innerNames, innerValues);
+
+            // Define the outer CompositeData
+            String[] outerNames = { "anInt", "aBoolean", "nestedData" };
+            Object[] outerValues = { 42, true, innerComposite };
+            OpenType<?>[] outerTypes = { SimpleType.INTEGER, SimpleType.BOOLEAN, innerType };
+
+            CompositeType outerType = new CompositeType(
+                    "OuterType",
+                    "Description for Outer CompositeData",
+                    outerNames,
+                    outerNames,
+                    outerTypes);
+
+            return new CompositeDataSupport(outerType, outerNames, outerValues);
+        } catch (Exception e) {
+            // should never happen
+            return null;
+        }
+    }
+
+    public CompositeData getNestedCompositeData() {
+        return this.nestedCompositeData;
+    }
+
+    public CompositeDataSupport getNestedCompositeDataSupport() {
+        return this.nestedCompositeData;
     }
 
     private CompositeData buildCompositeData(Integer i) {
         try {
             return new CompositeDataSupport(
                     compositetype,
-                    new String[] {"foo", "bar", "toto"},
-                    new Object[] {i.toString(), i, "tata"});
+                    new String[] { "foo", "bar", "toto" },
+                    new Object[] { i.toString(), i, "tata" });
         } catch (OpenDataException e) {
             return null;
         }
@@ -181,6 +228,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     public TabularData getTabulardata() {
         return tabulardata;
     }
+
     public TabularDataSupport getTabularDataSupport() {
         return tabulardata;
     }

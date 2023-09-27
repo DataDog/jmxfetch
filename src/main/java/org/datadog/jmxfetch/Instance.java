@@ -7,8 +7,6 @@ import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.yaml.snakeyaml.Yaml;
 
-
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -38,57 +36,55 @@ import javax.security.auth.login.FailedLoginException;
 
 @Slf4j
 public class Instance {
-    private static final List<String> SIMPLE_TYPES =
-            Arrays.asList(
-                    "long",
-                    "java.lang.String",
-                    "int",
-                    "float",
-                    "double",
-                    "java.lang.Double",
-                    "java.lang.Float",
-                    "java.lang.Integer",
-                    "java.lang.Long",
-                    "java.util.concurrent.atomic.AtomicInteger",
-                    "java.util.concurrent.atomic.AtomicLong",
-                    "java.lang.Object",
-                    "java.lang.Boolean",
-                    "boolean",
-                    "java.lang.Number",
-                    //Workaround for jasperserver, which returns attribute types as `class <type>`
-                    "class java.lang.String",
-                    "class java.lang.Double",
-                    "class java.lang.Float",
-                    "class java.lang.Integer",
-                    "class java.lang.Long",
-                    "class java.util.concurrent.atomic.AtomicInteger",
-                    "class java.util.concurrent.atomic.AtomicLong",
-                    "class java.lang.Object",
-                    "class java.lang.Boolean",
-                    "class java.lang.Number");
-    private static final List<String> COMPOSED_TYPES =
-            Arrays.asList(
-                    "javax.management.openmbean.CompositeData",
-                    "java.util.HashMap",
-                    "java.util.Map");
-    private static final List<String> MULTI_TYPES =
-            Arrays.asList(
-                    "javax.management.openmbean.TabularData",
-                    //Adding TabularDataSupport as it implements TabularData
-                    "javax.management.openmbean.TabularDataSupport");
+    private static final List<String> SIMPLE_TYPES = Arrays.asList(
+            "long",
+            "java.lang.String",
+            "int",
+            "float",
+            "double",
+            "java.lang.Double",
+            "java.lang.Float",
+            "java.lang.Integer",
+            "java.lang.Long",
+            "java.util.concurrent.atomic.AtomicInteger",
+            "java.util.concurrent.atomic.AtomicLong",
+            "java.lang.Object",
+            "java.lang.Boolean",
+            "boolean",
+            "java.lang.Number",
+            // Workaround for jasperserver, which returns attribute types as `class <type>`
+            "class java.lang.String",
+            "class java.lang.Double",
+            "class java.lang.Float",
+            "class java.lang.Integer",
+            "class java.lang.Long",
+            "class java.util.concurrent.atomic.AtomicInteger",
+            "class java.util.concurrent.atomic.AtomicLong",
+            "class java.lang.Object",
+            "class java.lang.Boolean",
+            "class java.lang.Number");
+    private static final List<String> COMPOSED_TYPES = Arrays.asList(
+            "javax.management.openmbean.CompositeData",
+            // Adding CompositeDataSupport as it implements CompositeData
+            "javax.management.openmbean.CompositeDataSupport",
+            "java.util.HashMap",
+            "java.util.Map");
+    private static final List<String> MULTI_TYPES = Arrays.asList(
+            "javax.management.openmbean.TabularData",
+            // Adding TabularDataSupport as it implements TabularData
+            "javax.management.openmbean.TabularDataSupport");
     private static final int MAX_RETURNED_METRICS = 350;
     private static final int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
     public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
 
-    private static final ThreadLocal<Yaml> YAML =
-        new ThreadLocal<Yaml>() {
-            @Override
-            public Yaml initialValue() {
-                return new Yaml();
-            }
-        };
+    private static final ThreadLocal<Yaml> YAML = new ThreadLocal<Yaml>() {
+        @Override
+        public Yaml initialValue() {
+            return new Yaml();
+        }
+    };
 
     private Set<ObjectName> beans;
     private List<String> beanScopes;
@@ -119,7 +115,10 @@ public class Instance {
     private MBeanServer mbs;
     private Boolean normalizeBeanParamTags;
 
-    /** Constructor, instantiates Instance based of a previous instance and appConfig. */
+    /**
+     * Constructor, instantiates Instance based of a previous instance and
+     * appConfig.
+     */
     public Instance(Instance instance, AppConfig appConfig) {
         this(
                 instance.getInstanceMap() != null
@@ -133,7 +132,10 @@ public class Instance {
                 instance.serviceNameProvider);
     }
 
-    /** Default constructor, builds an Instance from the provided instance map and init configs. */
+    /**
+     * Default constructor, builds an Instance from the provided instance map and
+     * init configs.
+     */
     @SuppressWarnings("unchecked")
     public Instance(
             Map<String, Object> instanceMap,
@@ -142,8 +144,7 @@ public class Instance {
             AppConfig appConfig,
             ServiceNameProvider serviceNameProvider) {
         this.appConfig = appConfig;
-        this.instanceMap =
-                instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
+        this.instanceMap = instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
         this.initConfig = initConfig != null ? new HashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
@@ -155,7 +156,8 @@ public class Instance {
             if (this.refreshBeansPeriod == null) {
                 // Make sure to refresh the beans list every 10 minutes
                 // Useful because sometimes if the application restarts, jmxfetch might read
-                // a jmxtree that is not completely initialized and would be missing some attributes
+                // a jmxtree that is not completely initialized and would be missing some
+                // attributes
                 this.refreshBeansPeriod = DEFAULT_REFRESH_BEANS_PERIOD;
             }
         } else {
@@ -167,7 +169,8 @@ public class Instance {
             if (this.initialRefreshBeansPeriod == null) {
                 // First bean refresh after initialization. Succeeding refresh controlled
                 // by refresh_beans
-                // Useful for Java applications that are lazy loaded and may take some time after
+                // Useful for Java applications that are lazy loaded and may take some time
+                // after
                 // application startup before actually being exposed
                 this.initialRefreshBeansPeriod = this.refreshBeansPeriod;
             }
@@ -189,8 +192,7 @@ public class Instance {
         }
 
         Object emptyDefaultHostnameObj = this.instanceMap.get("empty_default_hostname");
-        this.emptyDefaultHostname =
-                emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
+        this.emptyDefaultHostname = emptyDefaultHostnameObj != null ? (Boolean) emptyDefaultHostnameObj : false;
 
         this.lastCollectionTime = 0;
         this.initialRefreshTime = 0;
@@ -208,12 +210,11 @@ public class Instance {
             if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
                 this.instanceName = this.checkName + "-" + this.instanceMap.get(PROCESS_NAME_REGEX);
             } else if (this.instanceMap.get("host") != null) {
-                this.instanceName =
-                        this.checkName
-                                + "-"
-                                + this.instanceMap.get("host")
-                                + "-"
-                                + this.instanceMap.get("port");
+                this.instanceName = this.checkName
+                        + "-"
+                        + this.instanceMap.get("host")
+                        + "-"
+                        + this.instanceMap.get("port");
             } else {
                 log.warn(
                         "Cannot determine a unique instance name. "
@@ -231,7 +232,6 @@ public class Instance {
             this.normalizeBeanParamTags = false;
         }
 
-
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
         this.cassandraAliasing = (Boolean) instanceMap.get("cassandra_aliasing");
@@ -243,7 +243,8 @@ public class Instance {
             }
         }
 
-        // In case the configuration to match beans is not specified in the "instance" parameter but
+        // In case the configuration to match beans is not specified in the "instance"
+        // parameter but
         // in the initConfig one
         Object instanceConf = this.instanceMap.get("conf");
         if (instanceConf == null && this.initConfig != null) {
@@ -253,8 +254,7 @@ public class Instance {
         if (instanceConf == null) {
             log.warn("Cannot find a \"conf\" section in " + this.instanceName);
         } else {
-            for (Map<String, Object> conf :
-                    (List<Map<String, Object>>) (instanceConf)) {
+            for (Map<String, Object> conf : (List<Map<String, Object>>) (instanceConf)) {
                 configurationList.add(new Configuration(conf));
             }
         }
@@ -282,31 +282,30 @@ public class Instance {
         instanceTelemetryBean = createJmxBean();
     }
 
-    private ObjectName getObjName(String domain,String instance)
+    private ObjectName getObjName(String domain, String instance)
             throws MalformedObjectNameException {
         return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
     private InstanceTelemetry createJmxBean() {
-        mbs =  ManagementFactory.getPlatformMBeanServer();
+        mbs = ManagementFactory.getPlatformMBeanServer();
         InstanceTelemetry bean = new InstanceTelemetry();
         log.debug("Created jmx bean for instance: " + this.getCheckName());
 
         try {
             instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
-                     this.getName());
-            mbs.registerMBean(bean,instanceTelemetryBeanName);
+                    this.getName());
+            mbs.registerMBean(bean, instanceTelemetryBeanName);
             log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName()
                     + " with ObjectName = " + instanceTelemetryBeanName);
 
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException
                 | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
+            log.warn("Could not register bean for instance: " + this.getCheckName(), e);
         }
 
         return bean;
     }
-
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
         Object directInstance = configInstance.get(JVM_DIRECT);
@@ -314,9 +313,8 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        List<Map<String, Object>> defaultConf =
-                (List<Map<String, Object>>)
-                        YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
+        List<Map<String, Object>> defaultConf = (List<Map<String, Object>>) YAML.get()
+                .load(this.getClass().getResourceAsStream(configResourcePath));
         for (Map<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
         }
@@ -338,9 +336,7 @@ public class Instance {
                 log.info("Reading metric config file " + yamlPath);
                 try {
                     yamlInputStream = new FileInputStream(yamlPath);
-                    List<Map<String, Object>> confs =
-                            (List<Map<String, Object>>)
-                                    YAML.get().load(yamlInputStream);
+                    List<Map<String, Object>> confs = (List<Map<String, Object>>) YAML.get().load(yamlInputStream);
                     for (Map<String, Object> conf : confs) {
                         configurationList.add(new Configuration(conf));
                     }
@@ -377,11 +373,9 @@ public class Instance {
                     log.warn("Cannot find metric config resource" + resourceName);
                 } else {
                     try {
-                        Map<String, List<Map<String, Object>>> topYaml =
-                                (Map<String, List<Map<String, Object>>>)
-                                        YAML.get().load(inputStream);
-                        List<Map<String, Object>> jmxConf =
-                                topYaml.get("jmx_metrics");
+                        Map<String, List<Map<String, Object>>> topYaml = (Map<String, List<Map<String, Object>>>) YAML
+                                .get().load(inputStream);
+                        List<Map<String, Object>> jmxConf = topYaml.get("jmx_metrics");
                         if (jmxConf != null) {
                             for (Map<String, Object> conf : jmxConf) {
                                 configurationList.add(new Configuration(conf));
@@ -404,7 +398,8 @@ public class Instance {
     }
 
     /**
-     * Format the instance tags defined in the YAML configuration file to a `HashMap`.
+     * Format the instance tags defined in the YAML configuration file to a
+     * `HashMap`.
      * Supported inputs: `List`, `Map`.
      */
     private static Map<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
@@ -451,7 +446,7 @@ public class Instance {
         if (connection == null || !connection.isAlive()) {
             log.info(
                     "Connection closed or does not exist. "
-                    + "Attempting to create a new connection...");
+                            + "Attempting to create a new connection...");
             return ConnectionFactory.createConnection(connectionParams);
         } else if (forceNewConnection) {
             log.info("Forcing a new connection, attempting to create...");
@@ -500,10 +495,12 @@ public class Instance {
 
         // In case of ephemeral beans, we can force to refresh the bean list x seconds
         // post initialization and every x seconds thereafter.
-        // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters must be
+        // To enable this, a "refresh_beans_initial" and/or "refresh_beans" parameters
+        // must be
         // specified in the yaml/json config
         Integer period = (this.initialRefreshTime == this.lastRefreshTime)
-            ? this.initialRefreshBeansPeriod : this.refreshBeansPeriod;
+                ? this.initialRefreshBeansPeriod
+                : this.refreshBeansPeriod;
 
         if (isPeriodDue(this.lastRefreshTime, period)) {
             log.info("Refreshing bean list for " + this.getCheckName());
@@ -623,79 +620,78 @@ public class Instance {
                 if (SIMPLE_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                            + beanName
-                            + " : "
-                            + attributeInfo
-                            + " has attributeInfo simple type");
-                    jmxAttribute =
-                        new JmxSimpleAttribute(
-                                attributeInfo,
-                                beanName,
-                                className,
-                                instanceName,
-                                checkName,
-                                connection,
-                                serviceNameProvider,
-                                tags,
-                                cassandraAliasing,
-                                emptyDefaultHostname,
-                                normalizeBeanParamTags);
+                                    + beanName
+                                    + " : "
+                                    + attributeInfo
+                                    + " has attributeInfo simple type");
+                    jmxAttribute = new JmxSimpleAttribute(
+                            attributeInfo,
+                            beanName,
+                            className,
+                            instanceName,
+                            checkName,
+                            connection,
+                            serviceNameProvider,
+                            tags,
+                            cassandraAliasing,
+                            emptyDefaultHostname,
+                            normalizeBeanParamTags);
                 } else if (COMPOSED_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                            + beanName
-                            + " : "
-                            + attributeInfo
-                            + " has attributeInfo composite type");
-                    jmxAttribute =
-                        new JmxComplexAttribute(
-                                attributeInfo,
-                                beanName,
-                                className,
-                                instanceName,
-                                checkName,
-                                connection,
-                                serviceNameProvider,
-                                tags,
-                                emptyDefaultHostname,
-                                normalizeBeanParamTags);
+                                    + beanName
+                                    + " : "
+                                    + attributeInfo
+                                    + " has attributeInfo composite type");
+                    jmxAttribute = new JmxComplexAttribute(
+                            attributeInfo,
+                            beanName,
+                            className,
+                            instanceName,
+                            checkName,
+                            connection,
+                            serviceNameProvider,
+                            tags,
+                            emptyDefaultHostname,
+                            normalizeBeanParamTags);
                 } else if (MULTI_TYPES.contains(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                            + beanName
-                            + " : "
-                            + attributeInfo
-                            + " has attributeInfo tabular type");
-                    jmxAttribute =
-                        new JmxTabularAttribute(
-                                attributeInfo,
-                                beanName,
-                                className,
-                                instanceName,
-                                checkName,
-                                connection,
-                                serviceNameProvider,
-                                tags,
-                                emptyDefaultHostname,
-                                normalizeBeanParamTags);
+                                    + beanName
+                                    + " : "
+                                    + attributeInfo
+                                    + " has attributeInfo tabular type");
+                    jmxAttribute = new JmxTabularAttribute(
+                            attributeInfo,
+                            beanName,
+                            className,
+                            instanceName,
+                            checkName,
+                            connection,
+                            serviceNameProvider,
+                            tags,
+                            emptyDefaultHostname,
+                            normalizeBeanParamTags);
                 } else {
                     try {
                         log.debug(
                                 ATTRIBUTE
-                                + beanName
-                                + " : "
-                                + attributeInfo
-                                + " has an unsupported type: "
-                                + attributeType);
+                                        + beanName
+                                        + " : "
+                                        + attributeInfo
+                                        + " has an unsupported type: "
+                                        + attributeType);
                     } catch (NullPointerException e) {
                         log.warn("Caught unexpected NullPointerException");
                     }
                     continue;
                 }
 
-                // For each attribute we try it with each configuration to see if there is one that
+                // For each attribute we try it with each configuration to see if there is one
+                // that
                 // matches
-                // If so, we store the attribute so metrics will be collected from it. Otherwise we
+                // If so, we store the attribute so metrics will be collected from it. Otherwise
+                // we
                 // discard it.
                 for (Configuration conf : configurationList) {
                     try {
@@ -707,9 +703,9 @@ public class Instance {
                             if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                                     || action.equals(AppConfig.ACTION_LIST_MATCHING)
                                     || action.equals(AppConfig.ACTION_LIST_COLLECTED)
-                                    && !limitReached
+                                            && !limitReached
                                     || action.equals(AppConfig.ACTION_LIST_LIMITED)
-                                    && limitReached) {
+                                            && limitReached) {
                                 reporter.displayMatchingAttributeName(
                                         jmxAttribute, metricsCount, maxReturnedMetrics);
                             }
@@ -718,16 +714,16 @@ public class Instance {
                     } catch (Exception e) {
                         log.error(
                                 "Error while trying to match attributeInfo configuration "
-                                + "with the Attribute: "
-                                + beanName
-                                + " : "
-                                + attributeInfo,
+                                        + "with the Attribute: "
+                                        + beanName
+                                        + " : "
+                                        + attributeInfo,
                                 e);
                     }
                 }
                 if (jmxAttribute.getMatchingConf() == null
                         && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                            || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                                || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
             }
@@ -744,15 +740,15 @@ public class Instance {
     }
 
     /**
-     * Query and refresh the instance's list of beans. Limit the query scope when possible on
+     * Query and refresh the instance's list of beans. Limit the query scope when
+     * possible on
      * certain actions, and fallback if necessary.
      */
     private void refreshBeansList() throws IOException {
         this.beans = new HashSet<ObjectName>();
         String action = appConfig.getAction();
-        boolean limitQueryScopes =
-                !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
-                        && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
+        boolean limitQueryScopes = !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
         if (limitQueryScopes) {
             try {
@@ -788,7 +784,7 @@ public class Instance {
             }
         }
 
-        Iterable<String> services  = this.serviceNameProvider.getServiceNames();
+        Iterable<String> services = this.serviceNameProvider.getServiceNames();
         if (services != null) {
             for (String service : services) {
                 tags.add("service:" + service);
@@ -835,7 +831,10 @@ public class Instance {
         return this.instanceTelemetryBean;
     }
 
-    /** Returns whether or not the instance has reached the maximum bean collection limit. */
+    /**
+     * Returns whether or not the instance has reached the maximum bean collection
+     * limit.
+     */
     public boolean isLimitReached() {
         return this.limitReached;
     }
@@ -861,7 +860,7 @@ public class Instance {
 
     /**
      * Asynchronoush cleanup of instance, including connection.
-     * */
+     */
     public synchronized void cleanUpAsync() {
         appConfig = null;
         cleanupTelemetryBean();

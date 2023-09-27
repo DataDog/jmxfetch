@@ -1,0 +1,18 @@
+---
+init_config:
+
+instances:
+  - jvm_direct: true
+    refresh_beans: 4
+    collect_default_jvm_metrics: false
+    name: jmx_test_instance
+    tags:
+      - "env:stage"
+      - "newTag:test"
+    conf:
+      - include:
+          domain: org.datadog.jmxfetch.test
+          attribute:
+            NestedCompositeDataSupport.anInt:
+              metric_type: gauge
+              alias: one_level_int

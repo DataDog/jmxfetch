@@ -2,6 +2,8 @@ package org.datadog.jmxfetch;
 
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,6 +18,7 @@ import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
 @SuppressWarnings("unchecked")
+@Slf4j
 public class JmxComplexAttribute extends JmxSubAttribute {
 
     private List<String> subAttributeList = new ArrayList<String>();
@@ -48,7 +51,8 @@ public class JmxComplexAttribute extends JmxSubAttribute {
 
     private void populateSubAttributeList(Object attributeValue) {
         String attributeType = getAttribute().getType();
-        if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
+        if ("javax.management.openmbean.CompositeData".equals(attributeType)
+                || "javax.management.openmbean.CompositeDataSupport".equals(attributeType)) {
             CompositeData data = (CompositeData) attributeValue;
             for (String key : data.getCompositeType().keySet()) {
                 this.subAttributeList.add(key);
@@ -77,12 +81,13 @@ public class JmxComplexAttribute extends JmxSubAttribute {
 
     private Object getValue(String subAttribute)
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
-                    ReflectionException, IOException {
+            ReflectionException, IOException {
 
         Object value = this.getJmxValue();
         String attributeType = getAttribute().getType();
 
-        if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
+        if ("javax.management.openmbean.CompositeData".equals(attributeType)
+                || "javax.management.openmbean.CompositeDataSupport".equals(attributeType)) {
             CompositeData data = (CompositeData) value;
             return data.get(subAttribute);
         } else if (("java.util.HashMap".equals(attributeType))
@@ -90,41 +95,55 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             Map<String, Object> data = (Map<String, Object>) value;
             return data.get(subAttribute);
         }
+        log.warn("Could not retrieve value from bean '{}', attribute '{}', subattribute '{}'.", super.beanStringName,
+                super.getAttributeName(), subAttribute);
         throw new NumberFormatException();
     }
 
     @Override
     public boolean match(Configuration configuration) {
+        log.info("checking match for config {} with domain {} classname {} and bean {}", configuration,
+                this.getDomain(), super.className, super.beanStringName);
         if (!matchDomain(configuration)
                 || !matchClassName(configuration)
                 || !matchBean(configuration)
                 || excludeMatchDomain(configuration)
                 || excludeMatchClassName(configuration)
                 || excludeMatchBean(configuration)) {
+            log.info("Failed the domain, class, bean checks. {} returns false.", super.beanStringName);
             return false;
         }
 
         try {
             populateSubAttributeList(getJmxValue());
         } catch (Exception e) {
+            log.info("Couldn't populate subattribute list, returning false for bean {}: ", super.beanStringName, e);
             return false;
         }
+
+        log.info("Made it to the matchAttribute step for attribute {} (bean: {}), checking....", this.getAttribute(),
+                super.beanStringName);
 
         return matchAttribute(configuration) && !excludeMatchAttribute(configuration);
     }
 
     private boolean matchSubAttribute(
             Filter params, String subAttributeName, boolean matchOnEmpty) {
+        log.info("MatchSubAttribute checking for subattr name {} with filters: {}", subAttributeName, params);
         if ((params.getAttribute() instanceof Map<?, ?>)
                 && ((Map<String, Object>) (params.getAttribute()))
                         .containsKey(subAttributeName)) {
+            log.info("MatchSubAttribute Found attribute name in include map, returning true.");
             return true;
         } else if ((params.getAttribute() instanceof List<?>
                 && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
+            log.info("MatchSubAttribute Found attribute name in include list, returning true.");
             return true;
         } else if (params.getAttribute() == null) {
+            log.info("Returning matchonEmpty {}", matchOnEmpty);
             return matchOnEmpty;
         }
+        log.info("MatchSubAttribute did not match. REturning false.");
         return false;
     }
 
@@ -137,6 +156,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
 
         while (it.hasNext()) {
             String subAttribute = it.next();
+            log.info("Checking subattribute named {}", subAttribute);
             if (!matchSubAttribute(
                     configuration.getInclude(), getAttributeName() + "." + subAttribute, true)) {
                 it.remove();
