@@ -16,3 +16,11 @@ instances:
             NestedCompositeData.anInt:
               metric_type: gauge
               alias: one_level_int
+      - include:
+          domain: org.datadog.jmxfetch.test
+          attribute:
+            # Warning!! This is currently not supported!
+            # See corresponding unit test
+            NestedCompositeData.nestedData.aLong:
+              metric_type: gauge
+              alias: second_level_long

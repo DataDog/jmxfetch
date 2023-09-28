@@ -1138,6 +1138,10 @@ public class TestApp extends TestCommon {
 
         assertMetric("one_level_int", 42, tags, -1);
 
+        // This assertion currently fails as JMXFetch does not support accessing
+        // data from a nested compositedata object
+        //assertMetric("second_level_long", 123456L, tags, -1);
+
         assertCoverage();
     }
 }
