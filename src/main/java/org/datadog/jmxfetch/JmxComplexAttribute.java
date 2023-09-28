@@ -99,24 +99,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     }
 
     public static boolean matchAttributeType(String attributeType) {
-        if (COMPOSED_TYPES.contains(attributeType)) {
-            return true;
-        }
-        try {
-            Class<?> classObj = Class.forName(attributeType);
-
-            if (javax.management.openmbean.CompositeData.class.isAssignableFrom(classObj)) {
-                log.info("Found that type {} is assignable to CompositeData.", attributeType);
-                return true;
-            }
-            if (java.util.Map.class.isAssignableFrom(classObj)) {
-                log.info("Found that type {} is assignable to Map.", attributeType);
-                return true;
-            }
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-        return false;
+        return COMPOSED_TYPES.contains(attributeType);
     }
 
     @Override

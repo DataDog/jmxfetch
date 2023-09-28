@@ -61,19 +61,7 @@ public class JmxTabularAttribute extends JmxSubAttribute {
     }
 
     public static boolean matchAttributeType(String attributeType) {
-        if (MULTI_TYPES.contains(attributeType)) {
-            return true;
-        }
-        try {
-            Class<?> classObj = Class.forName(attributeType);
-
-            if (javax.management.openmbean.TabularData.class.isAssignableFrom(classObj)) {
-                return true;
-            }
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-        return false;
+        return MULTI_TYPES.contains(attributeType);
     }
 
     private String getMultiKey(Collection keys) {
