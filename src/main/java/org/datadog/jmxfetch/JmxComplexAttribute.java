@@ -24,6 +24,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     private static final List<String> COMPOSED_TYPES =
             Arrays.asList(
                     "javax.management.openmbean.CompositeData",
+                    "javax.management.openmbean.CompositeDataSupport",
                     "java.util.HashMap",
                     "java.util.Map");
 
