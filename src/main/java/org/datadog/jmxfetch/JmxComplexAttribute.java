@@ -50,15 +50,12 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     }
 
     private void populateSubAttributeList(Object attributeValue) {
-        String attributeType = getAttribute().getType();
-        if ("javax.management.openmbean.CompositeData".equals(attributeType)
-                || "javax.management.openmbean.CompositeDataSupport".equals(attributeType)) {
+        if (attributeValue instanceof javax.management.openmbean.CompositeData) {
             CompositeData data = (CompositeData) attributeValue;
             for (String key : data.getCompositeType().keySet()) {
                 this.subAttributeList.add(key);
             }
-        } else if (("java.util.HashMap".equals(attributeType))
-                || ("java.util.Map".equals(attributeType))) {
+        } else if (attributeValue instanceof java.util.Map) {
             Map<String, Double> data = (Map<String, Double>) attributeValue;
             for (String key : data.keySet()) {
                 this.subAttributeList.add(key);
