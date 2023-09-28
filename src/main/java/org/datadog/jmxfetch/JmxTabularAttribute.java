@@ -25,6 +25,11 @@ import javax.management.openmbean.TabularData;
 
 @Slf4j
 public class JmxTabularAttribute extends JmxSubAttribute {
+    private static final List<String> MULTI_TYPES =
+            Arrays.asList(
+                    "javax.management.openmbean.TabularData",
+                    //Adding TabularDataSupport as it implements TabularData
+                    "javax.management.openmbean.TabularDataSupport");
     private String instanceName;
     private Map<String, List<String>> subAttributeList;
 
@@ -53,6 +58,22 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 emptyDefaultHostname,
                 normalizeBeanParamTags);
         subAttributeList = new HashMap<String, List<String>>();
+    }
+
+    public static boolean matchAttributeType(String attributeType) {
+        if (MULTI_TYPES.contains(attributeType)) {
+            return true;
+        }
+        try {
+            Class<?> classObj = Class.forName(attributeType);
+
+            if (javax.management.openmbean.TabularData.class.isAssignableFrom(classObj)) {
+                return true;
+            }
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+        return false;
     }
 
     private String getMultiKey(Collection keys) {

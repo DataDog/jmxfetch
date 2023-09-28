@@ -2,8 +2,11 @@ package org.datadog.jmxfetch;
 
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +18,14 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
+@Slf4j
 @SuppressWarnings("unchecked")
 public class JmxComplexAttribute extends JmxSubAttribute {
+    private static final List<String> COMPOSED_TYPES =
+            Arrays.asList(
+                    "javax.management.openmbean.CompositeData",
+                    "java.util.HashMap",
+                    "java.util.Map");
 
     private List<String> subAttributeList = new ArrayList<String>();
 
@@ -87,6 +96,27 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             return data.get(subAttribute);
         }
         throw new NumberFormatException();
+    }
+
+    public static boolean matchAttributeType(String attributeType) {
+        if (COMPOSED_TYPES.contains(attributeType)) {
+            return true;
+        }
+        try {
+            Class<?> classObj = Class.forName(attributeType);
+
+            if (javax.management.openmbean.CompositeData.class.isAssignableFrom(classObj)) {
+                log.info("Found that type {} is assignable to CompositeData.", attributeType);
+                return true;
+            }
+            if (java.util.Map.class.isAssignableFrom(classObj)) {
+                log.info("Found that type {} is assignable to Map.", attributeType);
+                return true;
+            }
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+        return false;
     }
 
     @Override
