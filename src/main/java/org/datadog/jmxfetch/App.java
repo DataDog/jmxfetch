@@ -29,11 +29,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -828,6 +830,7 @@ public class App {
         this.brokenInstanceMap.clear();
 
         final List<Instance> newInstances = new ArrayList<>();
+        final Set<String> instanceNamesSeen = new HashSet<>();
 
         log.info("Dealing with YAML config instances...");
         final Iterator<Entry<String, YamlParser>> it = this.configs.entrySet().iterator();
@@ -867,7 +870,16 @@ public class App {
                             isDirectInstance(configInstance));
                     continue;
                 }
-
+                final String instanceName = (String) configInstance.get("name");
+                if (instanceName != null) {
+                    if (instanceNamesSeen.contains(instanceName)) {
+                        log.warn("Found multiple instances with name: '{}'. "
+                            + "Instance names should be unique, "
+                            + "update the 'name' field on your instances to be unique.",
+                            instanceName);
+                    }
+                    instanceNamesSeen.add(instanceName);
+                }
                 // Create a new Instance object
                 log.info("Instantiating instance for: {}", name);
                 final Instance instance =
@@ -893,6 +905,16 @@ public class App {
                 final String checkName = (String) checkConfig.get("check_name");
                 for (Map<String, Object> configInstance : configInstances) {
                     log.info("Instantiating instance for: " + checkName);
+                    final String instanceName = (String) configInstance.get("name");
+                    if (instanceName != null) {
+                        if (instanceNamesSeen.contains(instanceName)) {
+                            log.warn("Found multiple instances with name: '{}'. "
+                                + "Instance names should be unique, "
+                                + "update the 'name' field on your instances to be unique.",
+                                instanceName);
+                        }
+                        instanceNamesSeen.add(instanceName);
+                    }
                     final Instance instance =
                             instantiate(configInstance, initConfig, checkName, this.appConfig);
                     newInstances.add(instance);
