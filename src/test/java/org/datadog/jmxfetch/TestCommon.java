@@ -110,6 +110,16 @@ public class TestCommon {
         }
     }
 
+    /**
+     * Clear instances and their instance telemetry bean after execution of every test.
+     */
+    @After
+    public void clearInstances() {
+        if (app != null) {
+            app.clearAllInstances();
+        }
+    }
+
     /** Init JMXFetch with the given YAML configuration file. */
     protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile)
             throws FileNotFoundException, IOException {

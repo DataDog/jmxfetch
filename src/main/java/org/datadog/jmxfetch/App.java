@@ -242,6 +242,10 @@ public class App {
         }
     }
 
+    protected void clearAllInstances() {
+        this.clearInstances(this.instances);
+    }
+
     /**
      * Builds an {@link ExecutorService} of the specified fixed size. Threads will be created
      * and executed as daemons if {@link AppConfig#isDaemon()} is true. Defaults to false.
