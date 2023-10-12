@@ -601,7 +601,7 @@ public class Instance {
                 // we should not continue
                 throw e;
             } catch (Exception e) {
-                log.warn("Cannot get bean attributes or class name: {}", e.getMessage());
+                log.warn("Cannot get attributes or class name for bean {}: ", beanName, e);
                 continue;
             }
 
