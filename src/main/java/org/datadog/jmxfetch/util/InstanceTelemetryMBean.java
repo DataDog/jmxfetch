@@ -8,4 +8,6 @@ public interface InstanceTelemetryMBean {
 
     int getMetricCount();
 
+    int getDomainsQueried();
+
 }

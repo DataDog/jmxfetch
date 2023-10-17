@@ -434,7 +434,8 @@ public class Instance {
 
     /** Initializes the instance. May force a new connection.. */
     public void init(boolean forceNewConnection)
-            throws IOException, FailedLoginException, SecurityException {
+            throws IOException, FailedLoginException, SecurityException, 
+                    MalformedObjectNameException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
         log.info(
@@ -467,7 +468,7 @@ public class Instance {
     }
 
     /** Returns a map of metrics collected. */
-    public List<Metric> getMetrics() throws IOException {
+    public List<Metric> getMetrics() throws IOException, MalformedObjectNameException {
 
         // In case of ephemeral beans, we can force to refresh the bean list x seconds
         // post initialization and every x seconds thereafter.
@@ -509,13 +510,18 @@ public class Instance {
                 }
             }
         }
-        instanceTelemetryBean.setBeansFetched(beans.size());
-        instanceTelemetryBean.setTopLevelAttributeCount(matchingAttributes.size());
-        instanceTelemetryBean.setMetricCount(metrics.size());
-        log.debug("Updated jmx bean for instance: " + this.getCheckName()
-                + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
-                + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
-                + " metrics = " + instanceTelemetryBean.getMetricCount());
+        if (instanceTelemetryBean != null) {
+            instanceTelemetryBean.setBeansFetched(beans.size());
+            instanceTelemetryBean.setTopLevelAttributeCount(matchingAttributes.size());
+            instanceTelemetryBean.setMetricCount(metrics.size());
+            log.debug("Updated jmx bean for instance: " + this.getCheckName()
+                    + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
+                    + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
+                    + " metrics = " + instanceTelemetryBean.getMetricCount()
+                    + " domains queried = " + instanceTelemetryBean.getDomainsQueried()
+                    + " wildcard query count = " + instanceTelemetryBean.getWildcardQueryCount()
+                    + " attribute match ratio = " + instanceTelemetryBean.getAttributeMatchRatio());
+        }
         return metrics;
     }
 
@@ -547,11 +553,14 @@ public class Instance {
         this.failingAttributes.clear();
         int metricsCount = 0;
 
+        int beansWithAttributeMatch = 0;
+
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
         }
 
         for (ObjectName beanName : this.beans) {
+            boolean attributeMatched = false;
             if (limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -702,7 +711,17 @@ public class Instance {
                             || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
+                if (jmxAttribute.getMatchingConf() != null) {
+                    attributeMatched = true; 
+                }
             }
+            if (attributeMatched) {
+                beansWithAttributeMatch += 1;
+            }
+        }
+        if (instanceTelemetryBean != null) {
+            instanceTelemetryBean.setAttributeMatchRatio((double) 
+                                  beansWithAttributeMatch / beans.size());
         }
         log.info("Found {} matching attributes", matchingAttributes.size());
     }
@@ -719,7 +738,7 @@ public class Instance {
      * Query and refresh the instance's list of beans. Limit the query scope when possible on
      * certain actions, and fallback if necessary.
      */
-    private void refreshBeansList() throws IOException {
+    private void refreshBeansList() throws IOException, MalformedObjectNameException {
         this.beans = new HashSet<ObjectName>();
         String action = appConfig.getAction();
         boolean limitQueryScopes =
@@ -733,14 +752,24 @@ public class Instance {
                     ObjectName name = new ObjectName(scope);
                     this.beans.addAll(connection.queryNames(name));
                 }
-            } catch (Exception e) {
+                if (instanceTelemetryBean != null) {
+                    instanceTelemetryBean.setDomainsQueried(beanScopes.size());
+                }
+            } catch (MalformedObjectNameException e) {
+                log.error("Unable to create ObjectName", e);
+            } catch (IOException e) {
                 log.error(
-                        "Unable to compute a common bean scope, querying all beans as a fallback",
-                        e);
+                        "Unable to query mbean server", e);
             }
         }
 
-        this.beans = (this.beans.isEmpty()) ? connection.queryNames(null) : this.beans;
+        if (this.beans.isEmpty()) {
+            this.beans = connection.queryNames(null);
+            if (instanceTelemetryBean != null) {
+                int wildcardQueryCount = instanceTelemetryBean.getWildcardQueryCount();
+                instanceTelemetryBean.setWildcardQueryCount(wildcardQueryCount + 1);
+            }
+        }
         this.lastRefreshTime = System.currentTimeMillis();
     }
 

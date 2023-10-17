@@ -127,6 +127,11 @@ public class Status {
             instStats.put("instance_attribute_count", 
                           instanceTelemetryBean.getTopLevelAttributeCount());
             instStats.put("instance_metric_count", instanceTelemetryBean.getMetricCount());
+            instStats.put("instance_domains_queried", instanceTelemetryBean.getDomainsQueried());
+            instStats.put("instance_wildcard_query_count", 
+                          instanceTelemetryBean.getWildcardQueryCount());
+            instStats.put("instance_attribute_match_ratio",
+                          instanceTelemetryBean.getAttributeMatchRatio());
         }
         instStats.put("message", message);
         instStats.put("status", status);
