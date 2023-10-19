@@ -224,7 +224,7 @@
                 <configuration>
                     <!-- allowAttachSelf required for tests in jdk9+ ref https://bugs.openjdk.org/browse/JDK-8180425 -->
                     <!-- rmi.server.hostname required for tests in some MacOS configurations -->
-                    <argLine>-X  --debug -Djdk.attach.allowAttachSelf=true -Djava.rmi.server.hostname=localhost</argLine>
+                    <argLine>-Djdk.attach.allowAttachSelf=true -Djava.rmi.server.hostname=localhost</argLine>
                 </configuration>
             </plugin>
             <plugin>

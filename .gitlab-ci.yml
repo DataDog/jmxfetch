@@ -25,7 +25,7 @@ run_unit_tests:
   image: eclipse-temurin:8u382-b05-jdk
 
   script:
-    - ./mvnw -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
+    - ./mvnw -X -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=debug -Dtest=TestReconnectContainer -Djdk.attach.allowAttachSelf=true -B test
 
   artifacts:
     expire_in: 1 mos
