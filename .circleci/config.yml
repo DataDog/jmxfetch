@@ -5,11 +5,11 @@ lint_steps: &lint_steps
     - run: ./mvnw verify -B -Dhttps.protocols=TLSv1.2 -DskipTests
 build_steps: &build_steps
   environment:
-    DEBUG: testcontainers
+    DEBUG: testcontainers:build,testcontainers
   steps:
     - checkout
     - setup_remote_docker
-    - run: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
+    - run: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -Dtest=TestReconnectContainer
     - run:
         when: on_fail
         command: for log in target/surefire-reports/*.txt; do  echo "$log ========================" ; cat $log ; done
