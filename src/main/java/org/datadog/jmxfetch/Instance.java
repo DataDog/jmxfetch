@@ -279,7 +279,7 @@ public class Instance {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
-        instanceTelemetryBean = createJmxBean();
+        instanceTelemetryBean = createInstanceTelemetryBean();
     }
 
     private ObjectName getObjName(String domain,String instance)
@@ -287,7 +287,7 @@ public class Instance {
         return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
-    private InstanceTelemetry createJmxBean() {
+    private InstanceTelemetry createInstanceTelemetryBean() {
         mbs =  ManagementFactory.getPlatformMBeanServer();
         InstanceTelemetry bean = new InstanceTelemetry();
         log.debug("Created jmx bean for instance: " + this.getCheckName());
@@ -295,13 +295,17 @@ public class Instance {
         try {
             instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
                      this.getName());
+        } catch (MalformedObjectNameException e) {
+            log.warn("Could not construct bean name for jmxfetch_telemetry_domain '{}' and name '{}'", appConfig.getJmxfetchTelemetryDomain(), this.getName());
+            return bean;
+        }
+
+        try {
             mbs.registerMBean(bean,instanceTelemetryBeanName);
             log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName()
                     + " with ObjectName = " + instanceTelemetryBeanName);
-
-        } catch (MalformedObjectNameException | InstanceAlreadyExistsException
-                | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
+        } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ", instanceTelemetryBeanName.toString(), e);
         }
 
         return bean;
