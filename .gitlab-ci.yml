@@ -33,7 +33,7 @@ run_unit_tests:
     when: always
     paths:
       - target/surefire-reports/*.txt
-      - /tmp/jmxfetch_test.log
+      - /tmp/jmxfetch_test.log*
 
 
 # From the tagged repo, push the release artifact
