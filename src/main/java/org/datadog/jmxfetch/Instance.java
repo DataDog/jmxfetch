@@ -296,16 +296,21 @@ public class Instance {
             instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
                      this.getName());
         } catch (MalformedObjectNameException e) {
-            log.warn("Could not construct bean name for jmxfetch_telemetry_domain '{}' and name '{}'", appConfig.getJmxfetchTelemetryDomain(), this.getName());
+            log.warn(
+                "Could not construct bean name for jmxfetch_telemetry_domain '{}' and name '{}'",
+                appConfig.getJmxfetchTelemetryDomain(), this.getName());
             return bean;
         }
 
         try {
             mbs.registerMBean(bean,instanceTelemetryBeanName);
-            log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName()
-                    + " with ObjectName = " + instanceTelemetryBeanName);
-        } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean named '{}' for instance: ", instanceTelemetryBeanName.toString(), e);
+            log.debug("Succesfully registered jmx bean for instance {} with ObjectName = {}",
+                this.getName(), instanceTelemetryBeanName);
+        } catch (InstanceAlreadyExistsException
+         | MBeanRegistrationException
+         | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ",
+                instanceTelemetryBeanName.toString(), e);
         }
 
         return bean;
