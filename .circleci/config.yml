@@ -5,7 +5,7 @@ lint_steps: &lint_steps
     - run: ./mvnw verify -B -Dhttps.protocols=TLSv1.2 -DskipTests
 build_steps: &build_steps
   environment:
-    DEBUG: testcontainers:build,testcontainers
+    DEBUG: testcontainers*
   steps:
     - checkout
     - setup_remote_docker
