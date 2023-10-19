@@ -1114,4 +1114,34 @@ public class TestApp extends TestCommon {
 
         assertCoverage();
     }
+
+    @Test
+    public void testNestedCompositeData() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        initApplication("jmx_composite_data.yaml");
+
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        assertEquals(1, metrics.size());
+
+        List<String> tags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp",
+                "env:stage",
+                "newTag:test");
+
+        assertMetric("one_level_int", 42, tags, -1);
+
+        // This assertion currently fails as JMXFetch does not support accessing
+        // data from a nested compositedata object
+        //assertMetric("second_level_long", 123456L, tags, -1);
+
+        assertCoverage();
+    }
 }

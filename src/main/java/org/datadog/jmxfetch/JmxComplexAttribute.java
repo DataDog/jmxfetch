@@ -1,9 +1,13 @@
 package org.datadog.jmxfetch;
 
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +19,15 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
+@Slf4j
 @SuppressWarnings("unchecked")
 public class JmxComplexAttribute extends JmxSubAttribute {
+    private static final List<String> COMPOSED_TYPES =
+            Arrays.asList(
+                    "javax.management.openmbean.CompositeData",
+                    "javax.management.openmbean.CompositeDataSupport",
+                    "java.util.HashMap",
+                    "java.util.Map");
 
     private List<String> subAttributeList = new ArrayList<String>();
 
@@ -47,14 +58,12 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     }
 
     private void populateSubAttributeList(Object attributeValue) {
-        String attributeType = getAttribute().getType();
-        if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
+        if (attributeValue instanceof javax.management.openmbean.CompositeData) {
             CompositeData data = (CompositeData) attributeValue;
             for (String key : data.getCompositeType().keySet()) {
                 this.subAttributeList.add(key);
             }
-        } else if (("java.util.HashMap".equals(attributeType))
-                || ("java.util.Map".equals(attributeType))) {
+        } else if (attributeValue instanceof java.util.Map) {
             Map<String, Double> data = (Map<String, Double>) attributeValue;
             for (String key : data.keySet()) {
                 this.subAttributeList.add(key);
@@ -80,17 +89,19 @@ public class JmxComplexAttribute extends JmxSubAttribute {
                     ReflectionException, IOException {
 
         Object value = this.getJmxValue();
-        String attributeType = getAttribute().getType();
 
-        if ("javax.management.openmbean.CompositeData".equals(attributeType)) {
+        if (value instanceof CompositeData) {
             CompositeData data = (CompositeData) value;
             return data.get(subAttribute);
-        } else if (("java.util.HashMap".equals(attributeType))
-                || ("java.util.Map".equals(attributeType))) {
+        } else if (value instanceof java.util.Map) {
             Map<String, Object> data = (Map<String, Object>) value;
             return data.get(subAttribute);
         }
         throw new NumberFormatException();
+    }
+
+    public static boolean matchAttributeType(String attributeType) {
+        return COMPOSED_TYPES.contains(attributeType);
     }
 
     @Override

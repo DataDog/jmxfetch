@@ -38,44 +38,6 @@ import javax.security.auth.login.FailedLoginException;
 
 @Slf4j
 public class Instance {
-    private static final List<String> SIMPLE_TYPES =
-            Arrays.asList(
-                    "long",
-                    "java.lang.String",
-                    "int",
-                    "float",
-                    "double",
-                    "java.lang.Double",
-                    "java.lang.Float",
-                    "java.lang.Integer",
-                    "java.lang.Long",
-                    "java.util.concurrent.atomic.AtomicInteger",
-                    "java.util.concurrent.atomic.AtomicLong",
-                    "java.lang.Object",
-                    "java.lang.Boolean",
-                    "boolean",
-                    "java.lang.Number",
-                    //Workaround for jasperserver, which returns attribute types as `class <type>`
-                    "class java.lang.String",
-                    "class java.lang.Double",
-                    "class java.lang.Float",
-                    "class java.lang.Integer",
-                    "class java.lang.Long",
-                    "class java.util.concurrent.atomic.AtomicInteger",
-                    "class java.util.concurrent.atomic.AtomicLong",
-                    "class java.lang.Object",
-                    "class java.lang.Boolean",
-                    "class java.lang.Number");
-    private static final List<String> COMPOSED_TYPES =
-            Arrays.asList(
-                    "javax.management.openmbean.CompositeData",
-                    "java.util.HashMap",
-                    "java.util.Map");
-    private static final List<String> MULTI_TYPES =
-            Arrays.asList(
-                    "javax.management.openmbean.TabularData",
-                    //Adding TabularDataSupport as it implements TabularData
-                    "javax.management.openmbean.TabularDataSupport");
     private static final int MAX_RETURNED_METRICS = 350;
     private static final int DEFAULT_REFRESH_BEANS_PERIOD = 600;
     public static final String PROCESS_NAME_REGEX = "process_name_regex";
@@ -629,7 +591,8 @@ public class Instance {
                 }
                 JmxAttribute jmxAttribute;
                 String attributeType = attributeInfo.getType();
-                if (SIMPLE_TYPES.contains(attributeType)) {
+
+                if (JmxSimpleAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
                             + beanName
@@ -649,7 +612,7 @@ public class Instance {
                                 cassandraAliasing,
                                 emptyDefaultHostname,
                                 normalizeBeanParamTags);
-                } else if (COMPOSED_TYPES.contains(attributeType)) {
+                } else if (JmxComplexAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
                             + beanName
@@ -668,7 +631,7 @@ public class Instance {
                                 tags,
                                 emptyDefaultHostname,
                                 normalizeBeanParamTags);
-                } else if (MULTI_TYPES.contains(attributeType)) {
+                } else if (JmxTabularAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
                             + beanName
