@@ -7,7 +7,10 @@ build_steps: &build_steps
   steps:
     - checkout
     - setup_remote_docker
-    - run: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
+    - run:
+      command: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
+      environment:
+        DEBUG: testcontainers
     - run:
         when: on_fail
         command: for log in target/surefire-reports/*.txt; do  echo "$log ========================" ; cat $log ; done
