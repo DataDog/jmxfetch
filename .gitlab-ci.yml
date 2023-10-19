@@ -8,6 +8,7 @@ variables:
   # ryuk is a privileged container started by testcontainers which cleans up containers at the end of testing
   # It is not necessary for our gitlab CI env as #ci-cd infra tears everything down at the end of a gitlab run
   TESTCONTAINERS_RYUK_DISABLED: "true"
+  DEBUG: testcontainers*
 
 
 # Testing is handled by circleCI for PRs, but we also run maven tests as part of the deploy process
