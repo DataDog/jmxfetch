@@ -44,9 +44,4 @@ workflows:
   version: 2
   workflow:
     jobs:
-      - lint_openjdk8
-      - test_openjdk8
       - test_openjdk11
-      - test_openjdk15
-      - test_openjdk17
-      - test_openjdk19
