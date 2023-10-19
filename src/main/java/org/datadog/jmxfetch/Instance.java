@@ -257,17 +257,13 @@ public class Instance {
         try {
             instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
                      this.getName());
-        } catch (MalformedObjectNameException e) {
-            log.warn("Could not construct bean name for jmxfetch_telemetry_domain '{}' and name '{}'", appConfig.getJmxfetchTelemetryDomain(), this.getName());
-            return bean;
-        }
-
-        try {
             mbs.registerMBean(bean,instanceTelemetryBeanName);
             log.debug("Succesfully registered jmx bean for instance: " + this.getCheckName()
                     + " with ObjectName = " + instanceTelemetryBeanName);
-        } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-            log.warn("Could not register bean named '{}' for instance: ", instanceTelemetryBeanName.toString(), this.getCheckName(),e);
+
+        } catch (MalformedObjectNameException | InstanceAlreadyExistsException
+                | MBeanRegistrationException | NotCompliantMBeanException e) {
+            log.warn("Could not register bean for instance: " + this.getCheckName(),e);
         }
 
         return bean;
