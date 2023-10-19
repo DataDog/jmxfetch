@@ -30,9 +30,10 @@ run_unit_tests:
 
   artifacts:
     expire_in: 1 mos
+    when: always
     paths:
-      - $CI_PROJECT_DIR/target/surefire-reports/*.txt
-      - $CI_PROJECT_DIR/target/run.log
+      - target/surefire-reports/*.txt
+      - target/run.log
 
 
 # From the tagged repo, push the release artifact
