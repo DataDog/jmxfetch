@@ -13,6 +13,7 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -28,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Paths;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.util.CustomLogger;
+import org.datadog.jmxfetch.util.LogLevel;
 
 
 @Slf4j
@@ -52,6 +55,11 @@ public class TestReconnectContainer extends TestCommon {
             found = false;
         }
         return found;
+    }
+
+    @BeforeClass
+    public static void init() throws Exception {
+        CustomLogger.setup(LogLevel.ALL, "./target/jmxfetch_test.log", false);
     }
 
     private static ImageFromDockerfile img = new ImageFromDockerfile()
