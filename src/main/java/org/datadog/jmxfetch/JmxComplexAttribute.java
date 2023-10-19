@@ -1,8 +1,9 @@
 package org.datadog.jmxfetch;
 
-import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
