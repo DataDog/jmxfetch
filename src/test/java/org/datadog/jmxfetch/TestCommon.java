@@ -75,7 +75,7 @@ public class TestCommon {
         if (level == null) {
             level = "ALL";
         }
-        CustomLogger.setup(LogLevel.ALL, "/tmp/jmxfetch_test.log", false);
+        CustomLogger.setup(LogLevel.ALL, "./target/jmxfetch_test.log", false);
     }
 
     /**
@@ -168,7 +168,7 @@ public class TestCommon {
     }
 
     /*
-     * Init JMXFetch with the given YAML configuration template 
+     * Init JMXFetch with the given YAML configuration template
      * The configuration can be specified as a yaml literal with each arg
      * representing one line of the Yaml file
      * Does not support any SD/AD features.
@@ -180,7 +180,7 @@ public class TestCommon {
 
         String confdDirectory = tempFile.getParent().toString();
         String yamlFileName = tempFile.getFileName().toString();
-        
+
         List<String> params = new ArrayList<String>();
         params.add("--reporter");
         params.add("console");
