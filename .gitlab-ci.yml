@@ -26,14 +26,14 @@ run_unit_tests:
   image: eclipse-temurin:8u382-b05-jdk
 
   script:
-    - ./mvnw -X -Djava.util.logging.config.file=$CI_PROJECT_DIR/target/run.log -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=debug -Dtest=TestReconnectContainer -Djdk.attach.allowAttachSelf=true -B test
+    - ./mvnw -X -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=ALL -Dtest=TestReconnectContainer#testJMXDirectReconnect -Djdk.attach.allowAttachSelf=true -B test
 
   artifacts:
     expire_in: 1 mos
     when: always
     paths:
       - target/surefire-reports/*.txt
-      - target/run.log
+      - /tmp/jmxfetch_test.log
 
 
 # From the tagged repo, push the release artifact
