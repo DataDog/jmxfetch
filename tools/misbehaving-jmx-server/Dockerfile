@@ -10,7 +10,7 @@ RUN mvn dependency:resolve
 
 # Copy the source code and build the JAR file
 COPY src/ /app/src/
-RUN mvn compile assembly:single
+RUN ["mvn", "compile", "assembly:single"]
 
 RUN ls /app/target
 
