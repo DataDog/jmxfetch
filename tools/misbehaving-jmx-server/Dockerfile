@@ -1,21 +1,24 @@
-# Use the official Maven image as the base image
-FROM maven:latest AS build
+# Use the official JDK image as the base image
+FROM eclipse-temurin:17 AS base
 
+# Use the base image as the build image
+FROM base AS build
 # Set the working directory to /app
 WORKDIR /app
 
-# Copy the pom.xml file and install the dependencies
-COPY pom.xml .
-RUN mvn dependency:resolve
+# Copy the pom.xml and Maven files and install the dependencies
+COPY .mvn .mvn/
+COPY pom.xml mvnw mvnw.cmd ./
+RUN set -eu &&  \
+    ./mvnw dependency:resolve;
 
 # Copy the source code and build the JAR file
-COPY src/ /app/src/
-RUN mvn clean package assembly:single
+COPY src/ src/
+RUN set -eu &&  \
+    ./mvnw clean package assembly:single;
 
-RUN ls /app/target
-
-# Use the official OpenJDK image as the base image for the final image
-FROM openjdk:latest AS final
+# Use the base image as the the final image
+FROM base AS final
 
 # Set the working directory to /app
 WORKDIR /app
