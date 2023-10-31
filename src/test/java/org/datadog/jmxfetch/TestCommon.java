@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -270,7 +272,7 @@ public class TestCommon {
                     assertEquals(countTags, mTags.size());
                 }
                 for (String t : tags) {
-                    assertTrue(t + " missing from metric tags", mTags.contains(t));
+                    assertThat(mTags, hasItem(t));
                 }
 
                 if (metricType != null) {
