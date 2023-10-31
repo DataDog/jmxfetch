@@ -270,7 +270,7 @@ public class TestCommon {
                     assertEquals(countTags, mTags.size());
                 }
                 for (String t : tags) {
-                    assertTrue(mTags.contains(t));
+                    assertTrue(t + " missing from metric tags", mTags.contains(t));
                 }
 
                 if (metricType != null) {
