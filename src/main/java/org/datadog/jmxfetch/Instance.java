@@ -434,8 +434,7 @@ public class Instance {
 
     /** Initializes the instance. May force a new connection.. */
     public void init(boolean forceNewConnection)
-            throws IOException, FailedLoginException, SecurityException, 
-                    MalformedObjectNameException {
+            throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
         log.info(
@@ -739,7 +738,7 @@ public class Instance {
      * Query and refresh the instance's list of beans. Limit the query scope when possible on
      * certain actions, and fallback if necessary.
      */
-    private void refreshBeansList() throws IOException, MalformedObjectNameException {
+    private void refreshBeansList() throws IOException {
         this.beans = new HashSet<ObjectName>();
         String action = appConfig.getAction();
         boolean limitQueryScopes =
