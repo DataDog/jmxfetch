@@ -467,7 +467,7 @@ public class Instance {
     }
 
     /** Returns a map of metrics collected. */
-    public List<Metric> getMetrics() throws IOException, MalformedObjectNameException {
+    public List<Metric> getMetrics() throws IOException {
 
         // In case of ephemeral beans, we can force to refresh the bean list x seconds
         // post initialization and every x seconds thereafter.
