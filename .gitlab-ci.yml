@@ -29,6 +29,7 @@ run_unit_tests:
 
   artifacts:
     expire_in: 1 mos
+    when: always
     paths:
       - ./target/surefire-reports/*.txt
 
