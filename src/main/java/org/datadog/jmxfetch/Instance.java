@@ -519,8 +519,9 @@ public class Instance {
                     + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
                     + " metrics = " + instanceTelemetryBean.getMetricCount()
                     + " domains queried = " + instanceTelemetryBean.getDomainsQueried()
-                    + " wildcard query count = " + instanceTelemetryBean.getWildcardQueryCount()
-                    + " attribute match ratio = " + instanceTelemetryBean.getAttributeMatchRatio());
+                    + " wildcard domain query count = " 
+                    + instanceTelemetryBean.getWildcardDomainQueryCount() 
+                    + " bean match ratio = " + instanceTelemetryBean.getBeanMatchRatio());
         }
         return metrics;
     }
@@ -720,7 +721,7 @@ public class Instance {
             }
         }
         if (instanceTelemetryBean != null) {
-            instanceTelemetryBean.setAttributeMatchRatio((double) 
+            instanceTelemetryBean.setBeanMatchRatio((double) 
                                   beansWithAttributeMatch / beans.size());
         }
         log.info("Found {} matching attributes", matchingAttributes.size());
@@ -766,8 +767,8 @@ public class Instance {
         if (this.beans.isEmpty()) {
             this.beans = connection.queryNames(null);
             if (instanceTelemetryBean != null) {
-                int wildcardQueryCount = instanceTelemetryBean.getWildcardQueryCount();
-                instanceTelemetryBean.setWildcardQueryCount(wildcardQueryCount + 1);
+                int wildcardQueryCount = instanceTelemetryBean.getWildcardDomainQueryCount();
+                instanceTelemetryBean.setWildcardDomainQueryCount(wildcardQueryCount + 1);
             }
         }
         this.lastRefreshTime = System.currentTimeMillis();

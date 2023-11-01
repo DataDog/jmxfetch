@@ -41,8 +41,8 @@ public class StatusTest {
         instance.setMetricCount(fakeMetricCount);
         instance.setTopLevelAttributeCount(fakeAttributeCount);
         instance.setDomainsQueried(fakeDomainsQueried);
-        instance.setWildcardQueryCount(fakeWildcardQueryCount);
-        instance.setAttributeMatchRatio(fakeBeansAttributeMatchRatio);
+        instance.setWildcardDomainQueryCount(fakeWildcardQueryCount);
+        instance.setBeanMatchRatio(fakeBeansAttributeMatchRatio);
 
         status.addInstanceStats("fake_check", "fake_instance", 10, 3, "fake_message", Status.STATUS_OK, instance);
         status.flush();

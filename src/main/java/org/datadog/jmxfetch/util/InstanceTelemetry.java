@@ -8,8 +8,8 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
     private int topLevelAttributeCount;
     private int metricCount;
     private int domainsQueried;
-    private int wildcardQueryCount;
-    private double attributeMatchRatio;
+    private int wildcardDomainQueryCount;
+    private double beanMatchRatio;
 
     /** Jmxfetch telemetry bean constructor. */
     public InstanceTelemetry() {
@@ -17,8 +17,8 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
         topLevelAttributeCount = 0;
         metricCount = 0;
         domainsQueried = 0;
-        wildcardQueryCount = 0;
-        attributeMatchRatio = 0.0;
+        wildcardDomainQueryCount = 0;
+        beanMatchRatio = 0.0;
     }
 
     public int getBeansFetched() {
@@ -37,12 +37,12 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
         return domainsQueried;
     }
 
-    public int getWildcardQueryCount() {
-        return wildcardQueryCount;
+    public int getWildcardDomainQueryCount() {
+        return wildcardDomainQueryCount;
     }
 
-    public double getAttributeMatchRatio() {
-        return attributeMatchRatio;
+    public double getBeanMatchRatio() {
+        return beanMatchRatio;
     }
 
     public void setBeansFetched(int count) {
@@ -61,12 +61,12 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
         domainsQueried = count;
     }
 
-    public void setWildcardQueryCount(int count) {
-        wildcardQueryCount = count;
+    public void setWildcardDomainQueryCount(int count) {
+        wildcardDomainQueryCount = count;
     }
 
-    public void setAttributeMatchRatio(double ratio) {
-        attributeMatchRatio = ratio;
+    public void setBeanMatchRatio(double ratio) {
+        beanMatchRatio = ratio;
     }
 
 }
