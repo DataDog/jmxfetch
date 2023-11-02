@@ -62,8 +62,8 @@ public class StatusTest {
         assertEquals(fakeAttributeCount, stats.get("instance_attribute_count"));
         assertEquals(fakeMetricCount, stats.get("instance_metric_count"));
         assertEquals(fakeDomainsQueried, stats.get("instance_domains_queried"));
-        assertEquals(fakeWildcardQueryCount, stats.get("instance_wildcard_query_count"));
-        assertEquals(fakeBeansAttributeMatchRatio, stats.get("instance_attribute_match_ratio"));
+        assertEquals(fakeWildcardQueryCount, stats.get("instance_wildcard_domain_query_count"));
+        assertEquals(fakeBeansAttributeMatchRatio, stats.get("instance_bean_match_ratio"));
         assertEquals("fake_message", stats.get("message"));
         assertEquals(Status.STATUS_OK, stats.get("status"));
     }
