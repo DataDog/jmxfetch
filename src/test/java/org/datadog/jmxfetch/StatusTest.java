@@ -34,15 +34,15 @@ public class StatusTest {
         int fakeMetricCount = 29;
         int fakeAttributeCount = 55;
         int fakeDomainsQueried = 3;
-        int fakeWildcardQueryCount = 9;
-        double fakeBeansAttributeMatchRatio = .4;
+        int fakeWildcardDomainQueryCount = 9;
+        double fakeBeanMatchRatio = .4;
 
         instance.setBeansFetched(fakeBeansFetched);
         instance.setMetricCount(fakeMetricCount);
         instance.setTopLevelAttributeCount(fakeAttributeCount);
         instance.setDomainsQueried(fakeDomainsQueried);
-        instance.setWildcardDomainQueryCount(fakeWildcardQueryCount);
-        instance.setBeanMatchRatio(fakeBeansAttributeMatchRatio);
+        instance.setWildcardDomainQueryCount(fakeWildcardDomainQueryCount);
+        instance.setBeanMatchRatio(fakeBeanMatchRatio);
 
         status.addInstanceStats("fake_check", "fake_instance", 10, 3, "fake_message", Status.STATUS_OK, instance);
         status.flush();
@@ -62,8 +62,8 @@ public class StatusTest {
         assertEquals(fakeAttributeCount, stats.get("instance_attribute_count"));
         assertEquals(fakeMetricCount, stats.get("instance_metric_count"));
         assertEquals(fakeDomainsQueried, stats.get("instance_domains_queried"));
-        assertEquals(fakeWildcardQueryCount, stats.get("instance_wildcard_domain_query_count"));
-        assertEquals(fakeBeansAttributeMatchRatio, stats.get("instance_bean_match_ratio"));
+        assertEquals(fakeWildcardDomainQueryCount, stats.get("instance_wildcard_domain_query_count"));
+        assertEquals(fakeBeanMatchRatio, stats.get("instance_bean_match_ratio"));
         assertEquals("fake_message", stats.get("message"));
         assertEquals(Status.STATUS_OK, stats.get("status"));
     }
