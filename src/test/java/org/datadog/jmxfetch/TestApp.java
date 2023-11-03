@@ -157,7 +157,7 @@ public class TestApp extends TestCommon {
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "jmx_check_name:jmx_alias_match",
-                        "instance:jmx_test_instance",
+                        "instance:jmx_test_instance1",
                         "foo:Bar",
                         "qux:Baz");
 
@@ -975,7 +975,7 @@ public class TestApp extends TestCommon {
         List<String> tags = Arrays.asList(
             "type:SimpleTestJavaApp",
             "scope:CoolScope",
-            "instance:jmx_test_instance",
+            "instance:jmx_test_instance2",
             "jmx_domain:org.datadog.jmxfetch.test",
             "jmx_check_name:AD-jmx_0",
             "bean_host:localhost",
@@ -1014,7 +1014,7 @@ public class TestApp extends TestCommon {
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "jmx_check_name:jmx_alias_match",
-                        "instance:jmx_test_instance",
+                        "instance:jmx_test_instance1",
                         "foo:Bar",
                         "qux:Baz");
 
