@@ -7,7 +7,6 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
     private int beansFetched;
     private int topLevelAttributeCount;
     private int metricCount;
-    private int domainsQueried;
     private int wildcardDomainQueryCount;
     private double beanMatchRatio;
 
@@ -16,7 +15,6 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
         beansFetched = 0;
         topLevelAttributeCount = 0;
         metricCount = 0;
-        domainsQueried = 0;
         wildcardDomainQueryCount = 0;
         beanMatchRatio = 0.0;
     }
@@ -31,10 +29,6 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
 
     public int getMetricCount() {
         return metricCount;
-    }
-
-    public int getDomainsQueried() {
-        return domainsQueried;
     }
 
     public int getWildcardDomainQueryCount() {
@@ -55,10 +49,6 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
 
     public void setMetricCount(int count) {
         metricCount = count;
-    }
-
-    public void setDomainsQueried(int count) {
-        domainsQueried = count;
     }
 
     public void setWildcardDomainQueryCount(int count) {

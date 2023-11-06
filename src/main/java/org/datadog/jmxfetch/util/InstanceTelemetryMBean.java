@@ -8,6 +8,8 @@ public interface InstanceTelemetryMBean {
 
     int getMetricCount();
 
-    int getDomainsQueried();
+    int getWildcardDomainQueryCount();
+
+    double getBeanMatchRatio();
 
 }

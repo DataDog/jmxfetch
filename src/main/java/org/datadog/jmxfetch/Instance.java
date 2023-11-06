@@ -517,7 +517,6 @@ public class Instance {
                     + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
                     + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
                     + " metrics = " + instanceTelemetryBean.getMetricCount()
-                    + " domains queried = " + instanceTelemetryBean.getDomainsQueried()
                     + " wildcard domain query count = " 
                     + instanceTelemetryBean.getWildcardDomainQueryCount() 
                     + " bean match ratio = " + instanceTelemetryBean.getBeanMatchRatio());
@@ -751,9 +750,6 @@ public class Instance {
                 for (String scope : beanScopes) {
                     ObjectName name = new ObjectName(scope);
                     this.beans.addAll(connection.queryNames(name));
-                }
-                if (instanceTelemetryBean != null) {
-                    instanceTelemetryBean.setDomainsQueried(beanScopes.size());
                 }
             } catch (MalformedObjectNameException e) {
                 log.error("Unable to create ObjectName", e);
