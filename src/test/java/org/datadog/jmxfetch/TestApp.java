@@ -35,13 +35,14 @@ public class TestApp extends TestCommon {
                         "scope:CoolScope",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_bean_regex_tags",
                         "bean_host:localhost",
                         "component",
                         "hosttag:localhost",
                         "nonExistantTag:$2",
                         "nonRegexTag:value");
 
-        assertMetric("this.is.100", tags, 9);
+        assertMetric("this.is.100", tags, 10);
     }
 
     /** Tag metrics with MBeans parameters. */
@@ -66,10 +67,11 @@ public class TestApp extends TestCommon {
                         "scope:CoolScope",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_bean_tags",
                         "bean_host:localhost",
                         "component");
 
-        assertMetric("this.is.100", tags, 6);
+        assertMetric("this.is.100", tags, 7);
     }
 
     /** Tag metrics with MBeans parameters with normalize_bean_param_tags option enabled. */
@@ -95,11 +97,12 @@ public class TestApp extends TestCommon {
                         "scope:CoolScope",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_bean_tags_normalize_params",
                         "bean_host:localhost",
                         "component",
                         "target_instance:.*example.process.regex.*");
 
-        assertMetric("this.is.100", tags, 7);
+        assertMetric("this.is.100", tags, 8);
     }
 
     /** Tag metrics with MBeans parameters with normalize_bean_param_tags option disabled. */
@@ -125,11 +128,12 @@ public class TestApp extends TestCommon {
                         "scope:\"CoolScope\"",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_bean_tags_dont_normalize_params",
                         "bean_host:\"localhost\"",
                         "component",
                         "target_instance:\".\\*example.process.regex.\\*\"");
 
-        assertMetric("this.is.100", tags, 7);
+        assertMetric("this.is.100", tags, 8);
     }
 
     /** Generate metric aliases from a `alias_match` regular expression. */
@@ -152,14 +156,15 @@ public class TestApp extends TestCommon {
         List<String> tags =
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_alias_match",
                         "instance:jmx_test_instance1",
                         "foo:Bar",
                         "qux:Baz");
 
-        assertMetric("this.is.100.bar.baz", tags, 4);
-        assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
-        assertMetric("this.is.thousand.1000.0", 1000, tags, 4);
-        assertMetric("this.is.five.should_be5", 5, tags, 4);
+        assertMetric("this.is.100.bar.baz", tags, 5);
+        assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 5);
+        assertMetric("this.is.thousand.1000.0", 1000, tags, 5);
+        assertMetric("this.is.five.should_be5", 5, tags, 5);
     }
 
     /**
@@ -186,10 +191,11 @@ public class TestApp extends TestCommon {
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "instance:jmx_test_instance",
+                        "jmx_check_name:jmx_no_alias",
                         "foo:Bar",
                         "qux:Baz");
 
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be100", tags, 4);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be100", tags, 5);
     }
 
     /**
@@ -220,9 +226,10 @@ public class TestApp extends TestCommon {
                         "keyspace:MyKeySpace",
                         "ColumnFamily:MyColumnFamily",
                         "jmx_domain:org.apache.cassandra.metrics",
+                        "jmx_check_name:jmx_cassandra",
                         "instance:jmx_first_instance");
 
-        assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
+        assertMetric("cassandra.pending_tasks.should_be100", tags, 6);
 
         // Default behavior
         tags =
@@ -231,10 +238,11 @@ public class TestApp extends TestCommon {
                         "scope:MyColumnFamily",
                         "keyspace:MyKeySpace",
                         "jmx_domain:org.apache.cassandra.metrics",
+                        "jmx_check_name:jmx_cassandra",
                         "instance:jmx_second_instance",
                         "name:PendingTasks");
 
-        assertMetric("cassandra.metrics.should_be1000", tags, 6);
+        assertMetric("cassandra.metrics.should_be1000", tags, 7);
     }
 
     @Test
@@ -258,9 +266,10 @@ public class TestApp extends TestCommon {
                         "keyspace:MyKeySpace",
                         "columnfamily:MyColumnFamily",
                         "jmx_domain:org.apache.cassandra.db",
+                        "jmx_check_name:jmx_cassandra_deprecated",
                         "instance:jmx_test_instance");
 
-        assertMetric("cassandra.db.should_be100", tags, 5);
+        assertMetric("cassandra.db.should_be100", tags, 6);
     }
 
     @Test
@@ -526,14 +535,15 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
+                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test",
+                              "jmx_check_name:jmx_histogram");
 
         // 15 = 13 metrics from java.lang + the 3 collected (gauge and histogram)
         assertEquals(16, metrics.size());
 
-        assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
-        assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
-        assertMetric("test.histogram", 424242, commonTags, 5, "histogram");
+        assertMetric("test.gauge", 1000.0, commonTags, 6, "gauge");
+        assertMetric("test.gauge_by_default", 42.0, commonTags, 6, "gauge");
+        assertMetric("test.histogram", 424242, commonTags, 6, "histogram");
 
         // We run a second collection. The counter should now be present
         run();
@@ -541,10 +551,10 @@ public class TestApp extends TestCommon {
 
         // 16 = 13 metrics from java.lang + the 4 collected (gauge, histogram and counter)
         assertEquals(17, metrics.size());
-        assertMetric("test.gauge", 1000.0, commonTags, 5, "gauge");
-        assertMetric("test.gauge_by_default", 42.0, commonTags, 5, "gauge");
-        assertMetric("test.histogram", 424242, commonTags, 5, "histogram");
-        assertMetric("test.counter", 0.0, commonTags, 5, "counter");
+        assertMetric("test.gauge", 1000.0, commonTags, 6, "gauge");
+        assertMetric("test.gauge_by_default", 42.0, commonTags, 6, "gauge");
+        assertMetric("test.histogram", 424242, commonTags, 6, "histogram");
+        assertMetric("test.counter", 0.0, commonTags, 6, "counter");
     }
 
     @Test
@@ -554,39 +564,14 @@ public class TestApp extends TestCommon {
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
 
         // We do a first collection
-        initApplication("jmx_exclude_tags.yml");
+        initApplication("jmx_exclude_tags.yaml");
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "jmx_domain:org.datadog.jmxfetch.test");
-
-        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
-        assertEquals(15, metrics.size());
-
-        // There should only left 2 tags per metric
-        assertMetric("test1.gauge", 1000.0, commonTags, 2, "gauge");
-        assertMetric("test1.histogram", 424242, commonTags, 2, "histogram");
-    }
-
-    @Test
-    public void testExcludeServiceTagsAndOverride() throws Exception {
-        // We expose a few metrics through JMX
-        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,service=foo");
-
-        // We do a first collection
-        initApplication("jmx_exclude_tags_override_service.yml");
-        run();
-        List<Map<String, Object>> metrics = getMetrics();
-
-        // We test for the presence and the value of the metrics we want to collect.
-        // Tags "type", "newTag" and "env" should be excluded
-        List<String> commonTags =
-                Arrays.asList("instance:jmx_test_service_override_instance",
-                        "jmx_domain:org.datadog.jmxfetch.test","service:test");
+                Arrays.asList("instance:jmx_test_instance", "jmx_domain:org.datadog.jmxfetch.test", "jmx_check_name:jmx_exclude_tags");
 
         // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
         assertEquals(15, metrics.size());
@@ -597,13 +582,39 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testExcludeServiceTagsAndOverride() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,service=foo");
+
+        // We do a first collection
+        initApplication("jmx_exclude_tags_override_service.yaml");
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // We test for the presence and the value of the metrics we want to collect.
+        // Tags "type", "newTag" and "env" should be excluded
+        List<String> commonTags =
+                Arrays.asList("instance:jmx_test_service_override_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test","service:test",
+                        "jmx_check_name:jmx_exclude_tags_override_service");
+
+        // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
+        assertEquals(15, metrics.size());
+
+        // There should only left 2 tags per metric
+        assertMetric("test1.gauge", 1000.0, commonTags, 4, "gauge");
+        assertMetric("test1.histogram", 424242, commonTags, 4, "histogram");
+    }
+
+    @Test
     public void testAdditionalTags() throws Exception {
         // We expose a few metrics through JMX
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,name=testName");
 
         // We do a first collection
-        initApplication("jmx_additional_tags.yml");
+        initApplication("jmx_additional_tags.yaml");
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
@@ -613,6 +624,7 @@ public class TestApp extends TestCommon {
                 Arrays.asList(
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_additional_tags",
                         "type:SimpleTestJavaApp",
                         "name:testName",
                         "simple:SimpleTestJavaApp",
@@ -624,8 +636,8 @@ public class TestApp extends TestCommon {
         assertEquals(15, metrics.size());
 
         // There should only left 2 tags per metric
-        assertMetric("test1.gauge", 1000.0, commonTags, 8, "gauge");
-        assertMetric("test1.histogram", 424242, commonTags, 8, "histogram");
+        assertMetric("test1.gauge", 1000.0, commonTags, 9, "gauge");
+        assertMetric("test1.histogram", 424242, commonTags, 9, "histogram");
     }
 
     /** FIXME: Split this test in multiple sub-tests. */
@@ -649,26 +661,26 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
+                Arrays.asList("instance:jmx_test_instance", "jmx_check_name:jmx", "env:stage", "newTag:test");
 
-        assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 8);
+        assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 9);
         assertMetric(
-                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
-        assertMetric("test.converted", 5.0, commonTags, 5);
-        assertMetric("test.boolean", 1.0, commonTags, 5);
-        assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("subattr.defaulted", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
-        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
-        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 6);
+        assertMetric("test.converted", 5.0, commonTags, 6);
+        assertMetric("test.boolean", 1.0, commonTags, 6);
+        assertMetric("test.defaulted", 32.0, commonTags, 6);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 6);
+        assertMetric("subattr.defaulted", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
+        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
 
         assertCoverage();
 
@@ -682,28 +694,28 @@ public class TestApp extends TestCommon {
 
         // We test for the same metrics but this time, the counter should be here
         // Previous metrics
-        assertMetric("this.is.100", 100.0, commonTags, 8);
+        assertMetric("this.is.100", 100.0, commonTags, 9);
         assertMetric(
-                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
-        assertMetric("test.converted", 5.0, commonTags, 5);
-        assertMetric("test.boolean", 1.0, commonTags, 5);
-        assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("subattr.defaulted", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
-        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
-        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 6);
+        assertMetric("test.converted", 5.0, commonTags, 6);
+        assertMetric("test.boolean", 1.0, commonTags, 6);
+        assertMetric("test.defaulted", 32.0, commonTags, 6);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 6);
+        assertMetric("subattr.defaulted", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
+        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
 
         // Counters
-        assertMetric("subattr.counter", 0.0, commonTags, 5);
-        assertMetric("test.counter", 0.0, commonTags, 5);
+        assertMetric("subattr.counter", 0.0, commonTags, 6);
+        assertMetric("test.counter", 0.0, commonTags, 6);
         assertCoverage();
 
         // We run a 3rd collection but this time we increment the counter and we sleep
@@ -720,28 +732,28 @@ public class TestApp extends TestCommon {
         assertEquals(32, metrics.size());
 
         // Previous metrics
-        assertMetric("this.is.100", 100.0, commonTags, 8);
+        assertMetric("this.is.100", 100.0, commonTags, 9);
         assertMetric(
-                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
-        assertMetric("test.converted", 5.0, commonTags, 5);
-        assertMetric("test.boolean", 1.0, commonTags, 5);
-        assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("subattr.defaulted", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
-        assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
-        assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
+                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 6);
+        assertMetric("test.converted", 5.0, commonTags, 6);
+        assertMetric("test.boolean", 1.0, commonTags, 6);
+        assertMetric("test.defaulted", 32.0, commonTags, 6);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 6);
+        assertMetric("subattr.defaulted", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
+        assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 8);
+        assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 8);
 
-        // Counter (verify rate metrics within range)
-        assertMetric("subattr.counter", 0.95, 1, commonTags, 5);
-        assertMetric("test.counter", 0.95, 1, commonTags, 5);
+        // // Counter (verify rate metrics within range)
+        assertMetric("subattr.counter", 0.95, 1, commonTags, 6);
+        assertMetric("test.counter", 0.95, 1, commonTags, 6);
 
         assertCoverage();
     }
@@ -766,25 +778,25 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test");
+                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test", "jmx_check_name:jmx_canonical");
 
-        assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 8);
+        assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 9);
         assertMetric(
-                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
-        assertMetric("test.converted", 5.0, commonTags, 5);
-        assertMetric("test.boolean", 1.0, commonTags, 5);
-        assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
-        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
-        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 6);
+        assertMetric("test.converted", 5.0, commonTags, 6);
+        assertMetric("test.boolean", 1.0, commonTags, 6);
+        assertMetric("test.defaulted", 32.0, commonTags, 6);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
+        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
 
         assertCoverage();
 
@@ -798,27 +810,27 @@ public class TestApp extends TestCommon {
 
         // We test for the same metrics but this time, the counter should be here
         // Previous metrics
-        assertMetric("this.is.100", 100.0, commonTags, 8);
+        assertMetric("this.is.100", 100.0, commonTags, 9);
         assertMetric(
-                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
-        assertMetric("test.converted", 5.0, commonTags, 5);
-        assertMetric("test.boolean", 1.0, commonTags, 5);
-        assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
-        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
-        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 7);
+                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 6);
+        assertMetric("test.converted", 5.0, commonTags, 6);
+        assertMetric("test.boolean", 1.0, commonTags, 6);
+        assertMetric("test.defaulted", 32.0, commonTags, 6);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
+        assertMetric("multiattr.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
+        assertMetric("multiattr_supp.foo", 1.0, commonTags, Arrays.asList("foo:1", "toto:tata"), 8);
 
         // Counters
-        assertMetric("subattr.counter", 0.0, commonTags, 5);
-        assertMetric("test.counter", 0.0, commonTags, 5);
+        assertMetric("subattr.counter", 0.0, commonTags, 6);
+        assertMetric("test.counter", 0.0, commonTags, 6);
         assertCoverage();
 
         // We run a 3rd collection but this time we decrement the counter
@@ -833,7 +845,7 @@ public class TestApp extends TestCommon {
         run();
         metrics = getMetrics();
         assertEquals(31, metrics.size());
-        assertMetric("test.counter", 0.0, commonTags, 5);
+        assertMetric("test.counter", 0.0, commonTags, 6);
 
         // Check that they are working again
         Thread.sleep(5000);
@@ -846,27 +858,27 @@ public class TestApp extends TestCommon {
         assertEquals(31, metrics.size());
 
         // Previous metrics
-        assertMetric("this.is.100", 100.0, commonTags, 8);
+        assertMetric("this.is.100", 100.0, commonTags, 9);
         assertMetric(
-                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 5);
-        assertMetric("test.converted", 5.0, commonTags, 5);
-        assertMetric("test.boolean", 1.0, commonTags, 5);
-        assertMetric("test.defaulted", 32.0, commonTags, 5);
-        assertMetric("subattr.this.is.0", 0.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 5);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 5);
-        assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
-        assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 7);
+                "jmx.org.datadog.jmxfetch.test.number_big", 1.2345678890123457E20, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.long42424242", 4.2424242E7, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.int424242", 424242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.should_be1000", 1000.0, commonTags, 6);
+        assertMetric("test.converted", 5.0, commonTags, 6);
+        assertMetric("test.boolean", 1.0, commonTags, 6);
+        assertMetric("test.defaulted", 32.0, commonTags, 6);
+        assertMetric("subattr.this.is.0", 0.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic42", 42.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
+        assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 8);
+        assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 8);
 
         // Counter (verify rate metrics within range)
-        assertMetric("subattr.counter", 0.95, 1, commonTags, 5);
-        assertMetric("test.counter", 0.95, 1, commonTags, 5);
+        assertMetric("subattr.counter", 0.95, 1, commonTags, 6);
+        assertMetric("test.counter", 0.95, 1, commonTags, 6);
         assertCoverage();
     }
 
@@ -890,14 +902,14 @@ public class TestApp extends TestCommon {
         run();
         metrics = getMetrics();
         assertEquals(14, metrics.size());
-        assertMetric("test.counter", 0, Collections.<String>emptyList(), 3);
+        assertMetric("test.counter", 0, Collections.<String>emptyList(), 4);
 
         // For the 3rd collection we increment the count to 5 so we should get a +5 delta
         testApp.incrementCounter(5);
         run();
         metrics = getMetrics();
         assertEquals(14, metrics.size());
-        assertMetric("test.counter", 5, Collections.<String>emptyList(), 3);
+        assertMetric("test.counter", 5, Collections.<String>emptyList(), 4);
 
         assertCoverage();
     }
@@ -922,8 +934,8 @@ public class TestApp extends TestCommon {
         run();
         metrics = getMetrics();
         assertEquals(28, metrics.size());
-        assertMetric("test.counter", 0, Collections.<String>emptyList(), 3);
-        assertMetric("test.rate", 0, Collections.<String>emptyList(), 3);
+        assertMetric("test.counter", 0, Collections.<String>emptyList(), 4);
+        assertMetric("test.rate", 0, Collections.<String>emptyList(), 4);
 
         Thread.sleep(5000);
         // For the 3rd collection we increment the count to 5 so we should get a +5 delta
@@ -931,8 +943,8 @@ public class TestApp extends TestCommon {
         run();
         metrics = getMetrics();
         assertEquals(28, metrics.size());
-        assertMetric("test.counter", 0.95, 1, Collections.<String>emptyList(), 3);
-        assertMetric("test.rate", 0.95, 1, Collections.<String>emptyList(), 3);
+        assertMetric("test.counter", 0.95, 1, Collections.<String>emptyList(), 4);
+        assertMetric("test.rate", 0.95, 1, Collections.<String>emptyList(), 4);
 
         assertCoverage();
     }
@@ -965,11 +977,12 @@ public class TestApp extends TestCommon {
             "scope:CoolScope",
             "instance:jmx_test_instance2",
             "jmx_domain:org.datadog.jmxfetch.test",
+            "jmx_check_name:AD-jmx_0",
             "bean_host:localhost",
             "component"
         );
 
-        assertMetric("this.is.100", tags, 6);
+        assertMetric("this.is.100", tags, 7);
 
         // Assert compliancy with CASSANDRA-4009
         tags =
@@ -978,9 +991,10 @@ public class TestApp extends TestCommon {
                         "keyspace:MyKeySpace",
                         "ColumnFamily:MyColumnFamily",
                         "jmx_domain:org.apache.cassandra.metrics",
+                        "jmx_check_name:AD-cassandra_0",
                         "instance:jmx_first_instance");
 
-        assertMetric("cassandra.pending_tasks.should_be100", tags, 5);
+        assertMetric("cassandra.pending_tasks.should_be100", tags, 6);
 
         // Default behavior
         tags =
@@ -989,21 +1003,23 @@ public class TestApp extends TestCommon {
                         "scope:MyColumnFamily",
                         "keyspace:MyKeySpace",
                         "jmx_domain:org.apache.cassandra.metrics",
+                        "jmx_check_name:AD-cassandra_0",
                         "instance:jmx_second_instance",
                         "name:PendingTasks");
 
-        assertMetric("cassandra.metrics.should_be1000", tags, 6);
+        assertMetric("cassandra.metrics.should_be1000", tags, 7);
 
         // Metric aliases are generated from `alias_match`
         tags =
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
+                        "jmx_check_name:jmx_alias_match",
                         "instance:jmx_test_instance1",
                         "foo:Bar",
                         "qux:Baz");
 
-        assertMetric("this.is.100.bar.baz", tags, 4);
-        assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 4);
+        assertMetric("this.is.100.bar.baz", tags, 5);
+        assertMetric("org.datadog.jmxfetch.test.baz.hashmap.thisis0", tags, 5);
     }
 
     /** Test JMX Service Discovery. */

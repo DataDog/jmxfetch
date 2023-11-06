@@ -172,6 +172,7 @@ public abstract class JmxAttribute {
         List<String> beanTags = new ArrayList<String>();
         beanTags.add("instance:" + instanceName);
         beanTags.add("jmx_domain:" + domain);
+        beanTags.add("jmx_check_name:" + checkName);
 
         if (renameCassandraMetrics()) {
             beanTags.addAll(getCassandraBeanTags(beanParameters));
