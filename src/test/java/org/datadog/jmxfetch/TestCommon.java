@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -107,6 +109,16 @@ public class TestCommon {
             for (ObjectName objectName : objectNames) {
                 mbs.unregisterMBean(objectName);
             }
+        }
+    }
+
+    /**
+     * Clear instances and their instance telemetry bean after execution of every test.
+     */
+    @After
+    public void clearInstances() {
+        if (app != null) {
+            app.clearAllInstances();
         }
     }
 
@@ -270,7 +282,7 @@ public class TestCommon {
                     assertEquals(countTags, mTags.size());
                 }
                 for (String t : tags) {
-                    assertTrue(mTags.contains(t));
+                    assertThat(mTags, hasItem(t));
                 }
 
                 if (metricType != null) {
