@@ -45,6 +45,9 @@ class AppConfig {
     @Parameter(names = {"--rmi-host", "-rh"})
     public String rmiHost = Defaults.JMXSERVER_RMI_INTERFACE;
 
+    @Parameter(names = {"--rng-seed", "-rs"})
+    public long rngSeed = 1042849;
+
     // Can only be set via env var
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
 
@@ -70,6 +73,10 @@ class AppConfig {
         val = System.getenv("CONFIG_PATH");
         if (val != null) {
             this.config_path = val;
+        }
+        val = System.getenv("RNG_SEED");
+        if (val != null) {
+            this.rngSeed = Long.parseLong(val);
         }
     }
 
@@ -168,7 +175,7 @@ public class App
         MetricDAO mDao = new MetricDAO();
         mDao.runTickLoop();
 
-        BeanManager bm = new BeanManager(mbs, mDao);
+        BeanManager bm = new BeanManager(mbs, mDao, config.rngSeed);
 
         // Set up test domain
         BeanSpec testDomainBeanSpec = new BeanSpec(1, 1, 0, 0);
