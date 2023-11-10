@@ -35,7 +35,7 @@ public class TestApp extends TestCommon {
                         "scope:CoolScope",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_bean_regex_tags",
+                        "dd.internal.jmx_check_name:jmx_bean_regex_tags",
                         "bean_host:localhost",
                         "component",
                         "hosttag:localhost",
@@ -67,7 +67,7 @@ public class TestApp extends TestCommon {
                         "scope:CoolScope",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_bean_tags",
+                        "dd.internal.jmx_check_name:jmx_bean_tags",
                         "bean_host:localhost",
                         "component");
 
@@ -97,7 +97,7 @@ public class TestApp extends TestCommon {
                         "scope:CoolScope",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_bean_tags_normalize_params",
+                        "dd.internal.jmx_check_name:jmx_bean_tags_normalize_params",
                         "bean_host:localhost",
                         "component",
                         "target_instance:.*example.process.regex.*");
@@ -128,7 +128,7 @@ public class TestApp extends TestCommon {
                         "scope:\"CoolScope\"",
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_bean_tags_dont_normalize_params",
+                        "dd.internal.jmx_check_name:jmx_bean_tags_dont_normalize_params",
                         "bean_host:\"localhost\"",
                         "component",
                         "target_instance:\".\\*example.process.regex.\\*\"");
@@ -156,7 +156,7 @@ public class TestApp extends TestCommon {
         List<String> tags =
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_alias_match",
+                        "dd.internal.jmx_check_name:jmx_alias_match",
                         "instance:jmx_test_instance1",
                         "foo:Bar",
                         "qux:Baz");
@@ -191,7 +191,7 @@ public class TestApp extends TestCommon {
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
                         "instance:jmx_test_instance",
-                        "jmx_check_name:jmx_no_alias",
+                        "dd.internal.jmx_check_name:jmx_no_alias",
                         "foo:Bar",
                         "qux:Baz");
 
@@ -226,7 +226,7 @@ public class TestApp extends TestCommon {
                         "keyspace:MyKeySpace",
                         "ColumnFamily:MyColumnFamily",
                         "jmx_domain:org.apache.cassandra.metrics",
-                        "jmx_check_name:jmx_cassandra",
+                        "dd.internal.jmx_check_name:jmx_cassandra",
                         "instance:jmx_first_instance");
 
         assertMetric("cassandra.pending_tasks.should_be100", tags, 6);
@@ -238,7 +238,7 @@ public class TestApp extends TestCommon {
                         "scope:MyColumnFamily",
                         "keyspace:MyKeySpace",
                         "jmx_domain:org.apache.cassandra.metrics",
-                        "jmx_check_name:jmx_cassandra",
+                        "dd.internal.jmx_check_name:jmx_cassandra",
                         "instance:jmx_second_instance",
                         "name:PendingTasks");
 
@@ -266,7 +266,7 @@ public class TestApp extends TestCommon {
                         "keyspace:MyKeySpace",
                         "columnfamily:MyColumnFamily",
                         "jmx_domain:org.apache.cassandra.db",
-                        "jmx_check_name:jmx_cassandra_deprecated",
+                        "dd.internal.jmx_check_name:jmx_cassandra_deprecated",
                         "instance:jmx_test_instance");
 
         assertMetric("cassandra.db.should_be100", tags, 6);
@@ -536,7 +536,7 @@ public class TestApp extends TestCommon {
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
                 Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test",
-                              "jmx_check_name:jmx_histogram");
+                              "dd.internal.jmx_check_name:jmx_histogram");
 
         // 15 = 13 metrics from java.lang + the 3 collected (gauge and histogram)
         assertEquals(16, metrics.size());
@@ -571,7 +571,7 @@ public class TestApp extends TestCommon {
         // We test for the presence and the value of the metrics we want to collect.
         // Tags "type", "newTag" and "env" should be excluded
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "jmx_domain:org.datadog.jmxfetch.test", "jmx_check_name:jmx_exclude_tags");
+                Arrays.asList("instance:jmx_test_instance", "jmx_domain:org.datadog.jmxfetch.test", "dd.internal.jmx_check_name:jmx_exclude_tags");
 
         // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
         assertEquals(15, metrics.size());
@@ -597,7 +597,7 @@ public class TestApp extends TestCommon {
         List<String> commonTags =
                 Arrays.asList("instance:jmx_test_service_override_instance",
                         "jmx_domain:org.datadog.jmxfetch.test","service:test",
-                        "jmx_check_name:jmx_exclude_tags_override_service");
+                        "dd.internal.jmx_check_name:jmx_exclude_tags_override_service");
 
         // 15 = 13 metrics from java.lang + the 2 collected (gauge and histogram)
         assertEquals(15, metrics.size());
@@ -624,7 +624,7 @@ public class TestApp extends TestCommon {
                 Arrays.asList(
                         "instance:jmx_test_instance",
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_additional_tags",
+                        "dd.internal.jmx_check_name:jmx_additional_tags",
                         "type:SimpleTestJavaApp",
                         "name:testName",
                         "simple:SimpleTestJavaApp",
@@ -661,7 +661,7 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "jmx_check_name:jmx", "env:stage", "newTag:test");
+                Arrays.asList("instance:jmx_test_instance", "dd.internal.jmx_check_name:jmx", "env:stage", "newTag:test");
 
         assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 9);
         assertMetric(
@@ -778,7 +778,7 @@ public class TestApp extends TestCommon {
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
-                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test", "jmx_check_name:jmx_canonical");
+                Arrays.asList("instance:jmx_test_instance", "env:stage", "newTag:test", "dd.internal.jmx_check_name:jmx_canonical");
 
         assertMetric("this.is.100", 100.0, commonTags, Arrays.asList("foo", "gorch", "bar:baz"), 9);
         assertMetric(
@@ -977,7 +977,7 @@ public class TestApp extends TestCommon {
             "scope:CoolScope",
             "instance:jmx_test_instance2",
             "jmx_domain:org.datadog.jmxfetch.test",
-            "jmx_check_name:AD-jmx_0",
+            "dd.internal.jmx_check_name:AD-jmx_0",
             "bean_host:localhost",
             "component"
         );
@@ -991,7 +991,7 @@ public class TestApp extends TestCommon {
                         "keyspace:MyKeySpace",
                         "ColumnFamily:MyColumnFamily",
                         "jmx_domain:org.apache.cassandra.metrics",
-                        "jmx_check_name:AD-cassandra_0",
+                        "dd.internal.jmx_check_name:AD-cassandra_0",
                         "instance:jmx_first_instance");
 
         assertMetric("cassandra.pending_tasks.should_be100", tags, 6);
@@ -1003,7 +1003,7 @@ public class TestApp extends TestCommon {
                         "scope:MyColumnFamily",
                         "keyspace:MyKeySpace",
                         "jmx_domain:org.apache.cassandra.metrics",
-                        "jmx_check_name:AD-cassandra_0",
+                        "dd.internal.jmx_check_name:AD-cassandra_0",
                         "instance:jmx_second_instance",
                         "name:PendingTasks");
 
@@ -1013,7 +1013,7 @@ public class TestApp extends TestCommon {
         tags =
                 Arrays.asList(
                         "jmx_domain:org.datadog.jmxfetch.test",
-                        "jmx_check_name:jmx_alias_match",
+                        "dd.internal.jmx_check_name:jmx_alias_match",
                         "instance:jmx_test_instance1",
                         "foo:Bar",
                         "qux:Baz");
