@@ -2,6 +2,10 @@ Changelog
 =========
 # Next / TBD
 
+# 0.49.0 / 2023-11-10
+* [FEATURE] Adds more per-instance telemetry data around bean matching
+* [BUGFIX] Removes un-necessary statsd reinit
+
 # 0.48.0 / 2023-09-26
 
 * [FEATURE] Adds a configurable jmxfetch telemetry check to improve jmxfetch observability [#467][]
