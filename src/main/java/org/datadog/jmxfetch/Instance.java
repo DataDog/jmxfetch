@@ -509,13 +509,18 @@ public class Instance {
                 }
             }
         }
-        instanceTelemetryBean.setBeansFetched(beans.size());
-        instanceTelemetryBean.setTopLevelAttributeCount(matchingAttributes.size());
-        instanceTelemetryBean.setMetricCount(metrics.size());
-        log.debug("Updated jmx bean for instance: " + this.getCheckName()
-                + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
-                + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
-                + " metrics = " + instanceTelemetryBean.getMetricCount());
+        if (instanceTelemetryBean != null) {
+            instanceTelemetryBean.setBeansFetched(beans.size());
+            instanceTelemetryBean.setTopLevelAttributeCount(matchingAttributes.size());
+            instanceTelemetryBean.setMetricCount(metrics.size());
+            log.debug("Updated jmx bean for instance: " + this.getCheckName()
+                    + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
+                    + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
+                    + " metrics = " + instanceTelemetryBean.getMetricCount()
+                    + " wildcard domain query count = " 
+                    + instanceTelemetryBean.getWildcardDomainQueryCount() 
+                    + " bean match ratio = " + instanceTelemetryBean.getBeanMatchRatio());
+        }
         return metrics;
     }
 
@@ -547,11 +552,14 @@ public class Instance {
         this.failingAttributes.clear();
         int metricsCount = 0;
 
+        int beansWithAttributeMatch = 0;
+
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
         }
 
         for (ObjectName beanName : this.beans) {
+            boolean attributeMatched = false;
             if (limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -702,7 +710,17 @@ public class Instance {
                             || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
+                if (jmxAttribute.getMatchingConf() != null) {
+                    attributeMatched = true; 
+                }
             }
+            if (attributeMatched) {
+                beansWithAttributeMatch += 1;
+            }
+        }
+        if (instanceTelemetryBean != null) {
+            instanceTelemetryBean.setBeanMatchRatio((double) 
+                                  beansWithAttributeMatch / beans.size());
         }
         log.info("Found {} matching attributes", matchingAttributes.size());
     }
@@ -733,14 +751,21 @@ public class Instance {
                     ObjectName name = new ObjectName(scope);
                     this.beans.addAll(connection.queryNames(name));
                 }
-            } catch (Exception e) {
+            } catch (MalformedObjectNameException e) {
+                log.error("Unable to create ObjectName", e);
+            } catch (IOException e) {
                 log.error(
-                        "Unable to compute a common bean scope, querying all beans as a fallback",
-                        e);
+                        "Unable to query mbean server", e);
             }
         }
 
-        this.beans = (this.beans.isEmpty()) ? connection.queryNames(null) : this.beans;
+        if (this.beans.isEmpty()) {
+            this.beans = connection.queryNames(null);
+            if (instanceTelemetryBean != null) {
+                int wildcardQueryCount = instanceTelemetryBean.getWildcardDomainQueryCount();
+                instanceTelemetryBean.setWildcardDomainQueryCount(wildcardQueryCount + 1);
+            }
+        }
         this.lastRefreshTime = System.currentTimeMillis();
     }
 
