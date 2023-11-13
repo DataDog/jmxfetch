@@ -78,6 +78,10 @@ class AppConfig {
         if (val != null) {
             this.config_path = val;
         }
+        val = System.getenv("SEED_CONFIG_PATH");
+        if (val != null) {
+            this.seed_config_path = val;
+        }
         val = System.getenv("RNG_SEED");
         if (val != null) {
             this.rngSeed = Long.parseLong(val);
