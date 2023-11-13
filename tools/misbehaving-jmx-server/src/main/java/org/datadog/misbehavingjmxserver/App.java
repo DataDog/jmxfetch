@@ -46,7 +46,7 @@ class AppConfig {
     public String rmiHost = Defaults.JMXSERVER_RMI_INTERFACE;
 
     @Parameter(names = {"--rng-seed", "-rs"})
-    public long rngSeed = 1042849;
+    public Long rngSeed = 54321L;
 
     // Can only be set via env var
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
@@ -54,7 +54,11 @@ class AppConfig {
     @Parameter(names = {"--config-path", "-cfp"})
     public String config_path = "./misbehaving-jmx-domains-config.yaml";
 
+    @Parameter(names = {"--seed-config-path", "-scfp"})
+    public String seed_config_path = "./misbehaving-seed-config.yaml";
+
     public JmxDomainConfigurations jmxDomainConfigurations;
+    public RNGSeedConfiguration rngSeedConfiguration;
 
     public void overrideFromEnv() {
         String val;
@@ -80,7 +84,7 @@ class AppConfig {
         }
     }
 
-    public void readConfigFileOnDisk () {
+    public void readDomainsConfigFileOnDisk () {
         File f = new File(config_path);
         String yamlPath = f.getPath();
         try{
@@ -93,6 +97,33 @@ class AppConfig {
             jmxDomainConfigurations = null;
         }
     }
+
+    public void readSeedConfigFileOnDisk () {
+        File f = new File(seed_config_path);
+        String yamlPath = f.getPath();
+        try{
+            FileInputStream yamlInputStream = new FileInputStream(yamlPath);
+            Yaml yaml = new Yaml(new Constructor(RNGSeedConfiguration.class));
+            rngSeedConfiguration = yaml.load(yamlInputStream);
+            log.info("RNGSeed configuration read from " + seed_config_path + " is:\n" + rngSeedConfiguration);
+        } catch (FileNotFoundException e) {
+            log.warn("Could not find your config file at " + yamlPath);
+            rngSeedConfiguration = null;
+        }
+    }
+}
+
+class RNGSeedConfiguration {
+    public Long seed;
+
+    @Override
+    public String toString() {
+        if (seed != null) {
+            return "RNG Seed: " + seed;
+        } 
+        return "No seed specified in seed configuration file";
+    }
+
 }
 
 class JmxDomainConfigurations {
@@ -158,7 +189,8 @@ public class App
             jCommander.usage();
             System.exit(1);
         }
-        config.readConfigFileOnDisk();
+        config.readDomainsConfigFileOnDisk();
+        config.readSeedConfigFileOnDisk();
 
         InterruptibleRMISocketFactory customRMISocketFactory = new InterruptibleRMISocketFactory();
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
@@ -175,6 +207,10 @@ public class App
         MetricDAO mDao = new MetricDAO();
         mDao.runTickLoop();
 
+        // rng seed config file overrides flag
+        if (config.rngSeedConfiguration != null) {
+            config.rngSeed = config.rngSeedConfiguration.seed;
+        }
         BeanManager bm = new BeanManager(mbs, mDao, config.rngSeed);
 
         // Set up test domain
