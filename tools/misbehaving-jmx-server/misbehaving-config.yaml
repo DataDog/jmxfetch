@@ -10,4 +10,4 @@ domains:
         tabularAttributeCount: 5
         compositeValuesPerTabularAttribute: 10
 
-
+seed: 12345
