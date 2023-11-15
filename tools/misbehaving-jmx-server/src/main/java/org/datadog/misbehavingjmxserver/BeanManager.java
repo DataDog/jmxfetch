@@ -25,13 +25,15 @@ public class BeanManager {
     private final MBeanServer mBeanServer;
     private final Map<String, List<DynamicMBeanMetrics>> registeredBeans;
     private final MetricDAO mDao;
+    private final RandomIdentifier idGen;
     static final long ATTRIBUTE_REFRESH_INTERVAL = 10;
     private final ScheduledExecutorService executor;
 
-    public BeanManager(MBeanServer mBeanServer, MetricDAO mDao) {
+    public BeanManager(MBeanServer mBeanServer, MetricDAO mDao, long rngSeed) {
         this.mBeanServer = mBeanServer;
         this.registeredBeans = new HashMap<>();
         this.mDao = mDao;
+        this.idGen = new RandomIdentifier(rngSeed);
         this.executor = Executors.newSingleThreadScheduledExecutor();
         runAttributeUpdateLoop();
     }
@@ -60,7 +62,6 @@ public class BeanManager {
 
     public void setMBeanState(String beanDomain, BeanSpec domainSpec) {
         clearDomainBeans(beanDomain);
-        RandomIdentifier idGen = new RandomIdentifier();
         ArrayList<DynamicMBeanMetrics> beansList = new ArrayList<DynamicMBeanMetrics>();
 
         for (int i = 0; i < domainSpec.beanCount; i++) {

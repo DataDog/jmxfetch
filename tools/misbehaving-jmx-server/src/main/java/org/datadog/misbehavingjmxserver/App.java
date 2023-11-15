@@ -6,14 +6,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -21,7 +18,6 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
@@ -45,13 +41,16 @@ class AppConfig {
     @Parameter(names = {"--rmi-host", "-rh"})
     public String rmiHost = Defaults.JMXSERVER_RMI_INTERFACE;
 
+    @Parameter(names = {"--rng-seed", "-rs"})
+    public Long rngSeed = 54321L;
+
     // Can only be set via env var
     public int controlPort = Defaults.JMXSERVER_CONTROL_PORT;
 
     @Parameter(names = {"--config-path", "-cfp"})
-    public String config_path = "./misbehaving-jmx-domains-config.yaml";
+    public String config_path = "./misbehaving-config.yaml";
 
-    public JmxDomainConfigurations jmxDomainConfigurations;
+    public Configuration jmxConfiguration;
 
     public void overrideFromEnv() {
         String val;
@@ -71,6 +70,10 @@ class AppConfig {
         if (val != null) {
             this.config_path = val;
         }
+        val = System.getenv("RNG_SEED");
+        if (val != null) {
+            this.rngSeed = Long.parseLong(val);
+        }
     }
 
     public void readConfigFileOnDisk () {
@@ -78,18 +81,20 @@ class AppConfig {
         String yamlPath = f.getPath();
         try{
             FileInputStream yamlInputStream = new FileInputStream(yamlPath);
-            Yaml yaml = new Yaml(new Constructor(JmxDomainConfigurations.class));
-            jmxDomainConfigurations = yaml.load(yamlInputStream);
-            log.info("JmxDomainConfigurations read from " + config_path + " is:\n" + jmxDomainConfigurations);
+            Yaml yaml = new Yaml(new Constructor(Configuration.class));
+            jmxConfiguration = yaml.load(yamlInputStream);
+            log.info("Configuration read from " + config_path + " is:\n" + jmxConfiguration);
         } catch (FileNotFoundException e) {
             log.warn("Could not find your config file at " + yamlPath);
-            jmxDomainConfigurations = null;
+            jmxConfiguration = null;
         }
     }
+
 }
 
-class JmxDomainConfigurations {
+class Configuration {
     public Map<String,BeanSpec> domains;
+    public Long seed;
 
     @Override
     public String toString() {
@@ -99,7 +104,11 @@ class JmxDomainConfigurations {
                 result.append("Domain: " + entry.getKey() + entry.getValue().toString() + "\n");
             }
         } else {
-            return "No valid domain configurations";
+            result.append("No valid domain configurations\n");
+        }
+
+        if (seed != null) {
+            result.append("RNG Seed: " + seed + "\n");
         }
 
         return result.toString();
@@ -168,15 +177,19 @@ public class App
         MetricDAO mDao = new MetricDAO();
         mDao.runTickLoop();
 
-        BeanManager bm = new BeanManager(mbs, mDao);
+        if (config.jmxConfiguration != null && config.jmxConfiguration.seed != null) {
+            config.rngSeed = config.jmxConfiguration.seed;
+        }
+        log.info("RNG initializing with seed: {}", config.rngSeed);
+        BeanManager bm = new BeanManager(mbs, mDao, config.rngSeed);
 
         // Set up test domain
         BeanSpec testDomainBeanSpec = new BeanSpec(1, 1, 0, 0);
         bm.setMBeanState(testDomain, testDomainBeanSpec);
 
         // Set up initial beans for all the domains found in config file
-        if (config.jmxDomainConfigurations != null){
-            for (Map.Entry<String,BeanSpec> entry: config.jmxDomainConfigurations.domains.entrySet()) {
+        if (config.jmxConfiguration != null){
+            for (Map.Entry<String,BeanSpec> entry: config.jmxConfiguration.domains.entrySet()) {
                 bm.setMBeanState(entry.getKey(), entry.getValue());
             }
         }
