@@ -166,11 +166,29 @@ public class App
         // I don't think this call is actually important for jmx, the below 'env' param to JMXConnectorServerFactory is the important one
         RMISocketFactory.setSocketFactory(customRMISocketFactory);
 
+
         // Explicitly set RMI hostname to specified argument value
+        // This value is returned from the RMI registry as the hostname that the client should connect out to.
         System.setProperty("java.rmi.server.hostname", config.rmiHost);
 
-        // Initialize RMI registry at same port as the jmx service
+        // It is ridiculously hard to find good reference docs for the system properties controlling RMI ports.
+        // There are 3 ports relevant to JMX over RMI
+        // 1. port that RMI registry is available on. The initial network request for a RMI connection
+        //    comes into this port.
+        //    This java option is the one that controls the RMI registry port
+        System.setProperty("com.sun.management.jmxremote.rmi.port", "" + config.rmiPort);//
+        // If we don't create this registry explicitly, the above system property should be used.
         LocateRegistry.createRegistry(config.rmiPort, null, customRMISocketFactory);
+        // 2. port that RMI advertises in the initial handshake. This defaults to a random port unless
+        //    the system property is set. Some docs call this the "RMI Server Port", with there being
+        //    a distinction between "RMI Registry" and "RMI Server".
+        System.setProperty("com.sun.management.jmxremote.port", "" + config.rmiPort);//
+        // 3. A local port that is used for the AttachAPI. This doesn't matter for the purposes of our jmx-test-server,
+        // com.sun.management.jmxremote.local.port=<port#>
+        //
+        // References:
+        // https://www.oracle.com/java/technologies/javase/15all-relnotes.html#JDK-8234484
+
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
@@ -249,7 +267,7 @@ public class App
         // IMPORTANT! Without this, the custom RMI socket factory will not be used for JMX connections
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, customRMISocketFactory);
 
-        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + config.rmiHost + ":" + config.rmiPort + "/jmxrmi");
+        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + config.rmiPort + "/jmxrmi");
         log.info("JMXRMI Service listening at {}", url);
         JMXConnectorServer connector = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
 
