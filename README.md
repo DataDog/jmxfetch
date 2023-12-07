@@ -63,7 +63,7 @@ You may need to [enable annotation processors](https://projectlombok.org/setup/o
 ## Useful Developer Settings
 
 ### JDK version management
-[`sdkman`](https://sdkman.io/install) is recommended to manage multiple versions of java.
+[`sdkman`](https://sdkman.io/install) is recommended to manage multiple versions of Java.
 If you are an sdkman user, there is a config file present in this project with
 the recommended JDK version for development, use `sdk env` to activate it.
 
