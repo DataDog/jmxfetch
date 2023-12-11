@@ -1,0 +1,8 @@
+# Enable auto-env through the sdkman_auto_env config
+# Add key=value pairs of SDKs to use below
+#
+# Java version currently tracking what is present in -jmx agent builds
+# Agent is currently installing 'openjdk-11-jre-headless' from debian
+# See https://github.com/DataDog/datadog-agent/blob/3b6f07cb7d097837a7b9247c6119ead3309116ab/Dockerfiles/agent/Dockerfile#L136
+# and https://packages.debian.org/sid/openjdk-11-jre-headless
+java=11.0.21-amzn

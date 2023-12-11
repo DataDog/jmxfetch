@@ -61,6 +61,13 @@ JMXFetch uses [Lombok](https://projectlombok.org/) to modify classes and generat
 You may need to [enable annotation processors](https://projectlombok.org/setup/overview) to compile in your IDE.
 
 ## Useful Developer Settings
+
+### JDK version management
+[`sdkman`](https://sdkman.io/install) is recommended to manage multiple versions of Java.
+If you are an sdkman user, there is a config file present in this project with
+the recommended JDK version for development, use `sdk env` to activate it.
+
+
 ### Enabling file line numbers in log messages
 If you set the system property `-Djmxfetch.filelinelogging=true`, this will enable all log output to
 include the line number which emitted a given log.
