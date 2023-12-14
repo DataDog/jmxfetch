@@ -40,7 +40,8 @@ public class MisbehavingJMXServer implements Startable {
         this.supervisorPort = supervisorPort;
         this.jdkImage = jdkImage;
         final ImageFromDockerfile img = new ImageFromDockerfile()
-            .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
+            .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"))
+            .withBuildArg("FINAL_JRE_IMAGE", this.jdkImage);
         this.server = new GenericContainer<>(img)
             .withEnv(RMI_PORT, String.valueOf(rmiPort))
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))

@@ -65,32 +65,6 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testJMXFetchBasic() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(RMI_PORT, CONTROL_PORT,
-            SUPERVISOR_PORT)) {
-            server.start();
-            final String ipAddress = server.getIp();
-            this.initApplicationWithYamlLines(
-                "init_config:",
-                "  is_jmx: true",
-                "",
-                "instances:",
-                "    -   name: jmxint_container",
-                "        host: " + ipAddress,
-                "        collect_default_jvm_metrics: false",
-                "        max_returned_metrics: 300000",
-                "        port: " + RMI_PORT,
-                "        conf:",
-                "          - include:",
-                "              domain: Bohnanza"
-            );
-            this.app.doIteration();
-            final List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
-            assertThat(metrics, hasSize(1));
-        }
-    }
-
-    @Test
     public void testDefaultOldGC() throws IOException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(RMI_PORT, CONTROL_PORT,
             SUPERVISOR_PORT)) {
