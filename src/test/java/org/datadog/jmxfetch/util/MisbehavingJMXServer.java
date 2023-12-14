@@ -75,4 +75,12 @@ public class MisbehavingJMXServer implements Startable {
     public String getIp() {
         return this.server.getContainerInfo().getNetworkSettings().getIpAddress();
     }
+
+    public void cutNetwork() throws IOException {
+        this.controlClient.jmxCutNetwork();
+    }
+
+    public void restoreNetwork() throws IOException {
+        this.controlClient.jmxRestoreNetwork();
+    }
 }

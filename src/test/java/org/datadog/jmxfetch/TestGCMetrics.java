@@ -1,12 +1,16 @@
 package org.datadog.jmxfetch;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import lombok.extern.slf4j.Slf4j;
+import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.util.MisbehavingJMXServer;
 import org.junit.Test;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -23,11 +27,12 @@ public class TestGCMetrics extends TestCommon {
         boolean found = false;
         try {
             final String[] domains = mbs.getDomains();
-            for (String s : domains)
+            for (String s : domains) {
                 if(s.equals(domain)) {
                     found = true;
                     break;
                 }
+            }
         } catch (IOException e) {
             log.warn("Got an exception checking if domain is present", e);
         }
@@ -53,6 +58,34 @@ public class TestGCMetrics extends TestCommon {
             final JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
             final MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
             assertTrue(isDomainPresent("Bohnanza", mBeanServerConnection));
+        }
+    }
+
+    @Test
+    public void testJMXFetchBasic() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
+            RMI_PORT,
+            CONTROL_PORT,
+            SUPERVISOR_PORT)) {
+            server.start();
+            final String ipAddress = server.getIp();
+            this.initApplicationWithYamlLines(
+                "init_config:",
+                "  is_jmx: true",
+                "",
+                "instances:",
+                "    -   name: jmxint_container",
+                "        host: " + ipAddress,
+                "        collect_default_jvm_metrics: false",
+                "        max_returned_metrics: 300000",
+                "        port: " + RMI_PORT,
+                "        conf:",
+                "          - include:",
+                "              domain: Bohnanza"
+            );
+            this.app.doIteration();
+            List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
+            assertEquals(1, metrics.size());
         }
     }
 }
