@@ -2,7 +2,6 @@ package org.datadog.jmxfetch.util;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.JMXServerControlClient;
 import org.datadog.jmxfetch.JMXServerSupervisorClient;
@@ -15,6 +14,9 @@ import org.testcontainers.lifecycle.Startable;
 public class MisbehavingJMXServer implements Startable {
 
     private static final String DEFAULT_JDK_IMAGE = "base";
+    private static final String RMI_PORT = "RMI_PORT";
+    private static final String CONTROL_PORT = "CONTROL_PORT";
+    private static final String SUPERVISOR_PORT = "SUPERVISOR_PORT";
     private final String jdkImage;
     private final int controlPort;
     private final int supervisorPort;
@@ -40,9 +42,9 @@ public class MisbehavingJMXServer implements Startable {
         final ImageFromDockerfile img = new ImageFromDockerfile()
             .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
         this.server = new GenericContainer<>(img)
-            .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
-            .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
-            .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
+            .withEnv(RMI_PORT, String.valueOf(rmiPort))
+            .withEnv(CONTROL_PORT, String.valueOf(controlPort))
+            .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
             .waitingFor(Wait.forLogMessage(
                 ".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*",
                 1));
