@@ -17,7 +17,10 @@ public class MisbehavingJMXServer implements Startable {
     private static final String RMI_PORT = "RMI_PORT";
     private static final String CONTROL_PORT = "CONTROL_PORT";
     private static final String SUPERVISOR_PORT = "SUPERVISOR_PORT";
+    public static final String JAVA_OPTS = "JAVA_OPTS";
     private final String jdkImage;
+
+    private final String javaOpts;
     private final int controlPort;
     private final int supervisorPort;
     private final GenericContainer<?> server;
@@ -28,23 +31,27 @@ public class MisbehavingJMXServer implements Startable {
         final int rmiPort,
         final int controlPort,
         final int supervisorPort) {
-        this(DEFAULT_JDK_IMAGE, rmiPort, controlPort, supervisorPort);
+        this(DEFAULT_JDK_IMAGE, "", rmiPort, controlPort, supervisorPort);
     }
 
     public MisbehavingJMXServer(
         final String jdkImage,
+        final String javaOpts,
         final int rmiPort,
         final int controlPort,
         final int supervisorPort) {
+        this.javaOpts = javaOpts;
         this.controlPort = controlPort;
         this.supervisorPort = supervisorPort;
         this.jdkImage = jdkImage;
         final ImageFromDockerfile img = new ImageFromDockerfile()
-            .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"));
+            .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"))
+            .withBuildArg("FINAL_JRE_IMAGE", this.jdkImage);
         this.server = new GenericContainer<>(img)
             .withEnv(RMI_PORT, String.valueOf(rmiPort))
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
+            .withEnv(JAVA_OPTS, this.javaOpts)
             .waitingFor(Wait.forLogMessage(
                 ".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*",
                 1));
@@ -52,6 +59,7 @@ public class MisbehavingJMXServer implements Startable {
 
     @Override
     public void start() {
+        log.info("Starting MisbehavingJMXServer with Docker image '{}' with JAVA_OPTS '{}'", this.jdkImage, this.javaOpts);
         this.server.start();
         final String ipAddress = this.getIp();
         this.controlClient = new JMXServerControlClient(ipAddress, this.controlPort);
