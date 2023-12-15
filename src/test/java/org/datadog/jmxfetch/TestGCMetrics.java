@@ -115,6 +115,32 @@ public class TestGCMetrics extends TestCommon {
         }
     }
 
+    @Test
+    public void testDefaultNewGCMetrics() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(RMI_PORT, CONTROL_PORT,
+            SUPERVISOR_PORT)) {
+            server.start();
+            final String ipAddress = server.getIp();
+            this.initApplicationWithYamlLines("init_config:",
+                "  is_jmx: true",
+                "",
+                "instances:",
+                "    -   name: jmxint_container",
+                "        host: " + ipAddress,
+                "        collect_default_jvm_metrics: true",
+                "        new_gc_metrics: true",
+                "        max_returned_metrics: 300000",
+                "        port: " + RMI_PORT);
+            this.app.doIteration();
+            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            List<String> gcGenerations = Arrays.asList(
+                "G1 Old Generation",
+                "G1 Young Generation");
+            assertGCMetric(actualMetrics, "jvm.gc.cms.count", gcGenerations);
+            assertGCMetric(actualMetrics, "jvm.gc.parnew.time", gcGenerations);
+        }
+    }
+
     private static void assertGCMetric(final List<Map<String, Object>> actualMetrics,
         final String expectedMetric,
         final List<String> gcGenerations) {

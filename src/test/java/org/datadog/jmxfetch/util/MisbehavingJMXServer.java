@@ -2,13 +2,16 @@ package org.datadog.jmxfetch.util;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import lombok.extern.slf4j.Slf4j;
-import org.datadog.jmxfetch.JMXServerControlClient;
-import org.datadog.jmxfetch.JMXServerSupervisorClient;
+
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startable;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.datadog.jmxfetch.JMXServerControlClient;
+import org.datadog.jmxfetch.JMXServerSupervisorClient;
 
 @Slf4j
 public class MisbehavingJMXServer implements Startable {
@@ -59,7 +62,8 @@ public class MisbehavingJMXServer implements Startable {
 
     @Override
     public void start() {
-        log.info("Starting MisbehavingJMXServer with Docker image '{}' with JAVA_OPTS '{}'", this.jdkImage, this.javaOpts);
+        log.info("Starting MisbehavingJMXServer with Docker image '{}' with JAVA_OPTS '{}'",
+            this.jdkImage, this.javaOpts);
         this.server.start();
         final String ipAddress = this.getIp();
         this.controlClient = new JMXServerControlClient(ipAddress, this.controlPort);
