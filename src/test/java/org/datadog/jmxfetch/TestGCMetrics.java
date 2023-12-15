@@ -112,7 +112,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetrics() throws IOException, InterruptedException {
+    public void testDefaultNewGCMetricsUseParallelGC() throws IOException, InterruptedException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_11,
                 "-XX:+UseParallelGC",
@@ -150,7 +150,47 @@ public class TestGCMetrics extends TestCommon {
             assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcOldGenerations);
         }
     }
-    
+
+    @Test
+    public void testDefaultNewGCMetricsUseG1GC() throws IOException, InterruptedException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
+                MisbehavingJMXServer.JDK_17,
+                "-XX:+UseG1GC",
+                RMI_PORT,
+                CONTROL_PORT,
+                SUPERVISOR_PORT)) {
+            server.start();
+            final String ipAddress = server.getIp();
+            this.initApplicationWithYamlLines("init_config:",
+                    "  is_jmx: true",
+                    "  new_gc_metrics: true",
+                    "",
+                    "instances:",
+                    "    -   name: jmxint_container",
+                    "        host: " + ipAddress,
+                    "        collect_default_jvm_metrics: true",
+                    "        max_returned_metrics: 300000",
+                    "        port: " + RMI_PORT);
+            // Run one iteration first
+            this.app.doIteration();
+            // And then pull get the metrics or else reporter does not have correct number of metrics
+            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+            // Actual iteration we care about
+            this.app.doIteration();
+            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            assertThat(actualMetrics, hasSize(13));
+            final List<String> gcYoungGenerations = Collections.singletonList(
+                    "G1 Young Generation");
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", gcYoungGenerations);
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", gcYoungGenerations);
+            final List<String> gcOldGenerations = Collections.singletonList(
+                    "G1 Old Generation");
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", gcOldGenerations);
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcOldGenerations);
+        }
+    }
+
     private static void assertGCMetric(final List<Map<String, Object>> actualMetrics,
         final String expectedMetric,
         final List<String> gcGenerations) {
