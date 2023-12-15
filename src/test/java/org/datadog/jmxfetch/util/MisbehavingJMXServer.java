@@ -17,6 +17,8 @@ import org.datadog.jmxfetch.JMXServerSupervisorClient;
 public class MisbehavingJMXServer implements Startable {
 
     private static final String DEFAULT_JDK_IMAGE = "base";
+    public static final String JDK_11 = "eclipse-temurin:11";
+    public static final String JDK_17 = "eclipse-temurin:17";
     private static final String RMI_PORT = "RMI_PORT";
     private static final String CONTROL_PORT = "CONTROL_PORT";
     private static final String SUPERVISOR_PORT = "SUPERVISOR_PORT";
