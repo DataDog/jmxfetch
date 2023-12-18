@@ -12,6 +12,8 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.datadog.jmxfetch.util.server.SimpleAppContainer;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import lombok.extern.slf4j.Slf4j;
@@ -192,10 +194,49 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsUseZGC() throws IOException, InterruptedException {
+    public void testDefaultNewGCMetricsUseZGC() throws IOException {
+        try (final SimpleAppContainer container = new SimpleAppContainer(
+                "eclipse-temurin:21",
+                "-XX:+UseZGC -Xmx128M -Xms128M",
+                RMI_PORT
+        )){
+            container.start();
+            final String ipAddress = container.getIp();
+            this.initApplicationWithYamlLines("init_config:",
+                    "  is_jmx: true",
+                    "  new_gc_metrics: true",
+                    "",
+                    "instances:",
+                    "    -   name: jmxint_container",
+                    "        host: " + ipAddress,
+                    "        collect_default_jvm_metrics: true",
+                    "        max_returned_metrics: 300000",
+                    "        port: " + RMI_PORT);
+            // Run one iteration first
+            this.app.doIteration();
+            // And then pull get the metrics or else reporter does not have correct number of metrics
+            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+            // Actual iteration we care about
+            this.app.doIteration();
+            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            assertThat(actualMetrics, hasSize(13));
+            final List<String> zgcPause = Collections.singletonList(
+                    "ZGC Pauses");
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", zgcPause);
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", zgcPause);
+            final List<String> zgcCycles = Collections.singletonList(
+                    "ZGC Cycles");
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", zgcCycles);
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", zgcCycles);
+        }
+    }
+    @Test
+    @Ignore("Can not force ZGC to work using MisbehavingJMXServer")
+    public void testDefaultNewGCMetricsUseZGCOld() throws IOException, InterruptedException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
-                MisbehavingJMXServer.JDK_21,
-                "-XX:+UseZGC",
+                MisbehavingJMXServer.JDK_17,
+                "-XX:+UnlockExperimentalVMOptions -XX:+UseZGC",
                 RMI_PORT,
                 CONTROL_PORT,
                 SUPERVISOR_PORT)) {
@@ -220,14 +261,14 @@ public class TestGCMetrics extends TestCommon {
             this.app.doIteration();
             final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
             assertThat(actualMetrics, hasSize(13));
-            final List<String> gcYoungGenerations = Collections.singletonList(
-                    "G1 Young Generation");
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", gcYoungGenerations);
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", gcYoungGenerations);
-            final List<String> gcOldGenerations = Collections.singletonList(
-                    "G1 Old Generation");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", gcOldGenerations);
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcOldGenerations);
+            final List<String> zgcPause = Collections.singletonList(
+                    "ZGC Pauses");
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", zgcPause);
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", zgcPause);
+            final List<String> zgcCycles = Collections.singletonList(
+                    "ZGC Cycles");
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", zgcCycles);
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", zgcCycles);
         }
     }
 
