@@ -2,7 +2,6 @@ package org.datadog.jmxfetch.util.server;
 
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Set;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -38,14 +37,9 @@ public class SimpleAppContainer implements Startable {
     }
 
     @Override
-    public Set<Startable> getDependencies() {
-        return Startable.super.getDependencies();
-    }
-
-    @Override
     public void start() {
-        log.info("Starting SimpleApp with Docker image '{}' with JAVA_OPTS '{}'",
-                this.jreDockerImage, this.javaOpts);
+        log.info("Starting SimpleApp with Docker image '{}' with JAVA_OPTS '{}' in port '{}'",
+                this.jreDockerImage, this.javaOpts, this.rmiPort);
         this.server.start();
         log.info(this.server.getLogs());
     }
@@ -55,12 +49,12 @@ public class SimpleAppContainer implements Startable {
         this.server.stop();
     }
 
+    public void close() {
+        this.stop();
+    }
+
     public String getIp() {
         return this.server.getContainerInfo().getNetworkSettings().getIpAddress();
     }
 
-    @Override
-    public void close() {
-        Startable.super.close();
-    }
 }

@@ -231,8 +231,9 @@ public class TestGCMetrics extends TestCommon {
             assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", zgcCycles);
         }
     }
-    @Test
+    
     @Ignore("Can not force ZGC to work using MisbehavingJMXServer")
+    @Test
     public void testDefaultNewGCMetricsUseZGCOld() throws IOException, InterruptedException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
