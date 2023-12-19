@@ -4,13 +4,12 @@ set -f
 
 echo "Running $@"
 
-[ -n "$JAVA_OPTS" ] || JAVA_OPTS="-Xmx128M -Xms128M"
+[ -n "$MISBEHAVING_OPTS" ] || MISBEHAVING_OPTS="-Xmx128M -Xms128M"
 
 echo "Using `java --version`"
-echo "With JAVA_OPTS '${JAVA_OPTS}'"
+echo "With MISBEHAVING_OPTS '${MISBEHAVING_OPTS}'"
 
 # shellcheck disable=SC2086
-java \
-  ${JAVA_OPTS} \
+java -Xmx64M -Xms64M \
   -cp misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar \
   "$@"

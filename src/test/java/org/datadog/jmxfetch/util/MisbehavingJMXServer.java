@@ -23,7 +23,7 @@ public class MisbehavingJMXServer implements Startable {
     private static final String RMI_PORT = "RMI_PORT";
     private static final String CONTROL_PORT = "CONTROL_PORT";
     private static final String SUPERVISOR_PORT = "SUPERVISOR_PORT";
-    public static final String JAVA_OPTS = "JAVA_OPTS";
+    public static final String MISBEHAVING_OPTS = "MISBEHAVING_OPTS";
     private final String jdkImage;
 
     private final String javaOpts;
@@ -57,7 +57,7 @@ public class MisbehavingJMXServer implements Startable {
             .withEnv(RMI_PORT, String.valueOf(rmiPort))
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
-            .withEnv(JAVA_OPTS, this.javaOpts)
+            .withEnv(MISBEHAVING_OPTS, this.javaOpts)
             .waitingFor(Wait.forLogMessage(
                 ".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*",
                 1));
@@ -65,7 +65,7 @@ public class MisbehavingJMXServer implements Startable {
 
     @Override
     public void start() {
-        log.info("Starting MisbehavingJMXServer with Docker image '{}' with JAVA_OPTS '{}'",
+        log.info("Starting MisbehavingJMXServer with Docker image '{}' with MISBEHAVING_OPTS '{}'",
             this.jdkImage, this.javaOpts);
         this.server.start();
         final String ipAddress = this.getIp();

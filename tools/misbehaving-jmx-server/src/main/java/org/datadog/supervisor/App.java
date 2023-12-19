@@ -1,16 +1,15 @@
 package org.datadog.supervisor;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.datadog.Defaults;
 
 import lombok.extern.slf4j.Slf4j;
@@ -123,12 +122,16 @@ public class App {
     }
 
     static void startJMXServer() throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("java",
+        final String misbehavingOpts = System.getenv("MISBEHAVING_OPTS");
+        final String[] extraOpts = misbehavingOpts !=null ? StringUtils.split(misbehavingOpts) : ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] command = ArrayUtils.addAll( ArrayUtils.insert(0, extraOpts, "java"),
             "-cp",
             selfJarPath,
             jmxServerEntrypoint,
             "--rmi-host",
             App.config.rmiHostname);
+        log.info("Running JMXServer with command '{}'", ArrayUtils.toString(command));
+        final ProcessBuilder pb = new ProcessBuilder(command);
         pb.inheritIO();
         process = pb.start();
         running.set(true);

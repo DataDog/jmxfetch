@@ -5,21 +5,19 @@ import static org.hamcrest.Matchers.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.datadog.jmxfetch.util.server.SimpleAppContainer;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.util.MisbehavingJMXServer;
+import org.datadog.jmxfetch.util.server.SimpleAppContainer;
 
 @Slf4j
 public class TestGCMetrics extends TestCommon {
@@ -143,11 +141,11 @@ public class TestGCMetrics extends TestCommon {
             final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
             assertThat(actualMetrics, hasSize(13));
             final List<String> gcYoungGenerations = Collections.singletonList(
-                    "G1 Young Generation");
+                    "PS Scavenge");
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", gcYoungGenerations);
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", gcYoungGenerations);
             final List<String> gcOldGenerations = Collections.singletonList(
-                    "G1 Old Generation");
+                    "PS MarkSweep");
             assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", gcOldGenerations);
             assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcOldGenerations);
         }
@@ -196,7 +194,7 @@ public class TestGCMetrics extends TestCommon {
     @Test
     public void testDefaultNewGCMetricsUseZGC() throws IOException {
         try (final SimpleAppContainer container = new SimpleAppContainer(
-                "eclipse-temurin:21",
+                "eclipse-temurin:17",
                 "-XX:+UseZGC -Xmx128M -Xms128M",
                 RMI_PORT
         )){
@@ -232,12 +230,12 @@ public class TestGCMetrics extends TestCommon {
         }
     }
     
-    @Ignore("Can not force ZGC to work using MisbehavingJMXServer")
+//    @Ignore("Can not force ZGC to work using MisbehavingJMXServer")
     @Test
     public void testDefaultNewGCMetricsUseZGCOld() throws IOException, InterruptedException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
-                "-XX:+UnlockExperimentalVMOptions -XX:+UseZGC",
+                "-XX:+UseZGC",
                 RMI_PORT,
                 CONTROL_PORT,
                 SUPERVISOR_PORT)) {
