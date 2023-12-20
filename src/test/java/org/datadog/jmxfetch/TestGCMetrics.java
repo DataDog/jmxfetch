@@ -1,7 +1,6 @@
 package org.datadog.jmxfetch;
 
 import static org.datadog.jmxfetch.util.MetricsAssert.assertDomainPresent;
-import static org.datadog.jmxfetch.util.MetricsAssert.isDomainPresent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -20,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.util.server.MisbehavingJMXServer;
 import org.datadog.jmxfetch.util.server.SimpleAppContainer;
+import org.datadog.jmxfetch.util.MetricsAssert;
 
 @Slf4j
 public class TestGCMetrics extends TestCommon {
@@ -42,25 +42,7 @@ public class TestGCMetrics extends TestCommon {
     public void testDefaultOldGC() throws IOException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
             MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
-            server.start();
-            this.initApplicationWithYamlLines(
-                "init_config:",
-                "  is_jmx: true",
-                "",
-                "instances:",
-                "    -   name: jmxint_container",
-                "        host: " + server.getIp(),
-                "        collect_default_jvm_metrics: true",
-                "        max_returned_metrics: 300000",
-                "        port: " + server.getRMIPort());
-            // Run one iteration first
-            this.app.doIteration();
-            // And then pull get the metrics or else reporter does not have correct number of metrics
-            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-
-            // Actual iteration we care about
-            this.app.doIteration();
-            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, false);
             List<String> gcGenerations = Arrays.asList(
                 "G1 Old Generation",
                 "G1 Young Generation");
@@ -74,25 +56,7 @@ public class TestGCMetrics extends TestCommon {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_11,
                 "-XX:+UseParallelGC -Xmx128M -Xms128M")) {
-            server.start();
-            this.initApplicationWithYamlLines("init_config:",
-                "  is_jmx: true",
-                "  new_gc_metrics: true",
-                "",
-                "instances:",
-                "    -   name: jmxint_container",
-                "        host: " + server.getIp(),
-                "        collect_default_jvm_metrics: true",
-                "        max_returned_metrics: 300000",
-                "        port: " + server.getRMIPort());
-            // Run one iteration first
-            this.app.doIteration();
-            // And then pull get the metrics or else reporter does not have correct number of metrics
-            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-
-            // Actual iteration we care about
-            this.app.doIteration();
-            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", "PS Scavenge", "counter");
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", "PS Scavenge", "counter");
@@ -102,64 +66,39 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
+    public void testDefaultNewGCMetricsUseConcMarkSweepGC() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
+            MisbehavingJMXServer.JDK_11,
+            "-XX:+UseConcMarkSweepGC -Xmx128M -Xms128M")) {
+            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(13));
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", "ParNew", "counter");
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", "ParNew", "counter");
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", "ConcurrentMarkSweep", "counter");
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", "ConcurrentMarkSweep", "counter");
+        }
+    }
+
+    @Test
     public void testDefaultNewGCMetricsUseG1GC() throws IOException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
                 "-XX:+UseG1GC -Xmx128M -Xms128M")) {
-            server.start();
-            this.initApplicationWithYamlLines(
-                "init_config:",
-                "  is_jmx: true",
-                "  new_gc_metrics: true",
-                "",
-                "instances:",
-                "    -   name: jmxint_container",
-                "        host: " + server.getIp(),
-                "        collect_default_jvm_metrics: true",
-                "        max_returned_metrics: 300000",
-                "        port: " + server.getRMIPort());
-            // Run one iteration first
-            this.app.doIteration();
-            // And then pull get the metrics or else reporter does not have correct number of metrics
-            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-
-            // Actual iteration we care about
-            this.app.doIteration();
-            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
-            final List<String> gcYoungGenerations = Collections.singletonList(
-                    "G1 Young Generation");
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", "G1 Young Generation", "counter");
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", "G1 Young Generation", "counter");
             assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", "G1 Old Generation", "counter");
             assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", "G1 Old Generation", "counter");
         }
     }
-    
+
     @Test
     public void testDefaultNewGCMetricsUseZGC() throws IOException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
                 "-XX:+UseZGC -Xmx128M -Xms128M")) {
-            server.start();
-            this.initApplicationWithYamlLines("init_config:",
-                    "  is_jmx: true",
-                    "  new_gc_metrics: true",
-                    "",
-                    "instances:",
-                    "    -   name: jmxint_container",
-                    "        host: " + server.getIp(),
-                    "        collect_default_jvm_metrics: true",
-                    "        max_returned_metrics: 300000",
-                    "        port: " + server.getRMIPort());
-            // Run one iteration first
-            this.app.doIteration();
-            // And then pull get the metrics or else reporter does not have correct number of metrics
-            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-
-            // Actual iteration we care about
-            this.app.doIteration();
-            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
             assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", "ZGC Pauses", "counter");
             assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", "ZGC Pauses", "counter");
@@ -167,11 +106,35 @@ public class TestGCMetrics extends TestCommon {
             assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", "ZGC Cycles", "counter");
         }
     }
+
+    private List<Map<String, Object>> startAngGetMetrics(final MisbehavingJMXServer server, final boolean newGCMetrics) throws IOException {
+        server.start();
+        this.initApplicationWithYamlLines(
+            "init_config:",
+            "  is_jmx: true",
+            "  new_gc_metrics: " + newGCMetrics,
+            "",
+            "instances:",
+            "    -   name: jmxint_container",
+            "        host: " + server.getIp(),
+            "        collect_default_jvm_metrics: true",
+            "        max_returned_metrics: 300000",
+            "        port: " + server.getRMIPort());
+        // Run one iteration first
+        this.app.doIteration();
+        // And then pull get the metrics or else reporter does not have correct number of metrics
+        ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+        // Actual iteration we care about
+        this.app.doIteration();
+        return ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+    }
+
     private static void assertGCMetric(final List<Map<String, Object>> actualMetrics,
         final String expectedMetric,
         final String gcGeneration,
         final String metricType) {
-        TestCommon.assertMetric(
+        MetricsAssert.assertMetric(
             expectedMetric,
             -1,
             -1,
