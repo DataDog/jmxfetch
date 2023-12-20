@@ -16,15 +16,11 @@ import org.junit.Test;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
-import org.datadog.jmxfetch.util.MisbehavingJMXServer;
+import org.datadog.jmxfetch.util.server.MisbehavingJMXServer;
 import org.datadog.jmxfetch.util.server.SimpleAppContainer;
 
 @Slf4j
 public class TestGCMetrics extends TestCommon {
-
-    private static final int RMI_PORT = 9090;
-    private static final int CONTROL_PORT = 9091;
-    private static final int SUPERVISOR_PORT = 9092;
 
     private static boolean isDomainPresent(final String domain, final MBeanServerConnection mbs) {
         boolean found = false;
@@ -47,12 +43,12 @@ public class TestGCMetrics extends TestCommon {
      */
     @Test
     public void testJMXDirectBasic() throws Exception {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(RMI_PORT, CONTROL_PORT,
-            SUPERVISOR_PORT)) {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
+            MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
             server.start();
             final String ipAddress = server.getIp();
             final String remoteJmxServiceUrl = String.format(
-                "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", ipAddress, RMI_PORT);
+                "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", ipAddress, MisbehavingJMXServer.DEFAULT_RMI_PORT);
             final JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
             final JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
             final MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
@@ -62,8 +58,8 @@ public class TestGCMetrics extends TestCommon {
 
     @Test
     public void testJMXFetchBasic() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(RMI_PORT, CONTROL_PORT,
-            SUPERVISOR_PORT)) {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
+            MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
             server.start();
             final String ipAddress = server.getIp();
             this.initApplicationWithYamlLines(
@@ -75,7 +71,7 @@ public class TestGCMetrics extends TestCommon {
                 "        host: " + ipAddress,
                 "        collect_default_jvm_metrics: false",
                 "        max_returned_metrics: 300000",
-                "        port: " + RMI_PORT,
+                "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT,
                 "        conf:",
                 "          - include:",
                 "              domain: Bohnanza"
@@ -88,11 +84,12 @@ public class TestGCMetrics extends TestCommon {
 
     @Test
     public void testDefaultOldGC() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(RMI_PORT, CONTROL_PORT,
-            SUPERVISOR_PORT)) {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
+            MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
             server.start();
             final String ipAddress = server.getIp();
-            this.initApplicationWithYamlLines("init_config:",
+            this.initApplicationWithYamlLines(
+                "init_config:",
                 "  is_jmx: true",
                 "",
                 "instances:",
@@ -100,7 +97,7 @@ public class TestGCMetrics extends TestCommon {
                 "        host: " + ipAddress,
                 "        collect_default_jvm_metrics: true",
                 "        max_returned_metrics: 300000",
-                "        port: " + RMI_PORT);
+                "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
             this.app.doIteration();
             final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
             List<String> gcGenerations = Arrays.asList(
@@ -116,9 +113,9 @@ public class TestGCMetrics extends TestCommon {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_11,
                 "-XX:+UseParallelGC",
-                RMI_PORT,
-                CONTROL_PORT,
-                SUPERVISOR_PORT)) {
+                MisbehavingJMXServer.DEFAULT_RMI_PORT,
+                MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
+                MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
             server.start();
             final String ipAddress = server.getIp();
             this.initApplicationWithYamlLines("init_config:",
@@ -130,7 +127,7 @@ public class TestGCMetrics extends TestCommon {
                 "        host: " + ipAddress,
                 "        collect_default_jvm_metrics: true",
                 "        max_returned_metrics: 300000",
-                "        port: " + RMI_PORT);
+                "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
             // Run one iteration first
             this.app.doIteration();
             // And then pull get the metrics or else reporter does not have correct number of metrics
@@ -156,21 +153,22 @@ public class TestGCMetrics extends TestCommon {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
                 "-XX:+UseG1GC",
-                RMI_PORT,
-                CONTROL_PORT,
-                SUPERVISOR_PORT)) {
+                MisbehavingJMXServer.DEFAULT_RMI_PORT,
+                MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
+                MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
             server.start();
             final String ipAddress = server.getIp();
-            this.initApplicationWithYamlLines("init_config:",
-                    "  is_jmx: true",
-                    "  new_gc_metrics: true",
-                    "",
-                    "instances:",
-                    "    -   name: jmxint_container",
-                    "        host: " + ipAddress,
-                    "        collect_default_jvm_metrics: true",
-                    "        max_returned_metrics: 300000",
-                    "        port: " + RMI_PORT);
+            this.initApplicationWithYamlLines(
+                "init_config:",
+                "  is_jmx: true",
+                "  new_gc_metrics: true",
+                "",
+                "instances:",
+                "    -   name: jmxint_container",
+                "        host: " + ipAddress,
+                "        collect_default_jvm_metrics: true",
+                "        max_returned_metrics: 300000",
+                "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
             // Run one iteration first
             this.app.doIteration();
             // And then pull get the metrics or else reporter does not have correct number of metrics
@@ -196,7 +194,7 @@ public class TestGCMetrics extends TestCommon {
         try (final SimpleAppContainer container = new SimpleAppContainer(
                 "eclipse-temurin:17",
                 "-XX:+UseZGC -Xmx128M -Xms128M",
-                RMI_PORT
+                MisbehavingJMXServer.DEFAULT_RMI_PORT
         )){
             container.start();
             final String ipAddress = container.getIp();
@@ -209,7 +207,7 @@ public class TestGCMetrics extends TestCommon {
                     "        host: " + ipAddress,
                     "        collect_default_jvm_metrics: true",
                     "        max_returned_metrics: 300000",
-                    "        port: " + RMI_PORT);
+                    "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
             // Run one iteration first
             this.app.doIteration();
             // And then pull get the metrics or else reporter does not have correct number of metrics
@@ -236,9 +234,9 @@ public class TestGCMetrics extends TestCommon {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
                 "-XX:+UseZGC",
-                RMI_PORT,
-                CONTROL_PORT,
-                SUPERVISOR_PORT)) {
+                MisbehavingJMXServer.DEFAULT_RMI_PORT,
+                MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
+                MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
             server.start();
             final String ipAddress = server.getIp();
             this.initApplicationWithYamlLines("init_config:",
@@ -250,7 +248,7 @@ public class TestGCMetrics extends TestCommon {
                     "        host: " + ipAddress,
                     "        collect_default_jvm_metrics: true",
                     "        max_returned_metrics: 300000",
-                    "        port: " + RMI_PORT);
+                    "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
             // Run one iteration first
             this.app.doIteration();
             // And then pull get the metrics or else reporter does not have correct number of metrics

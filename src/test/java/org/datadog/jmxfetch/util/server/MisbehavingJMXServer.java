@@ -1,21 +1,22 @@
-package org.datadog.jmxfetch.util;
+package org.datadog.jmxfetch.util.server;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-
+import lombok.extern.slf4j.Slf4j;
+import org.datadog.jmxfetch.JMXServerControlClient;
+import org.datadog.jmxfetch.JMXServerSupervisorClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startable;
 
-import lombok.extern.slf4j.Slf4j;
-
-import org.datadog.jmxfetch.JMXServerControlClient;
-import org.datadog.jmxfetch.JMXServerSupervisorClient;
-
 @Slf4j
 public class MisbehavingJMXServer implements Startable {
 
+
+    public static final int DEFAULT_RMI_PORT = 9090;
+    public static final int DEFAULT_CONTROL_PORT = 9091;
+    public static final int DEFAULT_SUPERVISOR_PORT = 9092;
     private static final String DEFAULT_JDK_IMAGE = "base";
     public static final String JDK_11 = "eclipse-temurin:11";
     public static final String JDK_17 = "eclipse-temurin:17";
