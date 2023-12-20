@@ -238,36 +238,23 @@ public class TestCommon {
         return ((ConsoleReporter) appConfig.getReporter()).getServiceChecks();
     }
 
-    /**
-     * Assert that a specific metric was collected. Brand the metric so we can easily know which
-     * metric have/have not been tested
-     *
-     * @param name metric name
-     * @param value metric value
-     * @param lowerBound lower bound metric value
-     * @param upperBound upper bound metric value
-     * @param commonTags metric tags inherited from the instance configuration
-     * @param additionalTags metric tags inherited from the bean properties
-     * @param countTags number of metric tags
-     * @param metricType type of the metric (gauge, histogram, ...)
-     * @return fail if the metric was not found
-     */
-    public void assertMetric(
-            String name,
-            Number value,
-            Number lowerBound,
-            Number upperBound,
-            List<String> commonTags,
-            List<String> additionalTags,
-            int countTags,
-            String metricType) {
-        List<String> tags = new ArrayList<String>(commonTags);
+    public static void assertMetric(
+        String name,
+        Number value,
+        Number lowerBound,
+        Number upperBound,
+        List<String> commonTags,
+        List<String> additionalTags,
+        int countTags,
+        String metricType,
+        List<Map<String, Object>> actualMetrics) {
+        List<String> tags = new ArrayList<>(commonTags);
         tags.addAll(additionalTags);
 
-        for (Map<String, Object> m : metrics) {
+        for (Map<String, Object> m : actualMetrics) {
             String mName = (String) (m.get("name"));
             Double mValue = (Double) (m.get("value"));
-            Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
+            Set<String> mTags = new HashSet<>(Arrays.asList((String[]) (m.get("tags"))));
 
             if (mName.equals(name)) {
 
@@ -295,15 +282,42 @@ public class TestCommon {
             }
         }
         fail(
-                "Metric assertion failed (name: "
-                        + name
-                        + ", value: "
-                        + value
-                        + ", tags: "
-                        + tags
-                        + ", #tags: "
-                        + countTags
-                        + ").");
+            "Metric assertion failed (name: "
+                + name
+                + ", value: "
+                + value
+                + ", tags: "
+                + tags
+                + ", #tags: "
+                + countTags
+                + ").");
+
+    }
+
+    /**
+     * Assert that a specific metric was collected. Brand the metric so we can easily know which
+     * metric have/have not been tested
+     *
+     * @param name metric name
+     * @param value metric value
+     * @param lowerBound lower bound metric value
+     * @param upperBound upper bound metric value
+     * @param commonTags metric tags inherited from the instance configuration
+     * @param additionalTags metric tags inherited from the bean properties
+     * @param countTags number of metric tags
+     * @param metricType type of the metric (gauge, histogram, ...)
+     * @return fail if the metric was not found
+     */
+    public void assertMetric(
+            String name,
+            Number value,
+            Number lowerBound,
+            Number upperBound,
+            List<String> commonTags,
+            List<String> additionalTags,
+            int countTags,
+            String metricType) {
+        assertMetric(name, value, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType, this.metrics);
     }
 
     public void assertMetric(

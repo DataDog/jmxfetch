@@ -28,12 +28,18 @@ public class MisbehavingJMXServer implements Startable {
     private final String jdkImage;
 
     private final String javaOpts;
+    private final int rmiPort;
     private final int controlPort;
     private final int supervisorPort;
     private final GenericContainer<?> server;
     private JMXServerControlClient controlClient;
     private JMXServerSupervisorClient supervisorClient;
 
+    public MisbehavingJMXServer(
+        final String jdkImage,
+        final String javaOpts) {
+        this(jdkImage, javaOpts, DEFAULT_RMI_PORT, DEFAULT_CONTROL_PORT, DEFAULT_SUPERVISOR_PORT);
+    }
     public MisbehavingJMXServer(
         final int rmiPort,
         final int controlPort,
@@ -48,6 +54,7 @@ public class MisbehavingJMXServer implements Startable {
         final int controlPort,
         final int supervisorPort) {
         this.javaOpts = javaOpts;
+        this.rmiPort = rmiPort;
         this.controlPort = controlPort;
         this.supervisorPort = supervisorPort;
         this.jdkImage = jdkImage;
@@ -100,5 +107,9 @@ public class MisbehavingJMXServer implements Startable {
 
     public void restoreNetwork() throws IOException {
         this.controlClient.jmxRestoreNetwork();
+    }
+
+    public int getRMIPort() {
+        return this.rmiPort;
     }
 }
