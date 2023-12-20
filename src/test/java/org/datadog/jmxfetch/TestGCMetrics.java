@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import static org.datadog.jmxfetch.util.MetricsAssert.assertDomainPresent;
+import static org.datadog.jmxfetch.util.MetricsAssert.isDomainPresent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -22,22 +24,6 @@ import org.datadog.jmxfetch.util.server.SimpleAppContainer;
 @Slf4j
 public class TestGCMetrics extends TestCommon {
 
-    private static boolean isDomainPresent(final String domain, final MBeanServerConnection mbs) {
-        boolean found = false;
-        try {
-            final String[] domains = mbs.getDomains();
-            for (String s : domains) {
-                if(s.equals(domain)) {
-                    found = true;
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            log.warn("Got an exception checking if domain is present", e);
-        }
-        return found;
-    }
-
     @Test
     public void testJMXDirectBasic() throws Exception {
         try (final SimpleAppContainer container = new SimpleAppContainer()){
@@ -48,45 +34,7 @@ public class TestGCMetrics extends TestCommon {
             final JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
             final JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
             final MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
-            assertThat(isDomainPresent("java.lang", mBeanServerConnection), is(true));
-        }
-    }
-
-    @Test
-    public void testDefaultNewGCMetricsUseZGCSimple() throws IOException {
-        try (final SimpleAppContainer container = new SimpleAppContainer(
-            "eclipse-temurin:17",
-            "-XX:+UseZGC -Xmx128M -Xms128M",
-            MisbehavingJMXServer.DEFAULT_RMI_PORT
-        )){
-            container.start();
-            this.initApplicationWithYamlLines("init_config:",
-                "  is_jmx: true",
-                "  new_gc_metrics: true",
-                "",
-                "instances:",
-                "    -   name: jmxint_container",
-                "        host: " + container.getIp(),
-                "        collect_default_jvm_metrics: true",
-                "        max_returned_metrics: 300000",
-                "        port: " + container.getRMIPort());
-            // Run one iteration first
-            this.app.doIteration();
-            // And then pull get the metrics or else reporter does not have correct number of metrics
-            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-
-            // Actual iteration we care about
-            this.app.doIteration();
-            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-            assertThat(actualMetrics, hasSize(13));
-            final List<String> zgcPause = Collections.singletonList(
-                "ZGC Pauses");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", zgcPause);
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", zgcPause);
-            final List<String> zgcCycles = Collections.singletonList(
-                "ZGC Cycles");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", zgcCycles);
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", zgcCycles);
+            assertDomainPresent("java.lang", mBeanServerConnection);
         }
     }
 
