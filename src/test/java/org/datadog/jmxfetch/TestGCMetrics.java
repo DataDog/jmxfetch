@@ -38,47 +38,56 @@ public class TestGCMetrics extends TestCommon {
         return found;
     }
 
-    /*
-    Just here to make sure I've not broken anything
-     */
     @Test
     public void testJMXDirectBasic() throws Exception {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
-            MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
-            server.start();
-            final String ipAddress = server.getIp();
+        try (final SimpleAppContainer container = new SimpleAppContainer()){
+            container.start();
+            final String ipAddress = container.getIp();
             final String remoteJmxServiceUrl = String.format(
-                "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", ipAddress, MisbehavingJMXServer.DEFAULT_RMI_PORT);
+                "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", ipAddress, container.getRMIPort());
             final JMXServiceURL jmxUrl = new JMXServiceURL(remoteJmxServiceUrl);
             final JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
             final MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
-            assertThat(isDomainPresent("Bohnanza", mBeanServerConnection), is(true));
+            assertThat(isDomainPresent("java.lang", mBeanServerConnection), is(true));
         }
     }
 
     @Test
-    public void testJMXFetchBasic() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
-            MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
-            server.start();
-            final String ipAddress = server.getIp();
-            this.initApplicationWithYamlLines(
-                "init_config:",
+    public void testDefaultNewGCMetricsUseZGCSimple() throws IOException {
+        try (final SimpleAppContainer container = new SimpleAppContainer(
+            "eclipse-temurin:17",
+            "-XX:+UseZGC -Xmx128M -Xms128M",
+            MisbehavingJMXServer.DEFAULT_RMI_PORT
+        )){
+            container.start();
+            final String ipAddress = container.getIp();
+            this.initApplicationWithYamlLines("init_config:",
                 "  is_jmx: true",
+                "  new_gc_metrics: true",
                 "",
                 "instances:",
                 "    -   name: jmxint_container",
                 "        host: " + ipAddress,
-                "        collect_default_jvm_metrics: false",
+                "        collect_default_jvm_metrics: true",
                 "        max_returned_metrics: 300000",
-                "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT,
-                "        conf:",
-                "          - include:",
-                "              domain: Bohnanza"
-            );
+                "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
+            // Run one iteration first
             this.app.doIteration();
-            final List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
-            assertThat(metrics, hasSize(1));
+            // And then pull get the metrics or else reporter does not have correct number of metrics
+            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+
+            // Actual iteration we care about
+            this.app.doIteration();
+            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            assertThat(actualMetrics, hasSize(13));
+            final List<String> zgcPause = Collections.singletonList(
+                "ZGC Pauses");
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", zgcPause);
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", zgcPause);
+            final List<String> zgcCycles = Collections.singletonList(
+                "ZGC Cycles");
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", zgcCycles);
+            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", zgcCycles);
         }
     }
 
@@ -188,49 +197,9 @@ public class TestGCMetrics extends TestCommon {
             assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcOldGenerations);
         }
     }
-
-    @Test
-    public void testDefaultNewGCMetricsUseZGC() throws IOException {
-        try (final SimpleAppContainer container = new SimpleAppContainer(
-                "eclipse-temurin:17",
-                "-XX:+UseZGC -Xmx128M -Xms128M",
-                MisbehavingJMXServer.DEFAULT_RMI_PORT
-        )){
-            container.start();
-            final String ipAddress = container.getIp();
-            this.initApplicationWithYamlLines("init_config:",
-                    "  is_jmx: true",
-                    "  new_gc_metrics: true",
-                    "",
-                    "instances:",
-                    "    -   name: jmxint_container",
-                    "        host: " + ipAddress,
-                    "        collect_default_jvm_metrics: true",
-                    "        max_returned_metrics: 300000",
-                    "        port: " + MisbehavingJMXServer.DEFAULT_RMI_PORT);
-            // Run one iteration first
-            this.app.doIteration();
-            // And then pull get the metrics or else reporter does not have correct number of metrics
-            ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-
-            // Actual iteration we care about
-            this.app.doIteration();
-            final List<Map<String, Object>> actualMetrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
-            assertThat(actualMetrics, hasSize(13));
-            final List<String> zgcPause = Collections.singletonList(
-                    "ZGC Pauses");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", zgcPause);
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", zgcPause);
-            final List<String> zgcCycles = Collections.singletonList(
-                    "ZGC Cycles");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", zgcCycles);
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", zgcCycles);
-        }
-    }
     
-//    @Ignore("Can not force ZGC to work using MisbehavingJMXServer")
     @Test
-    public void testDefaultNewGCMetricsUseZGCOld() throws IOException, InterruptedException {
+    public void testDefaultNewGCMetricsUseZGC() throws IOException, InterruptedException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
                 MisbehavingJMXServer.JDK_17,
                 "-XX:+UseZGC",

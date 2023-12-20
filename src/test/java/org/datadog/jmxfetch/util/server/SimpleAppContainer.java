@@ -20,6 +20,11 @@ public class SimpleAppContainer implements Startable {
     private final int rmiPort;
     private final GenericContainer<?> server;
 
+    public SimpleAppContainer() {
+        this("eclipse-temurin:17", "", MisbehavingJMXServer.DEFAULT_RMI_PORT);
+
+    }
+
     public SimpleAppContainer(final String jreDockerImage, final String javaOpts, final int rmiPort) {
         this.jreDockerImage = jreDockerImage;
         this.javaOpts = javaOpts;
@@ -57,4 +62,7 @@ public class SimpleAppContainer implements Startable {
         return this.server.getContainerInfo().getNetworkSettings().getIpAddress();
     }
 
+    public int getRMIPort() {
+        return this.rmiPort;
+    }
 }
