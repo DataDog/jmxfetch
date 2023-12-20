@@ -1,9 +1,10 @@
 package org.datadog.jmxfetch;
 
-import static org.datadog.jmxfetch.util.MetricsAssert.isDomainPresent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+
+import static org.datadog.jmxfetch.util.MetricsAssert.assertDomainPresent;
+import static org.datadog.jmxfetch.util.MetricsAssert.isDomainPresent;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -88,7 +89,7 @@ public class TestReconnectContainer extends TestCommon {
         JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
         MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
 
-        assertTrue(isDomainPresent("Bohnanza", mBeanServerConnection));
+        assertDomainPresent("Bohnanza", mBeanServerConnection);
     }
 
     @Test
@@ -104,7 +105,7 @@ public class TestReconnectContainer extends TestCommon {
         JMXConnector conn = JMXConnectorFactory.connect(jmxUrl);
         MBeanServerConnection mBeanServerConnection = conn.getMBeanServerConnection();
 
-        assertTrue(isDomainPresent("Bohnanza", mBeanServerConnection));
+        assertDomainPresent("Bohnanza", mBeanServerConnection);
 
         this.controlClient.jmxCutNetwork();
 
@@ -112,7 +113,7 @@ public class TestReconnectContainer extends TestCommon {
 
         this.controlClient.jmxRestoreNetwork();
 
-        assertTrue(isDomainPresent("Bohnanza", mBeanServerConnection));
+        assertDomainPresent("Bohnanza", mBeanServerConnection);
     }
 
     @Test
