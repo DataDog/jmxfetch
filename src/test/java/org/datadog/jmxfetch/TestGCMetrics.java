@@ -1,32 +1,43 @@
 package org.datadog.jmxfetch;
 
 import static org.datadog.jmxfetch.util.MetricsAssert.assertDomainPresent;
+import static org.datadog.jmxfetch.util.server.app.org.datadog.jmxfetch.util.server.JDKImage.JDK_11;
+import static org.datadog.jmxfetch.util.server.app.org.datadog.jmxfetch.util.server.JDKImage.JDK_17;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import java.io.IOException;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.junit.Test;
-
 import lombok.extern.slf4j.Slf4j;
 
+import org.junit.Test;
+
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.util.MetricsAssert;
 import org.datadog.jmxfetch.util.server.MisbehavingJMXServer;
 import org.datadog.jmxfetch.util.server.SimpleAppContainer;
-import org.datadog.jmxfetch.util.MetricsAssert;
 
 @Slf4j
 public class TestGCMetrics extends TestCommon {
 
     @Test
     public void testJMXDirectBasic() throws Exception {
-        try (final SimpleAppContainer container = new SimpleAppContainer()){
+        try (final SimpleAppContainer container = new SimpleAppContainer()) {
             container.start();
             final String ipAddress = container.getIp();
             final String remoteJmxServiceUrl = String.format(
@@ -40,9 +51,8 @@ public class TestGCMetrics extends TestCommon {
 
     @Test
     public void testDefaultOldGC() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(MisbehavingJMXServer.DEFAULT_RMI_PORT, MisbehavingJMXServer.DEFAULT_CONTROL_PORT,
-            MisbehavingJMXServer.DEFAULT_SUPERVISOR_PORT)) {
-            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, false);
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, false);
             List<String> gcGenerations = Arrays.asList(
                 "G1 Old Generation",
                 "G1 Young Generation");
@@ -53,61 +63,74 @@ public class TestGCMetrics extends TestCommon {
 
     @Test
     public void testDefaultNewGCMetricsUseParallelGC() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
-                MisbehavingJMXServer.JDK_11,
-                "-XX:+UseParallelGC -Xmx128M -Xms128M")) {
-            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_11).appendJavaOpts("-XX:+UseParallelGC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", "PS Scavenge", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", "PS Scavenge", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", "PS MarkSweep", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", "PS MarkSweep", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_count", "PS Scavenge", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_time", "PS Scavenge", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "PS MarkSweep", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "PS MarkSweep", "counter");
         }
     }
 
     @Test
     public void testDefaultNewGCMetricsUseConcMarkSweepGC() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
-            MisbehavingJMXServer.JDK_11,
-            "-XX:+UseConcMarkSweepGC -Xmx128M -Xms128M")) {
-            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_11).appendJavaOpts("-XX:+UseConcMarkSweepGC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", "ParNew", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", "ParNew", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", "ConcurrentMarkSweep", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", "ConcurrentMarkSweep", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_count", "ParNew", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_time", "ParNew", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "ConcurrentMarkSweep", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "ConcurrentMarkSweep", "counter");
         }
     }
 
     @Test
     public void testDefaultNewGCMetricsUseG1GC() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
-                MisbehavingJMXServer.JDK_17,
-                "-XX:+UseG1GC -Xmx128M -Xms128M")) {
-            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_17).appendJavaOpts("-XX:+UseG1GC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", "G1 Young Generation", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", "G1 Young Generation", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", "G1 Old Generation", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", "G1 Old Generation", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_count", "G1 Young Generation", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_time", "G1 Young Generation", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "G1 Old Generation", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "G1 Old Generation", "counter");
         }
     }
 
     @Test
     public void testDefaultNewGCMetricsUseZGC() throws IOException {
-        try (final MisbehavingJMXServer server = new MisbehavingJMXServer(
-                MisbehavingJMXServer.JDK_17,
-                "-XX:+UseZGC -Xmx128M -Xms128M")) {
-            final List<Map<String, Object>> actualMetrics = startAngGetMetrics(server, true);
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_17).appendJavaOpts("-XX:+UseZGC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
             assertThat(actualMetrics, hasSize(13));
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", "ZGC Pauses", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", "ZGC Pauses", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", "ZGC Cycles", "counter");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", "ZGC Cycles", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_pauses_collection_count", "ZGC Pauses", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_pauses_collection_time", "ZGC Pauses", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_cycles_collection_count", "ZGC Cycles", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_cycles_collection_time", "ZGC Cycles", "counter");
         }
     }
 
-    private List<Map<String, Object>> startAngGetMetrics(final MisbehavingJMXServer server, final boolean newGCMetrics) throws IOException {
+    private List<Map<String, Object>> startAndGetMetrics(final MisbehavingJMXServer server,
+        final boolean newGCMetrics) throws IOException {
         server.start();
         this.initApplicationWithYamlLines(
             "init_config:",
@@ -140,7 +163,10 @@ public class TestGCMetrics extends TestCommon {
             -1,
             10.0,
             Collections.singletonList(String.format("name:%s", gcGeneration)),
-            Arrays.asList("instance:jmxint_container", "jmx_domain:java.lang", "type:GarbageCollector"),
+            Arrays.asList(
+                "instance:jmxint_container",
+                "jmx_domain:java.lang",
+                "type:GarbageCollector"),
             5,
             metricType,
             actualMetrics);
