@@ -13,7 +13,8 @@ WORKDIR /app
 COPY .mvn .mvn/
 COPY pom.xml mvnw mvnw.cmd ./
 
-# Test containers bug doesn't seem to allow mount cache
+# TODO: investigate why mount caching does not seem to work Test containers
+# Enabling this will speed up tests as the Maven cache can be shared between all builds
 # RUN --mount=type=cache,id=mavenCache,target=/root/.m2,sharing=locked \
 RUN set -eu &&  \
     ./mvnw dependency:resolve;
@@ -21,7 +22,7 @@ RUN set -eu &&  \
 # Copy the source code and build the JAR file
 COPY src/ src/
 
-# Test containers bug doesn't seem to allow mount cache
+# TODO: investigate why mount caching does not seem to work Test containers
 # RUN --mount=type=cache,id=mavenCache,target=/root/.m2,sharing=locked \
 RUN set -eu &&  \
     ./mvnw clean package assembly:single;

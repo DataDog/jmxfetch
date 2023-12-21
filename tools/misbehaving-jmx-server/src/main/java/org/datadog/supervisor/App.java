@@ -37,6 +37,8 @@ class SupervisorInitSpec {
 
 @Slf4j
 public class App {
+
+    private static final String MISBEHAVING_OPTS_ENV = "MISBEHAVING_OPTS";
     private static Process process = null;
     // marked when OS process is started
     private static AtomicBoolean running = new AtomicBoolean(false);
@@ -122,7 +124,12 @@ public class App {
     }
 
     static void startJMXServer() throws IOException {
-        final String misbehavingOpts = System.getenv("MISBEHAVING_OPTS");
+        /*
+         MISBEHAVING_OPTS_ENV is the environment variable used to pass configuration flags and
+         system properties to the JVM that runs the JMXServer. This allows you to do such things as
+         change the garbage collector use by passing "-XX:+UseParallelGC" to it.
+         */
+        final String misbehavingOpts = System.getenv(MISBEHAVING_OPTS_ENV);
         final String[] extraOpts = misbehavingOpts !=null ? StringUtils.split(misbehavingOpts) : ArrayUtils.EMPTY_STRING_ARRAY;
         final String[] command = ArrayUtils.addAll( ArrayUtils.insert(0, extraOpts, "java"),
             "-cp",

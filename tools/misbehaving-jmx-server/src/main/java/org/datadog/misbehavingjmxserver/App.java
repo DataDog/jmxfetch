@@ -257,7 +257,7 @@ public class App
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Got an InterruptedException", e);
         }
     }
 }
