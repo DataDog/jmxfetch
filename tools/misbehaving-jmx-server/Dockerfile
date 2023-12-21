@@ -27,7 +27,7 @@ COPY src/ src/
 RUN set -eu &&  \
     ./mvnw clean package assembly:single;
 
-# Use the base image as the the final image
+# Use the image specified by FINAL_JRE_IMAGE build arg (default "base")
 FROM ${FINAL_JRE_IMAGE} AS final
 
 # Set the working directory to /app
