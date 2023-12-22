@@ -145,8 +145,7 @@ public class App
 {
     private static boolean started = false;
     final static String testDomain = "Bohnanza";
-    public static void main( String[] args ) throws IOException, MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException
-    {
+    public static void main( String[] args ) throws IOException{
         AppConfig config = new AppConfig();
 
         JCommander jCommander = JCommander.newBuilder()
@@ -258,7 +257,7 @@ public class App
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Got an InterruptedException", e);
         }
     }
 }

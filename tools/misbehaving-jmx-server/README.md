@@ -25,6 +25,7 @@ a secondary `init` payload that contains the correct RMI Hostname. It is designe
 - `RMI_HOST` - hostname for JMX to listen on (default localhost)
 - `CONTROL_PORT` - HTTP control port (default 8080)
 - `SUPERVISOR_PORT` - HTTP control port for the supervisor process (if using) (default 8088)
+- `MISBEHAVING_OPTS` - Manages memory, GC configurations, and system properties of the Java process running the JMXServer (default `-Xmx128M -Xms128M`)
 
 ## HTTP Control Actions (jmx-server)
 - POST `/cutNetwork` - Denies any requests to create a new socket (ie, no more connections will be 'accept'ed) and then closes existing TCP sockets

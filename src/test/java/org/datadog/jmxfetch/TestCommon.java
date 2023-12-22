@@ -1,9 +1,5 @@
 package org.datadog.jmxfetch;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -19,11 +15,8 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -31,12 +24,15 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+
+import org.junit.After;
+import org.junit.BeforeClass;
+
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
+import org.datadog.jmxfetch.util.MetricsAssert;
 import org.datadog.jmxfetch.util.LogLevel;
-import org.junit.After;
-import org.junit.BeforeClass;
 
 final class ConfigUtil {
     public static Path writeConfigYamlToTemp(String content, String yamlName) throws IOException {
@@ -261,49 +257,7 @@ public class TestCommon {
             List<String> additionalTags,
             int countTags,
             String metricType) {
-        List<String> tags = new ArrayList<String>(commonTags);
-        tags.addAll(additionalTags);
-
-        for (Map<String, Object> m : metrics) {
-            String mName = (String) (m.get("name"));
-            Double mValue = (Double) (m.get("value"));
-            Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
-
-            if (mName.equals(name)) {
-
-                if (!value.equals(-1)) {
-                    assertEquals((Double) value.doubleValue(), mValue);
-                } else if (!lowerBound.equals(-1) || !upperBound.equals(-1)) {
-                    assertTrue(mValue > (Double) lowerBound.doubleValue());
-                    assertTrue(mValue < (Double) upperBound.doubleValue());
-                }
-
-                if (countTags != -1) {
-                    assertEquals(countTags, mTags.size());
-                }
-                for (String t : tags) {
-                    assertThat(mTags, hasItem(t));
-                }
-
-                if (metricType != null) {
-                    assertEquals(metricType, m.get("type"));
-                }
-                // Brand the metric
-                m.put("tested", true);
-
-                return;
-            }
-        }
-        fail(
-                "Metric assertion failed (name: "
-                        + name
-                        + ", value: "
-                        + value
-                        + ", tags: "
-                        + tags
-                        + ", #tags: "
-                        + countTags
-                        + ").");
+        MetricsAssert.assertMetric(name, value, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType, this.metrics);
     }
 
     public void assertMetric(
