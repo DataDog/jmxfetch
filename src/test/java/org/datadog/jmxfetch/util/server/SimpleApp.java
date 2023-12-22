@@ -11,6 +11,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+// TODO: Create tests to check all supported versions of Java work with this server - AMLII-1354
 class SimpleApp {
     public interface SampleMBean {
 

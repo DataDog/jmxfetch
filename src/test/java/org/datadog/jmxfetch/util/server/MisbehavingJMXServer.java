@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.JMXServerControlClient;
 import org.datadog.jmxfetch.JMXServerSupervisorClient;
-import org.datadog.jmxfetch.util.server.app.org.datadog.jmxfetch.util.server.JDKImage;
 
 @Slf4j
 public class MisbehavingJMXServer implements Startable {

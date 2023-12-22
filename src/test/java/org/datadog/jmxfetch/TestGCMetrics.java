@@ -1,8 +1,7 @@
 package org.datadog.jmxfetch;
 
-import static org.datadog.jmxfetch.util.MetricsAssert.assertDomainPresent;
-import static org.datadog.jmxfetch.util.server.app.org.datadog.jmxfetch.util.server.JDKImage.JDK_11;
-import static org.datadog.jmxfetch.util.server.app.org.datadog.jmxfetch.util.server.JDKImage.JDK_17;
+import static org.datadog.jmxfetch.util.MetricsAssert.*;
+import static org.datadog.jmxfetch.util.server.JDKImage.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItems;
@@ -144,6 +143,7 @@ public class TestGCMetrics extends TestCommon {
             "        max_returned_metrics: 300000",
             "        port: " + server.getRMIPort());
         // Run one iteration first
+        // TODO: Investigate why we have to run this twice - AMLII-1353
         this.app.doIteration();
         // And then pull get the metrics or else reporter does not have correct number of metrics
         ((ConsoleReporter) appConfig.getReporter()).getMetrics();
@@ -172,6 +172,12 @@ public class TestGCMetrics extends TestCommon {
             actualMetrics);
     }
 
+    /*
+    This function is needed as the TestGCMetrics.testDefaultOldGC asserts on two metrics that have
+    different tags. MetricsAssert.assertMetric expects metrics to have unique names so can't be used
+    to verify correctly G1 Old Generation and G1 Young Generation for the metric jvm.gc.cms.count and
+    jvm.gc.parnew.time.
+     */
     private static void assertGCMetric(final List<Map<String, Object>> actualMetrics,
         final String expectedMetric,
         final List<String> gcGenerations) {

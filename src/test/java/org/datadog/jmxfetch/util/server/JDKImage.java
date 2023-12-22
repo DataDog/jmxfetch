@@ -1,4 +1,4 @@
-package org.datadog.jmxfetch.util.server.app.org.datadog.jmxfetch.util.server;
+package org.datadog.jmxfetch.util.server;
 
 public enum JDKImage {
     BASE("base"),
