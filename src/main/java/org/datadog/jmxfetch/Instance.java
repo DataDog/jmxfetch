@@ -788,6 +788,11 @@ public class Instance implements BeanTracker {
             log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
         }
         log.debug("Bean registration processed. '{}'. Found {} matching attributes.", beanName, matchedAttributesForBean);
+
+        if (instanceTelemetryBean != null) {
+            int beanRegisterationsHandled = instanceTelemetryBean.getBeanRegistrationsHandled();
+            instanceTelemetryBean.setBeanRegistrationsHandled(beanRegisterationsHandled + 1);
+        }
     }
 
     /** Removes any matching attributes from the specified bean. */
@@ -811,6 +816,11 @@ public class Instance implements BeanTracker {
             removedMetrics,
             beanName);
         this.metricCountForMatchingAttributes -= removedMetrics;
+
+        if (instanceTelemetryBean != null) {
+            int beanUnRegistrationsHandled = instanceTelemetryBean.getBeanUnregistrationsHandled();
+            instanceTelemetryBean.setBeanUnregistrationsHandled(beanUnRegistrationsHandled + 1);
+        }
     }
 
     private void subscribeToBeans() {

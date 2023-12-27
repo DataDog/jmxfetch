@@ -277,6 +277,12 @@ public class TestInstance extends TestCommon {
         metrics = getMetrics();
 
         assertEquals(numRegisteredAttributes, metrics.size());
+
+        List<Instance> instances = getInstances();
+        assertEquals(1, instances.size());
+        Instance i = instances.get(0);
+        assertEquals(2, i.getInstanceTelemetryBean().getBeanRegistrationsHandled());
+        assertEquals(0, i.getInstanceTelemetryBean().getBeanUnregistrationsHandled());
     }
 
     @Test
@@ -319,8 +325,13 @@ public class TestInstance extends TestCommon {
         assertEquals(numRegisteredAttributes, metrics.size());
         // Which is why this second check exists, it reflects the running total of metrics
         // collected which is used to determine if new attributes can be added
-        Instance i = app.getInstances().get(0);
+        List<Instance> instances = getInstances();
+        assertEquals(1, instances.size());
+        Instance i = instances.get(0);
         assertEquals(numRegisteredAttributes, i.getCurrentNumberOfMetrics());
+
+        assertEquals(1, i.getInstanceTelemetryBean().getBeanRegistrationsHandled());
+        assertEquals(1, i.getInstanceTelemetryBean().getBeanUnregistrationsHandled());
     }
 
     @Test
