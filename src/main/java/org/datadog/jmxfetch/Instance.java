@@ -586,6 +586,7 @@ public class Instance implements BeanTracker {
     ) throws IOException {
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
+        int matchedAttributesForBean = 0;
 
         for (MBeanAttributeInfo attributeInfo : info.getAttributes()) {
             if (this.metricCountForMatchingAttributes >= maxReturnedMetrics) {
@@ -683,6 +684,7 @@ public class Instance implements BeanTracker {
                     if (jmxAttribute.match(conf)) {
                         jmxAttribute.setMatchingConf(conf);
                         this.metricCountForMatchingAttributes += jmxAttribute.getMetricsCount();
+                        matchedAttributesForBean++;
                         log.debug("Added attribute {} from bean {}.", jmxAttribute, beanName);
                         this.matchingAttributes.add(jmxAttribute);
                         if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
@@ -718,6 +720,8 @@ public class Instance implements BeanTracker {
                 reporter.displayNonMatchingAttributeName(jmxAttribute);
             }
         }
+
+        return matchedAttributesForBean;
     }
 
     private void getMatchingAttributes() throws IOException {
@@ -753,8 +757,16 @@ public class Instance implements BeanTracker {
                 continue;
             }
 
-            addMatchingAttributesForBean(beanName, info, limitReached);
+            int numMatchedAttributes = addMatchingAttributesForBean(beanName, info, limitReached);
+            if (numMatchedAttributes > 0) {
+                beansWithAttributeMatch++;
+            }
         }
+
+        if (instanceTelemetryBean != null) {
+            instanceTelemetryBean.setBeanMatchRatio(beansWithAttributeMatch / beans.size());
+        }
+
         log.info("Found {} matching attributes with {} metrics total",
             matchingAttributes.size(),
             this.metricCountForMatchingAttributes);
@@ -765,11 +777,12 @@ public class Instance implements BeanTracker {
         log.debug("Bean registered event. {}", beanName);
         String className;
         MBeanAttributeInfo[] attributeInfos;
+        int matchedAttributesForBean;
         try {
             log.debug("Getting bean info for bean: {}", beanName);
             MBeanInfo info = connection.getMBeanInfo(beanName);
 
-            this.addMatchingAttributesForBean(beanName, info, false);
+            matchedAttributesForBean = this.addMatchingAttributesForBean(beanName, info, false);
             this.beans.add(beanName);
         } catch (IOException e) {
             // Nothing to do, connection issue
@@ -777,7 +790,7 @@ public class Instance implements BeanTracker {
         } catch (Exception e) {
             log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
         }
-        log.debug("Bean registration processed. {}", beanName);
+        log.debug("Bean registration processed. '{}'. Found {} matching attributes.", beanName, matchedAttributesForBean);
     }
 
     /** Removes any matching attributes from the specified bean. */
@@ -873,9 +886,9 @@ public class Instance implements BeanTracker {
                 beansNotSeen.addAll(newBeans);
                 beansNotSeen.removeAll(this.beans);
 
-                log.error("Bean refresh found {} previously untracked beans", beansNotSeen.size());
+                log.error("[beansub-audit] Bean refresh found {} previously untracked beans", beansNotSeen.size());
                 for (ObjectName b : beansNotSeen) {
-                    log.error("New not-tracked bean {}", b);
+                    log.error("[beansub-audit] New not-tracked bean {}", b);
                 }
             }
             if (!newBeans.containsAll(this.beans)) {
@@ -885,10 +898,10 @@ public class Instance implements BeanTracker {
                 incorrectlyTrackedBeans.addAll(this.beans);
                 incorrectlyTrackedBeans.removeAll(newBeans);
 
-                log.error("Bean refresh found {} fewer beans than expected",
+                log.error("[beansub-audit] Bean refresh found {} fewer beans than expected",
                     incorrectlyTrackedBeans.size());
                 for (ObjectName b : incorrectlyTrackedBeans) {
-                    log.error("Currently tracked bean not returned from fresh query: {}", b);
+                    log.error("[beansub-audit] Currently tracked bean not returned from fresh query: {}", b);
                 }
             }
         }

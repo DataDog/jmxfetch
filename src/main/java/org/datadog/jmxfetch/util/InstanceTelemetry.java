@@ -16,6 +16,15 @@ public class InstanceTelemetry implements InstanceTelemetryMBean {
         topLevelAttributeCount = 0;
         metricCount = 0;
         wildcardDomainQueryCount = 0;
+        // This needs to be re-thought a bit
+        // it makes sense in a bean-refresh-loop world
+        // but in a subscription-world
+        // it's not clear what this should be
+        // current thought is to split this
+        // into two fields:
+        // - numBeansWithMatchingAttributes
+        // - numBeansWithoutMatchingAttributes
+        // a bit wordy though.
         beanMatchRatio = 0.0;
     }
 
