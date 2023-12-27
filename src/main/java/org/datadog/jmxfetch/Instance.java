@@ -710,9 +710,6 @@ public class Instance implements BeanTracker {
                             e);
                 }
             }
-            // TODO if there was a matching conf, then we must return
-            // true so that the instanceTelemetryBeanRatio can be kept correctly
-            // ref: jmxfetch pr 487
 
             if (jmxAttribute.getMatchingConf() == null
                     && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
@@ -763,7 +760,7 @@ public class Instance implements BeanTracker {
             }
         }
 
-        if (instanceTelemetryBean != null) {
+        if (instanceTelemetryBean != null && beans.size() > 0) {
             instanceTelemetryBean.setBeanMatchRatio(beansWithAttributeMatch / beans.size());
         }
 
