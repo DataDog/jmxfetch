@@ -28,11 +28,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -241,6 +244,10 @@ public class App {
         }
     }
 
+    protected void clearAllInstances() {
+        this.clearInstances(this.instances);
+    }
+
     /**
      * Builds an {@link ExecutorService} of the specified fixed size. Threads will be created
      * and executed as daemons if {@link AppConfig#isDaemon()} is true. Defaults to false.
@@ -388,11 +395,13 @@ public class App {
                             System.arraycopy(minibuff, 0, buffer, oldLen, len);
                         }
                     }
-                    this.setReinit(processAutoDiscovery(buffer));
+                    boolean result = processAutoDiscovery(buffer);
+                    this.setReinit(result);
                 }
 
                 if (this.appConfig.remoteEnabled()) {
-                    this.setReinit(getJsonConfigs());
+                    boolean result = getJsonConfigs();
+                    this.setReinit(result);
                 }
             } catch (IOException e) {
                 log.warn(
@@ -755,7 +764,7 @@ public class App {
         stats.addInstanceStats(
                 checkName, instance.getName(),
                 metricCount, reporter.getServiceCheckCount(checkName),
-                message, status);
+                message, status, instance.getInstanceTelemetryBean());
         if (reporter.getHandler() != null) {
             stats.addErrorStats(reporter.getHandler().getErrors());
         }
@@ -828,6 +837,7 @@ public class App {
         this.brokenInstanceMap.clear();
 
         final List<Instance> newInstances = new ArrayList<>();
+        final Set<String> instanceNamesSeen = new HashSet<>();
 
         log.info("Dealing with YAML config instances...");
         final Iterator<Entry<String, YamlParser>> it = this.configs.entrySet().iterator();
@@ -867,7 +877,16 @@ public class App {
                             isDirectInstance(configInstance));
                     continue;
                 }
-
+                final String instanceName = (String) configInstance.get("name");
+                if (instanceName != null) {
+                    if (instanceNamesSeen.contains(instanceName)) {
+                        log.warn("Found multiple instances with name: '{}'. "
+                            + "Instance names should be unique, "
+                            + "update the 'name' field on your instances to be unique.",
+                            instanceName);
+                    }
+                    instanceNamesSeen.add(instanceName);
+                }
                 // Create a new Instance object
                 log.info("Instantiating instance for: {}", name);
                 final Instance instance =
@@ -893,11 +912,30 @@ public class App {
                 final String checkName = (String) checkConfig.get("check_name");
                 for (Map<String, Object> configInstance : configInstances) {
                     log.info("Instantiating instance for: " + checkName);
+                    final String instanceName = (String) configInstance.get("name");
+                    if (instanceName != null) {
+                        if (instanceNamesSeen.contains(instanceName)) {
+                            log.warn("Found multiple instances with name: '{}'. "
+                                + "Instance names should be unique, "
+                                + "update the 'name' field on your instances to be unique.",
+                                instanceName);
+                        }
+                        instanceNamesSeen.add(instanceName);
+                    }
                     final Instance instance =
                             instantiate(configInstance, initConfig, checkName, this.appConfig);
                     newInstances.add(instance);
                 }
             }
+        }
+
+        // Enables jmxfetch telemetry if there are other checks active and it's been enabled
+        if (appConfig.getJmxfetchTelemetry() && newInstances.size() >= 1) {
+            log.info("Adding jmxfetch telemetry check");
+            final Instance instance = instantiate(getTelemetryInstanceConfig(),
+                        getTelemetryInitConfig(), "jmxfetch_telemetry_check",
+                        this.appConfig);
+            newInstances.add(instance);
         }
 
         final List<InstanceTask<Void>> instanceInitTasks =
@@ -946,6 +984,34 @@ public class App {
             // NADA
             log.warn("Critical issue initializing instances: " + e);
         }
+    }
+
+    private Map<String,Object> getTelemetryInitConfig() {
+        Map<String,Object> config = new HashMap<String,Object>();
+        config.put("is_jmx",true);
+        return config;
+    }
+
+    private Map<String,Object> getTelemetryInstanceConfig() {
+        Map<String,Object> config = new HashMap<String,Object>();
+        config.put("name","jmxfetch_telemetry_instance");
+        config.put("collect_default_jvm_metrics",true);
+        config.put("new_gc_metrics",true);
+        config.put("jvm_direct",true);
+        config.put("normalize_bean_param_tags",true);
+
+        List<Object> conf = new ArrayList<Object>();
+        Map<String,Object> confMap = new HashMap<String,Object>();
+        Map<String,Object> includeMap = new HashMap<String,Object>();
+        includeMap.put("domain",appConfig.getJmxfetchTelemetryDomain());
+        confMap.put("include", includeMap);
+        conf.add(confMap);
+        config.put("conf",conf);
+
+        List<String> tags = new ArrayList<String>();
+        config.put("tags", tags);
+
+        return config;
     }
 
     static TaskStatusHandler processRecoveryResults(

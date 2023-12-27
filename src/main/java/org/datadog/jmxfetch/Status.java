@@ -2,6 +2,8 @@ package org.datadog.jmxfetch;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
+
+import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.datadog.jmxfetch.util.MetadataHelper;
 import org.yaml.snakeyaml.Yaml;
 
@@ -73,7 +75,8 @@ public class Status {
             int metricCount,
             int serviceCheckCount,
             String message,
-            String status) {
+            String status,
+            InstanceTelemetry instanceTelemetryBean) {
         addStats(
                 checkName,
                 instance,
@@ -81,7 +84,8 @@ public class Status {
                 serviceCheckCount,
                 message,
                 status,
-                INITIALIZED_CHECKS);
+                INITIALIZED_CHECKS,
+                instanceTelemetryBean);
     }
 
     public void addErrorStats(int errors) {
@@ -96,7 +100,8 @@ public class Status {
             int serviceCheckCount,
             String message,
             String status,
-            String key) {
+            String key,
+            InstanceTelemetry instanceTelemetryBean) {
         List<Map<String, Object>> checkStats;
         Map<String, Object> initializedChecks;
         initializedChecks = (Map<String, Object>) this.instanceStats.get(key);
@@ -117,15 +122,28 @@ public class Status {
         if (serviceCheckCount != -1) {
             instStats.put("service_check_count", serviceCheckCount);
         }
+        if (instanceTelemetryBean != null) {
+            instStats.put("instance_bean_count", instanceTelemetryBean.getBeansFetched());
+            instStats.put("instance_attribute_count", 
+                          instanceTelemetryBean.getTopLevelAttributeCount());
+            instStats.put("instance_metric_count", instanceTelemetryBean.getMetricCount());
+            instStats.put("instance_wildcard_domain_query_count", 
+                          instanceTelemetryBean.getWildcardDomainQueryCount());
+            instStats.put("instance_bean_match_ratio",
+                          instanceTelemetryBean.getBeanMatchRatio());
+        }
         instStats.put("message", message);
         instStats.put("status", status);
+        // NOTE: jmxfetch template must be updated for any new keys in order for them
+        // to show up in the datadog-agent status
+        // https://github.com/DataDog/datadog-agent/blob/main/pkg/status/templates/jmxfetch.tmpl
         checkStats.add(instStats);
         initializedChecks.put(checkName, checkStats);
         this.instanceStats.put(key, initializedChecks);
     }
 
     public void addInitFailedCheck(String checkName, String message, String status) {
-        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS);
+        addStats(checkName, null, -1, -1, message, status, FAILED_CHECKS, null);
     }
 
     private String generateYaml() {

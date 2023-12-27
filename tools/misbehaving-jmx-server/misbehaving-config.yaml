@@ -1,0 +1,13 @@
+domains:
+    test_1:
+        beanCount: 4
+        scalarAttributeCount: 5
+        tabularAttributeCount: 1
+        compositeValuesPerTabularAttribute: 2
+    test_2:
+        beanCount: 10
+        scalarAttributeCount: 0
+        tabularAttributeCount: 5
+        compositeValuesPerTabularAttribute: 10
+
+seed: 12345

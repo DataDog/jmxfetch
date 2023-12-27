@@ -1,7 +1,5 @@
 package org.datadog.jmxfetch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -22,7 +20,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -30,12 +27,15 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+
+import org.junit.After;
+import org.junit.BeforeClass;
+
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
+import org.datadog.jmxfetch.util.MetricsAssert;
 import org.datadog.jmxfetch.util.LogLevel;
-import org.junit.After;
-import org.junit.BeforeClass;
 
 final class ConfigUtil {
     public static Path writeConfigYamlToTemp(String content, String yamlName) throws IOException {
@@ -133,6 +133,16 @@ public class TestCommon {
         }
     }
 
+    /**
+     * Clear instances and their instance telemetry bean after execution of every test.
+     */
+    @After
+    public void clearInstances() {
+        if (app != null) {
+            app.clearAllInstances();
+        }
+    }
+
     /** Init JMXFetch with the given YAML configuration file. */
     protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile)
             throws FileNotFoundException, IOException {
@@ -191,7 +201,7 @@ public class TestCommon {
     }
 
     /*
-     * Init JMXFetch with the given YAML configuration template 
+     * Init JMXFetch with the given YAML configuration template
      * The configuration can be specified as a yaml literal with each arg
      * representing one line of the Yaml file
      * Does not support any SD/AD features.
@@ -203,7 +213,7 @@ public class TestCommon {
 
         String confdDirectory = tempFile.getParent().toString();
         String yamlFileName = tempFile.getFileName().toString();
-        
+
         List<String> params = new ArrayList<String>();
         params.add("--reporter");
         params.add("console");
@@ -272,49 +282,7 @@ public class TestCommon {
             List<String> additionalTags,
             int countTags,
             String metricType) {
-        List<String> tags = new ArrayList<String>(commonTags);
-        tags.addAll(additionalTags);
-
-        for (Map<String, Object> m : metrics) {
-            String mName = (String) (m.get("name"));
-            Double mValue = (Double) (m.get("value"));
-            Set<String> mTags = new HashSet<String>(Arrays.asList((String[]) (m.get("tags"))));
-
-            if (mName.equals(name)) {
-
-                if (!value.equals(-1)) {
-                    assertEquals((Double) value.doubleValue(), mValue);
-                } else if (!lowerBound.equals(-1) || !upperBound.equals(-1)) {
-                    assertTrue(mValue > (Double) lowerBound.doubleValue());
-                    assertTrue(mValue < (Double) upperBound.doubleValue());
-                }
-
-                if (countTags != -1) {
-                    assertEquals(countTags, mTags.size());
-                }
-                for (String t : tags) {
-                    assertTrue(mTags.contains(t));
-                }
-
-                if (metricType != null) {
-                    assertEquals(metricType, m.get("type"));
-                }
-                // Brand the metric
-                m.put("tested", true);
-
-                return;
-            }
-        }
-        fail(
-                "Metric assertion failed (name: "
-                        + name
-                        + ", value: "
-                        + value
-                        + ", tags: "
-                        + tags
-                        + ", #tags: "
-                        + countTags
-                        + ").");
+        MetricsAssert.assertMetric(name, value, lowerBound, upperBound, commonTags, additionalTags, countTags, metricType, this.metrics);
     }
 
     public void assertMetric(

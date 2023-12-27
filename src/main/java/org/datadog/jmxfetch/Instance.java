@@ -4,13 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
+import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.yaml.snakeyaml.Yaml;
+
+
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,7 +27,11 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanServer;
 import javax.management.MBeanInfo;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -110,6 +118,10 @@ public class Instance implements BeanTracker {
     private boolean emptyDefaultHostname;
     private boolean enableBeanSubscription;
     private boolean beanSubscriptionActive;
+    private InstanceTelemetry instanceTelemetryBean;
+    private ObjectName instanceTelemetryBeanName;
+    private MBeanServer mbs;
+    private Boolean normalizeBeanParamTags;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -219,6 +231,12 @@ public class Instance implements BeanTracker {
             this.serviceCheckPrefix = (String) initConfig.get("service_check_prefix");
         }
 
+        this.normalizeBeanParamTags = (Boolean) instanceMap.get("normalize_bean_param_tags");
+        if (this.normalizeBeanParamTags == null) {
+            this.normalizeBeanParamTags = false;
+        }
+
+
         // Alternative aliasing for CASSANDRA-4009 metrics
         // More information: https://issues.apache.org/jira/browse/CASSANDRA-4009
         this.cassandraAliasing = (Boolean) instanceMap.get("cassandra_aliasing");
@@ -284,7 +302,43 @@ public class Instance implements BeanTracker {
         }
         log.info("JMXFetch Subscription mode enabled={}", this.enableBeanSubscription);
         this.beanSubscriptionActive = false;
+        instanceTelemetryBean = createInstanceTelemetryBean();
     }
+
+    private ObjectName getObjName(String domain,String instance)
+            throws MalformedObjectNameException {
+        return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
+    }
+
+    private InstanceTelemetry createInstanceTelemetryBean() {
+        mbs =  ManagementFactory.getPlatformMBeanServer();
+        InstanceTelemetry bean = new InstanceTelemetry();
+        log.debug("Created jmx bean for instance: " + this.getCheckName());
+
+        try {
+            instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
+                     this.getName());
+        } catch (MalformedObjectNameException e) {
+            log.warn(
+                "Could not construct bean name for jmxfetch_telemetry_domain '{}' and name '{}'",
+                appConfig.getJmxfetchTelemetryDomain(), this.getName());
+            return bean;
+        }
+
+        try {
+            mbs.registerMBean(bean,instanceTelemetryBeanName);
+            log.debug("Succesfully registered jmx bean for instance {} with ObjectName = {}",
+                this.getName(), instanceTelemetryBeanName);
+        } catch (InstanceAlreadyExistsException
+         | MBeanRegistrationException
+         | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ",
+                instanceTelemetryBeanName.toString(), e);
+        }
+
+        return bean;
+    }
+
 
     public static boolean isDirectInstance(Map<String, Object> configInstance) {
         Object directInstance = configInstance.get(JVM_DIRECT);
@@ -464,7 +518,11 @@ public class Instance implements BeanTracker {
     @Override
     public String toString() {
         if (isDirectInstance(instanceMap)) {
-            return "jvm_direct";
+            if (this.instanceMap.get("name") != null) {
+                return "jvm_direct - name: `" + (String) this.instanceMap.get("name") + "`";
+            } else {
+                return "jvm_direct";
+            }
         } else if (this.instanceMap.get(PROCESS_NAME_REGEX) != null) {
             return "process_regex: `" + this.instanceMap.get(PROCESS_NAME_REGEX) + "`";
         } else if (this.instanceMap.get("name") != null) {
@@ -492,7 +550,7 @@ public class Instance implements BeanTracker {
 
         List<Metric> metrics = new ArrayList<Metric>();
         if (isPeriodDue(this.lastRefreshTime, period)) {
-            log.info("Refreshing bean list");
+            log.info("Refreshing bean list for " + this.getCheckName());
             this.refreshBeansList(false);
             this.getMatchingAttributes();
         }
@@ -526,9 +584,23 @@ public class Instance implements BeanTracker {
             }
         }
 
+        // TODO put this in telemetry
         long duration = System.currentTimeMillis() - this.lastCollectionTime;
         log.info("Collection finished in {}ms. MatchingAttributes={} CollectedMetrics={}",
              duration, matchingAttributes.size(), metrics.size());
+
+        if (instanceTelemetryBean != null) {
+            instanceTelemetryBean.setBeansFetched(beans.size());
+            instanceTelemetryBean.setTopLevelAttributeCount(matchingAttributes.size());
+            instanceTelemetryBean.setMetricCount(metrics.size());
+            log.debug("Updated jmx bean for instance: " + this.getCheckName()
+                    + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
+                    + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
+                    + " metrics = " + instanceTelemetryBean.getMetricCount()
+                    + " wildcard domain query count = "
+                    + instanceTelemetryBean.getWildcardDomainQueryCount()
+                    + " bean match ratio = " + instanceTelemetryBean.getBeanMatchRatio());
+        }
         return metrics;
     }
 
@@ -555,14 +627,13 @@ public class Instance implements BeanTracker {
 
     private synchronized void addMatchingAttributesForBean(
         ObjectName beanName,
-        String className,
-        MBeanAttributeInfo[] attributeInfos,
+        MBeanInfo info,
         boolean metricReachedPreviouslyDisplayed
     ) throws IOException {
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
 
-        for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+        for (MBeanAttributeInfo attributeInfo : info.getAttributes()) {
             if (this.metricCountForMatchingAttributes >= maxReturnedMetrics) {
                 this.limitReached = true;
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -587,14 +658,15 @@ public class Instance implements BeanTracker {
                     new JmxSimpleAttribute(
                             attributeInfo,
                             beanName,
-                            className,
+                            info.getClassName(),
                             instanceName,
                             checkName,
                             connection,
                             serviceNameProvider,
                             tags,
                             cassandraAliasing,
-                            emptyDefaultHostname);
+                            emptyDefaultHostname,
+                            normalizeBeanParamTags);
             } else if (COMPOSED_TYPES.contains(attributeType)) {
                 log.debug(
                         ATTRIBUTE
@@ -606,13 +678,14 @@ public class Instance implements BeanTracker {
                     new JmxComplexAttribute(
                             attributeInfo,
                             beanName,
-                            className,
+                            info.getClassName(),
                             instanceName,
                             checkName,
                             connection,
                             serviceNameProvider,
                             tags,
-                            emptyDefaultHostname);
+                            emptyDefaultHostname,
+                            normalizeBeanParamTags);
             } else if (MULTI_TYPES.contains(attributeType)) {
                 log.debug(
                         ATTRIBUTE
@@ -624,13 +697,14 @@ public class Instance implements BeanTracker {
                     new JmxTabularAttribute(
                             attributeInfo,
                             beanName,
-                            className,
+                            info.getClassName(),
                             instanceName,
                             checkName,
                             connection,
                             serviceNameProvider,
                             tags,
-                            emptyDefaultHostname);
+                            emptyDefaultHostname,
+                            normalizeBeanParamTags);
             } else {
                 try {
                     log.debug(
@@ -680,6 +754,9 @@ public class Instance implements BeanTracker {
                             e);
                 }
             }
+            // TODO if there was a matching conf, then we must return
+            // true so that the instanceTelemetryBeanRatio can be kept correctly
+            // ref: jmxfetch pr 487
 
             if (jmxAttribute.getMatchingConf() == null
                     && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
@@ -697,35 +774,32 @@ public class Instance implements BeanTracker {
         Reporter reporter = appConfig.getReporter();
         String action = appConfig.getAction();
 
+        int beansWithAttributeMatch = 0;
+
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             reporter.displayInstanceName(this);
         }
 
         for (ObjectName beanName : this.beans) {
+            boolean attributeMatched = false;
             if (this.limitReached) {
                 log.debug("Limit reached");
                 if (action.equals(AppConfig.ACTION_COLLECT)) {
                     break;
                 }
             }
-            String className;
-            MBeanAttributeInfo[] attributeInfos;
+            MBeanInfo info;
             try {
                 log.debug("Getting bean info for bean: {}", beanName);
-                MBeanInfo info = connection.getMBeanInfo(beanName);
-
-                log.debug("Getting class name for bean: {}", beanName);
-                className = info.getClassName();
-                log.debug("Getting attributes for bean: {}", beanName);
-                attributeInfos = info.getAttributes();
+                info = connection.getMBeanInfo(beanName);
             } catch (IOException e) {
                 throw e;
             } catch (Exception e) {
-                log.warn("Cannot get bean attributes or class name: {}", e.getMessage());
+                log.warn("Cannot get attributes or class name for bean {}: ", beanName, e);
                 continue;
             }
 
-            addMatchingAttributesForBean(beanName, className, attributeInfos, limitReached);
+            addMatchingAttributesForBean(beanName, info, limitReached);
         }
         log.info("Found {} matching attributes with {} metrics total",
             matchingAttributes.size(),
@@ -741,12 +815,7 @@ public class Instance implements BeanTracker {
             log.debug("Getting bean info for bean: {}", beanName);
             MBeanInfo info = connection.getMBeanInfo(beanName);
 
-            log.debug("Getting class name for bean: {}", beanName);
-            className = info.getClassName();
-            log.debug("Getting attributes for bean: {}", beanName);
-            attributeInfos = info.getAttributes();
-
-            this.addMatchingAttributesForBean(beanName, className, attributeInfos, false);
+            this.addMatchingAttributesForBean(beanName, info, false);
             this.beans.add(beanName);
         } catch (IOException e) {
             // Nothing to do, connection issue
@@ -772,6 +841,7 @@ public class Instance implements BeanTracker {
                 removedAttributes++;
             }
         }
+
         log.debug("Bean unregistered, removed {} attributes ({} metrics) matching bean {}",
             removedAttributes,
             removedMetrics,
@@ -813,7 +883,7 @@ public class Instance implements BeanTracker {
                 !action.equals(AppConfig.ACTION_LIST_EVERYTHING)
                         && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING);
 
-        boolean fullBeanQueryNeeded = false;
+        boolean fullBeanQueryNeeded = true;
         if (limitQueryScopes) {
             try {
                 List<String> beanScopes = getBeansScopes();
@@ -821,16 +891,21 @@ public class Instance implements BeanTracker {
                     ObjectName name = new ObjectName(scope);
                     newBeans.addAll(connection.queryNames(name));
                 }
-            } catch (Exception e) {
-                fullBeanQueryNeeded = true;
+                fullBeanQueryNeeded = false;
+            } catch (MalformedObjectNameException e) {
+                log.error("Unable to create ObjectName", e);
+            } catch (IOException e) {
                 log.error(
-                        "Unable to compute a common bean scope, querying all beans as a fallback",
-                        e);
+                        "Unable to query mbean server", e);
             }
         }
 
         if (fullBeanQueryNeeded) {
             newBeans = connection.queryNames(null);
+            if (instanceTelemetryBean != null) {
+                int wildcardQueryCount = instanceTelemetryBean.getWildcardDomainQueryCount();
+                instanceTelemetryBean.setWildcardDomainQueryCount(wildcardQueryCount + 1);
+            }
         }
         if (this.beanSubscriptionActive && !fullBeanQueryNeeded && !isInitialQuery) {
             // This code exists to validate the bean-subscription is working properly
@@ -938,13 +1013,27 @@ public class Instance implements BeanTracker {
         return this.metricCountForMatchingAttributes;
     }
 
+    public InstanceTelemetry getInstanceTelemetryBean() {
+        return this.instanceTelemetryBean;
+    }
+
     /** Returns whether or not the instance has reached the maximum bean collection limit. */
     public boolean isLimitReached() {
         return this.limitReached;
     }
 
+    private void cleanupTelemetryBean() {
+        try {
+            mbs.unregisterMBean(instanceTelemetryBeanName);
+            log.debug("Successfully unregistered bean for instance: " + this.getCheckName());
+        } catch (MBeanRegistrationException | InstanceNotFoundException e) {
+            log.debug("Unable to unregister bean for instance: " + this.getCheckName());
+        }
+    }
+
     /** Clean up config and close connection. */
     public void cleanUp() {
+        cleanupTelemetryBean();
         this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
@@ -957,7 +1046,7 @@ public class Instance implements BeanTracker {
      * */
     public synchronized void cleanUpAsync() {
         appConfig = null;
-
+        cleanupTelemetryBean();
         class AsyncCleaner implements Runnable {
             Connection conn;
 

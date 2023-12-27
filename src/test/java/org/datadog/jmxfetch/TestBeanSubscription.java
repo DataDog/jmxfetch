@@ -84,12 +84,7 @@ public class TestBeanSubscription extends TestCommon {
             "        max_returned_metrics: 300000",
             "        conf:",
             "          - include:",
-            "              domain: " + testDomain,
-            "              attribute:",
-            "                - DoubleValue",
-            "                - NumberValue",
-            "                - FloatValue",
-            "                - BooleanValue"
+            "              domain: " + testDomain
         );
 
         this.app.doIteration();
@@ -99,7 +94,7 @@ public class TestBeanSubscription extends TestCommon {
         int numBeans = 2;
         int numAttributesPerBean = 4;
 
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         // Allow time for subscriptions to come through and be registered
         Thread.sleep(100);
@@ -129,12 +124,7 @@ public class TestBeanSubscription extends TestCommon {
             "        max_returned_metrics: 300000",
             "        conf:",
             "          - include:",
-            "              domain: " + testDomain,
-            "              attribute:",
-            "                - DoubleValue",
-            "                - NumberValue",
-            "                - FloatValue",
-            "                - BooleanValue"
+            "              domain: " + testDomain
         );
 
         this.app.doIteration();
@@ -144,7 +134,7 @@ public class TestBeanSubscription extends TestCommon {
         int numBeans = 200;
         int numAttributesPerBean = 4;
 
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         // Time for subscriptions to come through and be registered
         Thread.sleep(2000);
@@ -174,12 +164,7 @@ public class TestBeanSubscription extends TestCommon {
             "        max_returned_metrics: 300000",
             "        conf:",
             "          - include:",
-            "              domain: " + testDomain,
-            "              attribute:",
-            "                - DoubleValue",
-            "                - NumberValue",
-            "                - FloatValue",
-            "                - BooleanValue"
+            "              domain: " + testDomain
         );
 
         this.app.doIteration();
@@ -192,7 +177,7 @@ public class TestBeanSubscription extends TestCommon {
         int expectedMetrics = numBeans * numAttributesPerBean;
 
         // This call blocks until the beans actually exist in the remote application
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         // Intentionally leaving no time for subscriptions to be processed to test how
         // a collection behaves when interleaved with bean subscription traffic
@@ -237,12 +222,7 @@ public class TestBeanSubscription extends TestCommon {
             "        max_returned_metrics: 300000",
             "        conf:",
             "          - include:",
-            "              domain: " + testDomain,
-            "              attribute:",
-            "                - DoubleValue",
-            "                - NumberValue",
-            "                - FloatValue",
-            "                - BooleanValue"
+            "              domain: " + testDomain
         );
 
         this.app.doIteration();
@@ -253,7 +233,7 @@ public class TestBeanSubscription extends TestCommon {
         int numAttributesPerBean = 4;
         int expectedMetrics = numBeans * numAttributesPerBean;
 
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         Thread.sleep(500);
 
@@ -265,7 +245,7 @@ public class TestBeanSubscription extends TestCommon {
         numBeans = 10;
         expectedMetrics = numBeans * numAttributesPerBean;
 
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         Thread.sleep(500);
 
@@ -297,12 +277,7 @@ public class TestBeanSubscription extends TestCommon {
             "        max_returned_metrics: 300000",
             "        conf:",
             "          - include:",
-            "              domain: " + testDomain,
-            "              attribute:",
-            "                - DoubleValue",
-            "                - NumberValue",
-            "                - FloatValue",
-            "                - BooleanValue"
+            "              domain: " + testDomain
         );
 
         this.app.doIteration();
@@ -320,7 +295,7 @@ public class TestBeanSubscription extends TestCommon {
         int numAttributesPerBean = 4;
         int expectedMetrics = numBeans * numAttributesPerBean;
 
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         // One iteration to recover instance, no metrics are actually collected
         this.app.doIteration();
@@ -353,12 +328,7 @@ public class TestBeanSubscription extends TestCommon {
             "        max_returned_metrics: 300000",
             "        conf:",
             "          - include:",
-            "              domain: " + testDomain,
-            "              attribute:",
-            "                - DoubleValue",
-            "                - NumberValue",
-            "                - FloatValue",
-            "                - BooleanValue"
+            "              domain: " + testDomain
         );
 
         this.app.doIteration();
@@ -371,7 +341,7 @@ public class TestBeanSubscription extends TestCommon {
         int numAttributesPerBean = 4;
         int expectedMetrics = numBeans * numAttributesPerBean;
 
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         // once beans created, restore network
         this.controlClient.jmxRestoreNetwork();
@@ -386,7 +356,7 @@ public class TestBeanSubscription extends TestCommon {
         // Now create more beans which triggers subscription updates
         numBeans = 22;
         expectedMetrics = numBeans * numAttributesPerBean;
-        this.controlClient.createMBeans(testDomain, numBeans);
+        this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
 
         // Allow subscription updates to be processed
         Thread.sleep(500);

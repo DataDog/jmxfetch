@@ -14,7 +14,11 @@ public class RandomIdentifier {
     private static final List<String> VOWELS = List.of("a", "e", "i", "o", "u");
     private static final List<String> CONSONANTS = List.of("b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "y", "z");
     private static final List<String> RARE_SEQUENCES = Arrays.asList("qz", "qp", "qj", "qw", "qx", "qr", "qt", "qy", "qs", "qd", "qf", "qg", "qh", "qk", "ql", "qc", "qv", "qb", "qn", "qm", "wz", "wq", "wk", "wp", "wj", "wy", "wh", "wl");
-    private static final Random RANDOM = new Random();
+    private final Random RANDOM;
+
+    public RandomIdentifier(long seed) {
+        this.RANDOM = new Random(seed);
+    }
 
     private String generateWord(int minLength, int maxLength) {
         int wordLength = minLength + RANDOM.nextInt(maxLength - minLength + 1);

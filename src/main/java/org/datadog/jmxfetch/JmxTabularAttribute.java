@@ -25,6 +25,11 @@ import javax.management.openmbean.TabularData;
 
 @Slf4j
 public class JmxTabularAttribute extends JmxSubAttribute {
+    private static final List<String> MULTI_TYPES =
+            Arrays.asList(
+                    "javax.management.openmbean.TabularData",
+                    //Adding TabularDataSupport as it implements TabularData
+                    "javax.management.openmbean.TabularDataSupport");
     private String instanceName;
     private Map<String, List<String>> subAttributeList;
 
@@ -38,7 +43,8 @@ public class JmxTabularAttribute extends JmxSubAttribute {
             Connection connection,
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
-            boolean emptyDefaultHostname) {
+            boolean emptyDefaultHostname,
+            boolean normalizeBeanParamTags) {
         super(
                 attribute,
                 beanName,
@@ -49,8 +55,13 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 serviceNameProvider,
                 instanceTags,
                 false,
-                emptyDefaultHostname);
+                emptyDefaultHostname,
+                normalizeBeanParamTags);
         subAttributeList = new HashMap<String, List<String>>();
+    }
+
+    public static boolean matchAttributeType(String attributeType) {
+        return MULTI_TYPES.contains(attributeType);
     }
 
     private String getMultiKey(Collection keys) {
@@ -149,7 +160,6 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 Metric metric = new Metric(alias, metricType, tags, checkName);
                 double value = castToDouble(getValue(dataKey, metricKey), null);
                 metric.setValue(value);
-
                 String fullMetricKey = getAttributeName() + "." + metricKey;
                 if (!subMetrics.containsKey(fullMetricKey)) {
                     subMetrics.put(fullMetricKey, new ArrayList<Metric>());

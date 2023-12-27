@@ -1,5 +1,23 @@
 Changelog
 =========
+# Next / TBD
+
+# 0.49.0 / 2023-11-10
+* [FEATURE] Adds more per-instance telemetry data around bean matching
+* [BUGFIX] Removes un-necessary statsd reinit
+
+# 0.48.0 / 2023-09-26
+
+* [FEATURE] Adds a configurable jmxfetch telemetry check to improve jmxfetch observability [#467][]
+* [FEATURE] Added an option to enable removal of extra quotation marks during tag extraction from Java management beans' parameters/attributes [#469][]
+* [FEATURE] Updated status bean to report JMX Telemetry to Agent status [#477][]
+
+# 0.47.10 / 2023-08-10
+
+* [IMPROVEMENT] Improvements in how JMXFetch handles communicating back to the Agent. This includes allowing the TLS of the HTTP client to be configured, extra logging around the SSL Context, and 'TLS' as min protocol version used in the `dummyTrustManager` (configurable using the flag `jmxfetch.min_tls_version`, e.g., `-Djmxfetch.min_tls_version=TLS`) [#436][]
+* [BUGFIX] Fixed issue race condition where an exception is thrown if the Agent hasn't finished initializing before JMXFetch starts to shut down [#449][]
+* [OTHER] Update management agent logic and comments for Java 7 vs 8 vs 9 [#457][]
+
 # 0.47.9 / 2023-05-25
 
 * [BUGFIX] Fixes thread leak in situations with persistent connection failures [#432][]
@@ -736,7 +754,13 @@ Changelog
 [#424]: https://github.com/DataDog/jmxfetch/issues/424
 [#431]: https://github.com/DataDog/jmxfetch/issues/431
 [#432]: https://github.com/DataDog/jmxfetch/issues/432
+[#436]: https://github.com/DataDog/jmxfetch/issues/436
 [#437]: https://github.com/DataDog/jmxfetch/issues/437
+[#467]: https://github.com/DataDog/jmxfetch/issues/467
+[#457]: https://github.com/DataDog/jmxfetch/issues/457
+[#449]: https://github.com/DataDog/jmxfetch/issues/449
+[#469]: https://github.com/DataDog/jmxfetch/issues/469
+[#477]: https://github.com/DataDog/jmxfetch/issues/477
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia

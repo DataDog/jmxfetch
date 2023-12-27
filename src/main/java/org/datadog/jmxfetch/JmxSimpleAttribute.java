@@ -3,6 +3,7 @@ package org.datadog.jmxfetch;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,34 @@ import javax.management.ReflectionException;
 
 @SuppressWarnings("unchecked")
 public class JmxSimpleAttribute extends JmxAttribute {
+    private static final List<String> SIMPLE_TYPES =
+            Arrays.asList(
+                    "long",
+                    "java.lang.String",
+                    "int",
+                    "float",
+                    "double",
+                    "java.lang.Double",
+                    "java.lang.Float",
+                    "java.lang.Integer",
+                    "java.lang.Long",
+                    "java.util.concurrent.atomic.AtomicInteger",
+                    "java.util.concurrent.atomic.AtomicLong",
+                    "java.lang.Object",
+                    "java.lang.Boolean",
+                    "boolean",
+                    "java.lang.Number",
+                    //Workaround for jasperserver, which returns attribute types as `class <type>`
+                    "class java.lang.String",
+                    "class java.lang.Double",
+                    "class java.lang.Float",
+                    "class java.lang.Integer",
+                    "class java.lang.Long",
+                    "class java.util.concurrent.atomic.AtomicInteger",
+                    "class java.util.concurrent.atomic.AtomicLong",
+                    "class java.lang.Object",
+                    "class java.lang.Boolean",
+                    "class java.lang.Number");
     private Metric cachedMetric;
 
     /** JmxSimpleAttribute constructor. */
@@ -28,7 +57,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
-            Boolean emptyDefaultHostname) {
+            Boolean emptyDefaultHostname,
+            Boolean normalizeBeanParamTags) {
         super(
                 attribute,
                 beanName,
@@ -39,7 +69,8 @@ public class JmxSimpleAttribute extends JmxAttribute {
                 serviceNameProvider,
                 instanceTags,
                 cassandraAliasing,
-                emptyDefaultHostname);
+                emptyDefaultHostname,
+                normalizeBeanParamTags);
     }
 
     @Override
@@ -55,6 +86,10 @@ public class JmxSimpleAttribute extends JmxAttribute {
         double value = castToDouble(getValue(), null);
         cachedMetric.setValue(value);
         return Collections.singletonList(cachedMetric);
+    }
+
+    public static boolean matchAttributeType(String attributeType) {
+        return SIMPLE_TYPES.contains(attributeType);
     }
 
     /** Returns whether an attribute matches in a configuration spec. */
