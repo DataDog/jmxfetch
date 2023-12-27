@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
@@ -254,12 +253,6 @@ public class Instance implements BeanTracker {
         if (enableSubscriptionOverride != null
                 && enableSubscriptionOverride.equalsIgnoreCase("true")) {
             this.enableBeanSubscription = true;
-        }
-        String subscriptionCoinFlip = System.getenv("DD_JMXFETCH_SUBSCRIPTION_FLIPCOIN");
-        if (subscriptionCoinFlip != null && subscriptionCoinFlip.equalsIgnoreCase("true")) {
-            Random rd = new Random();
-            boolean enabled = rd.nextBoolean();
-            this.enableBeanSubscription = enabled;
         }
         log.info("JMXFetch Subscription mode enabled={}", this.enableBeanSubscription);
         this.beanSubscriptionActive = false;
