@@ -579,7 +579,7 @@ public class Instance implements BeanTracker {
         }
     }
 
-    private synchronized void addMatchingAttributesForBean(
+    private synchronized int addMatchingAttributesForBean(
         ObjectName beanName,
         MBeanInfo info,
         boolean metricReachedPreviouslyDisplayed
@@ -777,7 +777,7 @@ public class Instance implements BeanTracker {
         log.debug("Bean registered event. {}", beanName);
         String className;
         MBeanAttributeInfo[] attributeInfos;
-        int matchedAttributesForBean;
+        int matchedAttributesForBean = 0;
         try {
             log.debug("Getting bean info for bean: {}", beanName);
             MBeanInfo info = connection.getMBeanInfo(beanName);
