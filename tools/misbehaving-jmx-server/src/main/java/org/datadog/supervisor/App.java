@@ -1,5 +1,6 @@
 package org.datadog.supervisor;
 
+import io.javalin.http.HttpStatus;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -89,6 +90,10 @@ public class App {
             event.serverStarted(() -> {
                 log.info("Supervisor HTTP Server Started. Waiting for initialization payload POST to /init");
             });
+        });
+
+        app.get("/healthy", ctx -> {
+            ctx.status(HttpStatus.OK);
         });
 
         app.get("/ready", ctx -> {
