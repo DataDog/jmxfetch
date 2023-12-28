@@ -30,7 +30,7 @@ a secondary `init` payload that contains the correct RMI Hostname. It is designe
 To enable debug logging, set the system property `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug`.
 This can be done in the Dockerfile `CMD` if running in a container
 
-For extra debug logging around RMI systems, try any/all of the following:
+For extra debug logging around RMI systems, try the following:
 - `-Djava.rmi.server.logCalls=true`
 - `-Dsun.rmi.server.exceptionTrace=true`
 - `-Dsun.rmi.transport.logLevel=verbose`
