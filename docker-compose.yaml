@@ -19,9 +19,10 @@ services:
       context: .
       dockerfile: ./Dockerfile.agentbase
     pid: host
-    env_file: .env.template
     environment:
+     - DD_API_KEY=00000000001 # Remove me if you specify a valid API key in .env
      - DD_JMX_TELEMETRY_ENABLED=true
+    env_file: .env
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
      - /proc/:/host/proc/:ro
