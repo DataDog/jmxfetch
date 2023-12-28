@@ -16,6 +16,17 @@ import org.datadog.jmxfetch.util.FileHelper;
 import org.datadog.jmxfetch.util.LogLevel;
 import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
+import org.datadog.jmxfetch.util.AppTelemetry;
+
+import java.lang.management.ManagementFactory;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MBeanInfo;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -86,6 +97,8 @@ public class App {
     private final AppConfig appConfig;
     private HttpClient client;
 
+    private AppTelemetry appTelemetry;
+
     /**
      * Main method for backwards compatibility in case someone is launching process by class
      * instead of by jar IE: java -classpath jmxfetch.jar org.datadog.jmxfetch.App
@@ -118,7 +131,38 @@ public class App {
                     this.appConfig.getIpcHost(), this.appConfig.getIpcPort(), false);
         }
         this.configs = getConfigs(this.appConfig);
+
+        this.initTelemetryBean();
     }
+
+    private void initTelemetryBean() {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        AppTelemetry bean = new AppTelemetry();
+        ObjectName appTelemetryBeanName;
+
+        try {
+            appTelemetryBeanName = new ObjectName(appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app" + ",version=" + MetadataHelper.getVersion());
+        } catch (MalformedObjectNameException e) {
+            log.warn(
+                "Could not construct bean name for jmxfetch_telemetry_domain '{}' and name 'JMXFetch'",
+                appConfig.getJmxfetchTelemetryDomain());
+            return;
+        }
+
+        try {
+            mbs.registerMBean(bean, appTelemetryBeanName);
+            log.debug("Succesfully registered app telemetry bean");
+        } catch (InstanceAlreadyExistsException
+         | MBeanRegistrationException
+         | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ",
+                appTelemetryBeanName.toString(), e);
+        }
+
+        this.appTelemetry = bean;
+        return;
+    }
+
 
     /**
      * Main entry point of JMXFetch that returns integer on exit instead of calling {@code
@@ -466,6 +510,9 @@ public class App {
 
             for (Instance instance : this.instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
+            }
+            if (this.appTelemetry != null) {
+                this.appTelemetry.setNumRunningInstances(this.instances.size());
             }
 
             if (!this.collectionProcessor.ready()) {
@@ -1104,6 +1151,11 @@ public class App {
                     "Could not initialize instance: {}:", instance.getName(), e);
                 instance.cleanUpAsync();
                 this.brokenInstanceMap.put(instance.toString(), instance);
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
+                    int numBrokenInstancesTotal = this.appTelemetry.getNumBrokenInstancesTotal();
+                    this.appTelemetry.setNumBrokenInstancesTotal(numBrokenInstancesTotal + 1);
+                }
             }
         }
     }
@@ -1123,6 +1175,11 @@ public class App {
                 final Instance instance = tasks.get(idx).getInstance();
                 this.brokenInstanceMap.remove(instance.toString());
                 this.instances.add(instance);
+
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
+                    this.appTelemetry.setNumRunningInstances(this.instances.size());
+                }
 
             } catch (Throwable e) {
                 // Not much to do here, instance didn't recover
@@ -1235,12 +1292,23 @@ public class App {
 
                 this.brokenInstanceMap.put(instance.toString(), instance);
                 log.debug("Adding broken instance to list: " + instance.getName());
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
+                    int numBrokenInstancesTotal = this.appTelemetry.getNumBrokenInstancesTotal();
+                    this.appTelemetry.setNumBrokenInstancesTotal(numBrokenInstancesTotal + 1);
+                }
 
                 log.warn(instanceMessage, ee.getCause());
             } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
                 log.debug("Adding broken instance to list: " + instance.getName());
                 this.brokenInstanceMap.put(instance.toString(), instance);
+
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
+                    int numBrokenInstancesTotal = this.appTelemetry.getNumBrokenInstancesTotal();
+                    this.appTelemetry.setNumBrokenInstancesTotal(numBrokenInstancesTotal + 1);
+                }
 
                 instanceStatus = Status.STATUS_ERROR;
                 instanceMessage = task.getWarning() + ": " + t.toString();
@@ -1263,5 +1331,9 @@ public class App {
                 this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
             }
         }
+    }
+
+    public AppTelemetry getAppTelemetryBean() {
+        return this.appTelemetry;
     }
 }
