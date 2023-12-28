@@ -2,10 +2,10 @@ package org.datadog.jmxfetch.util;
 
 public interface AppTelemetryMBean {
 
-    int getNumRunningInstances();
+    int getRunningInstanceCount();
 
-    int getNumBrokenInstances();
+    int getBrokenInstanceCount();
 
-    int getNumBrokenInstancesTotal();
+    int getBrokenInstanceEventCount();
 
 }

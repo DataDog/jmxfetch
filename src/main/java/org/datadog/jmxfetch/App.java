@@ -24,7 +24,6 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MBeanInfo;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
@@ -512,7 +511,7 @@ public class App {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
             }
             if (this.appTelemetry != null) {
-                this.appTelemetry.setNumRunningInstances(this.instances.size());
+                this.appTelemetry.setRunningInstanceCount(this.instances.size());
             }
 
             if (!this.collectionProcessor.ready()) {
@@ -1152,9 +1151,8 @@ public class App {
                 instance.cleanUpAsync();
                 this.brokenInstanceMap.put(instance.toString(), instance);
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
-                    int numBrokenInstancesTotal = this.appTelemetry.getNumBrokenInstancesTotal();
-                    this.appTelemetry.setNumBrokenInstancesTotal(numBrokenInstancesTotal + 1);
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
             }
         }
@@ -1177,8 +1175,8 @@ public class App {
                 this.instances.add(instance);
 
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
-                    this.appTelemetry.setNumRunningInstances(this.instances.size());
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.setRunningInstanceCount(this.instances.size());
                 }
 
             } catch (Throwable e) {
@@ -1293,9 +1291,8 @@ public class App {
                 this.brokenInstanceMap.put(instance.toString(), instance);
                 log.debug("Adding broken instance to list: " + instance.getName());
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
-                    int numBrokenInstancesTotal = this.appTelemetry.getNumBrokenInstancesTotal();
-                    this.appTelemetry.setNumBrokenInstancesTotal(numBrokenInstancesTotal + 1);
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
 
                 log.warn(instanceMessage, ee.getCause());
@@ -1305,9 +1302,8 @@ public class App {
                 this.brokenInstanceMap.put(instance.toString(), instance);
 
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setNumBrokenInstances(this.brokenInstanceMap.size());
-                    int numBrokenInstancesTotal = this.appTelemetry.getNumBrokenInstancesTotal();
-                    this.appTelemetry.setNumBrokenInstancesTotal(numBrokenInstancesTotal + 1);
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
 
                 instanceStatus = Status.STATUS_ERROR;

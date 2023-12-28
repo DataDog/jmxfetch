@@ -1,40 +1,41 @@
 package org.datadog.jmxfetch.util;
 
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Jmxfetch telemetry JMX MBean. */
 public class AppTelemetry implements AppTelemetryMBean {
-    private int numRunningInstances;
-    private int numBrokenInstances;
-    private int numBrokenInstancesTotal;
+    private AtomicInteger runningInstanceCount;
+    private AtomicInteger brokenInstanceCount;
+    private AtomicInteger brokenInstanceEventCount;
 
     /** Jmxfetch telemetry bean constructor. */
     public AppTelemetry() {
-        numRunningInstances = 0;
-        numBrokenInstances = 0;
-        numBrokenInstancesTotal = 0;
+        runningInstanceCount = new AtomicInteger(0);
+        brokenInstanceCount = new AtomicInteger(0);
+        brokenInstanceEventCount = new AtomicInteger(0);
     }
 
-    public int getNumRunningInstances() {
-        return numRunningInstances;
+    public int getRunningInstanceCount() {
+        return runningInstanceCount.get();
     }
 
-    public int getNumBrokenInstances() {
-        return numBrokenInstances;
+    public int getBrokenInstanceCount() {
+        return brokenInstanceCount.get();
     }
 
-    public int getNumBrokenInstancesTotal() {
-        return numBrokenInstancesTotal;
+    public int getBrokenInstanceEventCount() {
+        return brokenInstanceEventCount.get();
     }
 
-    public void setNumRunningInstances(int count) {
-        numRunningInstances = count;
+    public void setRunningInstanceCount(int count) {
+        this.runningInstanceCount.set(count);
     }
 
-    public void setNumBrokenInstances(int count) {
-        numBrokenInstances = count;
+    public void setBrokenInstanceCount(int count) {
+        brokenInstanceCount.set(count);
     }
 
-    public void setNumBrokenInstancesTotal(int count) {
-        numBrokenInstancesTotal = count;
+    public void incrementBrokenInstanceEventCount() {
+        brokenInstanceEventCount.incrementAndGet();
     }
 }

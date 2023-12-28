@@ -47,7 +47,7 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 10);
 
         AppTelemetry tlm = app.getAppTelemetryBean();
-        assertEquals(1, tlm.getNumRunningInstances());
+        assertEquals(1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters. */
@@ -79,7 +79,7 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 7);
 
         AppTelemetry tlm = app.getAppTelemetryBean();
-        assertEquals(1, tlm.getNumRunningInstances());
+        assertEquals(1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters with normalize_bean_param_tags option enabled. */
