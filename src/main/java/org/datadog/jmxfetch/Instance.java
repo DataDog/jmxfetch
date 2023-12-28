@@ -8,7 +8,6 @@ import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.yaml.snakeyaml.Yaml;
 
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,14 +23,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.management.InstanceNotFoundException;
 import javax.management.InstanceAlreadyExistsException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.MBeanRegistrationException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanServer;
 import javax.management.MBeanInfo;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.security.auth.login.FailedLoginException;
 
@@ -787,7 +786,8 @@ public class Instance implements BeanTracker {
         } catch (Exception e) {
             log.warn("Cannot get bean attributes or class name: " + e.getMessage(), e);
         }
-        log.debug("Bean registration processed. '{}'. Found {} matching attributes.", beanName, matchedAttributesForBean);
+        log.debug("Bean registration processed. '{}'. Found {} matching attributes.",
+            beanName, matchedAttributesForBean);
 
         if (instanceTelemetryBean != null) {
             int beanRegisterationsHandled = instanceTelemetryBean.getBeanRegistrationsHandled();
@@ -893,7 +893,8 @@ public class Instance implements BeanTracker {
                 beansNotSeen.addAll(newBeans);
                 beansNotSeen.removeAll(this.beans);
 
-                log.error("[beansub-audit] Bean refresh found {} previously untracked beans", beansNotSeen.size());
+                log.error("[beansub-audit] Bean refresh found {} previously untracked beans",
+                    beansNotSeen.size());
                 for (ObjectName b : beansNotSeen) {
                     log.error("[beansub-audit] New not-tracked bean {}", b);
                 }
@@ -908,7 +909,8 @@ public class Instance implements BeanTracker {
                 log.error("[beansub-audit] Bean refresh found {} fewer beans than expected",
                     incorrectlyTrackedBeans.size());
                 for (ObjectName b : incorrectlyTrackedBeans) {
-                    log.error("[beansub-audit] Currently tracked bean not returned from fresh query: {}", b);
+                    log.error("[beansub-audit] Currently tracked bean not returned from fresh"
+                        + " query: {}", b);
                 }
             }
         }
