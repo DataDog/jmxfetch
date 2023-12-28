@@ -30,6 +30,8 @@ The distribution will be created under ```target/```.
 
 To use this JAR in the Agent, see [these docs](https://github.com/DataDog/datadog-agent/blob/main/docs/dev/checks/jmxfetch.md).
 
+To test your JAR with a local test-server, see below instructions for "Local Testing"
+
 ### Note
 
 If you want build all the JAR files for JMXFetch, you need to use an older JDK version like JDK 8.
@@ -71,6 +73,15 @@ the recommended JDK version for development, use `sdk env` to activate it.
 ### Enabling file line numbers in log messages
 If you set the system property `-Djmxfetch.filelinelogging=true`, this will enable all log output to
 include the line number which emitted a given log.
+
+### Local Testing
+You can utilize the provided testing server `misbehaving-jmx-server` with the
+preset `./docker-compose.yaml` file. This will run two containers, one is the
+test server and the other is the Datadog Agent running your local JAR's version
+of JMXFetch.
+
+1. `docker compose up -d`
+
 
 
 ## Testing

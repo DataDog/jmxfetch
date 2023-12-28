@@ -1,0 +1,28 @@
+---
+version: "3.9"
+
+services:
+  # The docker compose service name is used as the hostname for the misbehaving-jmx-server
+  # Note it is in the entrypoint as the --rmi-host and in the AD label as the hostname
+  # that the Agent should reach out to.
+  jmx-test-server:
+    build:
+      context: ./tools/misbehaving-jmx-server/
+    # Override entrypoint to specify the docker-compose service name as the RMI host
+    entrypoint: ["java", "-cp", "misbehavingjmxserver-1.0-SNAPSHOT-jar-with-dependencies.jar", "org.datadog.misbehavingjmxserver.App", "--rmi-host", "jmx-test-server"]
+    ports:
+      - "1099:1099"
+    labels:
+      com.datadoghq.ad.checks: '{"misbehaving":{"init_config":{"is_jmx":true},"instances":[{"host":"jmx-test-server","port":"1099","collect_default_jvm_metrics":false,"max_returned_metrics":300000,"conf":[{"include":{"domain":"Bohnanza"}}]}]}}'
+  datadog:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.agentbase
+    pid: host
+    environment:
+     - DD_API_KEY=000000001
+     - DD_JMX_TELEMETRY_ENABLED=true
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+     - /proc/:/host/proc/:ro
+     - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
