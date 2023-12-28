@@ -10,22 +10,15 @@ import org.datadog.jmxfetch.tasks.TaskMethod;
 import org.datadog.jmxfetch.tasks.TaskProcessException;
 import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
+import org.datadog.jmxfetch.util.AppTelemetry;
 import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
 import org.datadog.jmxfetch.util.LogLevel;
 import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
-import org.datadog.jmxfetch.util.AppTelemetry;
 
 import java.lang.management.ManagementFactory;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -58,7 +51,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.security.auth.login.FailedLoginException;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 
 
 @SuppressWarnings("unchecked")
@@ -140,10 +142,13 @@ public class App {
         ObjectName appTelemetryBeanName;
 
         try {
-            appTelemetryBeanName = new ObjectName(appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app" + ",version=" + MetadataHelper.getVersion());
+            appTelemetryBeanName = new ObjectName(
+                appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app"
+                + ",version=" + MetadataHelper.getVersion());
         } catch (MalformedObjectNameException e) {
             log.warn(
-                "Could not construct bean name for jmxfetch_telemetry_domain '{}' and name 'JMXFetch'",
+                "Could not construct bean name for jmxfetch_telemetry_domain"
+                + " '{}' and name 'jmxfetch_app'",
                 appConfig.getJmxfetchTelemetryDomain());
             return;
         }
