@@ -76,7 +76,7 @@ include the line number which emitted a given log.
 
 ### Local Testing
 You can utilize the provided testing server `misbehaving-jmx-server` with the
-preset `./docker-compose.yaml` file. This will run two containers, one is the
+preset `./docker-compose.yaml` file. This runs two containers, one is the
 test server and the other is the Datadog Agent running your local JAR's version
 of JMXFetch.
 
