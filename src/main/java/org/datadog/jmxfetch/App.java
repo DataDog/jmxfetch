@@ -52,6 +52,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -135,20 +136,28 @@ public class App {
         this.initTelemetryBean();
     }
 
-    private void initTelemetryBean() {
-        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
-        AppTelemetry bean = new AppTelemetry();
+    private ObjectName getAppTelemetryBeanName() {
         ObjectName appTelemetryBeanName;
 
         try {
             appTelemetryBeanName = new ObjectName(
-                appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app"
-                + ",version=" + MetadataHelper.getVersion());
+                appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app");
         } catch (MalformedObjectNameException e) {
             log.warn(
                 "Could not construct bean name for jmxfetch_telemetry_domain"
                 + " '{}' and name 'jmxfetch_app'",
                 appConfig.getJmxfetchTelemetryDomain());
+            return null;
+        }
+
+        return appTelemetryBeanName;
+    }
+
+    private void initTelemetryBean() {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        AppTelemetry bean = new AppTelemetry();
+        ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
+        if (appTelemetryBeanName == null) {
             return;
         }
 
@@ -164,6 +173,22 @@ public class App {
 
         this.appTelemetry = bean;
         return;
+    }
+
+    private void teardownTelemetry() {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
+        if (appTelemetryBeanName == null) {
+            return;
+        }
+
+        try {
+            mbs.unregisterMBean(appTelemetryBeanName);
+            log.debug("Succesfully unregistered app telemetry bean");
+        } catch (MBeanRegistrationException | InstanceNotFoundException e) {
+            log.warn("Could not unregister bean named '{}' for instance: ",
+                appTelemetryBeanName.toString(), e);
+        }
     }
 
 
@@ -495,6 +520,7 @@ public class App {
     }
 
     void stop() {
+        this.teardownTelemetry();
         this.collectionProcessor.stop();
         this.recoveryProcessor.stop();
     }
