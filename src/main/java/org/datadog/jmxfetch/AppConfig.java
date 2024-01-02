@@ -10,6 +10,7 @@ import org.datadog.jmxfetch.reporter.JsonReporter;
 import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.reporter.ReporterFactory;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
+import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.validator.LogLevelValidator;
 import org.datadog.jmxfetch.validator.PositiveIntegerValidator;
 import org.datadog.jmxfetch.validator.ReporterValidator;
@@ -512,5 +513,9 @@ public class AppConfig {
 
     public int getSocketTimeout() {
         return statsdSocketTimeout;
+    }
+
+    public String getVersion() {
+        return MetadataHelper.getVersion();
     }
 }

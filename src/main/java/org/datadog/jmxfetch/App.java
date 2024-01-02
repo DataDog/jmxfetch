@@ -225,7 +225,7 @@ public class App {
             return 0;
         }
 
-        log.info("JMX Fetch " + MetadataHelper.getVersion() + " has started");
+        log.info("JMX Fetch " + this.appConfig.getVersion() + " has started");
 
         // set up the config status
         this.appConfig.updateStatus();
@@ -1082,6 +1082,7 @@ public class App {
         config.put("conf",conf);
 
         List<String> tags = new ArrayList<String>();
+        tags.add("version:" + this.appConfig.getVersion());
         config.put("tags", tags);
 
         return config;

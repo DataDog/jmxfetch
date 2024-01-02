@@ -1168,4 +1168,29 @@ public class TestApp extends TestCommon {
 
         assertCoverage();
     }
+
+    @Test
+    public void testTelemetryTags() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
+        when(appConfig.getVersion()).thenReturn("MOCKED_VERSION");
+
+        initApplication("jmx_telemetry_tags.yaml");
+
+        run();
+
+        List<String> telemetryTags = Arrays.asList(
+                "instance:jmxfetch_telemetry_instance",
+                "name:jmxfetch_app",
+                "jmx_domain:jmx_fetch",
+                "version:MOCKED_VERSION");
+
+        assertMetric("jmx.jmx_fetch.running_instance_count", 2, telemetryTags, -1);
+
+        // not asserting coverage, this is intended to test the tags present on telemetry
+        // not the set metrics collected
+    }
 }
