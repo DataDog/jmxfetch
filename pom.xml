@@ -231,6 +231,8 @@
                     <!-- allowAttachSelf required for tests in jdk9+ ref https://bugs.openjdk.org/browse/JDK-8180425 -->
                     <!-- rmi.server.hostname required for tests in some MacOS configurations -->
                     <argLine>-Djdk.attach.allowAttachSelf=true -Djava.rmi.server.hostname=localhost</argLine>
+                    <useFile>false</useFile>
+                    <trimStackTrace>false</trimStackTrace> <!-- can remove once surefire 3.0 is used. ref: https://issues.apache.org/jira/browse/SUREFIRE-1432 -->
                 </configuration>
             </plugin>
             <plugin>
