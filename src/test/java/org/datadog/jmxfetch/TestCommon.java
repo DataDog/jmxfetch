@@ -109,12 +109,13 @@ public class TestCommon {
     }
 
     /**
-     * Clear instances and their instance telemetry bean after execution of every test.
+     * Tear down instances and application.
      */
     @After
-    public void clearInstances() {
+    public void teardown() {
         if (app != null) {
             app.clearAllInstances();
+            app.stop();
         }
     }
 
@@ -176,7 +177,7 @@ public class TestCommon {
     }
 
     /*
-     * Init JMXFetch with the given YAML configuration template 
+     * Init JMXFetch with the given YAML configuration template
      * The configuration can be specified as a yaml literal with each arg
      * representing one line of the Yaml file
      * Does not support any SD/AD features.
@@ -188,7 +189,7 @@ public class TestCommon {
 
         String confdDirectory = tempFile.getParent().toString();
         String yamlFileName = tempFile.getFileName().toString();
-        
+
         List<String> params = new ArrayList<String>();
         params.add("--reporter");
         params.add("console");

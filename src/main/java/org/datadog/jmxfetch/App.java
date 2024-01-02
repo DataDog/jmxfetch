@@ -10,6 +10,7 @@ import org.datadog.jmxfetch.tasks.TaskMethod;
 import org.datadog.jmxfetch.tasks.TaskProcessException;
 import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
+import org.datadog.jmxfetch.util.AppTelemetry;
 import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
@@ -23,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,8 +35,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +50,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import javax.security.auth.login.FailedLoginException;
+
 
 
 @SuppressWarnings("unchecked")
@@ -86,6 +98,8 @@ public class App {
     private final AppConfig appConfig;
     private HttpClient client;
 
+    private AppTelemetry appTelemetry;
+
     /**
      * Main method for backwards compatibility in case someone is launching process by class
      * instead of by jar IE: java -classpath jmxfetch.jar org.datadog.jmxfetch.App
@@ -118,7 +132,65 @@ public class App {
                     this.appConfig.getIpcHost(), this.appConfig.getIpcPort(), false);
         }
         this.configs = getConfigs(this.appConfig);
+
+        this.initTelemetryBean();
     }
+
+    private ObjectName getAppTelemetryBeanName() {
+        ObjectName appTelemetryBeanName;
+
+        try {
+            appTelemetryBeanName = new ObjectName(
+                appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app");
+        } catch (MalformedObjectNameException e) {
+            log.warn(
+                "Could not construct bean name for jmxfetch_telemetry_domain"
+                + " '{}' and name 'jmxfetch_app'",
+                appConfig.getJmxfetchTelemetryDomain());
+            return null;
+        }
+
+        return appTelemetryBeanName;
+    }
+
+    private void initTelemetryBean() {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        AppTelemetry bean = new AppTelemetry();
+        ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
+        if (appTelemetryBeanName == null) {
+            return;
+        }
+
+        try {
+            mbs.registerMBean(bean, appTelemetryBeanName);
+            log.debug("Succesfully registered app telemetry bean");
+        } catch (InstanceAlreadyExistsException
+         | MBeanRegistrationException
+         | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ",
+                appTelemetryBeanName.toString(), e);
+        }
+
+        this.appTelemetry = bean;
+        return;
+    }
+
+    private void teardownTelemetry() {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
+        if (appTelemetryBeanName == null) {
+            return;
+        }
+
+        try {
+            mbs.unregisterMBean(appTelemetryBeanName);
+            log.debug("Succesfully unregistered app telemetry bean");
+        } catch (MBeanRegistrationException | InstanceNotFoundException e) {
+            log.warn("Could not unregister bean named '{}' for instance: ",
+                appTelemetryBeanName.toString(), e);
+        }
+    }
+
 
     /**
      * Main entry point of JMXFetch that returns integer on exit instead of calling {@code
@@ -153,7 +225,7 @@ public class App {
             return 0;
         }
 
-        log.info("JMX Fetch " + MetadataHelper.getVersion() + " has started");
+        log.info("JMX Fetch " + this.appConfig.getVersion() + " has started");
 
         // set up the config status
         this.appConfig.updateStatus();
@@ -448,6 +520,7 @@ public class App {
     }
 
     void stop() {
+        this.teardownTelemetry();
         this.collectionProcessor.stop();
         this.recoveryProcessor.stop();
     }
@@ -466,6 +539,9 @@ public class App {
 
             for (Instance instance : this.instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
+            }
+            if (this.appTelemetry != null) {
+                this.appTelemetry.setRunningInstanceCount(this.instances.size());
             }
 
             if (!this.collectionProcessor.ready()) {
@@ -1006,6 +1082,7 @@ public class App {
         config.put("conf",conf);
 
         List<String> tags = new ArrayList<String>();
+        tags.add("version:" + this.appConfig.getVersion());
         config.put("tags", tags);
 
         return config;
@@ -1104,6 +1181,10 @@ public class App {
                     "Could not initialize instance: {}:", instance.getName(), e);
                 instance.cleanUpAsync();
                 this.brokenInstanceMap.put(instance.toString(), instance);
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.incrementBrokenInstanceEventCount();
+                }
             }
         }
     }
@@ -1123,6 +1204,11 @@ public class App {
                 final Instance instance = tasks.get(idx).getInstance();
                 this.brokenInstanceMap.remove(instance.toString());
                 this.instances.add(instance);
+
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.setRunningInstanceCount(this.instances.size());
+                }
 
             } catch (Throwable e) {
                 // Not much to do here, instance didn't recover
@@ -1235,12 +1321,21 @@ public class App {
 
                 this.brokenInstanceMap.put(instance.toString(), instance);
                 log.debug("Adding broken instance to list: " + instance.getName());
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.incrementBrokenInstanceEventCount();
+                }
 
                 log.warn(instanceMessage, ee.getCause());
             } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
                 log.debug("Adding broken instance to list: " + instance.getName());
                 this.brokenInstanceMap.put(instance.toString(), instance);
+
+                if (this.appTelemetry != null) {
+                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.incrementBrokenInstanceEventCount();
+                }
 
                 instanceStatus = Status.STATUS_ERROR;
                 instanceMessage = task.getWarning() + ": " + t.toString();
@@ -1263,5 +1358,9 @@ public class App {
                 this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
             }
         }
+    }
+
+    public AppTelemetry getAppTelemetryBean() {
+        return this.appTelemetry;
     }
 }
