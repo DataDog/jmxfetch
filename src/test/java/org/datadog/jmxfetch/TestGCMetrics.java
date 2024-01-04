@@ -136,15 +136,15 @@ public class TestGCMetrics extends TestCommon {
             assertThat(actualMetrics, hasSize(17));
             final List<String> gcCycles = Arrays.asList(
                 "ZGC Major Cycles",
-                "ZGC Minor Cycles");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_count", gcCycles);
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_cycles_collection_time", gcCycles);
+                "ZGC Major Pauses");
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", gcCycles);
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcCycles);
 
             final List<String> gcPauses = Arrays.asList(
-                "ZGC Major Pauses",
+                "ZGC Minor Cycles",
                 "ZGC Minor Pauses");
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_count", gcPauses);
-            assertGCMetric(actualMetrics, "jvm.gc.zgc_pauses_collection_time", gcPauses);
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", gcPauses);
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", gcPauses);
         }
     }
 

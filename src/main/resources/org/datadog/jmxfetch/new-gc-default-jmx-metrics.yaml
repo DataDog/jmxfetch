@@ -1,4 +1,4 @@
-
+---
 # Young Gen Collectors (Minor Collections)
 - include:
     domain: java.lang
@@ -155,10 +155,10 @@
     name: ZGC Major Cycles
     attribute:
       CollectionCount:
-        alias: jvm.gc.zgc_cycles_collection_count
+        alias: jvm.gc.major_collection_count
         metric_type: counter
       CollectionTime:
-        alias: jvm.gc.zgc_cycles_collection_time
+        alias: jvm.gc.major_collection_time
         metric_type: counter
 - include:
     domain: java.lang
@@ -166,10 +166,10 @@
     name: ZGC Major Pauses
     attribute:
       CollectionCount:
-        alias: jvm.gc.zgc_pauses_collection_count
+        alias: jvm.gc.major_collection_count
         metric_type: counter
       CollectionTime:
-        alias: jvm.gc.zgc_pauses_collection_time
+        alias: jvm.gc.major_collection_time
         metric_type: counter
 - include:
     domain: java.lang
@@ -177,10 +177,10 @@
     name: ZGC Minor Cycles
     attribute:
       CollectionCount:
-        alias: jvm.gc.zgc_cycles_collection_count
+        alias: jvm.gc.minor_collection_count
         metric_type: counter
       CollectionTime:
-        alias: jvm.gc.zgc_cycles_collection_time
+        alias: jvm.gc.minor_collection_time
         metric_type: counter
 - include:
     domain: java.lang
@@ -188,8 +188,8 @@
     name: ZGC Minor Pauses
     attribute:
       CollectionCount:
-        alias: jvm.gc.zgc_pauses_collection_count
+        alias: jvm.gc.minor_collection_count
         metric_type: counter
       CollectionTime:
-        alias: jvm.gc.zgc_pauses_collection_time
+        alias: jvm.gc.minor_collection_time
         metric_type: counter
