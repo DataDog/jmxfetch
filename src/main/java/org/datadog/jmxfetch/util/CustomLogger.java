@@ -33,8 +33,13 @@ public class CustomLogger {
 
     // Enable by setting -Djmxfetch.filelinelogging,
     // if true, log record will include the source file and line number
-    private static boolean enableFileLineLogging = 
+    private static boolean enableFileLineLogging =
         System.getProperty("jmxfetch.filelinelogging", "false").equals("true");
+
+    // Enable by setting -Djmxfetch.millisecondLogging,
+    // if true, log record will include milliseconds
+    private static boolean millisecondLogging =
+        System.getProperty("jmxfetch.millisecondLogging", "false").equals("true");
 
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
@@ -63,7 +68,10 @@ public class CustomLogger {
     public static synchronized void setup(LogLevel level, String logLocation,
                              boolean logFormatRfc3339) {
         String target = "CONSOLE";
-        final String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
+        String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
+        if (millisecondLogging) {
+            dateFormat = dateFormat.replace("ss", "ss.SSS");
+        }
         final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
                                                             Locale.getDefault());
 
