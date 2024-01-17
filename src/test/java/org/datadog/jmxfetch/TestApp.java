@@ -5,6 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import org.datadog.jmxfetch.util.AppTelemetry;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +45,9 @@ public class TestApp extends TestCommon {
                         "nonRegexTag:value");
 
         assertMetric("this.is.100", tags, 10);
+
+        AppTelemetry tlm = app.getAppTelemetryBean();
+        assertEquals(1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters. */
@@ -72,6 +77,9 @@ public class TestApp extends TestCommon {
                         "component");
 
         assertMetric("this.is.100", tags, 7);
+
+        AppTelemetry tlm = app.getAppTelemetryBean();
+        assertEquals(1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters with normalize_bean_param_tags option enabled. */
@@ -1159,5 +1167,30 @@ public class TestApp extends TestCommon {
         //assertMetric("second_level_long", 123456L, tags, -1);
 
         assertCoverage();
+    }
+
+    @Test
+    public void testTelemetryTags() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
+        when(appConfig.getVersion()).thenReturn("MOCKED_VERSION");
+
+        initApplication("jmx_telemetry_tags.yaml");
+
+        run();
+
+        List<String> telemetryTags = Arrays.asList(
+                "instance:jmxfetch_telemetry_instance",
+                "name:jmxfetch_app",
+                "jmx_domain:jmx_fetch",
+                "version:MOCKED_VERSION");
+
+        assertMetric("jmx.jmx_fetch.running_instance_count", 2, telemetryTags, -1);
+
+        // not asserting coverage, this is intended to test the tags present on telemetry
+        // not the set metrics collected
     }
 }

@@ -1,6 +1,7 @@
 Changelog
 =========
-# Next / TBD
+# 0.49.1 / TBD
+* [FEATURE] Add ZGC Major and Minor Cycles and ZGC Major and Minor Pauses beans support out of the box (Generational ZGC support) [#509][]
 
 # 0.49.0 / 2023-11-10
 * [FEATURE] Adds more per-instance telemetry data around bean matching
@@ -761,6 +762,7 @@ Changelog
 [#449]: https://github.com/DataDog/jmxfetch/issues/449
 [#469]: https://github.com/DataDog/jmxfetch/issues/469
 [#477]: https://github.com/DataDog/jmxfetch/issues/477
+[#509]: https://github.com/DataDog/jmxfetch/issues/509
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia

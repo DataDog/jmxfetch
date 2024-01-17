@@ -134,12 +134,13 @@ public class TestCommon {
     }
 
     /**
-     * Clear instances and their instance telemetry bean after execution of every test.
+     * Tear down instances and application.
      */
     @After
-    public void clearInstances() {
+    public void teardown() {
         if (app != null) {
             app.clearAllInstances();
+            app.stop();
         }
     }
 

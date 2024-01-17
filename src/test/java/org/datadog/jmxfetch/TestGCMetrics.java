@@ -128,6 +128,26 @@ public class TestGCMetrics extends TestCommon {
         }
     }
 
+    @Test
+    public void testDefaultNewGCMetricsUseGenerationalZGC() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_21).appendJavaOpts("-XX:+UseZGC -XX:+ZGenerational").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(17));
+            final List<String> gcCycles = Arrays.asList(
+                "ZGC Major Cycles",
+                "ZGC Major Pauses");
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_count", gcCycles);
+            assertGCMetric(actualMetrics, "jvm.gc.major_collection_time", gcCycles);
+
+            final List<String> gcPauses = Arrays.asList(
+                "ZGC Minor Cycles",
+                "ZGC Minor Pauses");
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", gcPauses);
+            assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", gcPauses);
+        }
+    }
+
     private List<Map<String, Object>> startAndGetMetrics(final MisbehavingJMXServer server,
         final boolean newGCMetrics) throws IOException {
         server.start();
@@ -188,24 +208,27 @@ public class TestGCMetrics extends TestCommon {
                 filteredMetrics.add(actualMetric);
             }
         }
-        assertThat(filteredMetrics, hasSize(gcGenerations.size()));
+        assertThat(
+            String.format("Asserting filtered metrics for '%s' of metric '%s'", gcGenerations.size(), expectedMetric),
+            filteredMetrics, hasSize(gcGenerations.size()));
         for (final String name : gcGenerations) {
-            log.debug("Asserting for metric '{}'", name);
+            log.debug("Asserting for expected metric '{}' with tag 'name:{}'", expectedMetric, name);
             boolean found = false;
             for (Map<String, Object> filteredMetric : filteredMetrics) {
                 final Set<String> mTags = new HashSet<>(
                     Arrays.asList((String[]) (filteredMetric.get("tags"))));
 
                 if(mTags.contains(String.format("name:%s", name))) {
-                    assertThat(mTags, not(empty()));
-                    assertThat(mTags, hasSize(5));
-                    log.debug("mTags '{}' has size: {}\n{}", name, mTags.size(), mTags);
-                    assertThat(mTags, hasItems(
+                    assertThat("Should not be empty", mTags, not(empty()));
+                    assertThat("Should have size 5", mTags, hasSize(5));
+                    assertThat("Has correct tags",
+                        mTags, hasItems(
                         "instance:jmxint_container",
                         "jmx_domain:java.lang",
                         "type:GarbageCollector",
                         String.format("name:%s", name)));
                     found = true;
+                    break;
                 }
             }
             assertThat(String.format("Did not find metric '%s'", name), found, is(true));
