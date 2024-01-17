@@ -99,8 +99,7 @@ public class TestCommon {
      * @throws InstanceNotFoundException
      * @throws MBeanRegistrationException
      */
-    @After
-    public void unregisterMBean() throws MBeanRegistrationException, InstanceNotFoundException {
+    public void unregisterMBeans() throws MBeanRegistrationException, InstanceNotFoundException {
         if (mbs != null) {
             for (ObjectName objectName : objectNames) {
                 mbs.unregisterMBean(objectName);
@@ -116,6 +115,11 @@ public class TestCommon {
         if (app != null) {
             app.clearAllInstances();
             app.stop();
+        }
+        try {
+            unregisterMBeans();
+        } catch (MBeanRegistrationException | InstanceNotFoundException e) {
+            // Ignore
         }
     }
 
