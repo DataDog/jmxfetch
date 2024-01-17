@@ -231,6 +231,13 @@ public class AppConfig {
     private String statusLocation;
 
     @Parameter(
+            names = {"--enable_bean_subscription", "-B"},
+            description =
+                    "EXPERIMENTAL: If true, JMX beans will be discovered via subscription rather than poll-based. Obsoletes 'initialBeanRefreshPeriod' and 'beanRefreshPeriod'.",
+            required = false)
+    private boolean enableBeanSubscription;
+
+    @Parameter(
             names = {"--exit_file_location", "-e"},
             description =
                     "Absolute path of the trigger file to watch to exit. "
@@ -517,5 +524,9 @@ public class AppConfig {
 
     public String getVersion() {
         return MetadataHelper.getVersion();
+    }
+
+    public boolean getEnableBeanSubscription() {
+        return enableBeanSubscription;
     }
 }

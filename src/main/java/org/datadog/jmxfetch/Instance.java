@@ -244,15 +244,7 @@ public class Instance implements BeanTracker {
         }
 
         this.beans = new HashSet<>();
-        Boolean enableBeanSubscription = (Boolean) instanceMap.get("enable_bean_subscription");
-        this.enableBeanSubscription = enableBeanSubscription != null && enableBeanSubscription;
-
-        // Global override for enabling bean subscription on all instances
-        String enableSubscriptionOverride = System.getenv("DD_JMXFETCH_SUBSCRIPTION_ENABLED");
-        if (enableSubscriptionOverride != null
-                && enableSubscriptionOverride.equalsIgnoreCase("true")) {
-            this.enableBeanSubscription = true;
-        }
+        this.enableBeanSubscription = appConfig.getEnableBeanSubscription();
         log.info("JMXFetch Subscription mode enabled={}", this.enableBeanSubscription);
         this.beanSubscriptionActive = false;
         instanceTelemetryBean = createInstanceTelemetryBean();

@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -69,6 +70,7 @@ public class TestBeanSubscription extends TestCommon {
     public void testJMXFetchBasic() throws IOException, InterruptedException {
         String testDomain = "test-domain";
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+        when(appConfig.getEnableBeanSubscription()).thenReturn(true);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -78,7 +80,6 @@ public class TestBeanSubscription extends TestCommon {
             "        host: " + ipAddress,
             "        port: " + rmiPort,
             "        min_collection_interval: null", // allow collections at arbitrary intervals since we trigger them manually in the tests
-            "        enable_bean_subscription: true",
             "        refresh_beans: 5000", // effectively disable bean refresh
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
@@ -109,6 +110,7 @@ public class TestBeanSubscription extends TestCommon {
         cont.followOutput(logConsumer);
         String testDomain = "test-domain";
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+        when(appConfig.getEnableBeanSubscription()).thenReturn(true);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -118,7 +120,6 @@ public class TestBeanSubscription extends TestCommon {
             "        host: " + ipAddress,
             "        port: " + rmiPort,
             "        min_collection_interval: null",
-            "        enable_bean_subscription: true",
             "        refresh_beans: 5000", // effectively disable bean refresh
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
@@ -149,6 +150,7 @@ public class TestBeanSubscription extends TestCommon {
         String testDomain = "test-domain";
         cont.followOutput(logConsumer);
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+        when(appConfig.getEnableBeanSubscription()).thenReturn(true);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -158,7 +160,6 @@ public class TestBeanSubscription extends TestCommon {
             "        host: " + ipAddress,
             "        port: " + rmiPort,
             "        min_collection_interval: null",
-            "        enable_bean_subscription: true",
             "        refresh_beans: 5000", // effectively disable bean refresh
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
@@ -207,6 +208,7 @@ public class TestBeanSubscription extends TestCommon {
         String testDomain = "test-domain";
         cont.followOutput(logConsumer);
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+        when(appConfig.getEnableBeanSubscription()).thenReturn(true);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -216,7 +218,6 @@ public class TestBeanSubscription extends TestCommon {
             "        host: " + ipAddress,
             "        port: " + rmiPort,
             "        min_collection_interval: null",
-            "        enable_bean_subscription: true",
             "        refresh_beans: 5000", // effectively disable bean refresh
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
@@ -262,6 +263,7 @@ public class TestBeanSubscription extends TestCommon {
         String testDomain = "test-domain-nwkfail";
         cont.followOutput(logConsumer);
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+        when(appConfig.getEnableBeanSubscription()).thenReturn(true);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -271,7 +273,6 @@ public class TestBeanSubscription extends TestCommon {
             "        host: " + ipAddress,
             "        port: " + rmiPort,
             "        min_collection_interval: null",
-            "        enable_bean_subscription: true",
             "        refresh_beans: 5000", // effectively disable bean refresh
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",
@@ -313,6 +314,7 @@ public class TestBeanSubscription extends TestCommon {
         String testDomain = "test-domain-dsc-bn-creat";
         cont.followOutput(logConsumer);
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
+        when(appConfig.getEnableBeanSubscription()).thenReturn(true);
         this.initApplicationWithYamlLines(
             "init_config:",
             "  is_jmx: true",
@@ -322,7 +324,6 @@ public class TestBeanSubscription extends TestCommon {
             "        host: " + ipAddress,
             "        port: " + rmiPort,
             "        min_collection_interval: null",
-            "        enable_bean_subscription: true",
             "        refresh_beans: 5000", // effectively disable bean refresh
             "        collect_default_jvm_metrics: false",
             "        max_returned_metrics: 300000",

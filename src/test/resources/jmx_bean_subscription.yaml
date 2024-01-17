@@ -3,7 +3,6 @@ init_config:
 instances:
   -   process_name_regex: .*surefire.*
       min_collection_interval: null
-      enable_bean_subscription: true
       collect_default_jvm_metrics: false
       refresh_beans: 50000
       max_returned_metrics: 10
@@ -11,6 +10,6 @@ instances:
       conf:
           - include:
              domain: org.datadog.jmxfetch.test
-             attribute: 
+             attribute:
                  - ShouldBe100
                  - ShouldBe1000
