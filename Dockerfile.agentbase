@@ -1,0 +1,25 @@
+FROM eclipse-temurin:8u382-b05-jdk AS build
+
+WORKDIR /app
+
+# Copy the pom.xml and Maven files and install the dependencies
+COPY .mvn .mvn/
+COPY pom.xml mvnw mvnw.cmd ./
+
+# Use a maven cache to speed up iteration
+RUN --mount=type=cache,id=mavenCache,target=/root/.m2,sharing=locked \
+    set -eu &&  \
+    ./mvnw dependency:resolve;
+
+# Copy the source code and build the JAR file
+COPY src/ src/
+
+RUN --mount=type=cache,id=mavenCache,target=/root/.m2,sharing=locked \
+    set -eu &&  \
+    ./mvnw -DskipTests clean package assembly:single;
+
+
+FROM datadog/agent:7-jmx AS final
+
+COPY --from=build /app/target/jmxfetch-*-jar-with-dependencies.jar /opt/datadog-agent/bin/agent/dist/jmx/jmxfetch.jar
+
