@@ -31,9 +31,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Paths;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.util.RepeatRunner;
+import org.datadog.jmxfetch.util.RepeatTest;
+import org.junit.runner.RunWith;
 
 
 @Slf4j
+@RunWith(RepeatRunner.class)
 public class TestReconnectContainer extends TestCommon {
     private static final int rmiPort = 9090;
     private static final int controlPort = 9091;
@@ -93,6 +97,7 @@ public class TestReconnectContainer extends TestCommon {
     }
 
     @Test
+    @RepeatTest(100)
     public void testJMXDirectReconnect() throws Exception {
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         // Connect directly via JMXConnector
