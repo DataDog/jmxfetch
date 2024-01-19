@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Paths;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.util.server.CustomWaitStrategy;
 
 
 @Slf4j
@@ -52,7 +53,7 @@ public class TestReconnectContainer extends TestCommon {
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
         .withExposedPorts(supervisorPort)
-        .waitingFor(Wait.forListeningPorts(supervisorPort));
+        .waitingFor(new CustomWaitStrategy(supervisorPort, "Supervisor HTTP Server Started. Waiting for initialization payload POST to /init", Duration.ofSeconds(10)));
 
     @Rule(order = 1)
     public TestRule setupRule = new TestRule() {

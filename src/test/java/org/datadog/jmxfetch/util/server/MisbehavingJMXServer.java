@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.JMXServerControlClient;
 import org.datadog.jmxfetch.JMXServerSupervisorClient;
+import org.datadog.jmxfetch.util.server.CustomWaitStrategy;
 
 @Slf4j
 public class MisbehavingJMXServer implements Startable {
@@ -57,7 +58,7 @@ public class MisbehavingJMXServer implements Startable {
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
             .withEnv(MISBEHAVING_OPTS, this.javaOpts)
-            .waitingFor(Wait.forListeningPorts(supervisorPort));
+            .waitingFor(new CustomWaitStrategy(supervisorPort, "Supervisor HTTP Server Started. Waiting for initialization payload POST to /init", Duration.ofSeconds(10)));
     }
 
     @Override
