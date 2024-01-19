@@ -51,23 +51,13 @@ public class MisbehavingJMXServer implements Startable {
         final ImageFromDockerfile img = new ImageFromDockerfile()
             .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"))
             .withBuildArg("FINAL_JRE_IMAGE", this.jdkImage);
-        final WaitAllStrategy strategy = new WaitAllStrategy()
-            .withStrategy(
-                Wait.forLogMessage(
-                    ".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*",
-                    1)
-            )
-            .withStrategy(
-                Wait.forHttp("/healthy").forPort(this.supervisorPort).forStatusCode(200)
-            )
-            .withStartupTimeout(Duration.ofSeconds(10));
         this.server = new GenericContainer<>(img)
             .withExposedPorts(rmiPort, controlPort, supervisorPort)
             .withEnv(RMI_PORT, String.valueOf(rmiPort))
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
             .withEnv(MISBEHAVING_OPTS, this.javaOpts)
-            .waitingFor(strategy);
+            .waitingFor(Wait.forListeningPorts(supervisorPort));
     }
 
     @Override
