@@ -88,6 +88,15 @@ public class App {
                 log.info("Supervisor HTTP control interface starting at :{}", App.config.controlHttpPort);
             });
             event.serverStarted(() -> {
+                try {
+                    // This sleep is necessary due to some flakiness in
+                    // the startup. See PR 513 for details.
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    /* ignore */
+                }
+                // This log message is watched for in the test suite
+                // to indicate a successful startup.
                 log.info("Supervisor HTTP Server Started. Waiting for initialization payload POST to /init");
             });
         });
