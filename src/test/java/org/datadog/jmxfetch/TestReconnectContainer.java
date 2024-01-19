@@ -51,7 +51,8 @@ public class TestReconnectContainer extends TestCommon {
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
-        .waitingFor(Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1));
+        .withExposedPorts(supervisorPort)
+        .waitingFor(Wait.forListeningPorts(supervisorPort));
 
     @Rule(order = 1)
     public TestRule setupRule = new TestRule() {
