@@ -2,7 +2,6 @@ package org.datadog.jmxfetch.util.server;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.Duration;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -14,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.JMXServerControlClient;
 import org.datadog.jmxfetch.JMXServerSupervisorClient;
-import org.datadog.jmxfetch.util.server.CustomWaitStrategy;
+import org.datadog.jmxfetch.util.server.WaitOrStrategy;
 
 @Slf4j
 public class MisbehavingJMXServer implements Startable {
@@ -58,7 +57,10 @@ public class MisbehavingJMXServer implements Startable {
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
             .withEnv(MISBEHAVING_OPTS, this.javaOpts)
-            .waitingFor(new CustomWaitStrategy(supervisorPort, "Supervisor HTTP Server Started. Waiting for initialization payload POST to /init", Duration.ofSeconds(10)));
+            .waitingFor(new WaitOrStrategy(
+                Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1),
+                Wait.forListeningPorts(supervisorPort)
+            ));
     }
 
     @Override
