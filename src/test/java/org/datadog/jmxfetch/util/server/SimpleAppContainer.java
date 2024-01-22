@@ -38,7 +38,10 @@ public class SimpleAppContainer implements Startable {
                 .withEnv(JAVA_OPTS, this.javaOpts)
                 .withEnv(RMI_PORT, Integer.toString(this.rmiPort))
                 .withExposedPorts(this.rmiPort)
-                .waitingFor(Wait.forListeningPorts(this.rmiPort).withStartupTimeout(Duration.ofSeconds(10)));
+                .waitingFor(new WaitOrStrategy(
+                    Wait.forLogMessage(".*Sample app started..*", 1),
+                    Wait.forListeningPorts(this.rmiPort)
+                ));
     }
 
     @Override
