@@ -57,8 +57,19 @@ public class MisbehavingJMXServer implements Startable {
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
             .withEnv(MISBEHAVING_OPTS, this.javaOpts)
+            // Waiting is a bit tricky here, so lets explain
+            // There are two cases that need to be supported by this code
+            // 1. Environments where port checks work correctly
+            // 2. Environments where port checks never succeed
+            // If the listening port is ever detected, then that is a valid signal
+            // that the container has started.
+            // If the log message is observed, we impose an artificial 5s delay
+            // to allow the networking stack to "catch up" to the container logs
+            // This is the fix for observed flakey tests in CI.
             .waitingFor(new WaitOrStrategy(
-                Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1),
+                new WaitAllStrategy()
+                    .withStrategy(Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1))
+                    .withStrategy(Wait.forSuccessfulCommand("sleep 5000")),
                 Wait.forListeningPorts(supervisorPort)
             ));
     }

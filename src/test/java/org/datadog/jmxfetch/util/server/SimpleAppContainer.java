@@ -7,6 +7,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startable;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,8 +39,19 @@ public class SimpleAppContainer implements Startable {
                 .withEnv(JAVA_OPTS, this.javaOpts)
                 .withEnv(RMI_PORT, Integer.toString(this.rmiPort))
                 .withExposedPorts(this.rmiPort)
+                // Waiting is a bit tricky here, so lets explain
+                // There are two cases that need to be supported by this code
+                // 1. Environments where port checks work correctly
+                // 2. Environments where port checks never succeed
+                // If the listening port is ever detected, then that is a valid signal
+                // that the container has started.
+                // If the log message is observed, we impose an artificial 5s delay
+                // to allow the networking stack to "catch up" to the container logs
+                // This is the fix for observed flakey tests in CI.
                 .waitingFor(new WaitOrStrategy(
-                    Wait.forLogMessage(".*Sample app started..*", 1),
+                    new WaitAllStrategy()
+                        .withStrategy(Wait.forLogMessage(".*Sample app started..*", 1))
+                        .withStrategy(Wait.forSuccessfulCommand("sleep 5000")),
                     Wait.forListeningPorts(this.rmiPort)
                 ));
     }

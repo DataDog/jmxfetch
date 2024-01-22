@@ -1,6 +1,7 @@
 package org.datadog.jmxfetch.util.server;
 
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
 
@@ -9,16 +10,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 
-public class WaitOrStrategy extends AbstractWaitStrategy {
+public class WaitOrStrategy implements WaitStrategy {
 
     private final List<WaitStrategy> waitStrategies;
 
     public WaitOrStrategy(WaitStrategy... strategies) {
         this.waitStrategies = Arrays.asList(strategies);
     }
+
     @Override
-    public void waitUntilReady() {
-        // huh?
+    public WaitOrStrategy withStartupTimeout(java.time.Duration startupTimeout) {
+        return this;
     }
 
     @Override
