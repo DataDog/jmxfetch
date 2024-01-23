@@ -2,7 +2,6 @@ package org.datadog.jmxfetch.util.server;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.Duration;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -14,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.JMXServerControlClient;
 import org.datadog.jmxfetch.JMXServerSupervisorClient;
+import org.datadog.jmxfetch.util.server.WaitOrStrategy;
+import org.datadog.jmxfetch.util.TimerWaitStrategy;
 
 @Slf4j
 public class MisbehavingJMXServer implements Startable {
@@ -51,23 +52,27 @@ public class MisbehavingJMXServer implements Startable {
         final ImageFromDockerfile img = new ImageFromDockerfile()
             .withFileFromPath(".", Paths.get("./tools/misbehaving-jmx-server/"))
             .withBuildArg("FINAL_JRE_IMAGE", this.jdkImage);
-        final WaitAllStrategy strategy = new WaitAllStrategy()
-            .withStrategy(
-                Wait.forLogMessage(
-                    ".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*",
-                    1)
-            )
-            .withStrategy(
-                Wait.forHttp("/healthy").forPort(this.supervisorPort).forStatusCode(200)
-            )
-            .withStartupTimeout(Duration.ofSeconds(10));
         this.server = new GenericContainer<>(img)
             .withExposedPorts(rmiPort, controlPort, supervisorPort)
             .withEnv(RMI_PORT, String.valueOf(rmiPort))
             .withEnv(CONTROL_PORT, String.valueOf(controlPort))
             .withEnv(SUPERVISOR_PORT, String.valueOf(supervisorPort))
             .withEnv(MISBEHAVING_OPTS, this.javaOpts)
-            .waitingFor(strategy);
+            // Waiting is a bit tricky here, so lets explain
+            // There are two cases that need to be supported by this code
+            // 1. Environments where port checks work correctly
+            // 2. Environments where port checks never succeed
+            // If the listening port is ever detected, then that is a valid signal
+            // that the container has started.
+            // If the log message is observed, we impose an artificial 5s delay
+            // to allow the networking stack to "catch up" to the container logs
+            // This is the fix for observed flakey tests in CI.
+            .waitingFor(new WaitOrStrategy(
+                new WaitAllStrategy()
+                    .withStrategy(Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1))
+                    .withStrategy(new TimerWaitStrategy(5000)),
+                Wait.forListeningPorts(supervisorPort)
+            ));
     }
 
     @Override

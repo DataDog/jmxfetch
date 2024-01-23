@@ -64,6 +64,7 @@ class SimpleApp {
             pairs.put("type", "simple");
             final Thread daemonThread = getThread(pairs);
             daemonThread.start();
+            System.out.println("Sample app started.");
             daemonThread.join();
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException |
                  MBeanRegistrationException | NotCompliantMBeanException | InterruptedException e) {

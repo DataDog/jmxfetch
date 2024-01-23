@@ -24,6 +24,7 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Paths;
 
 import org.datadog.jmxfetch.reporter.ConsoleReporter;
+import org.datadog.jmxfetch.util.TimerWaitStrategy;
+import org.datadog.jmxfetch.util.server.WaitOrStrategy;
 
 
 @Slf4j
@@ -51,7 +54,22 @@ public class TestReconnectContainer extends TestCommon {
         .withEnv(Collections.singletonMap("RMI_PORT", "" + rmiPort))
         .withEnv(Collections.singletonMap("CONTROL_PORT", "" + controlPort))
         .withEnv(Collections.singletonMap("SUPERVISOR_PORT", "" + supervisorPort))
-        .waitingFor(Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1));
+        .withExposedPorts(supervisorPort)
+        // Waiting is a bit tricky here, so lets explain
+        // There are two cases that need to be supported by this code
+        // 1. Environments where port checks work correctly
+        // 2. Environments where port checks never succeed
+        // If the listening port is ever detected, then that is a valid signal
+        // that the container has started.
+        // If the log message is observed, we impose an artificial 5s delay
+        // to allow the networking stack to "catch up" to the container logs
+        // This is the fix for observed flakey tests in CI.
+        .waitingFor(new WaitOrStrategy(
+            new WaitAllStrategy()
+                .withStrategy(Wait.forLogMessage(".*Supervisor HTTP Server Started. Waiting for initialization payload POST to /init.*", 1))
+                .withStrategy(new TimerWaitStrategy(5000)),
+            Wait.forListeningPorts(supervisorPort)
+        ));
 
     @Rule(order = 1)
     public TestRule setupRule = new TestRule() {
