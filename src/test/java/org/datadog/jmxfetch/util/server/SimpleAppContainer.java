@@ -9,6 +9,8 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
+import org.datadog.jmxfetch.util.TimerWaitStrategy;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -51,7 +53,7 @@ public class SimpleAppContainer implements Startable {
                 .waitingFor(new WaitOrStrategy(
                     new WaitAllStrategy()
                         .withStrategy(Wait.forLogMessage(".*Sample app started..*", 1))
-                        .withStrategy(Wait.forSuccessfulCommand("sleep 5000")),
+                        .withStrategy(new TimerWaitStrategy(5000)),
                     Wait.forListeningPorts(this.rmiPort)
                 ));
     }
