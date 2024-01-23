@@ -1,0 +1,5 @@
+---
+schema-version: v1
+kind: mergequeue
+team: agent-metricslogs
+gitlab_check_enable: false
