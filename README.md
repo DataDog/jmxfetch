@@ -70,9 +70,16 @@ If you are an sdkman user, there is a config file present in this project with
 the recommended JDK version for development, use `sdk env` to activate it.
 
 
-### Enabling file line numbers in log messages
-If you set the system property `-Djmxfetch.filelinelogging=true`, this will enable all log output to
-include the line number which emitted a given log.
+### Logging Options
+The logging output is configured in code in `CustomLogger.java`.
+The following system properties will affect the format of the log records.
+
+- `-Djmxfetch.filelinelogging=true`
+    - All log records will include the specific file and line number which emitted
+      that log.
+- `-Djmxfetch.millisecondlogging=true`
+    - All log records will include milliseconds in the timestamp, rather than the default
+      'second' timestamp resolution.
 
 ### Local Testing
 You can utilize the provided testing server `misbehaving-jmx-server` with the
