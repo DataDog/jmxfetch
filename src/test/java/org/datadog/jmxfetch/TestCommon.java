@@ -146,8 +146,14 @@ public class TestCommon {
     }
 
     /** Init JMXFetch with the given YAML configuration file. */
-    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile)
+    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile, AppConfig passedAppConfig)
             throws FileNotFoundException, IOException {
+        AppConfig appConfig = this.appConfig;
+        if (passedAppConfig != null) {
+            appConfig = passedAppConfig;
+        }
+        this.appConfig = appConfig;
+
         // We do a first collection
         // We initialize the main app that will collect these metrics using JMX
         String confdDirectory =
@@ -199,7 +205,15 @@ public class TestCommon {
     }
 
     protected void initApplication(String yamlFileName) throws FileNotFoundException, IOException {
-        initApplication(yamlFileName, "");
+        initApplication(yamlFileName, "", null);
+    }
+
+    protected void initApplication(String yamlFileName, AppConfig appConfig) throws FileNotFoundException, IOException {
+        initApplication(yamlFileName, "", appConfig);
+    }
+
+    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile) throws FileNotFoundException, IOException {
+        initApplication(yamlFileName, autoDiscoveryPipeFile, null);
     }
 
     /*

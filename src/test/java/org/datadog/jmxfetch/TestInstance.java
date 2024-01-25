@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.spy;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -246,10 +247,11 @@ public class TestInstance extends TestCommon {
     @Test
     public void testBeanSubscription() throws Exception {
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        AppConfig config = mock(AppConfig.class);
+        AppConfig config = spy(AppConfig.builder().build());
         when(config.getEnableBeanSubscription()).thenReturn(true);
+
         // initial fetch
-        initApplication("jmx_bean_subscription.yaml");
+        initApplication("jmx_bean_subscription.yaml", config);
 
         // We do a first collection
         run();
@@ -290,11 +292,11 @@ public class TestInstance extends TestCommon {
     @Test
     public void testBeanUnsubscription() throws Exception {
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        AppConfig config = mock(AppConfig.class);
+        AppConfig config = spy(AppConfig.builder().build());
         when(config.getEnableBeanSubscription()).thenReturn(true);
         // Bean-refresh interval is to to 50s, so the only bean refresh will be
         // initial fetch
-        initApplication("jmx_bean_subscription.yaml");
+        initApplication("jmx_bean_subscription.yaml", config);
         int numRegisteredAttributes = 0;
 
         // We do a first collection
@@ -344,9 +346,9 @@ public class TestInstance extends TestCommon {
         // should be updated on bean registration/deregistration
 
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
-        AppConfig config = mock(AppConfig.class);
+        AppConfig config = spy(AppConfig.builder().build());
         when(config.getEnableBeanSubscription()).thenReturn(true);
-        initApplication("jmx_bean_subscription.yaml"); // max returned metrics is 10
+        initApplication("jmx_bean_subscription.yaml", config); // max returned metrics is 10
 
         int numRegisteredAttributes = 0;
         assertEquals(numRegisteredAttributes, app.getInstances().get(0).getCurrentNumberOfMetrics());
