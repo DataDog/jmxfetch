@@ -233,7 +233,9 @@ public class AppConfig {
     @Parameter(
             names = {"--enable_bean_subscription", "-B"},
             description =
-                    "EXPERIMENTAL: If true, JMX beans will be discovered via subscription rather than poll-based. Obsoletes 'initialBeanRefreshPeriod' and 'beanRefreshPeriod'.",
+                    "EXPERIMENTAL: If true, JMX beans will be discovered via subscription rather"
+                    + " than poll-based. Obsoletes 'initialBeanRefreshPeriod' and"
+                    + " 'beanRefreshPeriod'.",
             required = false)
     private boolean enableBeanSubscription;
 
