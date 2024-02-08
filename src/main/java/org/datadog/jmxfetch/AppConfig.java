@@ -529,6 +529,10 @@ public class AppConfig {
     }
 
     public boolean getEnableBeanSubscription() {
-        return enableBeanSubscription;
+        // As noted in `pkg/jmxfetch/jmxfetch.go` in the agent, using an env var
+        // for enablement is a temporary measure until the stable JMXFetch is upgraded
+        // to a version supporting this CLI arg.
+        boolean isEnvEnabled = System.getenv("DD_JMX_BEAN_SUBSCRIPTION_ENABLED") != null;
+        return isEnvEnabled || enableBeanSubscription;
     }
 }
