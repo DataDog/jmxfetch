@@ -20,6 +20,10 @@ public class JvmDirectConnection extends Connection {
         // ignore
     }
 
+    public boolean isConnectorClosed() {
+        return false;
+    }
+
     public boolean isAlive() {
         return true;
     }

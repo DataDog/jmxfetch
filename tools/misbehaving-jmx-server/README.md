@@ -27,6 +27,15 @@ a secondary `init` payload that contains the correct RMI Hostname. It is designe
 - `SUPERVISOR_PORT` - HTTP control port for the supervisor process (if using) (default 8088)
 - `MISBEHAVING_OPTS` - Manages memory, GC configurations, and system properties of the Java process running the JMXServer (default `-Xmx128M -Xms128M`)
 
+To enable debug logging, set the system property `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug`.
+This can be done in the Dockerfile `CMD` if running in a container
+
+For extra debug logging around RMI systems, try the following:
+- `-Djava.rmi.server.logCalls=true`
+- `-Dsun.rmi.server.exceptionTrace=true`
+- `-Dsun.rmi.transport.logLevel=verbose`
+- `-Dsun.rmi.transport.tcp.logLevel=verbose`
+
 ## HTTP Control Actions (jmx-server)
 - POST `/cutNetwork` - Denies any requests to create a new socket (ie, no more connections will be 'accept'ed) and then closes existing TCP sockets
 - POST `/restoreNetwork` - Allows new sockets to be created
