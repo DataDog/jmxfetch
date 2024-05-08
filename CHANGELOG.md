@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.49.2-SNAPSHOT / TBC
+
 # 0.49.1 / 2024-04-09
 * [FEATURE] Add ZGC Major and Minor Cycles and ZGC Major and Minor Pauses beans support out of the box (Generational ZGC support) [#509][]
 * [FEATURE] Added support for emitting logs with millisecond timestamp [#512][]
