@@ -520,6 +520,9 @@ public class App {
     }
 
     void stop() {
+        for (Instance in : this.getInstances()) {
+            in.cleanUp();
+        }
         this.teardownTelemetry();
         this.collectionProcessor.stop();
         this.recoveryProcessor.stop();
