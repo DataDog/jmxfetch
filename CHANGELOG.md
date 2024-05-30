@@ -1,6 +1,7 @@
 Changelog
 =========
 # 0.49.2-SNAPSHOT / TBC
+* [BUGFIX] Telemetry is no longer initialized when telemetry is disabled [#522][]
 
 # 0.49.1 / 2024-04-09
 * [FEATURE] Add ZGC Major and Minor Cycles and ZGC Major and Minor Pauses beans support out of the box (Generational ZGC support) [#509][]
@@ -342,7 +343,7 @@ Changelog
 * [IMPROVEMENT] `java-dogstatsd-client` connections errors are now logged. See [#208][] (Thanks [@mattdrees][])
 * [IMPROVEMENT] Lower log level of log entry dumping all configs from AutoConfig. See [#212][]
 * [BUGFIX] GC metrics `jvm.gc.eden_size` and `jvm.gc.survivor_size` were not collected for
-`Eden Space` and `Survivor Space` memory pools. See [#214][]
+  `Eden Space` and `Survivor Space` memory pools. See [#214][]
 
 # 0.26.2 / 2019-06-04
 
@@ -767,6 +768,7 @@ Changelog
 [#477]: https://github.com/DataDog/jmxfetch/issues/477
 [#509]: https://github.com/DataDog/jmxfetch/issues/509
 [#512]: https://github.com/DataDog/jmxfetch/pull/512
+[#522]: https://github.com/DataDog/jmxfetch/pull/522
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia

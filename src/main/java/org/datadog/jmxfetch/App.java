@@ -133,7 +133,9 @@ public class App {
         }
         this.configs = getConfigs(this.appConfig);
 
-        this.initTelemetryBean();
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            this.initTelemetryBean();
+        }
     }
 
     private ObjectName getAppTelemetryBeanName() {
