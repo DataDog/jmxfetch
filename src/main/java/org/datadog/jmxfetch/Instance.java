@@ -854,7 +854,6 @@ public class Instance {
     /** Clean up config and close connection. */
     public void cleanUp() {
         cleanupTelemetryBean();
-        this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
             connection = null;
@@ -866,7 +865,6 @@ public class Instance {
      * */
     public synchronized void cleanUpAsync() {
         cleanupTelemetryBean();
-        this.appConfig = null;
         class AsyncCleaner implements Runnable {
             Connection conn;
 
