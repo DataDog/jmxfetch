@@ -133,10 +133,12 @@ public class App {
         }
         this.configs = getConfigs(this.appConfig);
 
-//        if (this.appConfig.getJmxfetchTelemetry()) {
+        this.appTelemetry = new AppTelemetry();
+
+        if (this.appConfig.getJmxfetchTelemetry()) {
             log.info("Enabling JMX Fetch Telemetry");
-            this.initTelemetryBean();
-//        }
+            this.registerTelemetryBean(this.appTelemetry);
+        }
     }
 
     private ObjectName getAppTelemetryBeanName() {
@@ -156,9 +158,8 @@ public class App {
         return appTelemetryBeanName;
     }
 
-    private void initTelemetryBean() {
+    private void registerTelemetryBean(AppTelemetry bean) {
         MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
-        AppTelemetry bean = new AppTelemetry();
         ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
         if (appTelemetryBeanName == null) {
             return;
@@ -174,7 +175,6 @@ public class App {
                 appTelemetryBeanName.toString(), e);
         }
 
-        this.appTelemetry = bean;
         return;
     }
 
@@ -523,7 +523,9 @@ public class App {
     }
 
     void stop() {
-        this.teardownTelemetry();
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            this.teardownTelemetry();
+        }
         this.collectionProcessor.stop();
         this.recoveryProcessor.stop();
     }

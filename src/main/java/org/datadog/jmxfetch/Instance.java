@@ -240,7 +240,10 @@ public class Instance {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
-        instanceTelemetryBean = createInstanceTelemetryBean();
+        instanceTelemetryBean = new InstanceTelemetry();
+        if (appConfig.getJmxfetchTelemetry()) {
+            registerTelemetryBean(instanceTelemetryBean);
+        }
     }
 
     private ObjectName getObjName(String domain,String instance)
@@ -248,10 +251,9 @@ public class Instance {
         return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
-    private InstanceTelemetry createInstanceTelemetryBean() {
+    private InstanceTelemetry registerTelemetryBean(InstanceTelemetry bean) {
+        log.debug("Registering jmx bean for instance: " + this.getCheckName());
         mbs =  ManagementFactory.getPlatformMBeanServer();
-        InstanceTelemetry bean = new InstanceTelemetry();
-        log.debug("Created jmx bean for instance: " + this.getCheckName());
 
         try {
             instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
@@ -516,8 +518,8 @@ public class Instance {
                     + " With beans fetched = " + instanceTelemetryBean.getBeansFetched()
                     + " top attributes = " + instanceTelemetryBean.getTopLevelAttributeCount()
                     + " metrics = " + instanceTelemetryBean.getMetricCount()
-                    + " wildcard domain query count = " 
-                    + instanceTelemetryBean.getWildcardDomainQueryCount() 
+                    + " wildcard domain query count = "
+                    + instanceTelemetryBean.getWildcardDomainQueryCount()
                     + " bean match ratio = " + instanceTelemetryBean.getBeanMatchRatio());
         }
         return metrics;
@@ -710,7 +712,7 @@ public class Instance {
                     reporter.displayNonMatchingAttributeName(jmxAttribute);
                 }
                 if (jmxAttribute.getMatchingConf() != null) {
-                    attributeMatched = true; 
+                    attributeMatched = true;
                 }
             }
             if (attributeMatched) {
@@ -718,7 +720,7 @@ public class Instance {
             }
         }
         if (instanceTelemetryBean != null) {
-            instanceTelemetryBean.setBeanMatchRatio((double) 
+            instanceTelemetryBean.setBeanMatchRatio((double)
                                   beansWithAttributeMatch / beans.size());
         }
         log.info("Found {} matching attributes", matchingAttributes.size());
@@ -837,6 +839,10 @@ public class Instance {
     }
 
     private void cleanupTelemetryBean() {
+        if (!appConfig.getJmxfetchTelemetry()) {
+            // If telemetry is not enabled, no need to unregister the bean
+            return;
+        }
         try {
             mbs.unregisterMBean(instanceTelemetryBeanName);
             log.debug("Successfully unregistered bean for instance: " + this.getCheckName());

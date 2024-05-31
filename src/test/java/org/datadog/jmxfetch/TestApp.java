@@ -25,8 +25,6 @@ public class TestApp extends TestCommon {
     @Test
     public void testBeanRegexTags() throws Exception {
         log.info("********************\nSTARTING\n********************");
-        // When we enable JMXFetch telemetry
-        when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
 
 
         log.info("********************\nregisterMBean\n********************");
@@ -64,9 +62,6 @@ public class TestApp extends TestCommon {
     /** Tag metrics with MBeans parameters. */
     @Test
     public void testBeanTags() throws Exception {
-        // When we enable JMXFetch telemetry
-        when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
-
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
