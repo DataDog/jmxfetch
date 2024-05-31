@@ -865,8 +865,8 @@ public class Instance {
      * Asynchronoush cleanup of instance, including connection.
      * */
     public synchronized void cleanUpAsync() {
-        appConfig = null;
         cleanupTelemetryBean();
+        this.appConfig = null;
         class AsyncCleaner implements Runnable {
             Connection conn;
 
