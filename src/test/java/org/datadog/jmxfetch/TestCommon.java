@@ -104,6 +104,7 @@ public class TestCommon {
             for (ObjectName objectName : objectNames) {
                 mbs.unregisterMBean(objectName);
             }
+            objectNames.clear();
         }
     }
 

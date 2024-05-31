@@ -134,6 +134,7 @@ public class App {
         this.configs = getConfigs(this.appConfig);
 
         if (this.appConfig.getJmxfetchTelemetry()) {
+            log.info("Enabling JMX Fetch Telemetry");
             this.initTelemetryBean();
         }
     }
