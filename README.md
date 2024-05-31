@@ -95,7 +95,7 @@ of JMXFetch.
 
 To run unit test, issue the following command:
 ```
-./mvnw test
+./mvnw test -Djdk.attach.allowAttachSelf=true
 ```
 
 Some tests utilize [TestContainers](https://www.testcontainers.org/) which requires a docker client.
@@ -105,7 +105,7 @@ If you're on macOS or Windows, docker desktop is architected to run a linux VM w
 This makes the networking a bit different and you should use the following command to run the tests.
 
 ```
-docker run -it --rm -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker.sock eclipse-temurin:8-jdk ./mvnw test
+docker run -it --rm -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker.sock eclipse-temurin:8-jdk ./mvnw test -Djdk.attach.allowAttachSelf=true
 ```
 
 This version runs the maven jmxfetch tests within a container as well, which works as long as the `TEST_CONTAINERS_HOST_OVERRIDE` env var is set.

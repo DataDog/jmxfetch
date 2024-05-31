@@ -24,18 +24,24 @@ public class TestApp extends TestCommon {
     /** Tag metrics with MBean parameters based on user supplied regex */
     @Test
     public void testBeanRegexTags() throws Exception {
+        log.info("********************\nSTARTING\n********************");
         // When we enable JMXFetch telemetry
         when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
 
+
+        log.info("********************\nregisterMBean\n********************");
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=Co|olScope,host=localhost,component=");
+        log.info("********************\ninitApplication\n********************");
         initApplication("jmx_bean_regex_tags.yaml");
 
+        log.info("********************\nrun\n********************");
         // Run the collection
         run();
 
+        log.info("********************\nassertMetric\n********************");
         List<String> tags =
                 Arrays.asList(
                         "type:SimpleTestJavaApp",
@@ -76,7 +82,7 @@ public class TestApp extends TestCommon {
         for (Map<String, Object> metric : metrics) {
             log.info("Metric: {}", metric);
         }
-        
+
         List<String> tags =
                 Arrays.asList(
                         "type:SimpleTestJavaApp",
@@ -914,20 +920,17 @@ public class TestApp extends TestCommon {
 
         // First collection should not contain our count
         run();
-        metrics = getMetrics();
-        assertEquals(13, metrics.size());
+        assertEquals(13, getMetrics().size());
 
         // Since our count is still equal to 0, we should report a delta equal to 0
         run();
-        metrics = getMetrics();
-        assertEquals(14, metrics.size());
+        assertEquals(14, getMetrics().size());
         assertMetric("test.counter", 0, Collections.<String>emptyList(), 4);
 
         // For the 3rd collection we increment the count to 5 so we should get a +5 delta
         testApp.incrementCounter(5);
         run();
-        metrics = getMetrics();
-        assertEquals(14, metrics.size());
+        assertEquals(14, getMetrics().size());
         assertMetric("test.counter", 5, Collections.<String>emptyList(), 4);
 
         assertCoverage();
@@ -946,13 +949,11 @@ public class TestApp extends TestCommon {
 
         // First collection should not contain our count
         run();
-        metrics = getMetrics();
-        assertEquals(26, metrics.size());
+        assertEquals(26, getMetrics().size());
 
         // Since our count is still equal to 0, we should report a delta equal to 0
         run();
-        metrics = getMetrics();
-        assertEquals(28, metrics.size());
+        assertEquals(28, getMetrics().size());
         assertMetric("test.counter", 0, Collections.<String>emptyList(), 4);
         assertMetric("test.rate", 0, Collections.<String>emptyList(), 4);
 
@@ -960,8 +961,7 @@ public class TestApp extends TestCommon {
         // For the 3rd collection we increment the count to 5 so we should get a +5 delta
         testApp.incrementCounter(5);
         run();
-        metrics = getMetrics();
-        assertEquals(28, metrics.size());
+        assertEquals(28, getMetrics().size());
         assertMetric("test.counter", 0.95, 1, Collections.<String>emptyList(), 4);
         assertMetric("test.rate", 0.95, 1, Collections.<String>emptyList(), 4);
 

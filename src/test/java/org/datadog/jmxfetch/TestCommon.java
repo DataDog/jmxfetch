@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -63,7 +64,7 @@ public class TestCommon {
     App app;
     MBeanServer mbs;
     List<ObjectName> objectNames = new ArrayList<>();
-    List<Map<String, Object>> metrics = new ArrayList<>();
+    List<Map<String, Object>> metrics = new CopyOnWriteArrayList<>();
     List<Map<String, Object>> serviceChecks;
 
     /** Setup logger. */
@@ -73,7 +74,7 @@ public class TestCommon {
         if (level == null) {
             level = "ALL";
         }
-        CustomLogger.setup(LogLevel.ALL, "/tmp/jmxfetch_test.log", false);
+        CustomLogger.setup(LogLevel.fromString(level), "/tmp/jmxfetch_test.log", false);
     }
 
     /**
@@ -113,10 +114,10 @@ public class TestCommon {
      */
     @After
     public void teardown() {
+        this.metrics.clear();
         if (app != null) {
             app.clearAllInstances();
             app.stop();
-            metrics.clear();
         }
         try {
             unregisterMBeans();
@@ -217,7 +218,8 @@ public class TestCommon {
     protected void run() {
         if (app != null) {
             app.doIteration();
-            metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            this.metrics.clear();
+            this.metrics.addAll(((ConsoleReporter) appConfig.getReporter()).getMetrics());
         }
     }
 
@@ -233,7 +235,7 @@ public class TestCommon {
 
     /** Return the metrics collected by JMXFetch. */
     protected List<Map<String, Object>> getMetrics() {
-        return metrics;
+        return this.metrics;
     }
 
     /** Return the service checks collected by JMXFetch. */
@@ -369,7 +371,7 @@ public class TestCommon {
         int totalMetrics = 0;
         List<Map<String, Object>> untestedMetrics = new ArrayList<Map<String, Object>>();
 
-        for (Map<String, Object> m : metrics) {
+        for (Map<String, Object> m : this.metrics) {
             String mName = (String) (m.get("name"));
 
             // Exclusion logic
