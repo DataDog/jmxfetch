@@ -62,8 +62,8 @@ public class TestCommon {
     AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
     MBeanServer mbs;
-    List<ObjectName> objectNames = new ArrayList<ObjectName>();
-    List<Map<String, Object>> metrics;
+    List<ObjectName> objectNames = new ArrayList<>();
+    List<Map<String, Object>> metrics = new ArrayList<>();
     List<Map<String, Object>> serviceChecks;
 
     /** Setup logger. */
@@ -116,6 +116,7 @@ public class TestCommon {
         if (app != null) {
             app.clearAllInstances();
             app.stop();
+            metrics.clear();
         }
         try {
             unregisterMBeans();

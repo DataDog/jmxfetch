@@ -545,6 +545,7 @@ public class App {
             }
             if (this.appTelemetry != null) {
                 this.appTelemetry.setRunningInstanceCount(this.instances.size());
+                log.info("Instances running are: {}", this.instances);
             }
 
             if (!this.collectionProcessor.ready()) {
@@ -1211,6 +1212,7 @@ public class App {
                 if (this.appTelemetry != null) {
                     this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
                     this.appTelemetry.setRunningInstanceCount(this.instances.size());
+                    log.info("Instances running are: {}", this.instances);
                 }
 
             } catch (Throwable e) {

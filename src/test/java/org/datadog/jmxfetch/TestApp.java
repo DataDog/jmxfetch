@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.util.AppTelemetry;
 
 import java.io.File;
@@ -17,6 +18,7 @@ import javax.management.ObjectName;
 
 import org.junit.Test;
 
+@Slf4j
 public class TestApp extends TestCommon {
 
     /** Tag metrics with MBean parameters based on user supplied regex */
@@ -50,7 +52,7 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 10);
 
         AppTelemetry tlm = app.getAppTelemetryBean();
-        assertEquals(1, tlm.getRunningInstanceCount());
+        assertEquals("Instance count should be 1", 1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters. */
@@ -70,8 +72,11 @@ public class TestApp extends TestCommon {
         List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(14, metrics.size());
-
+        assertEquals("Metric count was not correct", 14, metrics.size());
+        for (Map<String, Object> metric : metrics) {
+            log.info("Metric: {}", metric);
+        }
+        
         List<String> tags =
                 Arrays.asList(
                         "type:SimpleTestJavaApp",
@@ -85,7 +90,7 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 7);
 
         AppTelemetry tlm = app.getAppTelemetryBean();
-        assertEquals(1, tlm.getRunningInstanceCount());
+        assertEquals("Instance count should be 1", 1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters with normalize_bean_param_tags option enabled. */
