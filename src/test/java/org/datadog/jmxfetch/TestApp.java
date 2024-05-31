@@ -2,6 +2,7 @@ package org.datadog.jmxfetch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -22,11 +23,18 @@ public class TestApp extends TestCommon {
     /** Tag metrics with MBean parameters based on user supplied regex */
     @Test
     public void testBeanRegexTags() throws Exception {
+        // When we enable JMXFetch telemetry
+        when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
+
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:type=SimpleTestJavaApp,scope=Co|olScope,host=localhost,component=");
         initApplication("jmx_bean_regex_tags.yaml");
+
+        AppTelemetry tlm = app.getAppTelemetryBean();
+        assertNotNull("AppTelemetryBean should not be null", tlm);
+        assertEquals("Before run", 0, tlm.getRunningInstanceCount());
 
         // Run the collection
         run();
@@ -45,14 +53,15 @@ public class TestApp extends TestCommon {
                         "nonRegexTag:value");
 
         assertMetric("this.is.100", tags, 10);
-
-        AppTelemetry tlm = app.getAppTelemetryBean();
-        assertEquals(1, tlm.getRunningInstanceCount());
+        assertEquals("Expecting one instance running", 1, tlm.getRunningInstanceCount());
     }
 
     /** Tag metrics with MBeans parameters. */
     @Test
     public void testBeanTags() throws Exception {
+        // When we enable JMXFetch telemetry
+        when(appConfig.getJmxfetchTelemetry()).thenReturn(true);
+
         // We expose a few metrics through JMX
         registerMBean(
                 new SimpleTestJavaApp(),
@@ -61,10 +70,11 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(14, metrics.size());
+        assertEquals(
+            "Expecting 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file",
+            14, getMetrics().size());
 
         List<String> tags =
                 Arrays.asList(
@@ -79,6 +89,7 @@ public class TestApp extends TestCommon {
         assertMetric("this.is.100", tags, 7);
 
         AppTelemetry tlm = app.getAppTelemetryBean();
+        assertNotNull("AppTelemetryBean should not be null", tlm);
         assertEquals(1, tlm.getRunningInstanceCount());
     }
 
@@ -125,10 +136,9 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(14, metrics.size());
+        assertEquals(14, getMetrics().size());
 
         List<String> tags =
                 Arrays.asList(

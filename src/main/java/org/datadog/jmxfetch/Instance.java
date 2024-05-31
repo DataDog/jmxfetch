@@ -240,7 +240,9 @@ public class Instance {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
         }
 
-        instanceTelemetryBean = createInstanceTelemetryBean();
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            this.instanceTelemetryBean = createInstanceTelemetryBean();
+        }
     }
 
     private ObjectName getObjName(String domain,String instance)
@@ -837,11 +839,14 @@ public class Instance {
     }
 
     private void cleanupTelemetryBean() {
+        if (this.instanceTelemetryBean == null) {
+            return;
+        }
         try {
             mbs.unregisterMBean(instanceTelemetryBeanName);
-            log.debug("Successfully unregistered bean for instance: " + this.getCheckName());
+            log.debug("Successfully unregistered bean for instance: {}", this.getCheckName());
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
-            log.debug("Unable to unregister bean for instance: " + this.getCheckName());
+            log.debug("Unable to unregister bean for instance: {}", this.getCheckName());
         }
     }
 

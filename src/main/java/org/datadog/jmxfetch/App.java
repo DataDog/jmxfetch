@@ -133,7 +133,10 @@ public class App {
         }
         this.configs = getConfigs(this.appConfig);
 
-        this.initTelemetryBean();
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            log.info("Enabling JMX Fetch Telemetry");
+            this.initTelemetryBean();
+        }
     }
 
     private ObjectName getAppTelemetryBeanName() {
@@ -168,7 +171,7 @@ public class App {
          | MBeanRegistrationException
          | NotCompliantMBeanException e) {
             log.warn("Could not register bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                appTelemetryBeanName, e);
         }
 
         this.appTelemetry = bean;
@@ -176,6 +179,11 @@ public class App {
     }
 
     private void teardownTelemetry() {
+        if (!this.appConfig.getJmxfetchTelemetry()) {
+            log.debug("Skipping teardown telemetry as not enabled");
+            return;
+        }
+
         MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
         ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
         if (appTelemetryBeanName == null) {
@@ -187,7 +195,7 @@ public class App {
             log.debug("Succesfully unregistered app telemetry bean");
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             log.warn("Could not unregister bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                appTelemetryBeanName, e);
         }
     }
 
@@ -540,7 +548,7 @@ public class App {
             for (Instance instance : this.instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
             }
-            if (this.appTelemetry != null) {
+            if (this.appTelemetry != null && this.appConfig.getJmxfetchTelemetry()) {
                 this.appTelemetry.setRunningInstanceCount(this.instances.size());
             }
 
@@ -906,6 +914,7 @@ public class App {
     public void init(final boolean forceNewConnection) {
         log.info("Cleaning up instances...");
         this.clearInstances(this.instances);
+        this.instances.clear();
         this.clearInstances(this.brokenInstanceMap.values());
         this.brokenInstanceMap.clear();
 
@@ -1205,7 +1214,7 @@ public class App {
                 this.brokenInstanceMap.remove(instance.toString());
                 this.instances.add(instance);
 
-                if (this.appTelemetry != null) {
+                if (this.appTelemetry != null && this.appConfig.getJmxfetchTelemetry()) {
                     this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
                     this.appTelemetry.setRunningInstanceCount(this.instances.size());
                 }

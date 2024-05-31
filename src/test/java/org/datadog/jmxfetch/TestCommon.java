@@ -62,7 +62,7 @@ public class TestCommon {
     AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
     MBeanServer mbs;
-    List<ObjectName> objectNames = new ArrayList<ObjectName>();
+    List<ObjectName> objectNames = new ArrayList<>();
     List<Map<String, Object>> metrics;
     List<Map<String, Object>> serviceChecks;
 
@@ -87,10 +87,12 @@ public class TestCommon {
     protected void registerMBean(Object application, String objectStringName)
             throws InstanceAlreadyExistsException, MBeanRegistrationException,
                     NotCompliantMBeanException, MalformedObjectNameException {
-        mbs = (mbs == null) ? ManagementFactory.getPlatformMBeanServer() : mbs;
+        if(this.mbs == null) {
+            this.mbs = ManagementFactory.getPlatformMBeanServer();
+        }
         ObjectName objectName = new ObjectName(objectStringName);
+        this.mbs.registerMBean(application, objectName);
         objectNames.add(objectName);
-        mbs.registerMBean(application, objectName);
     }
 
     /**
@@ -100,10 +102,11 @@ public class TestCommon {
      * @throws MBeanRegistrationException
      */
     public void unregisterMBeans() throws MBeanRegistrationException, InstanceNotFoundException {
-        if (mbs != null) {
-            for (ObjectName objectName : objectNames) {
-                mbs.unregisterMBean(objectName);
+        if (this.mbs != null) {
+            for (ObjectName objectName : this.objectNames) {
+                this.mbs.unregisterMBean(objectName);
             }
+            this.objectNames.clear();
         }
     }
 
