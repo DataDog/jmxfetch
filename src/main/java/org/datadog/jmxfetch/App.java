@@ -133,7 +133,30 @@ public class App {
         }
         this.configs = getConfigs(this.appConfig);
 
-        this.initTelemetryBean();
+        this.appTelemetry = new AppTelemetry();
+
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            log.info("Enabling JMX Fetch Telemetry");
+            this.registerTelemetryBean(this.appTelemetry);
+        }
+    }
+
+    private void registerTelemetryBean(AppTelemetry bean) {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
+        if (appTelemetryBeanName == null) {
+            return;
+        }
+
+        try {
+            mbs.registerMBean(bean, appTelemetryBeanName);
+            log.debug("Succesfully registered app telemetry bean");
+        } catch (InstanceAlreadyExistsException
+                 | MBeanRegistrationException
+                 | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ",
+                appTelemetryBeanName.toString(), e);
+        }
     }
 
     private ObjectName getAppTelemetryBeanName() {
@@ -520,7 +543,9 @@ public class App {
     }
 
     void stop() {
-        this.teardownTelemetry();
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            this.teardownTelemetry();
+        }
         this.collectionProcessor.stop();
         this.recoveryProcessor.stop();
     }
