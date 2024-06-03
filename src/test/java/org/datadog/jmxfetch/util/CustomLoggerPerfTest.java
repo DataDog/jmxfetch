@@ -34,6 +34,7 @@ public final class CustomLoggerPerfTest {
     private final int msgSize;  // length of log message in bytes
     private final int uPause;  // length of log message in bytes
     private final boolean rfc3339;  // length of log message in bytes
+    private final boolean logThreadName;
 
     private AtomicBoolean running;
     private final ExecutorService executor;
@@ -42,29 +43,37 @@ public final class CustomLoggerPerfTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                 { 90, 100, 1, 128, false },  // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, false
-                 { 90, 100, 1, 512, false },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false
-                 { 90, 100, 1, 1024, false },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false
-                 { 90, 100, 1, 128, true },  // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, true
-                 { 90, 100, 1, 512, true },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true
-                 { 90, 100, 1, 1024, true },  // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true
-           });
+        return Arrays.asList(new Object[][]{
+            {90, 100, 1, 128, false, false}, // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, false, false
+            {90, 100, 1, 512, false, false}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false, false
+            {90, 100, 1, 1024, false, false}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false, false
+            {90, 100, 1, 128, false, true}, // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, false, true
+            {90, 100, 1, 512, false, true}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false, true
+            {90, 100, 1, 1024, false, true}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, false, true
+            {90, 100, 1, 128, true, false}, // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, true, false
+            {90, 100, 1, 512, true, false}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true, false
+            {90, 100, 1, 1024, true, false}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true, false
+            {90, 100, 1, 128, true, true}, // 90 seconds, 100 microsecond pause, 1 worker, 128 byte string, true, true
+            {90, 100, 1, 512, true, true}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true, true
+            {90, 100, 1, 1024, true, true}, // 90 seconds, 100 microsecond pause, 1 worker, 512 byte string, true, true
+        });
     }
 
-    public CustomLoggerPerfTest(int duration, int uPause, int testWorkers, int msgSize, boolean rfc3339) throws IOException {
+    public CustomLoggerPerfTest(int duration, int uPause, int testWorkers, int msgSize, boolean rfc3339, boolean logThreadName) throws IOException {
         this.duration = duration;
         this.testWorkers = testWorkers;
         this.msgSize = msgSize;
         this.uPause = uPause;
         this.rfc3339 = rfc3339;
+        this.logThreadName =logThreadName;
 
         this.executor = Executors.newFixedThreadPool(testWorkers);
         this.running = new AtomicBoolean(true);
 
         CustomLogger.setup(LogLevel.fromString("INFO"),
-                null,   //stdout
-                rfc3339);
+            null,   //stdout
+            rfc3339,
+            logThreadName);
     }
 
     /**
@@ -117,11 +126,13 @@ public final class CustomLoggerPerfTest {
             .append(this.msgSize)
             .append(" and RFC 3339 mode set to ")
             .append(this.rfc3339)
+            .append(" and log thread name set to ")
+            .append(this.logThreadName)
             .append(" logged ")
             .append(count.get())
             .append(" messsages.");
 
-        System.out.println(sb.toString());
+        System.out.println(sb);
     }
 
     private String getRandomString(int length) {
@@ -135,8 +146,7 @@ public final class CustomLoggerPerfTest {
               (random.nextFloat() * (rightLimit - leftLimit + 1));
             buffer.append((char) randomLimitedInt);
         }
-        String generatedString = buffer.toString();
 
-        return generatedString;
+        return buffer.toString();
     }
 }
