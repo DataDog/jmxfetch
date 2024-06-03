@@ -1,6 +1,7 @@
 Changelog
 =========
 # 0.49.2-SNAPSHOT / TBC
+* [BUGFIX] Telemetry is no longer initialized when telemetry is disabled [#522][]
 
 # 0.49.1 / 2024-04-09
 * [FEATURE] Add ZGC Major and Minor Cycles and ZGC Major and Minor Pauses beans support out of the box (Generational ZGC support) [#509][]
@@ -767,6 +768,7 @@ Changelog
 [#477]: https://github.com/DataDog/jmxfetch/issues/477
 [#509]: https://github.com/DataDog/jmxfetch/issues/509
 [#512]: https://github.com/DataDog/jmxfetch/pull/512
+[#522]: https://github.com/DataDog/jmxfetch/pull/522
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
