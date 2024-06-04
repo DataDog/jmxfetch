@@ -62,8 +62,8 @@ public class TestCommon {
     AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
     MBeanServer mbs;
-    List<ObjectName> objectNames = new ArrayList<ObjectName>();
-    List<Map<String, Object>> metrics;
+    List<ObjectName> objectNames = new ArrayList<>();
+    List<Map<String, Object>> metrics = new ArrayList<>();
     List<Map<String, Object>> serviceChecks;
 
     /** Setup logger. */
@@ -73,7 +73,7 @@ public class TestCommon {
         if (level == null) {
             level = "ALL";
         }
-        CustomLogger.setup(LogLevel.ALL, "/tmp/jmxfetch_test.log", false);
+        CustomLogger.setup(LogLevel.fromString(level), "/tmp/jmxfetch_test.log", false);
     }
 
     /**
@@ -104,6 +104,7 @@ public class TestCommon {
             for (ObjectName objectName : objectNames) {
                 mbs.unregisterMBean(objectName);
             }
+            this.objectNames.clear();
         }
     }
 
@@ -112,6 +113,7 @@ public class TestCommon {
      */
     @After
     public void teardown() {
+        this.metrics.clear();
         if (app != null) {
             app.clearAllInstances();
             app.stop();
@@ -214,8 +216,9 @@ public class TestCommon {
     /** Run a JMXFetch iteration. */
     protected void run() {
         if (app != null) {
+            this.metrics.clear();
             app.doIteration();
-            metrics = ((ConsoleReporter) appConfig.getReporter()).getMetrics();
+            this.metrics.addAll(((ConsoleReporter) appConfig.getReporter()).getMetrics());
         }
     }
 
@@ -382,7 +385,7 @@ public class TestCommon {
             }
         }
 
-        if (untestedMetrics.size() > 0) {
+        if (!untestedMetrics.isEmpty()) {
             String message = generateReport(untestedMetrics, totalMetrics);
             fail(message);
         }
