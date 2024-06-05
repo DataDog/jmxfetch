@@ -139,8 +139,6 @@ public class CustomLogger {
 
         // log format
         return new SimpleFormatter() {
-            private final String formatLayout =
-                logThreadName ? JDK14_WITH_THREADS_LAYOUT : JDK14_LAYOUT;
 
             private String simpleClassName(String str) {
                 int start = str.lastIndexOf('.');
@@ -170,14 +168,8 @@ public class CustomLogger {
                     Throwable throwable = new Throwable();
                     StackTraceElement logEmissionFrame = throwable.getStackTrace()[6];
 
-                    final String logFormat;
                     if (logThreadName) {
-                        logFormat = JDK14_WITH_THREADS_LAYOUT_FILE_LINE;
-                    } else {
-                        logFormat = JDK14_LAYOUT_FILE_LINE;
-                    }
-                    if (logThreadName) {
-                        return String.format(logFormat,
+                        return String.format(JDK14_WITH_THREADS_LAYOUT_FILE_LINE,
                             dateFormatter.format(new Date()),
                             LogLevel.fromJulLevel(lr.getLevel()).toString(),
                             Thread.currentThread().getName(),
@@ -187,7 +179,8 @@ public class CustomLogger {
                             exception
                         );
                     }
-                    return String.format(logFormat,
+
+                    return String.format(JDK14_LAYOUT_FILE_LINE,
                         dateFormatter.format(new Date()),
                         LogLevel.fromJulLevel(lr.getLevel()).toString(),
                         logEmissionFrame.getFileName(),
@@ -198,7 +191,7 @@ public class CustomLogger {
                 }
 
                 if (logThreadName) {
-                    return String.format(formatLayout,
+                    return String.format(JDK14_WITH_THREADS_LAYOUT,
                         dateFormatter.format(new Date()),
                         LogLevel.fromJulLevel(lr.getLevel()).toString(),
                         Thread.currentThread().getName(),
@@ -207,7 +200,7 @@ public class CustomLogger {
                         exception
                     );
                 }
-                return String.format(formatLayout,
+                return String.format(JDK14_LAYOUT,
                     dateFormatter.format(new Date()),
                     LogLevel.fromJulLevel(lr.getLevel()).toString(),
                     simpleClassName(lr.getSourceClassName()),

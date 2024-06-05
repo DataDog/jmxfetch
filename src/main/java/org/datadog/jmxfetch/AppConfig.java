@@ -101,7 +101,7 @@ public class AppConfig {
         description = "Logs the thread name with each message",
         required = false)
     @Builder.Default
-    private boolean logThreadName = false;
+    private boolean logThreadName = true;
 
     @Parameter(
             names = {"--conf_directory", "-D"},
