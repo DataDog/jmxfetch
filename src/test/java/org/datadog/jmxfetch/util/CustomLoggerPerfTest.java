@@ -72,8 +72,7 @@ public final class CustomLoggerPerfTest {
 
         CustomLogger.setup(LogLevel.fromString("INFO"),
             null,   //stdout
-            rfc3339,
-            logThreadName);
+            rfc3339);
     }
 
     /**

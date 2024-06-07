@@ -36,6 +36,11 @@ public class CustomLogger {
     private static boolean millisecondLogging =
         System.getProperty("jmxfetch.millisecondLogging", "false").equals("true");
 
+    // Enable by setting -Djmxfetch.disableThreadLogging,
+    // if true, log record will not include thread name
+    private static final boolean disableThreadLogging =
+        System.getProperty("jmxfetch.disableThreadLogging", "false").equals("true");
+
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
 
@@ -66,8 +71,8 @@ public class CustomLogger {
 
     /** setup and configure the logging. */
     public static synchronized void setup(LogLevel level, String logLocation,
-                             boolean logFormatRfc3339, boolean logThreadName) {
-        SimpleFormatter formatter = getFormatter(logFormatRfc3339, logThreadName);
+                             boolean logFormatRfc3339) {
+        SimpleFormatter formatter = getFormatter(logFormatRfc3339);
 
         // log level
         Level julLevel = level.toJulLevel();
@@ -128,8 +133,7 @@ public class CustomLogger {
     }
 
     private static SimpleFormatter getFormatter(
-        final boolean logFormatRfc3339,
-        final boolean logThreadName) {
+        final boolean logFormatRfc3339) {
         String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
         if (millisecondLogging) {
             dateFormat = dateFormat.replace("ss", "ss.SSS");
@@ -168,7 +172,7 @@ public class CustomLogger {
                     Throwable throwable = new Throwable();
                     StackTraceElement logEmissionFrame = throwable.getStackTrace()[6];
 
-                    if (logThreadName) {
+                    if (!disableThreadLogging) {
                         return String.format(JDK14_WITH_THREADS_LAYOUT_FILE_LINE,
                             dateFormatter.format(new Date()),
                             LogLevel.fromJulLevel(lr.getLevel()).toString(),
@@ -190,7 +194,7 @@ public class CustomLogger {
                     );
                 }
 
-                if (logThreadName) {
+                if (!disableThreadLogging) {
                     return String.format(JDK14_WITH_THREADS_LAYOUT,
                         dateFormatter.format(new Date()),
                         LogLevel.fromJulLevel(lr.getLevel()).toString(),

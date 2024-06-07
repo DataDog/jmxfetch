@@ -47,8 +47,7 @@ public class JmxFetch {
             // Set up the logger to add file handler
             CustomLogger.setup(LogLevel.fromString(config.getLogLevel()),
                 config.getLogLocation(),
-                config.isLogFormatRfc3339(),
-                config.isLogThreadName());
+                config.isLogFormatRfc3339());
 
             // Set up the shutdown hook to properly close resources
             attachShutdownHook();

@@ -97,13 +97,6 @@ public class AppConfig {
     private boolean logFormatRfc3339 = false;
 
     @Parameter(
-        names = {"--log_thread_name"},
-        description = "Logs the thread name with each message",
-        required = false)
-    @Builder.Default
-    private boolean logThreadName = true;
-
-    @Parameter(
             names = {"--conf_directory", "-D"},
             description = "Absolute path to the conf.d directory",
             required = false)
@@ -451,10 +444,6 @@ public class AppConfig {
 
     public boolean isLogFormatRfc3339() {
         return logFormatRfc3339;
-    }
-
-    public boolean isLogThreadName() {
-        return logThreadName;
     }
 
     /** Returns path to auto-discovery pipe. Deprecated.. */

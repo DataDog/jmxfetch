@@ -73,7 +73,7 @@ public class TestCommon {
         if (level == null) {
             level = "ALL";
         }
-        CustomLogger.setup(LogLevel.fromString(level), "/tmp/jmxfetch_test.log", false, true);
+        CustomLogger.setup(LogLevel.fromString(level), "/tmp/jmxfetch_test.log", false);
     }
 
     /**
