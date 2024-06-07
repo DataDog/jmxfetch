@@ -1,6 +1,6 @@
 Changelog
 =========
-# 0.49.2-SNAPSHOT / TBC
+# 0.49.2 / 2024-06-07
 * [FEATURE] Added support for emitting logs with thread name [#525][]
 * [BUGFIX] Telemetry is no longer initialized when telemetry is disabled [#522][]
 
