@@ -2,22 +2,17 @@ package org.datadog.jmxfetch.util;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.datadog.jmxfetch.util.LogLevel;
-import org.datadog.jmxfetch.util.StdoutConsoleHandler;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
-import java.util.logging.Filter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -41,14 +36,24 @@ public class CustomLogger {
     private static boolean millisecondLogging =
         System.getProperty("jmxfetch.millisecondLogging", "false").equals("true");
 
+    // Enable by setting -Djmxfetch.disableThreadLogging,
+    // if true, log record will not include thread name
+    private static final boolean disableThreadLogging =
+        System.getProperty("jmxfetch.disableThreadLogging", "false").equals("true");
+
     private static final ConcurrentHashMap<String, AtomicInteger> messageCount
             = new ConcurrentHashMap<String, AtomicInteger>();
 
     private static final String DATE_JDK14_LAYOUT = "yyyy-MM-dd HH:mm:ss z";
     private static final String DATE_JDK14_LAYOUT_RFC3339 = "yyyy-MM-dd'T'HH:mm:ssXXX";
-    private static final String JDK14_LAYOUT = "%s | JMX | %2$s | %3$s | %4$s%5$s%n";
+    private static final String JDK14_LAYOUT =
+        "%s | JMX | %2$s | %3$s | %4$s%5$s%n";
+    private static final String JDK14_WITH_THREADS_LAYOUT =
+        "%s | JMX | %2$s | %3$s | %4$s | %5$s%6$s%n";
     private static final String JDK14_LAYOUT_FILE_LINE =
-            "%s | JMX | %2$s | %3$s:%4$d | %5$s%6$s%n";
+        "%s | JMX | %2$s | %3$s:%4$d | %5$s%6$s%n";
+    private static final String JDK14_WITH_THREADS_LAYOUT_FILE_LINE =
+        "%s | JMX | %2$s | %3$s | %4$s:%5$d | %6$s%7$s%n";
 
     private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -67,66 +72,7 @@ public class CustomLogger {
     /** setup and configure the logging. */
     public static synchronized void setup(LogLevel level, String logLocation,
                              boolean logFormatRfc3339) {
-        String target = "CONSOLE";
-        String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
-        if (millisecondLogging) {
-            dateFormat = dateFormat.replace("ss", "ss.SSS");
-        }
-        final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
-                                                            Locale.getDefault());
-
-        // log format
-        SimpleFormatter formatter = new SimpleFormatter() {
-            private static final String format = JDK14_LAYOUT;
-
-            private String simpleClassName(String str) {
-                int start = str.lastIndexOf('.');
-                int end = str.indexOf('$');
-                if (start == -1 || start + 1 == str.length()) {
-                    return str;
-                }
-                if (end == -1 || end <= start || end > str.length()) {
-                    end = str.length();
-                }
-                return str.substring(start + 1, end);
-            }
-
-            @Override
-            public synchronized String format(LogRecord lr) {
-                String exception = "";
-                if (lr.getThrown() != null) {
-                    StringWriter writer = new StringWriter();
-                    PrintWriter stream = new PrintWriter(writer);
-                    stream.println();
-                    lr.getThrown().printStackTrace(stream);
-                    stream.close();
-                    exception = writer.toString();
-                }
-
-                if (enableFileLineLogging) {
-                    Throwable throwable = new Throwable();
-                    StackTraceElement logEmissionFrame = throwable.getStackTrace()[6];
-
-                    return String.format(JDK14_LAYOUT_FILE_LINE,
-                        dateFormatter.format(new Date()).toString(),
-                        LogLevel.fromJulLevel(lr.getLevel()).toString(),
-                        logEmissionFrame.getFileName(),
-                        logEmissionFrame.getLineNumber(),
-                        lr.getMessage(),
-                        exception
-                    );
-
-                }
-
-                return String.format(format,
-                    dateFormatter.format(new Date()).toString(),
-                    LogLevel.fromJulLevel(lr.getLevel()).toString(),
-                    simpleClassName(lr.getSourceClassName()),
-                    lr.getMessage(),
-                    exception
-                );
-            }
-        };
+        SimpleFormatter formatter = getFormatter(logFormatRfc3339);
 
         // log level
         Level julLevel = level.toJulLevel();
@@ -138,14 +84,14 @@ public class CustomLogger {
         manager.reset();
 
         // prepare the different handlers
-        ConsoleHandler stdoutHandler = null;
+        ConsoleHandler stdoutHandler;
         ConsoleHandler stderrHandler = null;
         FileHandler fileHandler = null;
 
         // the logLocation isn't always containing a file, it is sometimes
         // referring to a standard output. We want to create a FileHandler only
         // if the logLocation is a file on the FS.
-        if (logLocation != null && logLocation.length() > 0) {
+        if (logLocation != null && !logLocation.isEmpty()) {
             if (!isStdOut(logLocation) && !isStdErr(logLocation)) {
                 // file logging
                 try {
@@ -178,12 +124,95 @@ public class CustomLogger {
         if (fileHandler != null) {
             jmxfetchLogger.addHandler(fileHandler);
         }
-        if (stdoutHandler != null) { // always non-null but doesn't cost much
-            jmxfetchLogger.addHandler(stdoutHandler);
-        }
+
+        jmxfetchLogger.addHandler(stdoutHandler);
+
         if (stderrHandler != null) {
             jmxfetchLogger.addHandler(stderrHandler);
         }
+    }
+
+    private static SimpleFormatter getFormatter(
+        final boolean logFormatRfc3339) {
+        String dateFormat = logFormatRfc3339 ? DATE_JDK14_LAYOUT_RFC3339 : DATE_JDK14_LAYOUT;
+        if (millisecondLogging) {
+            dateFormat = dateFormat.replace("ss", "ss.SSS");
+        }
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat(dateFormat,
+                                                            Locale.getDefault());
+
+        // log format
+        return new SimpleFormatter() {
+
+            private String simpleClassName(String str) {
+                int start = str.lastIndexOf('.');
+                int end = str.indexOf('$');
+                if (start == -1 || start + 1 == str.length()) {
+                    return str;
+                }
+                if (end == -1 || end <= start) {
+                    end = str.length();
+                }
+                return str.substring(start + 1, end);
+            }
+
+            @Override
+            public synchronized String format(LogRecord lr) {
+                String exception = "";
+                if (lr.getThrown() != null) {
+                    StringWriter writer = new StringWriter();
+                    PrintWriter stream = new PrintWriter(writer);
+                    stream.println();
+                    lr.getThrown().printStackTrace(stream);
+                    stream.close();
+                    exception = writer.toString();
+                }
+
+                if (enableFileLineLogging) {
+                    Throwable throwable = new Throwable();
+                    StackTraceElement logEmissionFrame = throwable.getStackTrace()[6];
+
+                    if (!disableThreadLogging) {
+                        return String.format(JDK14_WITH_THREADS_LAYOUT_FILE_LINE,
+                            dateFormatter.format(new Date()),
+                            LogLevel.fromJulLevel(lr.getLevel()).toString(),
+                            Thread.currentThread().getName(),
+                            logEmissionFrame.getFileName(),
+                            logEmissionFrame.getLineNumber(),
+                            lr.getMessage(),
+                            exception
+                        );
+                    }
+
+                    return String.format(JDK14_LAYOUT_FILE_LINE,
+                        dateFormatter.format(new Date()),
+                        LogLevel.fromJulLevel(lr.getLevel()).toString(),
+                        logEmissionFrame.getFileName(),
+                        logEmissionFrame.getLineNumber(),
+                        lr.getMessage(),
+                        exception
+                    );
+                }
+
+                if (!disableThreadLogging) {
+                    return String.format(JDK14_WITH_THREADS_LAYOUT,
+                        dateFormatter.format(new Date()),
+                        LogLevel.fromJulLevel(lr.getLevel()).toString(),
+                        Thread.currentThread().getName(),
+                        simpleClassName(lr.getSourceClassName()),
+                        lr.getMessage(),
+                        exception
+                    );
+                }
+                return String.format(JDK14_LAYOUT,
+                    dateFormatter.format(new Date()),
+                    LogLevel.fromJulLevel(lr.getLevel()).toString(),
+                    simpleClassName(lr.getSourceClassName()),
+                    lr.getMessage(),
+                    exception
+                );
+            }
+        };
     }
 
     /** closeHandlers closes all opened handlers. */
