@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.49.3-SNAPSHOT / 2024-06-07
+
 # 0.49.2 / 2024-06-07
 * [FEATURE] Added support for emitting logs with thread name [#525][]
 * [BUGFIX] Telemetry is no longer initialized when telemetry is disabled [#522][]
@@ -768,7 +770,9 @@ Changelog
 [#469]: https://github.com/DataDog/jmxfetch/issues/469
 [#477]: https://github.com/DataDog/jmxfetch/issues/477
 [#509]: https://github.com/DataDog/jmxfetch/issues/509
-[#512]: https://github.com/DataDog/jmxfetch/pull/512
+[#512]: https://github.com/DataDog/jmxfetch/issues/512
+[#522]: https://github.com/DataDog/jmxfetch/issues/522
+[#525]: https://github.com/DataDog/jmxfetch/issues/525
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
