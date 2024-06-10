@@ -486,7 +486,7 @@ public class AppConfig {
         return initialRefreshBeansPeriod;
     }
 
-    public Map<String, String> getGlobalTags() {
+        public Map<String, String> getGlobalTags() {
         return globalTags;
     }
 
@@ -495,6 +495,8 @@ public class AppConfig {
     }
 
     /**
+     * Whether or not internal threads will be run as daemon.
+     *
      * @return Whether or not internal threads will be run as daemon.
      */
     public boolean isDaemon() {
