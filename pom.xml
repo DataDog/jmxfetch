@@ -57,7 +57,7 @@
         <javax.management.j2ee-api.version>1.1.2</javax.management.j2ee-api.version>
         <jcommander.version>1.35</jcommander.version>
         <junit.version>4.13.2</junit.version>
-        <lombok.version>1.18.22</lombok.version>
+        <lombok.version>1.18.32</lombok.version>
         <mockito.version>2.28.2</mockito.version>
         <slf4j.version>1.7.32</slf4j.version>
         <snakeyaml.version>2.0</snakeyaml.version>
