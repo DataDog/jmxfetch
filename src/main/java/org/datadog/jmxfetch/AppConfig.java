@@ -306,6 +306,12 @@ public class AppConfig {
      */
     private ServiceNameProvider serviceNameProvider;
 
+    /**
+     * Controls how JMX connections are created.
+     */
+    @Builder.Default
+    private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
+
     @Builder.Default
     private Status status = new Status();
 
@@ -492,6 +498,10 @@ public class AppConfig {
 
     public ServiceNameProvider getServiceNameProvider() {
         return serviceNameProvider;
+    }
+
+    public ConnectionFactory getConnectionFactory() {
+        return connectionFactory;
     }
 
     /**
