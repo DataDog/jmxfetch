@@ -1,10 +1,23 @@
 package org.datadog.jmxfetch;
 
+import org.datadog.jmxfetch.jee.BoundaryStatisticImpl;
+import org.datadog.jmxfetch.jee.BoundedRangeStatisticImpl;
+import org.datadog.jmxfetch.jee.CountStatisticImpl;
+import org.datadog.jmxfetch.jee.RangeStatisticImpl;
+import org.datadog.jmxfetch.jee.TimeStatisticImpl;
+import org.datadog.jmxfetch.jee.UnsupportedStatisticImpl;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.management.j2ee.statistics.BoundaryStatistic;
+import javax.management.j2ee.statistics.BoundedRangeStatistic;
+import javax.management.j2ee.statistics.CountStatistic;
+import javax.management.j2ee.statistics.RangeStatistic;
+import javax.management.j2ee.statistics.Statistic;
+import javax.management.j2ee.statistics.TimeStatistic;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
@@ -44,6 +57,14 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final CompositeType compositetype;
 
     private final CompositeData nestedCompositeData;
+
+    // JEE Stats
+    private final CountStatistic countStatistic = new CountStatisticImpl("Sample Counter", long42424242);
+    private final TimeStatistic timeStatistic = new TimeStatisticImpl("Sample Time", 0, Long.MAX_VALUE, long42424242, 1);
+    private final RangeStatistic rangeStatistic = new RangeStatisticImpl("Sample Range", Long.MIN_VALUE, Long.MAX_VALUE, long42424242);
+    private final BoundaryStatistic boundaryStatistic = new BoundaryStatisticImpl("Sample Boundary", Long.MIN_VALUE, Long.MAX_VALUE);
+    private final BoundedRangeStatistic boundedRangeStatistic = new BoundedRangeStatisticImpl("Sample BoundedRange", Long.MIN_VALUE, Long.MAX_VALUE, 0, -1, +1);
+    private final Statistic unsupportedStatistic = new UnsupportedStatisticImpl("Sample Unsupported Statistic");
 
     SimpleTestJavaApp() {
         hashmap.put("thisis0", 0);
@@ -201,6 +222,36 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     public CompositeData getNestedCompositeData() {
         return this.nestedCompositeData;
+    }
+
+    @Override
+    public Statistic getJeeCounter() {
+        return countStatistic;
+    }
+
+    @Override
+    public Statistic getJeeRange() {
+        return rangeStatistic;
+    }
+
+    @Override
+    public Statistic getJeeTime() {
+        return timeStatistic;
+    }
+
+    @Override
+    public Statistic getJeeBoundary() {
+        return boundaryStatistic;
+    }
+
+    @Override
+    public Statistic getJeeBoundedRange() {
+        return boundedRangeStatistic;
+    }
+
+    @Override
+    public Statistic getJeeUnsupported() {
+        return unsupportedStatistic;
     }
 
     private CompositeData buildCompositeData(Integer i) {

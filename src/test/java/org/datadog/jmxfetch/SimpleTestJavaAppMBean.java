@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.management.j2ee.statistics.Statistic;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.TabularData;
@@ -45,4 +46,10 @@ public interface SimpleTestJavaAppMBean {
     TabularDataSupport getTabularDataSupport();
 
     CompositeData getNestedCompositeData();
+    Statistic getJeeCounter();
+    Statistic getJeeRange();
+    Statistic getJeeTime();
+    Statistic getJeeBoundary();
+    Statistic getJeeBoundedRange();
+    Statistic getJeeUnsupported();
 }

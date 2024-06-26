@@ -4,6 +4,7 @@ package org.datadog.jmxfetch;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.service.ServiceNameProvider;
+import org.datadog.jmxfetch.util.JeeStatisticsAttributes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.j2ee.statistics.Statistic;
 import javax.management.openmbean.CompositeData;
 
 @Slf4j
@@ -26,8 +28,10 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             Arrays.asList(
                     "javax.management.openmbean.CompositeData",
                     "javax.management.openmbean.CompositeDataSupport",
+                    "javax.management.j2ee.statistics.Statistic",
                     "java.util.HashMap",
                     "java.util.Map");
+
 
     private List<String> subAttributeList = new ArrayList<String>();
 
@@ -68,6 +72,8 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             for (String key : data.keySet()) {
                 this.subAttributeList.add(key);
             }
+        } else if (attributeValue instanceof Statistic) {
+            this.subAttributeList.addAll(JeeStatisticsAttributes.attributesFor(attributeValue));
         }
     }
 
@@ -96,6 +102,8 @@ public class JmxComplexAttribute extends JmxSubAttribute {
         } else if (value instanceof java.util.Map) {
             Map<String, Object> data = (Map<String, Object>) value;
             return data.get(subAttribute);
+        } else if (value instanceof Statistic) {
+            return JeeStatisticsAttributes.dataFor(value, subAttribute);
         }
         throw new NumberFormatException();
     }
