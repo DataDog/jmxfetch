@@ -3,11 +3,13 @@ package org.datadog.jmxfetch;
 import org.datadog.jmxfetch.jee.BoundaryStatisticImpl;
 import org.datadog.jmxfetch.jee.BoundedRangeStatisticImpl;
 import org.datadog.jmxfetch.jee.CountStatisticImpl;
+import org.datadog.jmxfetch.jee.JeeStats;
 import org.datadog.jmxfetch.jee.RangeStatisticImpl;
 import org.datadog.jmxfetch.jee.TimeStatisticImpl;
 import org.datadog.jmxfetch.jee.UnsupportedStatisticImpl;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +19,7 @@ import javax.management.j2ee.statistics.BoundedRangeStatistic;
 import javax.management.j2ee.statistics.CountStatistic;
 import javax.management.j2ee.statistics.RangeStatistic;
 import javax.management.j2ee.statistics.Statistic;
+import javax.management.j2ee.statistics.Stats;
 import javax.management.j2ee.statistics.TimeStatistic;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
@@ -65,6 +68,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final BoundaryStatistic boundaryStatistic;
     private final BoundedRangeStatistic boundedRangeStatistic;
     private final Statistic unsupportedStatistic;
+    private final Stats jeeStats;
 
     SimpleTestJavaApp() {
         this(false);
@@ -88,6 +92,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
             boundaryStatistic = new BoundaryStatisticImpl("Sample Boundary", Long.MIN_VALUE, Long.MAX_VALUE);
             boundedRangeStatistic = new BoundedRangeStatisticImpl("Sample BoundedRange", Long.MIN_VALUE, Long.MAX_VALUE, 0, -1, +1);
             unsupportedStatistic = new UnsupportedStatisticImpl("Sample Unsupported Statistic");
+            jeeStats = new JeeStats(Collections.singletonMap("MyCounter", countStatistic));
         } else {
             countStatistic = null;
             timeStatistic = null;
@@ -95,6 +100,7 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
             boundaryStatistic = null;
             boundedRangeStatistic = null;
             unsupportedStatistic = null;
+            jeeStats = null;
         }
     }
 
@@ -270,6 +276,11 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     @Override
     public Statistic getJeeUnsupported() {
         return unsupportedStatistic;
+    }
+
+    @Override
+    public Stats getJeeStat() {
+        return jeeStats;
     }
 
     private CompositeData buildCompositeData(Integer i) {

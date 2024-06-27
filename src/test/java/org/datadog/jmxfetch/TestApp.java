@@ -1139,8 +1139,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 13 metrics from java.lang + 16 defined - 1 undefined
-        assertEquals(28, metrics.size());
+        // 13 metrics from java.lang + 17 defined - 1 undefined
+        assertEquals(29, metrics.size());
 
         List<String> tags = Arrays.asList(
                 "instance:jmx_test_instance",
@@ -1164,6 +1164,7 @@ public class TestApp extends TestCommon {
         assertMetric(prefix + "jee_bounded_range.current", 0, tags, -1);
         assertMetric(prefix + "jee_bounded_range.lower_bound", -1, tags, -1);
         assertMetric(prefix + "jee_bounded_range.upper_bound", 1, tags, -1);
+        assertMetric(prefix + "jee_stat.my_counter.count", testApp.getLong42424242(), tags, -1);
         assertCoverage();
     }
 

@@ -18,7 +18,6 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import javax.management.j2ee.statistics.Statistic;
 import javax.management.openmbean.CompositeData;
 
 @Slf4j
@@ -29,6 +28,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
                     "javax.management.openmbean.CompositeData",
                     "javax.management.openmbean.CompositeDataSupport",
                     "javax.management.j2ee.statistics.Statistic",
+                    "javax.management.j2ee.statistics.Stats",
                     "java.util.HashMap",
                     "java.util.Map");
 
@@ -72,8 +72,12 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             for (String key : data.keySet()) {
                 this.subAttributeList.add(key);
             }
-        } else if (attributeValue instanceof Statistic) {
+        } else if (JeeStatisticsAttributes.CLASS_STATISTIC != null
+            && JeeStatisticsAttributes.CLASS_STATISTIC.isInstance(attributeValue)) {
             this.subAttributeList.addAll(JeeStatisticsAttributes.attributesFor(attributeValue));
+        } else if (JeeStatisticsAttributes.CLASS_STATS != null
+            && JeeStatisticsAttributes.CLASS_STATS.isInstance(attributeValue)) {
+            this.subAttributeList.addAll(JeeStatisticsAttributes.getStatisticNames(attributeValue));
         }
     }
 
@@ -102,8 +106,12 @@ public class JmxComplexAttribute extends JmxSubAttribute {
         } else if (value instanceof java.util.Map) {
             Map<String, Object> data = (Map<String, Object>) value;
             return data.get(subAttribute);
-        } else if (value instanceof Statistic) {
+        } else if (JeeStatisticsAttributes.CLASS_STATISTIC != null
+            && JeeStatisticsAttributes.CLASS_STATISTIC.isInstance(value)) {
             return JeeStatisticsAttributes.dataFor(value, subAttribute);
+        } else if  (JeeStatisticsAttributes.CLASS_STATS != null
+            && JeeStatisticsAttributes.CLASS_STATS.isInstance(value)) {
+            return JeeStatisticsAttributes.getStatisticDataFor(value, subAttribute);
         }
         throw new NumberFormatException();
     }

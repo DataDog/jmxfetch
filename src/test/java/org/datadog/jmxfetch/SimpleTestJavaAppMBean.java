@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.j2ee.statistics.Statistic;
+import javax.management.j2ee.statistics.Stats;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.TabularData;
@@ -52,4 +53,5 @@ public interface SimpleTestJavaAppMBean {
     Statistic getJeeBoundary();
     Statistic getJeeBoundedRange();
     Statistic getJeeUnsupported();
+    Stats getJeeStat();
 }
