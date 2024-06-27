@@ -1129,7 +1129,7 @@ public class TestApp extends TestCommon {
     @Test
     public void testJeeStatistics() throws Exception {
         // We expose a few metrics through JMX
-        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp(true);
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
 
         // We do a first collection

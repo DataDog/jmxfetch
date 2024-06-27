@@ -59,14 +59,17 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
     private final CompositeData nestedCompositeData;
 
     // JEE Stats
-    private final CountStatistic countStatistic = new CountStatisticImpl("Sample Counter", long42424242);
-    private final TimeStatistic timeStatistic = new TimeStatisticImpl("Sample Time", 0, Long.MAX_VALUE, long42424242, 1);
-    private final RangeStatistic rangeStatistic = new RangeStatisticImpl("Sample Range", Long.MIN_VALUE, Long.MAX_VALUE, long42424242);
-    private final BoundaryStatistic boundaryStatistic = new BoundaryStatisticImpl("Sample Boundary", Long.MIN_VALUE, Long.MAX_VALUE);
-    private final BoundedRangeStatistic boundedRangeStatistic = new BoundedRangeStatisticImpl("Sample BoundedRange", Long.MIN_VALUE, Long.MAX_VALUE, 0, -1, +1);
-    private final Statistic unsupportedStatistic = new UnsupportedStatisticImpl("Sample Unsupported Statistic");
+    private final CountStatistic countStatistic;
+    private final TimeStatistic timeStatistic;
+    private final RangeStatistic rangeStatistic;
+    private final BoundaryStatistic boundaryStatistic;
+    private final BoundedRangeStatistic boundedRangeStatistic;
+    private final Statistic unsupportedStatistic;
 
     SimpleTestJavaApp() {
+        this(false);
+    }
+    SimpleTestJavaApp(boolean includeJeeStats) {
         hashmap.put("thisis0", 0);
         hashmap.put("thisis10", 10);
         hashmap.put("thisiscounter", 0);
@@ -78,6 +81,21 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         }
 
         nestedCompositeData = buildNestedCompositeData();
+        if (includeJeeStats) {
+            countStatistic = new CountStatisticImpl("Sample Counter", long42424242);
+            timeStatistic = new TimeStatisticImpl("Sample Time", 0, Long.MAX_VALUE, long42424242, 1);
+            rangeStatistic = new RangeStatisticImpl("Sample Range", Long.MIN_VALUE, Long.MAX_VALUE, long42424242);
+            boundaryStatistic = new BoundaryStatisticImpl("Sample Boundary", Long.MIN_VALUE, Long.MAX_VALUE);
+            boundedRangeStatistic = new BoundedRangeStatisticImpl("Sample BoundedRange", Long.MIN_VALUE, Long.MAX_VALUE, 0, -1, +1);
+            unsupportedStatistic = new UnsupportedStatisticImpl("Sample Unsupported Statistic");
+        } else {
+            countStatistic = null;
+            timeStatistic = null;
+            rangeStatistic = null;
+            boundaryStatistic = null;
+            boundedRangeStatistic = null;
+            unsupportedStatistic = null;
+        }
     }
 
     public int getShouldBe100() {
