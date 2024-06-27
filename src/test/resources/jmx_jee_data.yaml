@@ -1,0 +1,18 @@
+---
+init_config:
+
+instances:
+  - jvm_direct: true
+    refresh_beans: 4
+    name: jmx_test_instance
+    conf:
+      - include:
+          domain: org.datadog.jmxfetch.test
+          attribute:
+            - JeeCounter # 1 metric
+            - JeeTime # 4 metrics
+            - JeeRange # 3 metrics
+            - JeeBoundary # 2 metrics
+            - JeeBoundedRange # 5 metrics
+            - JeeUnsupported # 0 metrics
+            - JeeStat # 1 child metric

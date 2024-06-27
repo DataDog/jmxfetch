@@ -1127,6 +1127,48 @@ public class TestApp extends TestCommon {
     }
 
     @Test
+    public void testJeeStatistics() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp(true);
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        initApplication("jmx_jee_data.yaml");
+
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang + 17 defined - 1 undefined
+        assertEquals(29, metrics.size());
+
+        List<String> tags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp"
+        );
+        final String prefix = "jmx.org.datadog.jmxfetch.test.";
+
+        assertMetric(prefix + "jee_counter.count", testApp.getLong42424242(), tags, -1);
+        assertMetric(prefix + "jee_time.count", 1, tags, -1);
+        assertMetric(prefix + "jee_time.min_time", 0, tags, -1);
+        assertMetric(prefix + "jee_time.max_time", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_time.total_time", testApp.getLong42424242(), tags, -1);
+        assertMetric(prefix + "jee_range.low_water_mark", Long.MIN_VALUE, tags, -1);
+        assertMetric(prefix + "jee_range.high_water_mark", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_range.current", testApp.getLong42424242(), tags, -1);
+        assertMetric(prefix + "jee_boundary.lower_bound", Long.MIN_VALUE, tags, -1);
+        assertMetric(prefix + "jee_boundary.upper_bound", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.low_water_mark", Long.MIN_VALUE, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.high_water_mark", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.current", 0, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.lower_bound", -1, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.upper_bound", 1, tags, -1);
+        assertMetric(prefix + "jee_stat.my_counter.count", testApp.getLong42424242(), tags, -1);
+        assertCoverage();
+    }
+
+    @Test
     public void testNestedCompositeData() throws Exception {
         SimpleTestJavaApp testApp = new SimpleTestJavaApp();
         registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
