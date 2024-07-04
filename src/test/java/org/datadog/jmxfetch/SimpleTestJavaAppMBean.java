@@ -44,14 +44,22 @@ public interface SimpleTestJavaAppMBean {
     Float getInstanceFloat();
 
     TabularData getTabulardata();
+
     TabularDataSupport getTabularDataSupport();
 
     CompositeData getNestedCompositeData();
+
     Statistic getJeeCounter();
+
     Statistic getJeeRange();
+
     Statistic getJeeTime();
+
     Statistic getJeeBoundary();
+
     Statistic getJeeBoundedRange();
+
     Statistic getJeeUnsupported();
+
     Stats getJeeStat();
 }

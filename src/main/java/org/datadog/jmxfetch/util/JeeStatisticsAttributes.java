@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.ref.SoftReference;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.sql.Ref;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,8 +41,8 @@ public class JeeStatisticsAttributes {
             Arrays.asList("upperBound", "lowerBound", "highWaterMark", "lowWaterMark", "current"));
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JeeStatisticsAttributes.class);
-    private static final WeakHashMap<ClassLoader, ReflectionHolder> REFLECTION_CACHE =
-        new WeakHashMap<>();
+    private static final WeakHashMap<ClassLoader, SoftReference<ReflectionHolder>>
+        REFLECTION_CACHE = new WeakHashMap<>();
 
     private static class ReflectionHolder {
 
@@ -60,22 +60,39 @@ public class JeeStatisticsAttributes {
 
         ReflectionHolder(final ClassLoader classLoader) {
             classStat = maybeLookupClass("javax.management.j2ee.statistics.Stats", classLoader);
-            mhStatGetStatisticNames = maybeFindMethodHandleFor(classStat, "getStatisticNames");
-            mhStatGetStatistic = maybeFindMethodHandleFor(classStat, "getStatistic", String.class);
-            classStatistic = maybeLookupClass("javax.management.j2ee.statistics.Statistic",
-                classLoader);
-            classCountStatistic =
-                maybeLookupClass("javax.management.j2ee.statistics.CountStatistic", classLoader);
-            classTimeStatistic =
-                maybeLookupClass("javax.management.j2ee.statistics.TimeStatistic", classLoader);
-            classRangeStatistic =
-                maybeLookupClass("javax.management.j2ee.statistics.RangeStatistic", classLoader);
-            classBoundaryStatistic =
-                maybeLookupClass("javax.management.j2ee.statistics.BoundaryStatistic", classLoader);
-            classBoundedRangeStatistic =
-                maybeLookupClass("javax.management.j2ee.statistics.BoundedRangeStatistic",
+            if (classStat != null) {
+                mhStatGetStatisticNames = maybeFindMethodHandleFor(classStat, "getStatisticNames");
+                mhStatGetStatistic = maybeFindMethodHandleFor(classStat, "getStatistic",
+                    String.class);
+                classStatistic = maybeLookupClass("javax.management.j2ee.statistics.Statistic",
                     classLoader);
-            methodCache = buildMethodCache();
+                classCountStatistic =
+                    maybeLookupClass("javax.management.j2ee.statistics.CountStatistic",
+                        classLoader);
+                classTimeStatistic =
+                    maybeLookupClass("javax.management.j2ee.statistics.TimeStatistic",
+                        classLoader);
+                classRangeStatistic =
+                    maybeLookupClass("javax.management.j2ee.statistics.RangeStatistic",
+                        classLoader);
+                classBoundaryStatistic =
+                    maybeLookupClass("javax.management.j2ee.statistics.BoundaryStatistic",
+                        classLoader);
+                classBoundedRangeStatistic =
+                    maybeLookupClass("javax.management.j2ee.statistics.BoundedRangeStatistic",
+                        classLoader);
+                methodCache = buildMethodCache();
+            } else {
+                mhStatGetStatisticNames = null;
+                mhStatGetStatistic = null;
+                classStatistic = null;
+                classCountStatistic = null;
+                classTimeStatistic = null;
+                classRangeStatistic  = null;
+                classBoundaryStatistic = null;
+                classBoundedRangeStatistic = null;
+                methodCache = new WeakHashMap<>();
+            }
         }
 
         private Map<Class<?>, Map<String, MethodHandle>> buildMethodCache() {
@@ -118,7 +135,7 @@ public class JeeStatisticsAttributes {
                             return MethodHandles.lookup()
                                 .unreflect(cls.getMethod(name, parameterTypes));
                         } catch (Throwable t) {
-                            LOGGER.warn("Unable to find method {} for class {}: {}", name, cls,
+                            LOGGER.debug("Unable to find method {} for class {}: {}", name, cls,
                                 t.getMessage());
                         }
                         return null;
@@ -160,12 +177,12 @@ public class JeeStatisticsAttributes {
 
     private static ReflectionHolder getOrCreateReflectionHolder(final ClassLoader classLoader) {
         // no need to lock here. At worst, we'll do it more time if there is contention.
-        ReflectionHolder holder = REFLECTION_CACHE.get(classLoader);
-        if (holder != null) {
-            return holder;
+        SoftReference<ReflectionHolder> ref = REFLECTION_CACHE.get(classLoader);
+        if (ref != null && ref.get() != null) {
+            return ref.get();
         }
-        holder = new ReflectionHolder(classLoader);
-        REFLECTION_CACHE.put(classLoader, holder);
+        final ReflectionHolder holder = new ReflectionHolder(classLoader);
+        REFLECTION_CACHE.put(classLoader, new SoftReference<>(holder));
         return holder;
     }
 
