@@ -424,11 +424,11 @@ public class Instance {
             log.info(
                     "Connection closed or does not exist. "
                     + "Attempting to create a new connection...");
-            return ConnectionFactory.createConnection(connectionParams);
+            return appConfig.getConnectionFactory().createConnection(connectionParams);
         } else if (forceNewConnection) {
             log.info("Forcing a new connection, attempting to create...");
             connection.closeConnector();
-            return ConnectionFactory.createConnection(connectionParams);
+            return appConfig.getConnectionFactory().createConnection(connectionParams);
         }
         return connection;
     }
