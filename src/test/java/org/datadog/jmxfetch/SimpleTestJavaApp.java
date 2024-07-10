@@ -1,10 +1,26 @@
 package org.datadog.jmxfetch;
 
+import org.datadog.jmxfetch.jee.BoundaryStatisticImpl;
+import org.datadog.jmxfetch.jee.BoundedRangeStatisticImpl;
+import org.datadog.jmxfetch.jee.CountStatisticImpl;
+import org.datadog.jmxfetch.jee.JeeStats;
+import org.datadog.jmxfetch.jee.RangeStatisticImpl;
+import org.datadog.jmxfetch.jee.TimeStatisticImpl;
+import org.datadog.jmxfetch.jee.UnsupportedStatisticImpl;
+
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.management.j2ee.statistics.BoundaryStatistic;
+import javax.management.j2ee.statistics.BoundedRangeStatistic;
+import javax.management.j2ee.statistics.CountStatistic;
+import javax.management.j2ee.statistics.RangeStatistic;
+import javax.management.j2ee.statistics.Statistic;
+import javax.management.j2ee.statistics.Stats;
+import javax.management.j2ee.statistics.TimeStatistic;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
@@ -45,7 +61,19 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     private final CompositeData nestedCompositeData;
 
+    // JEE Stats
+    private final CountStatistic countStatistic;
+    private final TimeStatistic timeStatistic;
+    private final RangeStatistic rangeStatistic;
+    private final BoundaryStatistic boundaryStatistic;
+    private final BoundedRangeStatistic boundedRangeStatistic;
+    private final Statistic unsupportedStatistic;
+    private final Stats jeeStats;
+
     SimpleTestJavaApp() {
+        this(false);
+    }
+    SimpleTestJavaApp(boolean includeJeeStats) {
         hashmap.put("thisis0", 0);
         hashmap.put("thisis10", 10);
         hashmap.put("thisiscounter", 0);
@@ -57,6 +85,23 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
         }
 
         nestedCompositeData = buildNestedCompositeData();
+        if (includeJeeStats) {
+            countStatistic = new CountStatisticImpl("Sample Counter", long42424242);
+            timeStatistic = new TimeStatisticImpl("Sample Time", 0, Long.MAX_VALUE, long42424242, 1);
+            rangeStatistic = new RangeStatisticImpl("Sample Range", Long.MIN_VALUE, Long.MAX_VALUE, long42424242);
+            boundaryStatistic = new BoundaryStatisticImpl("Sample Boundary", Long.MIN_VALUE, Long.MAX_VALUE);
+            boundedRangeStatistic = new BoundedRangeStatisticImpl("Sample BoundedRange", Long.MIN_VALUE, Long.MAX_VALUE, 0, -1, +1);
+            unsupportedStatistic = new UnsupportedStatisticImpl("Sample Unsupported Statistic");
+            jeeStats = new JeeStats(Collections.singletonMap("MyCounter", countStatistic));
+        } else {
+            countStatistic = null;
+            timeStatistic = null;
+            rangeStatistic = null;
+            boundaryStatistic = null;
+            boundedRangeStatistic = null;
+            unsupportedStatistic = null;
+            jeeStats = null;
+        }
     }
 
     public int getShouldBe100() {
@@ -201,6 +246,41 @@ public class SimpleTestJavaApp implements SimpleTestJavaAppMBean {
 
     public CompositeData getNestedCompositeData() {
         return this.nestedCompositeData;
+    }
+
+    @Override
+    public Statistic getJeeCounter() {
+        return countStatistic;
+    }
+
+    @Override
+    public Statistic getJeeRange() {
+        return rangeStatistic;
+    }
+
+    @Override
+    public Statistic getJeeTime() {
+        return timeStatistic;
+    }
+
+    @Override
+    public Statistic getJeeBoundary() {
+        return boundaryStatistic;
+    }
+
+    @Override
+    public Statistic getJeeBoundedRange() {
+        return boundedRangeStatistic;
+    }
+
+    @Override
+    public Statistic getJeeUnsupported() {
+        return unsupportedStatistic;
+    }
+
+    @Override
+    public Stats getJeeStat() {
+        return jeeStats;
     }
 
     private CompositeData buildCompositeData(Integer i) {
