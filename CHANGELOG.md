@@ -1,6 +1,9 @@
 Changelog
 =========
-# 0.49.3 / 2024-07-26
+# 0.49.4 / TBC
+* [?] ?
+
+# 0.49.3-SNAPSHOT / 2024-07-26
 * [FEATURE] Added support for jsr77 j2ee statistics [#531][]
 * [FEATURE] Added support for custom ConnectionFactory [#530][]
 
