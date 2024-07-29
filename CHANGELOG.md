@@ -1,6 +1,8 @@
 Changelog
 =========
-# 0.49.3-SNAPSHOT / 2024-06-07
+# 0.49.3 / 2024-07-26
+* [FEATURE] Added support for jsr77 j2ee statistics [#531][]
+* [FEATURE] Added support for custom ConnectionFactory [#530][]
 
 # 0.49.2 / 2024-06-07
 * [FEATURE] Added support for emitting logs with thread name [#525][]
@@ -773,6 +775,8 @@ Changelog
 [#512]: https://github.com/DataDog/jmxfetch/issues/512
 [#522]: https://github.com/DataDog/jmxfetch/issues/522
 [#525]: https://github.com/DataDog/jmxfetch/issues/525
+[#530]: https://github.com/DataDog/jmxfetch/issues/530
+[#531]: https://github.com/DataDog/jmxfetch/issues/531
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
