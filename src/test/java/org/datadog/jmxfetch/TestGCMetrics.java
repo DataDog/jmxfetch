@@ -148,6 +148,40 @@ public class TestGCMetrics extends TestCommon {
         }
     }
 
+    @Test
+    public void testDefaultNewGCMetricsIBMJ9Balanced() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_11_OPENJ9).appendJavaOpts("-Xgcpolicy:balanced").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(13));
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_count", "partial gc", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_time", "partial gc", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "global garbage collect", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "global garbage collect", "counter");
+        }
+    }
+
+    @Test
+    public void testDefaultNewGCMetricsIBMJ9Gencon() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_11_OPENJ9).appendJavaOpts("-Xgcpolicy:gencon").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(13));
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_count", "scavenge", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_time", "scavenge", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "global", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "global", "counter");
+        }
+    }
+    
     private List<Map<String, Object>> startAndGetMetrics(final MisbehavingJMXServer server,
         final boolean newGCMetrics) throws IOException {
         server.start();
