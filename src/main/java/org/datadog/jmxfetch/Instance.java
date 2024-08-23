@@ -164,7 +164,9 @@ public class Instance {
             try {
                 this.maxReturnedMetrics = Integer.parseInt((String) maxReturnedMetrics);
             } catch (NumberFormatException e) {
-                log.warn("Cannot convert max_returned_metrics to integer in your instance configuration. Defaulting to '{}'.", MAX_RETURNED_METRICS);
+                log.warn(
+                    "Cannot convert max_returned_metrics to integer in your instance configuration. Defaulting to '{}'.",
+                    MAX_RETURNED_METRICS);
                 this.maxReturnedMetrics = MAX_RETURNED_METRICS;
             }
         } else {
