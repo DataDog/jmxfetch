@@ -1,6 +1,8 @@
 Changelog
 =========
-# 0.49.4 / TBC
+# 0.49.5 / TBC
+
+# 0.49.4 / 2024-08-23
 * [FEATURE] Added support for IBM J9 gc metrics [#534][]
 
 # 0.49.3 / 2024-07-26
