@@ -160,6 +160,15 @@ public class Instance {
         Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
         if (maxReturnedMetrics == null) {
             this.maxReturnedMetrics = MAX_RETURNED_METRICS;
+        } else if (maxReturnedMetrics instanceof String) {
+            try {
+                this.maxReturnedMetrics = Integer.parseInt((String) maxReturnedMetrics);
+            } catch (NumberFormatException e) {
+                log.warn(
+                    "Cannot convert max_returned_metrics to integer in your instance configuration."
+                    + " Defaulting to {}.", MAX_RETURNED_METRICS);
+                this.maxReturnedMetrics = MAX_RETURNED_METRICS;
+            }
         } else {
             this.maxReturnedMetrics = (Integer) maxReturnedMetrics;
         }
