@@ -1,9 +1,9 @@
 Changelog
 =========
 # 0.49.4 / TBC
-* [?] ?
+* [FEATURE] Added support for IBM J9 gc metrics [#534][]
 
-# 0.49.3-SNAPSHOT / 2024-07-26
+# 0.49.3 / 2024-07-26
 * [FEATURE] Added support for jsr77 j2ee statistics [#531][]
 * [FEATURE] Added support for custom ConnectionFactory [#530][]
 
@@ -780,6 +780,7 @@ Changelog
 [#525]: https://github.com/DataDog/jmxfetch/issues/525
 [#530]: https://github.com/DataDog/jmxfetch/issues/530
 [#531]: https://github.com/DataDog/jmxfetch/issues/531
+[#534]: https://github.com/DataDog/jmxfetch/issues/534
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
