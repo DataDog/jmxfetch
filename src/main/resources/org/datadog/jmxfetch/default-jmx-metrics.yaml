@@ -87,6 +87,9 @@
       LoadedClassCount:
         alias: jvm.loaded_classes
         metric_type: gauge
+      UnloadedClassCount:
+        alias: jvm.unloaded_classes
+        metric_type: gauge
 
 # Open File Descriptors
 - include:
