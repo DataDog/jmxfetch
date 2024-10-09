@@ -887,7 +887,7 @@ public class TestApp extends TestCommon {
         assertMetric("jmx.org.datadog.jmxfetch.test.atomic4242", 4242.0, commonTags, 6);
         assertMetric("jmx.org.datadog.jmxfetch.test.object1337", 13.37, commonTags, 6);
         assertMetric("jmx.org.datadog.jmxfetch.test.primitive_float", 123.4f, commonTags, 6);
-        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);    
+        assertMetric("jmx.org.datadog.jmxfetch.test.instance_float", 567.8f, commonTags, 6);
         // assertMetric("multiattr.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 8);
         // assertMetric("multiattr_supp.foo", 2.0, commonTags, Arrays.asList("foo:2", "toto:tata"), 8);
 

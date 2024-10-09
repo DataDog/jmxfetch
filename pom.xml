@@ -230,7 +230,7 @@
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>4.2.0</version> <!-- Use the latest version -->
+            <version>4.2.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
