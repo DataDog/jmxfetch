@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.49.6 / TBC
+
 # 0.49.5 / 2024-10-24
 * [FEATURE] Added support for `UnloadedClassCount` metric [#540][]
 
