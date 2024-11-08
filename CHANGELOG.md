@@ -1,6 +1,7 @@
 Changelog
 =========
 # 0.49.6 / TBC
+* [BUGFIX] Fixed `NullPointerException` on JBoss when user and password not set [#546][]
 
 # 0.49.5 / 2024-10-24
 * [FEATURE] Added support for `UnloadedClassCount` metric [#540][]
@@ -787,6 +788,7 @@ Changelog
 [#531]: https://github.com/DataDog/jmxfetch/issues/531
 [#534]: https://github.com/DataDog/jmxfetch/issues/534
 [#540]: https://github.com/DataDog/jmxfetch/issues/540
+[#546]: https://github.com/DataDog/jmxfetch/issues/546
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
