@@ -1,6 +1,6 @@
 Changelog
 =========
-# 0.49.6 / TBC
+# 0.49.6 / 2024-11-11
 * [BUGFIX] Fixed `NullPointerException` on JBoss when user and password not set [#546][]
 
 # 0.49.5 / 2024-10-24
