@@ -1,4 +1,4 @@
-FROM eclipse-temurin:8u382-b05-jdk AS build
+FROM eclipse-temurin:8u432-b06-jdk AS build
 
 WORKDIR /app
 
