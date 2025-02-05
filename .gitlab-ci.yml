@@ -22,7 +22,7 @@ run_unit_tests:
   tags:
     - "runner:docker"
 
-  image: eclipse-temurin:8u412-b08-jdk
+  image: eclipse-temurin:8u442-b06-jdk
 
   script:
     - ./mvnw -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
@@ -46,7 +46,7 @@ deploy_to_sonatype:
   tags:
     - "runner:docker"
 
-  image: eclipse-temurin:8u412-b08-jdk
+  image: eclipse-temurin:8u442-b06-jdk
 
   script:
     # Ensure we don't print commands being run to the logs during credential
