@@ -61,8 +61,6 @@ import javax.management.ObjectName;
 
 import javax.security.auth.login.FailedLoginException;
 
-
-
 @SuppressWarnings("unchecked")
 @Slf4j
 public class App {
@@ -108,10 +106,11 @@ public class App {
         JmxFetch.main(args);
     }
 
-    /** Application constructor. */
+    /**
+     * Application constructor.
+     */
     public App(final AppConfig appConfig) {
         this.appConfig = appConfig;
-
         ExecutorService collectionThreadPool = null;
         ExecutorService recoveryThreadPool = null;
         if (!this.appConfig.isEmbedded()) { // Creates executors in standalone mode only
@@ -132,9 +131,7 @@ public class App {
                     this.appConfig.getIpcHost(), this.appConfig.getIpcPort(), false);
         }
         this.configs = getConfigs(this.appConfig);
-
         this.appTelemetry = new AppTelemetry();
-
         if (this.appConfig.getJmxfetchTelemetry()) {
             log.info("Enabling JMX Fetch Telemetry");
             this.registerTelemetryBean(this.appTelemetry);
@@ -142,12 +139,11 @@ public class App {
     }
 
     private void registerTelemetryBean(AppTelemetry bean) {
-        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
         if (appTelemetryBeanName == null) {
             return;
         }
-
         try {
             mbs.registerMBean(bean, appTelemetryBeanName);
             log.debug("Succesfully registered app telemetry bean");
@@ -155,65 +151,59 @@ public class App {
                  | MBeanRegistrationException
                  | NotCompliantMBeanException e) {
             log.warn("Could not register bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                    appTelemetryBeanName.toString(), e);
         }
     }
 
     private ObjectName getAppTelemetryBeanName() {
         ObjectName appTelemetryBeanName;
-
         try {
             appTelemetryBeanName = new ObjectName(
-                appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app");
+                    appConfig.getJmxfetchTelemetryDomain() + ":name=jmxfetch_app");
         } catch (MalformedObjectNameException e) {
             log.warn(
-                "Could not construct bean name for jmxfetch_telemetry_domain"
-                + " '{}' and name 'jmxfetch_app'",
-                appConfig.getJmxfetchTelemetryDomain());
+                    "Could not construct bean name for jmxfetch_telemetry_domain"
+                            + " '{}' and name 'jmxfetch_app'",
+                    appConfig.getJmxfetchTelemetryDomain());
             return null;
         }
-
         return appTelemetryBeanName;
     }
 
     private void initTelemetryBean() {
-        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         AppTelemetry bean = new AppTelemetry();
         ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
         if (appTelemetryBeanName == null) {
             return;
         }
-
         try {
             mbs.registerMBean(bean, appTelemetryBeanName);
             log.debug("Succesfully registered app telemetry bean");
         } catch (InstanceAlreadyExistsException
-         | MBeanRegistrationException
-         | NotCompliantMBeanException e) {
+                 | MBeanRegistrationException
+                 | NotCompliantMBeanException e) {
             log.warn("Could not register bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                    appTelemetryBeanName.toString(), e);
         }
-
         this.appTelemetry = bean;
         return;
     }
 
     private void teardownTelemetry() {
-        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
         if (appTelemetryBeanName == null) {
             return;
         }
-
         try {
             mbs.unregisterMBean(appTelemetryBeanName);
             log.debug("Succesfully unregistered app telemetry bean");
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             log.warn("Could not unregister bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                    appTelemetryBeanName.toString(), e);
         }
     }
-
 
     /**
      * Main entry point of JMXFetch that returns integer on exit instead of calling {@code
@@ -221,25 +211,21 @@ public class App {
      */
     public int run() {
         final String action = this.appConfig.getAction();
-
         // The specified action is unknown
         if (!AppConfig.ACTIONS.contains(action)) {
             log.error(action + " is not in " + AppConfig.ACTIONS + ". Exiting.");
             return 1;
         }
-
         if (!action.equals(AppConfig.ACTION_COLLECT)
-            && !(this.appConfig.isConsoleReporter() || this.appConfig.isJsonReporter())) {
+                && !(this.appConfig.isConsoleReporter() || this.appConfig.isJsonReporter())) {
             // The "list_*" actions can not be used with the statsd reporter
             log.error(action
-                      + " argument can only be used with the console or json reporter. Exiting.");
+                    + " argument can only be used with the console or json reporter. Exiting.");
             return 1;
         }
-
         if (action.equals(AppConfig.ACTION_LIST_JVMS)) {
             List<com.sun.tools.attach.VirtualMachineDescriptor> descriptors =
                     com.sun.tools.attach.VirtualMachine.list();
-
             System.out.println("List of JVMs for user " + System.getProperty("user.name"));
             for (com.sun.tools.attach.VirtualMachineDescriptor descriptor : descriptors) {
                 System.out.println(
@@ -247,12 +233,9 @@ public class App {
             }
             return 0;
         }
-
         log.info("JMX Fetch " + this.appConfig.getVersion() + " has started");
-
         // set up the config status
         this.appConfig.updateStatus();
-
         try {
             // Adding another shutdown hook for App related tasks
             Runtime.getRuntime().addShutdownHook(new AppShutdownHook(this));
@@ -260,15 +243,12 @@ public class App {
             // this exception is thrown if shutdown is already happening when the hook is added
             return 0;
         }
-
         // Get config from the ipc endpoint for "list_*" actions
         if (!action.equals(AppConfig.ACTION_COLLECT)) {
             this.getJsonConfigs();
         }
-
         // Initiate JMX Connections, get attributes that match the yaml configuration
         this.init(false);
-
         // We don't want to loop if the action is list_* as it's just used for display information
         // about what will be collected
         if (action.equals(AppConfig.ACTION_COLLECT)) {
@@ -284,12 +264,16 @@ public class App {
         return 0;
     }
 
-    /** Sets reinitialization flag. */
+    /**
+     * Sets reinitialization flag.
+     */
     public void setReinit(final boolean reinit) {
         this.reinit.set(reinit);
     }
 
-    /** Returns loop counter with number of iterations performed on instances. */
+    /**
+     * Returns loop counter with number of iterations performed on instances.
+     */
     public static int getLoopCounter() {
         return loopCounter;
     }
@@ -301,18 +285,16 @@ public class App {
             // create the cleanup task
             cleanupInstanceTasks.add(new InstanceCleanupTask(instance));
         }
-
         try {
             if (!this.recoveryProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for recovery processor, "
-                        + "previous one hogging threads");
+                                + "previous one hogging threads");
                 this.recoveryProcessor.stop();
                 this.recoveryProcessor.setThreadPoolExecutor(
                         this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
                                 RECOVERY_POOL_NAME));
             }
-
             List<TaskStatusHandler> statuses =
                     this.recoveryProcessor.processTasks(
                             cleanupInstanceTasks,
@@ -331,7 +313,7 @@ public class App {
         } catch (Exception e) {
             log.warn(
                     "Unable to terminate all connections gracefully "
-                    + "- possible network connectivity issues.");
+                            + "- possible network connectivity issues.");
         } finally {
             // This is a best effort thing, we always clear the list - eventually 'orphaned'
             // instances should get GC'd anyhow.
@@ -367,7 +349,6 @@ public class App {
 
     private String getAutoDiscoveryName(final String config) {
         final String[] splitted = config.split(System.getProperty("line.separator"), 2);
-
         return AUTO_DISCOVERY_PREFIX + splitted[0].substring(2);
     }
 
@@ -380,33 +361,29 @@ public class App {
         } catch (FileNotFoundException e) {
             log.info("Unable to open named pipe for Auto-Discovery: {}", pipeName);
         }
-
         return adPipe;
     }
 
-    /** Processes auto-discovery byte buffer (deprecated). */
+    /**
+     * Processes auto-discovery byte buffer (deprecated).
+     */
     public boolean processAutoDiscovery(byte[] buffer) {
         boolean reinit = false;
         String[] discovered;
-
         final String configs = new String(buffer, UTF_8);
         String separator = App.AD_CONFIG_SEP;
-
         if (configs.contains(App.AD_LEGACY_CONFIG_SEP)) {
             separator = App.AD_LEGACY_CONFIG_SEP;
         }
         discovered = configs.split(separator + System.getProperty("line.separator"));
-
         for (String config : discovered) {
             if (config == null || config.isEmpty()) {
                 continue;
             }
-
             final String name = getAutoDiscoveryName(config);
             log.debug("Attempting to apply config. Name: " + name);
             final InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
             final YamlParser yaml = new YamlParser(stream);
-
             if (this.addConfig(name, yaml)) {
                 reinit = true;
                 log.debug("Configuration added succesfully reinit in order");
@@ -414,7 +391,6 @@ public class App {
                 log.debug("Unable to apply configuration.");
             }
         }
-
         return reinit;
     }
 
@@ -441,7 +417,6 @@ public class App {
     void start() {
         // Main Loop that will periodically collect metrics from the JMX Server
         FileInputStream adPipe = null;
-
         if (this.appConfig.getAutoDiscoveryPipeEnabled()) {
             log.info("Auto Discovery enabled");
             adPipe = this.newAutoDiscoveryPipe();
@@ -450,17 +425,15 @@ public class App {
             } catch (IOException e) {
                 log.warn(
                         "Unable to create launch file"
-                        + " - Auto-Discovery configs will not be automatically resubmitted.");
+                                + " - Auto-Discovery configs will not be automatically resubmitted.");
             }
         }
-
         while (true) {
             // Exit on exit file trigger...
             if (this.appConfig.getExitWatcher().shouldExit()) {
                 log.info("Exit file detected: stopping JMXFetch.");
                 return;
             }
-
             if (adPipe == null && this.appConfig.getAutoDiscoveryPipeEnabled()) {
                 // If SD is enabled and the pipe is not open, retry opening pipe
                 adPipe = newAutoDiscoveryPipe();
@@ -475,7 +448,6 @@ public class App {
                         if (len > 0) {
                             byte[] minibuff = new byte[len];
                             adPipe.read(minibuff);
-
                             // The separator always comes in its own atomic write() from the agent
                             // side -
                             // so it will never be chopped.
@@ -483,7 +455,6 @@ public class App {
                                     || LEGACY_CONFIG_TERM_SEARCHER.matches(minibuff)) {
                                 terminated = true;
                             }
-
                             // make room for read chunk
                             int oldLen = buffer.length;
                             buffer = Arrays.copyOf(buffer, buffer.length + len);
@@ -493,7 +464,6 @@ public class App {
                     boolean result = processAutoDiscovery(buffer);
                     this.setReinit(result);
                 }
-
                 if (this.appConfig.remoteEnabled()) {
                     boolean result = getJsonConfigs();
                     this.setReinit(result);
@@ -505,13 +475,11 @@ public class App {
             } catch (Exception e) {
                 log.warn("Problem parsing auto-discovery configuration: " + e);
             }
-
             long start = System.currentTimeMillis();
             if (this.reinit.get()) {
                 log.info("Reinitializing...");
                 init(true);
             }
-
             if (instances.size() > 0) {
                 this.doIteration();
             } else {
@@ -529,8 +497,8 @@ public class App {
                 long sleepPeriod = loopPeriod - duration;
                 if (sleepPeriod < loopPeriod / 2) {
                     log.debug(
-                        "The collection cycle took longer that the configured check period,"
-                        + " the next cycle will be delayed");
+                            "The collection cycle took longer that the configured check period,"
+                                    + " the next cycle will be delayed");
                     sleepPeriod = loopPeriod / 2;
                 } else {
                     log.debug("Sleeping for {} ms.", sleepPeriod);
@@ -557,28 +525,24 @@ public class App {
     public void doIteration() {
         final Reporter reporter = this.appConfig.getReporter();
         loopCounter++;
-
         try {
             List<InstanceTask<List<Metric>>> getMetricsTasks =
                     new ArrayList<>(this.instances.size());
-
             for (Instance instance : this.instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
             }
             if (this.appTelemetry != null) {
                 this.appTelemetry.setRunningInstanceCount(this.instances.size());
             }
-
             if (!this.collectionProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for collection processor, "
-                        + "previous one hogging threads");
+                                + "previous one hogging threads");
                 this.collectionProcessor.stop();
                 this.collectionProcessor.setThreadPoolExecutor(
                         this.buildExecutorService(
                                 this.appConfig.getThreadPoolSize(), COLLECTION_POOL_NAME));
             }
-
             final List<TaskStatusHandler> statuses =
                     this.collectionProcessor.processTasks(
                             getMetricsTasks,
@@ -593,19 +557,15 @@ public class App {
                                     return App.processCollectionResults(instance, future, reporter);
                                 }
                             });
-
             this.processCollectionStatus(getMetricsTasks, statuses);
 
         } catch (Exception e) {
             // INTERNAL ERROR
             // This might also have a place in the status processor
-
             String instanceMessage;
             final String instanceStatus = Status.STATUS_ERROR;
             final String scStatus = Status.STATUS_ERROR;
-
             log.warn("JMXFetch internal error invoking concurrent tasks: ", e);
-
             for (Instance instance : this.instances) {
                 // don't add instances to broken instances, issue was internal
                 instanceMessage =
@@ -615,10 +575,8 @@ public class App {
                 this.sendServiceCheck(reporter, instance, instanceMessage, scStatus);
             }
         }
-
         // Attempt to fix broken instances
         this.fixBrokenInstances(reporter);
-
         try {
             this.appConfig.getStatus().flush();
         } catch (Exception e) {
@@ -630,46 +588,38 @@ public class App {
         if (this.brokenInstanceMap.isEmpty()) {
             return;
         }
-
         log.debug("Trying to recover broken instances...");
         final List<InstanceTask<Void>> fixInstanceTasks =
                 new ArrayList<>(this.brokenInstanceMap.values().size());
-
         for (final Instance instance : this.brokenInstanceMap.values()) {
             // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
             reporter.clearRatesAggregator(instance.getName());
             reporter.clearCountersAggregator(instance.getName());
-
             log.warn(
                     "Instance "
                             + instance
                             + " didn't return any metrics. "
                             + "Maybe the server got disconnected ? Trying to reconnect.");
-
             // Remove the broken instance from the good instance list so jmxfetch won't try to
             // collect metrics from this broken instance during next collection and close
             // ongoing connections (do so asynchronously to avoid locking on network timeout).
             instance.cleanUpAsync();
             this.instances.remove(instance);
-
             // Resetting the instance
             final Instance newInstance = new Instance(instance, this.appConfig);
-
             // create the initializing task
             fixInstanceTasks.add(new InstanceInitializingTask(newInstance, true));
         }
-
         try {
             if (!this.recoveryProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for recovery processor, "
-                        + "previous one hogging threads");
+                                + "previous one hogging threads");
                 this.recoveryProcessor.stop();
                 this.recoveryProcessor.setThreadPoolExecutor(
                         this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
                                 RECOVERY_POOL_NAME));
             }
-
             Collections.shuffle(fixInstanceTasks);
             final List<TaskStatusHandler> statuses =
                     this.recoveryProcessor.processTasks(
@@ -685,16 +635,13 @@ public class App {
                                     return App.processRecoveryResults(instance, future, reporter);
                                 }
                             });
-
             this.processFixedStatus(fixInstanceTasks, statuses);
-
             // update with statuses
             this.processStatus(fixInstanceTasks, statuses);
 
         } catch (Exception e) {
             // NADA
         }
-
         log.debug("Done trying to recover broken instances.");
     }
 
@@ -719,16 +666,13 @@ public class App {
                         + "})_(\\d{0,"
                         + AD_MAX_MAG_INSTANCES
                         + "})";
-
         final Pattern pattern = Pattern.compile(patternText);
-
         final Matcher matcher = pattern.matcher(name);
         if (!matcher.find()) {
             // bad name.
             log.debug("Cannot match instance name: " + name);
             return false;
         }
-
         // Java 6 doesn't allow name matching - group 1 is "check"
         final String check = matcher.group(1);
         if (this.configs.containsKey(check)) {
@@ -736,24 +680,22 @@ public class App {
             log.debug("Key already present - skipping: " + name);
             return false;
         }
-
         this.adPipeConfigs.put(name, config);
         this.setReinit(true);
-
         return true;
     }
 
-    /** Adds a configuration to the auto-discovery HTTP collected configuration list (JSON). */
+    /**
+     * Adds a configuration to the auto-discovery HTTP collected configuration list (JSON).
+     */
     public boolean addJsonConfig(final String name, final String json) {
         return false;
     }
 
     private Map<String, YamlParser> getConfigs(final AppConfig config) {
         final Map<String, YamlParser> configs = new ConcurrentHashMap<>();
-
         this.loadFileConfigs(config, configs);
         this.loadResourceConfigs(config, configs);
-
         log.info("Found {} config files", configs.size());
         return configs;
     }
@@ -777,29 +719,25 @@ public class App {
         }
     }
 
-    private void loadResourceConfigs(
-            final AppConfig config, final Map<String, YamlParser> configs) {
+    private void loadResourceConfigs(final AppConfig config, final Map<String, YamlParser> configs) {
         final List<String> resourceConfigList = config.getInstanceConfigResources();
         if (resourceConfigList != null) {
             final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             for (final String resourceName : resourceConfigList) {
                 final String name = resourceName.replace(".yaml", "");
                 log.info("Reading {}", resourceName);
-                final InputStream inputStream = classLoader.getResourceAsStream(resourceName);
-                if (inputStream == null) {
-                    log.warn("Cannot find " + resourceName);
-                } else {
-                    try {
-                        configs.put(name, new YamlParser(inputStream));
-                    } catch (Exception e) {
-                        log.warn("Cannot parse yaml file " + resourceName, e);
-                    } finally {
+                try (InputStream inputStream = classLoader.getResourceAsStream(resourceName)) {
+                    if (inputStream == null) {
+                        log.warn("Cannot find " + resourceName);
+                    } else {
                         try {
-                            inputStream.close();
-                        } catch (IOException e) {
-                            // ignore
+                            configs.put(name, new YamlParser(inputStream));
+                        } catch (Exception e) {
+                            log.warn("Cannot parse yaml file " + resourceName, e);
                         }
                     }
+                } catch (IOException e) {
+                    log.error("Error closing stream for " + resourceName, e);
                 }
             }
         }
@@ -808,11 +746,9 @@ public class App {
     private boolean getJsonConfigs() {
         HttpClient.HttpResponse response;
         boolean update = false;
-
         if (this.client == null) {
             return update;
         }
-
         try {
             String uripath = "agent/jmx/configs?timestamp=" + lastJsonConfigTs;
             response = client.request("GET", "", uripath);
@@ -845,7 +781,6 @@ public class App {
         } catch (IOException e) {
             log.error("unable to collect remote JMX configs: " + e);
         }
-
         return update;
     }
 
@@ -857,7 +792,6 @@ public class App {
             final String message,
             final String status) {
         final String checkName = instance.getCheckName();
-
         final Status stats = appConfig.getStatus();
         stats.addInstanceStats(
                 checkName, instance.getName(),
@@ -874,14 +808,12 @@ public class App {
             final String message,
             final String status) {
         final String checkName = instance.getCheckName();
-
         if (instance.getServiceCheckPrefix() != null) {
             this.sendCanConnectServiceCheck(reporter, checkName, instance.getServiceCheckPrefix(),
                     status, message, instance.getServiceCheckTags());
         } else {
             this.sendCanConnectServiceCheck(reporter, checkName, checkName,
                     status, message, instance.getServiceCheckTags());
-
             // Service check with formatted name is kept for backward compatibility
             final String formattedCheckName = ServiceCheckHelper
                     .formatServiceCheckPrefix(checkName);
@@ -890,7 +822,6 @@ public class App {
                         status, message, instance.getServiceCheckTags());
             }
         }
-
         reporter.resetServiceCheckCount(checkName);
     }
 
@@ -902,11 +833,9 @@ public class App {
             String message,
             final String[] tags) {
         final String serviceCheckName = String.format("%s.can_connect", serviceCheckPrefix);
-
         if (!status.equals(Status.STATUS_ERROR)) {
             message = null;
         }
-
         reporter.sendServiceCheck(
                 checkName, serviceCheckName, status, message, tags);
     }
@@ -916,7 +845,6 @@ public class App {
             final Map<String, Object> initConfig,
             final String checkName,
             final AppConfig appConfig) {
-
         try {
             return new Instance(instanceMap, initConfig, checkName, appConfig, null);
         } catch (Exception e) {
@@ -927,20 +855,20 @@ public class App {
         return null;
     }
 
-    /** Initializes instances and metric collection. */
+    /**
+     * Initializes instances and metric collection.
+     */
     public void init(final boolean forceNewConnection) {
         log.info("Cleaning up instances...");
         this.clearInstances(this.instances);
         this.clearInstances(this.brokenInstanceMap.values());
         this.brokenInstanceMap.clear();
-
         final List<Instance> newInstances = new ArrayList<>();
         final Set<String> instanceNamesSeen = new HashSet<>();
-
         log.info("Dealing with YAML config instances...");
         final Iterator<Entry<String, YamlParser>> it = this.configs.entrySet().iterator();
         final Iterator<Entry<String, YamlParser>> itPipeConfigs = this.adPipeConfigs
-                        .entrySet().iterator();
+                .entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
             Map.Entry<String, YamlParser> entry;
             boolean fromPipeIterator = false;
@@ -950,14 +878,12 @@ public class App {
                 entry = itPipeConfigs.next();
                 fromPipeIterator = true;
             }
-
             final String name = entry.getKey();
             final YamlParser yamlConfig = entry.getValue();
             // AD config cache doesn't remove configs - it just overwrites.
             if (!fromPipeIterator) {
                 it.remove();
             }
-
             final List<Map<String, Object>> configInstances =
                     ((List<Map<String, Object>>) yamlConfig.getYamlInstances());
             if (configInstances == null || configInstances.size() == 0) {
@@ -966,7 +892,6 @@ public class App {
                 this.appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
                 continue;
             }
-
             for (final Map<String, Object> configInstance : configInstances) {
                 if (appConfig.isTargetDirectInstances() != isDirectInstance(configInstance)) {
                     log.info("Skipping instance '{}'. targetDirectInstances={} != jvm_direct={}",
@@ -979,9 +904,9 @@ public class App {
                 if (instanceName != null) {
                     if (instanceNamesSeen.contains(instanceName)) {
                         log.warn("Found multiple instances with name: '{}'. "
-                            + "Instance names should be unique, "
-                            + "update the 'name' field on your instances to be unique.",
-                            instanceName);
+                                        + "Instance names should be unique, "
+                                        + "update the 'name' field on your instances to be unique.",
+                                instanceName);
                     }
                     instanceNamesSeen.add(instanceName);
                 }
@@ -996,7 +921,6 @@ public class App {
                 newInstances.add(instance);
             }
         }
-
         // Process JSON configurations
         log.info("Dealing with Auto-Config instances collected...");
         if (this.adJsonConfigs != null) {
@@ -1014,9 +938,9 @@ public class App {
                     if (instanceName != null) {
                         if (instanceNamesSeen.contains(instanceName)) {
                             log.warn("Found multiple instances with name: '{}'. "
-                                + "Instance names should be unique, "
-                                + "update the 'name' field on your instances to be unique.",
-                                instanceName);
+                                            + "Instance names should be unique, "
+                                            + "update the 'name' field on your instances to be unique.",
+                                    instanceName);
                         }
                         instanceNamesSeen.add(instanceName);
                     }
@@ -1026,37 +950,32 @@ public class App {
                 }
             }
         }
-
         // Enables jmxfetch telemetry if there are other checks active and it's been enabled
         if (appConfig.getJmxfetchTelemetry() && newInstances.size() >= 1) {
             log.info("Adding jmxfetch telemetry check");
             final Instance instance = instantiate(getTelemetryInstanceConfig(),
-                        getTelemetryInitConfig(), "jmxfetch_telemetry_check",
-                        this.appConfig);
+                    getTelemetryInitConfig(), "jmxfetch_telemetry_check",
+                    this.appConfig);
             newInstances.add(instance);
         }
-
         final List<InstanceTask<Void>> instanceInitTasks =
                 new ArrayList<>(newInstances.size());
         for (Instance instance : newInstances) {
             // create the initializing tasks
             instanceInitTasks.add(new InstanceInitializingTask(instance, forceNewConnection));
         }
-
         // Initialize the instances
         log.info("Started instance initialization...");
-
         try {
             if (!this.recoveryProcessor.ready()) {
                 log.warn(
                         "Executor has to be replaced for recovery processor, "
-                        + "previous one hogging threads");
+                                + "previous one hogging threads");
                 this.recoveryProcessor.stop();
                 this.recoveryProcessor.setThreadPoolExecutor(
                         this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
                                 RECOVERY_POOL_NAME));
             }
-
             final List<TaskStatusHandler> statuses =
                     this.recoveryProcessor.processTasks(
                             instanceInitTasks,
@@ -1071,11 +990,8 @@ public class App {
                                     return App.processRecoveryResults(instance, future, reporter);
                                 }
                             });
-
             log.info("Completed instance initialization...");
-
             this.processInstantiationStatus(instanceInitTasks, statuses);
-
             // update with statuses
             this.processStatus(instanceInitTasks, statuses);
         } catch (Exception e) {
@@ -1084,32 +1000,29 @@ public class App {
         }
     }
 
-    private Map<String,Object> getTelemetryInitConfig() {
-        Map<String,Object> config = new HashMap<String,Object>();
-        config.put("is_jmx",true);
+    private Map<String, Object> getTelemetryInitConfig() {
+        Map<String, Object> config = new HashMap<String, Object>();
+        config.put("is_jmx", true);
         return config;
     }
 
-    private Map<String,Object> getTelemetryInstanceConfig() {
-        Map<String,Object> config = new HashMap<String,Object>();
-        config.put("name","jmxfetch_telemetry_instance");
-        config.put("collect_default_jvm_metrics",true);
-        config.put("new_gc_metrics",true);
-        config.put("jvm_direct",true);
-        config.put("normalize_bean_param_tags",true);
-
+    private Map<String, Object> getTelemetryInstanceConfig() {
+        Map<String, Object> config = new HashMap<String, Object>();
+        config.put("name", "jmxfetch_telemetry_instance");
+        config.put("collect_default_jvm_metrics", true);
+        config.put("new_gc_metrics", true);
+        config.put("jvm_direct", true);
+        config.put("normalize_bean_param_tags", true);
         List<Object> conf = new ArrayList<Object>();
-        Map<String,Object> confMap = new HashMap<String,Object>();
-        Map<String,Object> includeMap = new HashMap<String,Object>();
-        includeMap.put("domain",appConfig.getJmxfetchTelemetryDomain());
+        Map<String, Object> confMap = new HashMap<String, Object>();
+        Map<String, Object> includeMap = new HashMap<String, Object>();
+        includeMap.put("domain", appConfig.getJmxfetchTelemetryDomain());
         confMap.put("include", includeMap);
         conf.add(confMap);
-        config.put("conf",conf);
-
+        config.put("conf", conf);
         List<String> tags = new ArrayList<String>();
         tags.add("version:" + this.appConfig.getVersion());
         config.put("tags", tags);
-
         return config;
     }
 
@@ -1117,10 +1030,8 @@ public class App {
             final Instance instance,
             final Future<Void> future,
             final Reporter reporter) {
-
         final TaskStatusHandler status = new TaskStatusHandler();
         Throwable exc = null;
-
         try {
             if (future.isDone()) {
                 future.get();
@@ -1131,11 +1042,9 @@ public class App {
         } catch (Exception e) {
             exc = e;
         }
-
         if (exc != null) {
             status.setThrowableStatus(exc);
         }
-
         return status;
     }
 
@@ -1143,19 +1052,14 @@ public class App {
             final Instance instance,
             final Future<List<Metric>> future,
             final Reporter reporter) {
-
         final TaskStatusHandler status = new TaskStatusHandler();
         Throwable exc = null;
-
         try {
             int numberOfMetrics = 0;
-
             if (future.isDone()) {
                 final List<Metric> metrics = future.get();
                 numberOfMetrics = metrics.size();
-
                 status.setData(metrics);
-
                 if (numberOfMetrics == 0) {
                     // Build custom throwable
                     exc =
@@ -1174,36 +1078,30 @@ public class App {
             // Exception running task
             exc = e;
         }
-
         if (exc != null) {
             status.setThrowableStatus(exc);
         }
-
         return status;
     }
 
     private <T> void processInstantiationStatus(
             final List<InstanceTask<T>> tasks,
             final List<TaskStatusHandler> statuses) {
-
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         final ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
         int idx = statuses.size();
         while (sit.hasPrevious()) {
             idx--;
-
             final Instance instance = tasks.get(idx).getInstance();
-
             try {
                 final TaskStatusHandler status = sit.previous();
                 status.raiseForStatus();
-
                 // All was good, add instance
                 this.instances.add(instance);
                 log.info("Successfully initialized instance: {}", instance.getName());
             } catch (Throwable e) {
                 log.warn(
-                    "Could not initialize instance: {}:", instance.getName(), e);
+                        "Could not initialize instance: {}:", instance.getName(), e);
                 instance.cleanUpAsync();
                 this.brokenInstanceMap.put(instance.toString(), instance);
                 if (this.appTelemetry != null) {
@@ -1222,14 +1120,11 @@ public class App {
         int idx = 0;
         while (it.hasNext()) {
             final TaskStatusHandler status = it.next();
-
             try {
                 status.raiseForStatus();
-
                 final Instance instance = tasks.get(idx).getInstance();
                 this.brokenInstanceMap.remove(instance.toString());
                 this.instances.add(instance);
-
                 if (this.appTelemetry != null) {
                     this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
                     this.appTelemetry.setRunningInstanceCount(this.instances.size());
@@ -1247,13 +1142,11 @@ public class App {
             final List<InstanceTask<T>> tasks,
             final List<TaskStatusHandler> statuses) {
         for (int i = 0; i < statuses.size(); i++) {
-
             InstanceTask<T> task = tasks.get(i);
             TaskStatusHandler status = statuses.get(i);
             Instance instance = task.getInstance();
             Reporter reporter = this.appConfig.getReporter();
             String warning = task.getWarning();
-
             try {
                 status.raiseForStatus();
                 warning = null;
@@ -1261,7 +1154,6 @@ public class App {
                 // NOTHING serious
             } catch (ExecutionException ee) {
                 Throwable exc = ee.getCause();
-
                 if (exc instanceof IOException) {
                     warning += ". Is the target JMX Server or JVM running? ";
                     warning += exc.getMessage();
@@ -1276,7 +1168,7 @@ public class App {
             } catch (CancellationException ce) {
                 warning +=
                         " because connection timed out and was canceled. "
-                        + "Please check your network.";
+                                + "Please check your network.";
             } catch (InterruptedException ie) {
                 warning += " attempt interrupted waiting on IO";
             } catch (Throwable e) {
@@ -1284,7 +1176,6 @@ public class App {
             } finally {
                 if (warning != null) {
                     log.warn(warning);
-
                     this.reportStatus(
                             this.appConfig, reporter, instance, 0, warning, Status.STATUS_ERROR);
                     this.sendServiceCheck(reporter, instance, warning, Status.STATUS_ERROR);
@@ -1299,21 +1190,16 @@ public class App {
             String instanceMessage = null;
             String instanceStatus = Status.STATUS_OK;
             String scStatus = Status.STATUS_OK;
-
             int numberOfMetrics = 0;
-
             final InstanceTask<T> task = tasks.get(i);
             final TaskStatusHandler status = statuses.get(i);
             final Instance instance = task.getInstance();
             final Reporter reporter = this.appConfig.getReporter();
-
             try {
                 status.raiseForStatus();
-
                 // If we get here all was good - metric count  available
                 final List<Metric> metrics = (List<Metric>) status.getData();
                 numberOfMetrics = metrics.size();
-
                 if (instance.isLimitReached()) {
                     instanceMessage =
                             "Number of returned metrics is too high for instance: "
@@ -1322,11 +1208,9 @@ public class App {
                                     + "Support for more details. Truncating to "
                                     + instance.getMaxNumberOfMetrics()
                                     + " metrics.";
-
                     instanceStatus = Status.STATUS_WARNING;
                     CustomLogger.laconic(log, LogLevel.WARN, instanceMessage, 0);
                 }
-
                 if (numberOfMetrics > 0) {
                     reporter.sendMetrics(
                             metrics, instance.getName(), instance.getCanonicalRateConfig());
@@ -1336,43 +1220,34 @@ public class App {
                 // This would be "fine" - no need to evict
                 instanceStatus = Status.STATUS_WARNING;
                 scStatus = Status.STATUS_WARNING;
-
                 instanceMessage = te.toString();
-
                 log.warn(instanceMessage);
             } catch (ExecutionException ee) {
                 instanceMessage = task.getWarning();
                 instanceStatus = Status.STATUS_ERROR;
-
                 this.brokenInstanceMap.put(instance.toString(), instance);
                 log.debug("Adding broken instance to list: " + instance.getName());
                 if (this.appTelemetry != null) {
                     this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
                     this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
-
                 log.warn(instanceMessage, ee.getCause());
             } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
                 log.debug("Adding broken instance to list: " + instance.getName());
                 this.brokenInstanceMap.put(instance.toString(), instance);
-
                 if (this.appTelemetry != null) {
                     this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
                     this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
-
                 instanceStatus = Status.STATUS_ERROR;
                 instanceMessage = task.getWarning() + ": " + t.toString();
-
                 log.warn(instanceMessage);
 
             } finally {
-
                 if (Status.STATUS_ERROR.equals(instanceStatus)) {
                     scStatus = Status.STATUS_ERROR;
                 }
-
                 this.reportStatus(
                         this.appConfig,
                         reporter,
@@ -1388,4 +1263,9 @@ public class App {
     public AppTelemetry getAppTelemetryBean() {
         return this.appTelemetry;
     }
+
+    InputStream getResourceStream(String resourceName, ClassLoader classLoader) {
+        return classLoader.getResourceAsStream(resourceName);
+    }
+
 }
