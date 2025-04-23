@@ -5,9 +5,8 @@ import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.service.ConfigServiceNameProvider;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.datadog.jmxfetch.util.InstanceTelemetry;
-import org.yaml.snakeyaml.Yaml;
-
-
+import org.snakeyaml.engine.v2.api.Load;
+import org.snakeyaml.engine.v2.api.LoadSettings;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,11 +42,12 @@ public class Instance {
     public static final String JVM_DIRECT = "jvm_direct";
     public static final String ATTRIBUTE = "Attribute: ";
 
-    private static final ThreadLocal<Yaml> YAML =
-        new ThreadLocal<Yaml>() {
+    private static final ThreadLocal<Load> YAML =
+        new ThreadLocal<Load>() {
             @Override
-            public Yaml initialValue() {
-                return new Yaml();
+            public Load initialValue() {
+                LoadSettings settings = LoadSettings.builder().build();
+                return new Load(settings);
             }
         };
 
@@ -295,9 +295,9 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        List<Map<String, Object>> defaultConf =
-                (List<Map<String, Object>>)
-                        YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
+        InputStream is = this.getClass().getResourceAsStream(configResourcePath);
+        List<Map<String, Object>> defaultConf = (List<Map<String, Object>>)
+                YAML.get().loadFromInputStream(is);
         for (Map<String, Object> conf : defaultConf) {
             configurationList.add(new Configuration(conf));
         }
@@ -321,7 +321,7 @@ public class Instance {
                     yamlInputStream = new FileInputStream(yamlPath);
                     List<Map<String, Object>> confs =
                             (List<Map<String, Object>>)
-                                    YAML.get().load(yamlInputStream);
+                                    YAML.get().loadFromInputStream(yamlInputStream);
                     for (Map<String, Object> conf : confs) {
                         configurationList.add(new Configuration(conf));
                     }
@@ -360,7 +360,7 @@ public class Instance {
                     try {
                         Map<String, List<Map<String, Object>>> topYaml =
                                 (Map<String, List<Map<String, Object>>>)
-                                        YAML.get().load(inputStream);
+                                        YAML.get().loadFromInputStream(inputStream);
                         List<Map<String, Object>> jmxConf =
                                 topYaml.get("jmx_metrics");
                         if (jmxConf != null) {
