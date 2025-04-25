@@ -4,7 +4,7 @@ stages:
   - run_unit_tests
 
 variables:
-  REGISTRY: 486234852809.dkr.ecr.us-east-1.amazonaws.com
+  REGISTRY: registry.ddbuild.io
   # ryuk is a privileged container started by testcontainers which cleans up containers at the end of testing
   # It is not necessary for our gitlab CI env as #ci-cd infra tears everything down at the end of a gitlab run
   TESTCONTAINERS_RYUK_DISABLED: "true"
