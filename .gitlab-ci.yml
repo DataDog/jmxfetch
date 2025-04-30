@@ -59,6 +59,7 @@ deploy_to_sonatype:
     - python3 -m venv venv
     - source venv/bin/activate
     - python3 -m pip install --upgrade pip
+    - echo "Installing AWSCLI..."
     - python3 -m pip install awscli
 
     - echo "Fetching Sonatype user..."
