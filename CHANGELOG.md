@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.49.8 / TBC
+
 # 0.49.7 / 2025-05-01
 * [IMPROVEMENT] Encapsulate the JsonParser error type to hide the Jackson exception inside the wrapper, to avoid a dependency on Jackson outside of `App.java` [#553][] (Thanks [@ygree][])
 * [IMPROVEMENT] Migrate from snakeyaml to snakeyaml-engine to stop using snakeyaml reflection, which is poorly compatible with GraalVM native builds [#554][] (Thanks [@ygree][])
