@@ -1,6 +1,8 @@
 Changelog
 =========
-# 0.49.7 / TBC
+# 0.49.7 / 2025-05-01
+* [IMPROVEMENT] Encapsulate the JsonParser error type to hide the Jackson exception inside the wrapper, to avoid a dependency on Jackson outside of `App.java` [#553][] (Thanks [@ygree][])
+* [IMPROVEMENT] Migrate from snakeyaml to snakeyaml-engine to stop using snakeyaml reflection, which is poorly compatible with GraalVM native builds [#554][] (Thanks [@ygree][])
 
 # 0.49.6 / 2024-11-11
 * [BUGFIX] Fixed `NullPointerException` on JBoss when user and password not set [#546][]
@@ -791,6 +793,8 @@ Changelog
 [#534]: https://github.com/DataDog/jmxfetch/issues/534
 [#540]: https://github.com/DataDog/jmxfetch/issues/540
 [#546]: https://github.com/DataDog/jmxfetch/issues/546
+[#553]: https://github.com/DataDog/jmxfetch/issues/553
+[#554]: https://github.com/DataDog/jmxfetch/issues/554
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
@@ -800,3 +804,4 @@ Changelog
 [@cslee00]: https://github.com/cslee00
 [@mattdrees]: https://github.com/mattdrees
 [@nwillems]: https://github.com/nwillems
+[@ygree]: https://github.com/ygree
