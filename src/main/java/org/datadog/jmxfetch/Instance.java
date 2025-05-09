@@ -276,7 +276,7 @@ public class Instance {
 
         try {
             mbs.registerMBean(bean,instanceTelemetryBeanName);
-            log.debug("Succesfully registered jmx bean for instance {} with ObjectName = {}",
+            log.debug("Successfully registered jmx bean for instance {} with ObjectName = {}",
                 this.getName(), instanceTelemetryBeanName);
         } catch (InstanceAlreadyExistsException
          | MBeanRegistrationException
@@ -534,7 +534,7 @@ public class Instance {
         return metrics;
     }
 
-    /** Returns whather or not the given period has elapsed since reference time. */
+    /** Returns whether or not the given period has elapsed since reference time. */
     public boolean isPeriodDue(long refTime, Integer refPeriod) {
         if ((System.currentTimeMillis() - refTime) / 1000 < refPeriod) {
             return false;
@@ -543,7 +543,7 @@ public class Instance {
         }
     }
 
-    /** Returns whather or not its time to collect metrics for the instance. */
+    /** Returns whether or not its time to collect metrics for the instance. */
     public boolean timeToCollect() {
         if (this.minCollectionPeriod == null) {
             return true;
@@ -870,7 +870,7 @@ public class Instance {
     }
 
     /**
-     * Asynchronoush cleanup of instance, including connection.
+     * Asynchronous cleanup of instance, including connection.
      * */
     public synchronized void cleanUpAsync() {
         cleanupTelemetryBean();

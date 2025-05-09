@@ -29,7 +29,7 @@ public class AttachApiConnection extends Connection {
         try {
             address = new JMXServiceURL(getJmxUrlForProcessRegex(processRegex));
         } catch (com.sun.tools.attach.AttachNotSupportedException e) {
-            throw new IOException("Unnable to attach to process regex:  " + processRegex, e);
+            throw new IOException("Unable to attach to process regex:  " + processRegex, e);
         }
         return address;
     }

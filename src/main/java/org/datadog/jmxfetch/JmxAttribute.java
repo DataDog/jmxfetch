@@ -196,7 +196,7 @@ public abstract class JmxAttribute {
     }
 
     /**
-     * Wrapper for javax.management.ObjectName.unqoute that removes quotes from the bean parameter
+     * Wrapper for javax.management.ObjectName.unquote that removes quotes from the bean parameter
      * value if possible. If not, it hits the catch block and returns the original parameter.
      */
     private String unquote(String beanParameter) {
