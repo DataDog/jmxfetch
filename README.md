@@ -1,4 +1,4 @@
-[![Build Status](https://circleci.com/gh/DataDog/jmxfetch.svg?style=svg)](https://app.circleci.com/pipelines/github/DataDog/jmxfetch)
+[![Build Status](https://github.com/DataDog/jmxfetch/actions/workflows/test.yml/badge.svg)](https://github.com/DataDog/jmxfetch/actions/workflows/test.yml)
 
 # [Change log](https://github.com/DataDog/jmxfetch/blob/master/CHANGELOG.md)
 

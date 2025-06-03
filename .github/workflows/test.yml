@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions: read-all
+
+jobs:
+  lint:
+    name: Lint (OpenJDK 8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ github.ref }}-${{ hashFiles('**/pom.xml') }}-lint
+        restore-keys: |
+          ${{ runner.os }}-m2-${{ github.ref }}-
+          ${{ runner.os }}-m2-
+          
+    - name: Run lint
+      run: ./mvnw verify -B -Dhttps.protocols=TLSv1.2 -DskipTests
+
+  test:
+    name: Test (OpenJDK ${{ matrix.java-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        java-version:
+          - 8
+          - 11
+          - 16
+          - 17
+          - 19
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ github.ref }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2-${{ github.ref }}-
+          ${{ runner.os }}-m2-
+          
+    - name: Set up Docker
+      uses: docker/setup-docker-action@v4
+      
+    - name: Run tests
+      run: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
+      
+    - name: Show test logs on failure
+      if: failure()
+      run: |
+        echo "Test failed. Showing surefire reports:"
+        for log in target/surefire-reports/*.txt; do
+          if [ -f "$log" ]; then
+            echo "$log ========================"
+            cat "$log"
+          fi
+        done
