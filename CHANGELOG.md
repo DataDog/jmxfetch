@@ -1,6 +1,9 @@
 Changelog
 =========
-# 0.49.8 / TBC
+# 0.49.9 / TBC
+
+# 0.49.8 / 2025-06-03
+* [FEATURE] Added support for GraalVM Native GC metrics [#560][] (Thanks [@ygree][])
 
 # 0.49.7 / 2025-05-01
 * [IMPROVEMENT] Encapsulate the JsonParser error type to hide the Jackson exception inside the wrapper, to avoid a dependency on Jackson outside of `App.java` [#553][] (Thanks [@ygree][])
@@ -13,7 +16,7 @@ Changelog
 * [FEATURE] Added support for `UnloadedClassCount` metric [#540][]
 
 # 0.49.4 / 2024-08-23
-* [FEATURE] Added support for IBM J9 gc metrics [#534][]
+* [FEATURE] Added support for IBM J9 GC metrics [#534][]
 
 # 0.49.3 / 2024-07-26
 * [FEATURE] Added support for jsr77 j2ee statistics [#531][]
@@ -462,34 +465,34 @@ Changelog
 
 #### Changes
 
-* [BUGFIX] confd is now an optional parameter. See [#161][]
+* [BUGFIX] confd is now an optional parameter. See [#161][].
 
 # 0.18.0 / 2017-10-11
 
 #### Changes
 
-* [FEATURE] Collect instance configurations via API. See [#156][]
+* [FEATURE] Collect instance configurations via API. See [#156][].
 
 # 0.17.0 / 2017-09-20
 
 #### Changes
 
-* [FEATURE] Add support for submission of JMX statuses to REST API. See [#155][]
+* [FEATURE] Add support for submission of JMX statuses to REST API. See [#155][].
 * [IMPROVEMENT] Rates: add canonical_rate + feature flag for the feature. See [#154][] (Thanks [@arrawatia][])
 
 # 0.16.0 / 2017-08-21
 
 #### Changes
 
-* [BUGFIX] Increase maximum length of instance configs pulled from Auto-Discovery pipe. See [#147][]
-* [IMPROVEMENT] Touch JMXFetch launch file on boot-up. See [#143][]
+* [BUGFIX] Increase maximum length of instance configs pulled from Auto-Discovery pipe. See [#147][].
+* [IMPROVEMENT] Touch JMXFetch launch file on boot-up. See [#143][].
 
 # 0.15.0 / 2017-07-10
 
 #### Changes
 
-* [FEATURE] Transition to auto-discovery nomenclature, support legacy SD. See [#142][]
-* [IMPROVEMENT] Auto_discovery: process templates larger than the page buffer size. See [#145][]
+* [FEATURE] Transition to auto-discovery nomenclature, support legacy SD. See [#142][].
+* [IMPROVEMENT] Auto_discovery: process templates larger than the page buffer size. See [#145][].
 
 # 0.14.0 / 2017-05-31
 
@@ -499,21 +502,21 @@ Changelog
 # 0.13.1 / 2017-04-18
 
 #### Changes
-* [BUGFIX] Service_discovery: fix race condition preventing SD initialization. See [#135][]
+* [BUGFIX] Service_discovery: fix race condition preventing SD initialization. See [#135][].
 
 # 0.13.0 / 2017-03-22
 
 #### Changes
-* [BUGFIX] Allow specifying no alias on detailed attribute. See [#133][]
-* [BUGFIX] Fix connectivity loss when multiple instances are assigned to a same JVM. See [#124][]
-* [BUGFIX] Parse string-defined ports to integers in user configurations. See [#121][]
-* [BUGFIX] Support `java.util.Map` attribute types. See [#130][]
-* [BUGFIX] Support list-defined user tags at instance level. See [#132][]
-* [FEATURE] Add `histogram` metric type. See [#115][]
+* [BUGFIX] Allow specifying no alias on detailed attribute. See [#133][].
+* [BUGFIX] Fix connectivity loss when multiple instances are assigned to a same JVM. See [#124][].
+* [BUGFIX] Parse string-defined ports to integers in user configurations. See [#121][].
+* [BUGFIX] Support `java.util.Map` attribute types. See [#130][].
+* [BUGFIX] Support list-defined user tags at instance level. See [#132][].
+* [FEATURE] Add `histogram` metric type. See [#115][].
 * [FEATURE] Add `list_jvms` command to list available JVMs when using the Attach API. See [#100][], [#112][] (Thanks [@cslee00][])
-* [FEATURE] Add tag blacklisting. See [#116][]
+* [FEATURE] Add tag blacklisting. See [#116][].
 * [FEATURE] Add user tags definition for MBeans. See [#117][].
-* [FEATURE] Enable service discovery via a named pipe. See [#113][]
+* [FEATURE] Enable service discovery via a named pipe. See [#113][].
 * [FEATURE] Support `javax.management.openmbean.TabularData` attribute types. See [#111][], [#128][] (Thanks [@brothhaar][])
 * [FEATURE] Support user tag value substitution by attribute name. See [#117][].
 * [IMPROVEMENT] Print exception messages on Attach API connection failures. See [#122][] (Thanks [@aoking][])
@@ -527,57 +530,57 @@ Changelog
 
 #### Changes
 * [BUGFIX] Report properly beans with ':' in the name. See [#90][], [#91][], [#95][] (Thanks [@bluestix][])
-* [BUGFIX] Sanitize metric names and tags, i.e. remove illegal characters. See [#89][]
+* [BUGFIX] Sanitize metric names and tags, i.e. remove illegal characters. See [#89][].
 * [BUGFIX] Support `javax.management.Attribute` attribute types. See [#92][] (Thanks [@nwillems][])
-* [FEATURE] Add user tags to service checks. See [#96][]
+* [FEATURE] Add user tags to service checks. See [#96][].
 * [FEATURE] Allow group name substitutions in attribute/alias parameters. See [#94][], [#97][] (Thanks [@alz][])
 
 # 0.10.0 / 2016-03-23
 
 #### Changes
-* [FEATURE] Allow configuration of StatsD host. See [#85][]
-* [IMPROVEMENT] Re-throw IOException caught at the instance-level to handle them properly. See [#83][]
+* [FEATURE] Allow configuration of StatsD host. See [#85][].
+* [IMPROVEMENT] Re-throw IOException caught at the instance-level to handle them properly. See [#83][].
 
 # 0.9.0 / 2015-11-05
 
 #### Changes
-* [BUGFIX] Fix bean name matching logic: `OR`→`AND`. See [#81][]
-* [FEATURE] Support `float` and `java.lang.Float` attribute types as simple JMX attributes. See [#76][]
-* [FEATURE] Support Cassandra > 2.2 metric name structure (CASSANDRA-4009). See [#79][]
-* [FEATURE] Support custom JMX Service URL to connect to, on a per-instance basis. See [#80][]
-* [IMPROVEMENT] Assign generic alias if not defined. See [#78][]
+* [BUGFIX] Fix bean name matching logic: `OR`→`AND`. See [#81][].
+* [FEATURE] Support `float` and `java.lang.Float` attribute types as simple JMX attributes. See [#76][].
+* [FEATURE] Support Cassandra > 2.2 metric name structure (CASSANDRA-4009). See [#79][].
+* [FEATURE] Support custom JMX Service URL to connect to, on a per-instance basis. See [#80][].
+* [IMPROVEMENT] Assign generic alias if not defined. See [#78][].
 
 # 0.8.0 / 2015-09-17
 
 #### Changes
-* [BUGFIX] Do not send service check warnings on metric limit violation. See [#73][]
-* [BUGFIX] Log exception stack traces instead of printing them. See [#67][]
-* [BUGFIX] Use `jmx_server` tag instead of `host` to tag JMX host's service checks. See [#66][]
-* [FEATURE] Wildcard support on domains and bean names. See [#57][]
-* [IMPROVEMENT] Memory saving by limiting MBeans queries to certain scopes. See [#63][]
-* [IMPROVEMENT] Memory saving by query bean names instead of full bean objects. See [#71][]
+* [BUGFIX] Do not send service check warnings on metric limit violation. See [#73][].
+* [BUGFIX] Log exception stack traces instead of printing them. See [#67][].
+* [BUGFIX] Use `jmx_server` tag instead of `host` to tag JMX host's service checks. See [#66][].
+* [FEATURE] Wildcard support on domains and bean names. See [#57][].
+* [IMPROVEMENT] Memory saving by limiting MBeans queries to certain scopes. See [#63][].
+* [IMPROVEMENT] Memory saving by query bean names instead of full bean objects. See [#71][].
 
 # 0.7.0 / 2015-06-04
 
 #### Changes
-* [BUGFIX] Rename 'host' bean parameter to 'bean_host' in tags to avoid conflicts. See [#59][]
-* [ENHANCEMENT] Add option to exit JMXFetch when a specified file is created. See [#58][]
+* [BUGFIX] Rename 'host' bean parameter to 'bean_host' in tags to avoid conflicts. See [#59][].
+* [ENHANCEMENT] Add option to exit JMXFetch when a specified file is created. See [#58][].
 
 # 0.6.0 / 2015-05-20
 
 #### Changes
-* [ENHANCEMENT] Format service check names prefix names to strip non alphabetic characters. See [#53][]
-* [FEATURE] Write the number of service check sent to status file. See [#54][]
+* [ENHANCEMENT] Format service check names prefix names to strip non alphabetic characters. See [#53][].
+* [FEATURE] Write the number of service check sent to status file. See [#54][].
 
 # 0.5.2 / 2015-04-08
 
 #### Changes
-* [ENHANCEMENT] Only send instance name in service check tags. See [#51][]
+* [ENHANCEMENT] Only send instance name in service check tags. See [#51][].
 
 # 0.5.1 / 2015-04-02
 
 #### Changes
-* [BUGFIX] Fix bad regression with `Status` type. See [#49][]
+* [BUGFIX] Fix bad regression with `Status` type. See [#49][].
 
 # 0.5.0 / 2015-03-16
 
@@ -588,15 +591,15 @@ Changelog
 # 0.4.1 / 2014-02-11
 
 #### Changes
-* [BUGFIX] Memory leak fix when fetching attributes value is failing. See [#30][]
+* [BUGFIX] Memory leak fix when fetching attributes value is failing. See [#30][].
 * [FEATURE/BUGFIX] Fetch more JVM (Non)Heap variables by default. See [bd8915c2f1eec794f406414b678ce6110407dce1](https://github.com/DataDog/jmxfetch/commit/bd8915c2f1eec794f406414b678ce6110407dce1)
 
 # 0.3.0 / 2014-03-25
 
 #### Changes
 * [BUGFIX] Refresh JMX tree: See [4374b92cbf1b93d88fa5bd9d7339907e16a2da4a](https://github.com/DataDog/jmxfetch/commit/4374b92cbf1b93d88fa5bd9d7339907e16a2da4a)
-* [BUGFIX] Reset statsd connection: See [#19][]
-* [BUGFIX] Support WARN log level, See [#14][]
+* [BUGFIX] Reset statsd connection: See [#19][].
+* [BUGFIX] Support WARN log level, See [#14][].
 * [FEATURE] Support custom instance tags: See [#28][] (Thanks [@coupacooke][])
 * [FEATURE] Support new types: Boolean, String, java.lang.Number, AtomicInteger, AtomicLong: See [#25][] [#26][] (Thanks [@coupacooke][])
 
@@ -797,6 +800,7 @@ Changelog
 [#546]: https://github.com/DataDog/jmxfetch/issues/546
 [#553]: https://github.com/DataDog/jmxfetch/issues/553
 [#554]: https://github.com/DataDog/jmxfetch/issues/554
+[#560]: https://github.com/DataDog/jmxfetch/issues/560
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
