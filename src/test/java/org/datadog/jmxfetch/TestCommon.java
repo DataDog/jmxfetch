@@ -168,11 +168,12 @@ public class TestCommon {
 
         app = new App(appConfig);
         if (sdEnabled) {
-            FileInputStream sdPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe());
-            int len = sdPipe.available();
-            byte[] buffer = new byte[len];
-            sdPipe.read(buffer);
-            app.setReinit(app.processAutoDiscovery(buffer));
+            try (FileInputStream sdPipe = new FileInputStream(appConfig.getAutoDiscoveryPipe())) {
+                int len = sdPipe.available();
+                byte[] buffer = new byte[len];
+                sdPipe.read(buffer);
+                app.setReinit(app.processAutoDiscovery(buffer));
+            }
         }
 
         app.init(false);
