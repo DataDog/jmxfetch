@@ -1,4 +1,4 @@
-FROM eclipse-temurin:8u432-b06-jdk AS build
+FROM eclipse-temurin:8-jdk-noble AS build
 
 WORKDIR /app
 
@@ -22,4 +22,3 @@ RUN --mount=type=cache,id=mavenCache,target=/root/.m2,sharing=locked \
 FROM datadog/agent:7-jmx AS final
 
 COPY --from=build /app/target/jmxfetch-*-jar-with-dependencies.jar /opt/datadog-agent/bin/agent/dist/jmx/jmxfetch.jar
-
