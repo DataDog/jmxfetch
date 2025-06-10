@@ -38,11 +38,12 @@
         <buildnumber-maven-plugin.version>3.1.0</buildnumber-maven-plugin.version>
         <maven-assembly-plugin.version>3.1.0</maven-assembly-plugin.version>
         <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
+        <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-deploy-plugin.version>3.1.2</maven-deploy-plugin.version>
         <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
         <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-        <maven-surefire-plugin.version>2.9</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.0.0-M6</maven-surefire-plugin.version>
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
         <!-- Note: using project checkstyle with AOSP style
         find the default google java checkstyle config here -
@@ -58,7 +59,7 @@
         <javax.management.j2ee-api.version>1.1.2</javax.management.j2ee-api.version>
         <jcommander.version>1.35</jcommander.version>
         <junit.version>4.13.2</junit.version>
-        <lombok.version>1.18.32</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
         <mockito.version>2.28.2</mockito.version>
         <slf4j.version>1.7.32</slf4j.version>
         <snakeyaml-engine.version>2.9</snakeyaml-engine.version>
@@ -149,6 +150,54 @@
                     <systemPath>${java.home}/../lib/tools.jar</systemPath>
                 </dependency>
             </dependencies>
+        </profile>
+        <profile>
+            <id>jdk-21-and-later-profile</id>
+            <activation>
+                <jdk>[21.0,)</jdk>
+            </activation>
+            <properties>
+                <!-- Fix for JDK 21 which fails with "Source option 7 is no longer supported. Use 8 or later. -->
+                <jdk.version>1.8</jdk.version>
+                <maven.compiler.source>1.8</maven.compiler.source>
+                <maven.compiler.target>1.8</maven.compiler.target>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${maven-surefire-plugin.version}</version>
+                        <configuration>
+                            <!-- Fix for "java.lang.reflect.InaccessibleObjectException: Unable to make field private final java.util.Map java.util.Collections$UnmodifiableMap.m accessible: module java.base does not "opens java.util" to unnamed module @75eeccf5" -->
+                            <!-- Use ParallelGC for tests to avoid G1 GC which is the default in JDK 21 -->
+                            <argLine>
+                                --add-opens=java.base/java.util=ALL-UNNAMED
+                                -Djdk.attach.allowAttachSelf
+                                -XX:+UseParallelGC
+                            </argLine>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven-compiler-plugin.version}</version>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok</artifactId>
+                                    <version>${lombok.version}</version>
+                                </path>
+                            </annotationProcessorPaths>
+                            <compilerArgs>
+                                <arg>-Xlint:deprecation</arg>
+                                <arg>-Xlint:unchecked</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -243,14 +292,27 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:deprecation</arg>
+                        <arg>-Xlint:unchecked</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <!-- allowAttachSelf required for tests in jdk9+ ref https://bugs.openjdk.org/browse/JDK-8180425 -->
                     <!-- rmi.server.hostname required for tests in some MacOS configurations -->
-                    <argLine>-Djdk.attach.allowAttachSelf=true -Djava.rmi.server.hostname=localhost</argLine>
+                    <argLine>
+                        -Djdk.attach.allowAttachSelf
+                        -Djava.rmi.server.hostname=localhost
+                    </argLine>
                     <useFile>false</useFile>
-                    <trimStackTrace>false</trimStackTrace> <!-- can remove once surefire 3.0 is used. ref: https://issues.apache.org/jira/browse/SUREFIRE-1432 -->
                 </configuration>
             </plugin>
             <plugin>

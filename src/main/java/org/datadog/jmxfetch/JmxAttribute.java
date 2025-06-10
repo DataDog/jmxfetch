@@ -364,9 +364,9 @@ public abstract class JmxAttribute {
         if (value instanceof String) {
             return Double.parseDouble((String) value);
         } else if (value instanceof Integer) {
-            return new Double((Integer) (value));
+            return Double.valueOf((Integer) (value));
         } else if (value instanceof AtomicInteger) {
-            return new Double(((AtomicInteger) (value)).get());
+            return Double.valueOf(((AtomicInteger) (value)).get());
         } else if (value instanceof AtomicLong) {
             Long longValue = ((AtomicLong) (value)).get();
             return longValue.doubleValue();
@@ -375,13 +375,13 @@ public abstract class JmxAttribute {
         } else if (value instanceof Boolean) {
             return ((Boolean) value ? 1.0 : 0.0);
         } else if (value instanceof Long) {
-            Long longValue = new Long((Long) value);
+            Long longValue = Long.valueOf((Long) value);
             return longValue.doubleValue();
         } else if (value instanceof Number) {
             return ((Number) value).doubleValue();
         } else {
             try {
-                return new Double((Double) value);
+                return Double.valueOf((Double) value);
             } catch (Exception e) {
                 throw new NumberFormatException();
             }

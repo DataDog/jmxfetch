@@ -27,8 +27,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import io.javalin.*;
 import lombok.extern.slf4j.Slf4j;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import org.datadog.Defaults;
 
@@ -79,13 +79,15 @@ class AppConfig {
     public void readConfigFileOnDisk () {
         File f = new File(config_path);
         String yamlPath = f.getPath();
-        try{
-            FileInputStream yamlInputStream = new FileInputStream(yamlPath);
-            Yaml yaml = new Yaml(new Constructor(Configuration.class));
-            jmxConfiguration = yaml.load(yamlInputStream);
+        try (FileInputStream yamlInputStream = new FileInputStream(yamlPath)){
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            jmxConfiguration = mapper.readValue(yamlInputStream, Configuration.class);
             log.info("Configuration read from " + config_path + " is:\n" + jmxConfiguration);
         } catch (FileNotFoundException e) {
             log.warn("Could not find your config file at " + yamlPath);
+            jmxConfiguration = null;
+        } catch (IOException e) {
+            log.error("Error reading config file at " + yamlPath, e);
             jmxConfiguration = null;
         }
     }
