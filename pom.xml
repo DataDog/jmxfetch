@@ -54,7 +54,7 @@
         <apache-commons-lang3.version>3.5</apache-commons-lang3.version>
         <commons-io.version>2.4</commons-io.version>
         <hamcrest.version>2.2</hamcrest.version>
-        <jackson.version>2.12.3</jackson.version>
+        <jackson.version>2.13.0</jackson.version>
         <java-dogstatsd-client.version>2.10.5</java-dogstatsd-client.version>
         <javax.management.j2ee-api.version>1.1.2</javax.management.j2ee-api.version>
         <jcommander.version>1.35</jcommander.version>
