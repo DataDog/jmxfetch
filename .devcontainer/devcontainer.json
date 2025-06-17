@@ -7,8 +7,8 @@
 	"features": {
 		"ghcr.io/devcontainers/features/java:1": {
 			"additionalVersions": "21-tem, 17.0.15-tem, 11.0.27-tem",
-			"installGradle": "true",
-			"installMaven": "true",
+			"installMaven": "false",
+			"installGradle": "false"
 		},
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {  // Needed for Testcontainers for Java
 			"disableIp6tables": true

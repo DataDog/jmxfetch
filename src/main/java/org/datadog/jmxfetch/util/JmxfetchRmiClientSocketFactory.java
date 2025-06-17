@@ -51,7 +51,16 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         } catch (IOException e) {
             /* will close socket if it ever connects */
             f.clean();
+            t.interrupt();
             throw e;
+        } finally {
+            if (t.isAlive()) {
+                try {
+                    t.join(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
         if (socket == null) {
             throw new IOException("connect timed out: " + host + ":" + port);
@@ -95,6 +104,13 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
             try {
                 final Socket s = factory.createSocket(host, port);
                 synchronized (this) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        // Thread was interrupted, close socket and exit
+                        try {
+                            s.close();
+                        } catch (final IOException e) { /* empty on purpose */ }
+                        return;
+                    }
                     socket = s;
                     notify();
                 }
