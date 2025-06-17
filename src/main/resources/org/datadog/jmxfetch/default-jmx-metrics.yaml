@@ -136,6 +136,14 @@
 - include:
     domain: java.lang
     type: MemoryPool
+    name: ZGC Young Generation
+    attribute:
+      Usage.used:
+        alias: jvm.gc.eden_size
+        metric_type: gauge
+- include:
+    domain: java.lang
+    type: MemoryPool
     name: Survivor Space
     attribute:
       Usage.used:
@@ -185,6 +193,14 @@
     domain: java.lang
     type: MemoryPool
     name: G1 Old Gen
+    attribute:
+      Usage.used:
+        alias: jvm.gc.old_gen_size
+        metric_type: gauge
+- include:
+    domain: java.lang
+    type: MemoryPool
+    name: ZGC Old Generation
     attribute:
       Usage.used:
         alias: jvm.gc.old_gen_size
