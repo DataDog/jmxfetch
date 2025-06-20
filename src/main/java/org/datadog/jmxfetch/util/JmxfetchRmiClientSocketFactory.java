@@ -54,23 +54,21 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         final AsyncSocketFactory f = new AsyncSocketFactory(factory, host, port);
         final Thread t = new Thread(f, "JmxfetchRmiClientSocketFactory-" + nextThreadNum());
         try {
-            synchronized (f) {
-                t.start();
-                try {
-                    long now = System.currentTimeMillis();
-                    final long until = now + connectionTimeoutMs;
-                    do {
-                        f.wait(until - now);
-                        socket = getSocketFromFactory(f);
-                        if (socket != null) {
-                            break;
-                        }
-                        now = System.currentTimeMillis();
-                    } while (now < until);
-                } catch (final InterruptedException e) {
-                    throw new InterruptedIOException(
-                        "interrupted during socket connection attempt");
-                }
+            t.start();
+            try {
+                long now = System.currentTimeMillis();
+                final long until = now + this.connectionTimeoutMs;
+                do {
+                    f.wait(until - now);
+                    socket = getSocketFromFactory(f);
+                    if (socket != null) {
+                        break;
+                    }
+                    now = System.currentTimeMillis();
+                } while (now < until);
+            } catch (final InterruptedException e) {
+                throw new InterruptedIOException(
+                    "interrupted during socket connection attempt");
             }
         } catch (IOException e) {
             /* will close socket if it ever connects */
@@ -113,9 +111,11 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         private final RMIClientSocketFactory factory;
         private final String host;
         private final int port;
-        private Exception exception = null;
-        private Socket socket = null;
-        private boolean shouldClose = false;
+        
+        private volatile Exception exception = null;
+        private volatile Socket socket = null;
+        private volatile boolean shouldClose = false;
+        private final Object lock = new Object();
         
         AsyncSocketFactory(
                 final RMIClientSocketFactory factory,final String host, final int port) {
