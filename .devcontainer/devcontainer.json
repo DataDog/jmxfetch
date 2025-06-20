@@ -21,6 +21,7 @@
 		"vscode": {
 			"settings": {},
 			"extensions": [
+				"github.vscode-github-actions",
 				"streetsidesoftware.code-spell-checker"
 			]
 		}
