@@ -54,21 +54,23 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         final AsyncSocketFactory f = new AsyncSocketFactory(factory, host, port);
         final Thread t = new Thread(f, "JmxfetchRmiClientSocketFactory-" + nextThreadNum());
         try {
-            t.start();
-            try {
-                long now = System.currentTimeMillis();
-                final long until = now + this.connectionTimeoutMs;
-                do {
-                    f.wait(until - now);
-                    socket = getSocketFromFactory(f);
-                    if (socket != null) {
-                        break;
-                    }
-                    now = System.currentTimeMillis();
-                } while (now < until);
-            } catch (final InterruptedException e) {
-                throw new InterruptedIOException(
-                    "interrupted during socket connection attempt");
+            synchronized (f) {
+                t.start();
+                try {
+                    long now = System.currentTimeMillis();
+                    final long until = now + this.connectionTimeoutMs;
+                    do {
+                        f.wait(until - now);
+                        socket = getSocketFromFactory(f);
+                        if (socket != null) {
+                            break;
+                        }
+                        now = System.currentTimeMillis();
+                    } while (now < until);
+                } catch (final InterruptedException e) {
+                    throw new InterruptedIOException(
+                        "interrupted during socket connection attempt");
+                }
             }
         } catch (IOException e) {
             /* will close socket if it ever connects */
