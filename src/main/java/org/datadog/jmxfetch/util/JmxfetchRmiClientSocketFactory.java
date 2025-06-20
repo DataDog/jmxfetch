@@ -52,15 +52,17 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
     public Socket createSocket(final String host, final int port) throws IOException {
         Socket socket = null;
         final AsyncSocketFactory f = new AsyncSocketFactory(factory, host, port);
-        final Thread t = new Thread(f, "JmxfetchRmiClientSocketFactory-" + nextThreadNum());
+        final Thread t = new Thread(f, 
+            String.format("JmxfetchRmiClientSocketFactory-[%s:%d]-%d", 
+                host, port, nextThreadNum()));
         try {
-            synchronized (f) {
+            synchronized (f.lock) {
                 t.start();
                 try {
                     long now = System.currentTimeMillis();
                     final long until = now + this.connectionTimeoutMs;
                     do {
-                        f.wait(until - now);
+                        f.lock.wait(until - now);
                         socket = getSocketFromFactory(f);
                         if (socket != null) {
                             break;
@@ -129,7 +131,7 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         public void run() {
             try {
                 final Socket s = factory.createSocket(host, port);
-                synchronized (this) {
+                synchronized (this.lock) {
                     if (Thread.currentThread().isInterrupted()) {
                         // Thread was interrupted, close socket and exit
                         try {
@@ -138,9 +140,9 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
                         return;
                     }
                     this.socket = s;
-                    notify();
+                    this.lock.notify();
                 }
-                synchronized (this) {
+                synchronized (this.lock) {
                     if (this.shouldClose) {
                         try {
                             this.socket.close();
@@ -148,28 +150,34 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
                     }
                 }
             } catch (final Exception e) {
-                synchronized (this) {
+                synchronized (this.lock) {
                     this.exception = e;
-                    notify();
+                    this.lock.notify();
                 }
             }
         }
 
-        synchronized void clean() {
-            if (this.socket != null) {
-                try {
-                    this.socket.close();
-                } catch (final IOException e) { /* empty on purpose */ }
+        void clean() {
+            synchronized (this.lock) {
+                if (this.socket != null) {
+                    try {
+                        this.socket.close();
+                    } catch (final IOException e) { /* empty on purpose */ }
+                }
+                this.shouldClose = true;
             }
-            this.shouldClose = true;
         }
 
-        private synchronized Exception getException() {
-            return this.exception;
+        private Exception getException() {
+            synchronized (this.lock) {
+                return this.exception;
+            }
         }
 
-        private synchronized Socket getSocket() {
-            return this.socket;
+        private Socket getSocket() {
+            synchronized (this.lock) {
+                return this.socket;
+            }
         }
     }
 }
