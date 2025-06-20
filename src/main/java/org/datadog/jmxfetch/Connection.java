@@ -36,7 +36,7 @@ public abstract class Connection {
     /** Queries beans on specific scope. Returns set of matching query names.. */
     public Set<ObjectName> queryNames(final ObjectName name) throws IOException {
         final String scope = (name != null) ? name.toString() : "*:*";
-        log.debug("Querying bean names on scope: " + scope);
+        log.debug("Querying bean names on scope: {}", scope);
         return this.mbs.queryNames(name, null);
     }
 

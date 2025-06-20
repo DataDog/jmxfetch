@@ -23,6 +23,9 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
     /**
      * JmxfetchRmiClientSocketFactory constructor with socket timeout (milliseconds), a socket
      * connection timeout (milliseconds) and a flag to enable/disable SSL.
+     * @param timeoutMs socket timeout (milliseconds)
+     * @param connectionTimeoutMs socket connection timeout (milliseconds)
+     * @param ssl flag to enable/disable SSL
      */
     public JmxfetchRmiClientSocketFactory(
         final int timeoutMs, final int connectionTimeoutMs, final boolean ssl) {
@@ -132,39 +135,39 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
                         } catch (final IOException e) { /* empty on purpose */ }
                         return;
                     }
-                    socket = s;
+                    this.socket = s;
                     notify();
                 }
                 synchronized (this) {
-                    if (shouldClose) {
+                    if (this.shouldClose) {
                         try {
-                            s.close();
+                            this.socket.close();
                         } catch (final IOException e) { /* empty on purpose */ }
                     }
                 }
             } catch (final Exception e) {
                 synchronized (this) {
-                    exception = e;
+                    this.exception = e;
                     notify();
                 }
             }
         }
 
         synchronized void clean() {
-            if (socket != null) {
+            if (this.socket != null) {
                 try {
-                    socket.close();
+                    this.socket.close();
                 } catch (final IOException e) { /* empty on purpose */ }
             }
-            shouldClose = true;
+            this.shouldClose = true;
         }
 
         private synchronized Exception getException() {
-            return exception;
+            return this.exception;
         }
 
         private synchronized Socket getSocket() {
-            return socket;
+            return this.socket;
         }
     }
 }
