@@ -8,35 +8,61 @@ import java.rmi.server.RMISocketFactory;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
+
+    /* For autonumbering RMIClientSocketFactory threads. */
+    private static int threadInitNumber;
+
+    private static synchronized int nextThreadNum() {
+        return threadInitNumber++;
+    }
+
     private final int timeoutMs;
     private final int connectionTimeoutMs;
     private final RMIClientSocketFactory factory;
 
     /**
      * JmxfetchRmiClientSocketFactory constructor with socket timeout (milliseconds), a socket
-     * connection timeout (millisecondes) and a flag to enable/disable SSL.
+     * connection timeout (milliseconds) and a flag to enable/disable SSL.
+     * @param timeoutMs socket timeout (milliseconds)
+     * @param connectionTimeoutMs socket connection timeout (milliseconds)
+     * @param ssl flag to enable/disable SSL
      */
     public JmxfetchRmiClientSocketFactory(
-            final int timeoutMs, final int connectionTimeoutMs,final boolean ssl) {
+        final int timeoutMs, final int connectionTimeoutMs, final boolean ssl) {
+        this(timeoutMs,
+            connectionTimeoutMs,
+            ssl ? new SslRMIClientSocketFactory() : RMISocketFactory.getDefaultSocketFactory());
+    }
+
+    /**
+     * JmxfetchRmiClientSocketFactory constructor with socket timeout (milliseconds), a socket
+     * connection timeout (milliseconds) and a RMIClientSocketFactory.
+     * @param timeoutMs socket timeout (milliseconds)
+     * @param connectionTimeoutMs socket connection timeout (milliseconds)
+     * @param factory RMIClientSocketFactory
+     */ 
+    public JmxfetchRmiClientSocketFactory(
+        final int timeoutMs, final int connectionTimeoutMs, final RMIClientSocketFactory factory) {
         this.timeoutMs = timeoutMs;
         this.connectionTimeoutMs = connectionTimeoutMs;
-        this.factory = 
-            ssl ? new SslRMIClientSocketFactory() : RMISocketFactory.getDefaultSocketFactory();
+        this.factory = factory;
     }
 
     @Override
     public Socket createSocket(final String host, final int port) throws IOException {
         Socket socket = null;
         final AsyncSocketFactory f = new AsyncSocketFactory(factory, host, port);
-        final Thread t = new Thread(f);
+        final Thread t = new Thread(f, 
+            String.format("JmxfetchRmiClientSocketFactory-[%s:%d]-%d", 
+                host, port, nextThreadNum()));
         try {
-            synchronized (f) {
+            synchronized (f.lock) {
                 t.start();
                 try {
                     long now = System.currentTimeMillis();
-                    final long until = now + connectionTimeoutMs;
+                    final long until = now + this.connectionTimeoutMs;
                     do {
-                        f.wait(until - now);
+                        f.lock.wait(until - now);
                         socket = getSocketFromFactory(f);
                         if (socket != null) {
                             break;
@@ -51,7 +77,16 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         } catch (IOException e) {
             /* will close socket if it ever connects */
             f.clean();
+            t.interrupt();
             throw e;
+        } finally {
+            if (t.isAlive()) {
+                try {
+                    t.join(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
         if (socket == null) {
             throw new IOException("connect timed out: " + host + ":" + port);
@@ -80,9 +115,11 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         private final RMIClientSocketFactory factory;
         private final String host;
         private final int port;
-        private Exception exception = null;
-        private Socket socket = null;
-        private boolean shouldClose = false;
+        
+        private volatile Exception exception = null;
+        private volatile Socket socket = null;
+        private volatile boolean shouldClose = false;
+        private final Object lock = new Object();
         
         AsyncSocketFactory(
                 final RMIClientSocketFactory factory,final String host, final int port) {
@@ -94,40 +131,53 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         public void run() {
             try {
                 final Socket s = factory.createSocket(host, port);
-                synchronized (this) {
-                    socket = s;
-                    notify();
-                }
-                synchronized (this) {
-                    if (shouldClose) {
+                synchronized (this.lock) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        // Thread was interrupted, close socket and exit
                         try {
                             s.close();
+                        } catch (final IOException e) { /* empty on purpose */ }
+                        return;
+                    }
+                    this.socket = s;
+                    this.lock.notify();
+                }
+                synchronized (this.lock) {
+                    if (this.shouldClose) {
+                        try {
+                            this.socket.close();
                         } catch (final IOException e) { /* empty on purpose */ }
                     }
                 }
             } catch (final Exception e) {
-                synchronized (this) {
-                    exception = e;
-                    notify();
+                synchronized (this.lock) {
+                    this.exception = e;
+                    this.lock.notify();
                 }
             }
         }
 
-        synchronized void clean() {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (final IOException e) { /* empty on purpose */ }
+        void clean() {
+            synchronized (this.lock) {
+                if (this.socket != null) {
+                    try {
+                        this.socket.close();
+                    } catch (final IOException e) { /* empty on purpose */ }
+                }
+                this.shouldClose = true;
             }
-            shouldClose = true;
         }
 
-        private synchronized Exception getException() {
-            return exception;
+        private Exception getException() {
+            synchronized (this.lock) {
+                return this.exception;
+            }
         }
 
-        private synchronized Socket getSocket() {
-            return socket;
+        private Socket getSocket() {
+            synchronized (this.lock) {
+                return this.socket;
+            }
         }
     }
 }

@@ -10,7 +10,6 @@ import java.util.Map;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 @Slf4j
 public class RemoteConnection extends Connection {
@@ -33,47 +32,47 @@ public class RemoteConnection extends Connection {
 
     /** RemoteConnection constructor for specified remote connection parameters. */
     public RemoteConnection(Map<String, Object> connectionParams) throws IOException {
-        host = (String) connectionParams.get("host");
+        this.host = (String) connectionParams.get("host");
         try {
-            port = (Integer) connectionParams.get("port");
+            this.port = (Integer) connectionParams.get("port");
         } catch (ClassCastException e) {
-            port = Integer.parseInt((String) connectionParams.get("port"));
+            this.port = Integer.parseInt((String) connectionParams.get("port"));
         }
 
         try {
-            rmiTimeout = (Integer) connectionParams.get("rmi_client_timeout");
+            this.rmiTimeout = (Integer) connectionParams.get("rmi_client_timeout");
         } catch (final ClassCastException e) {
-            rmiTimeout = Integer.parseInt((String) connectionParams.get("rmi_client_timeout"));
+            this.rmiTimeout = Integer.parseInt((String) connectionParams.get("rmi_client_timeout"));
         }
-        if (rmiTimeout == null) {
-            rmiTimeout = DEFAULT_RMI_TIMEOUT;
+        if (this.rmiTimeout == null) {
+            this.rmiTimeout = DEFAULT_RMI_TIMEOUT;
         }
 
         try {
-            rmiConnectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
+            this.rmiConnectionTimeout = (Integer) connectionParams.get("rmi_connection_timeout");
         } catch (final ClassCastException e) {
-            rmiConnectionTimeout = 
+            this.rmiConnectionTimeout = 
                 Integer.parseInt((String) connectionParams.get("rmi_connection_timeout"));
         }
-        if (rmiConnectionTimeout == null) {
-            rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
+        if (this.rmiConnectionTimeout == null) {
+            this.rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
         }
 
         if (connectionParams.containsKey("user") && connectionParams.containsKey("password")) {
             if (connectionParams.get("user") != null && connectionParams.get("password") != null) {
-                user = (String) connectionParams.get("user");
-                password = (String) connectionParams.get("password");
+                this.user = (String) connectionParams.get("user");
+                this.password = (String) connectionParams.get("password");
             }
         }
 
-        jmxUrl = (String) connectionParams.get("jmx_url");
+        this.jmxUrl = (String) connectionParams.get("jmx_url");
 
         if (connectionParams.containsKey("path")) {
-            path = (String) connectionParams.get("path");
+            this.path = (String) connectionParams.get("path");
         }
 
-        env = getEnv(connectionParams);
-        address = getAddress();
+        this.env = getEnv(connectionParams);
+        this.address = getAddress();
 
         String trustStorePath;
         String trustStorePassword;
@@ -103,7 +102,7 @@ public class RemoteConnection extends Connection {
                 log.info("Setting keyStore path: " + keyStorePath + " and keyStorePassword");
             }
         }
-        createConnection();
+        this.createConnection();
     }
 
     private Map<String, Object> getEnv(Map<String, Object> connectionParams) {
@@ -119,7 +118,7 @@ public class RemoteConnection extends Connection {
         // a `NullPointerException` when creating a remote connection if null
         // https://github.com/DataDog/jmxfetch/issues/545
         if (this.user != null && this.password != null) {
-            environment.put(JMXConnector.CREDENTIALS, new String[] { user, password });
+            environment.put(JMXConnector.CREDENTIALS, new String[] { this.user, this.password });
         }
         return environment;
     }
