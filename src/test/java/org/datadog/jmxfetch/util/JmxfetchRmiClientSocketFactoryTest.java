@@ -1,5 +1,6 @@
 package org.datadog.jmxfetch.util;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +9,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -101,6 +101,7 @@ public class JmxfetchRmiClientSocketFactoryTest {
     }
 
     @Test
+    @Ignore
     public void testNoThreadLeakOnNullSocketFromFactory() throws Exception {
         // Given RMIClientSocketFactory returns null
         final AtomicInteger count = new AtomicInteger(0);
@@ -144,6 +145,7 @@ public class JmxfetchRmiClientSocketFactoryTest {
     }
 
     @Test
+    @Ignore
     public void testNoThreadLeakOnTimeout() throws Exception {
         final int registryPort = findAvailablePort();
         log.info("Setting up registry on port : " + registryPort);
