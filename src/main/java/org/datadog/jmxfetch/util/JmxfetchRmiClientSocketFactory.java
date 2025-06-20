@@ -8,27 +8,48 @@ import java.rmi.server.RMISocketFactory;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
+
+    /* For autonumbering RMIClientSocketFactory threads. */
+    private static int threadInitNumber;
+
+    private static synchronized int nextThreadNum() {
+        return threadInitNumber++;
+    }
+
     private final int timeoutMs;
     private final int connectionTimeoutMs;
     private final RMIClientSocketFactory factory;
 
     /**
      * JmxfetchRmiClientSocketFactory constructor with socket timeout (milliseconds), a socket
-     * connection timeout (millisecondes) and a flag to enable/disable SSL.
+     * connection timeout (milliseconds) and a flag to enable/disable SSL.
      */
     public JmxfetchRmiClientSocketFactory(
-            final int timeoutMs, final int connectionTimeoutMs,final boolean ssl) {
+        final int timeoutMs, final int connectionTimeoutMs, final boolean ssl) {
+        this(timeoutMs,
+            connectionTimeoutMs,
+            ssl ? new SslRMIClientSocketFactory() : RMISocketFactory.getDefaultSocketFactory());
+    }
+
+    /**
+     * JmxfetchRmiClientSocketFactory constructor with socket timeout (milliseconds), a socket
+     * connection timeout (milliseconds) and a RMIClientSocketFactory.
+     * @param timeoutMs socket timeout (milliseconds)
+     * @param connectionTimeoutMs socket connection timeout (milliseconds)
+     * @param factory RMIClientSocketFactory
+     */ 
+    public JmxfetchRmiClientSocketFactory(
+        final int timeoutMs, final int connectionTimeoutMs, final RMIClientSocketFactory factory) {
         this.timeoutMs = timeoutMs;
         this.connectionTimeoutMs = connectionTimeoutMs;
-        this.factory = 
-            ssl ? new SslRMIClientSocketFactory() : RMISocketFactory.getDefaultSocketFactory();
+        this.factory = factory;
     }
 
     @Override
     public Socket createSocket(final String host, final int port) throws IOException {
         Socket socket = null;
         final AsyncSocketFactory f = new AsyncSocketFactory(factory, host, port);
-        final Thread t = new Thread(f);
+        final Thread t = new Thread(f, "JmxfetchRmiClientSocketFactory-" + nextThreadNum());
         try {
             synchronized (f) {
                 t.start();
