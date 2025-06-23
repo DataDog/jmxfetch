@@ -32,6 +32,7 @@ public class RemoteConnection extends Connection {
 
     /** RemoteConnection constructor for specified remote connection parameters. */
     public RemoteConnection(Map<String, Object> connectionParams) throws IOException {
+        System.setProperty("sun.rmi.dgc.client.gcInterval", "180000");
         this.host = (String) connectionParams.get("host");
         try {
             this.port = (Integer) connectionParams.get("port");

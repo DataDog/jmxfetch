@@ -7,6 +7,9 @@ import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMISocketFactory;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
+import lombok.extern.java.Log;
+
+@Log
 public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
 
     /* For autonumbering RMIClientSocketFactory threads. */
@@ -50,6 +53,7 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
 
     @Override
     public Socket createSocket(final String host, final int port) throws IOException {
+        log.info("Creating socket for " + host + ":" + port);
         Socket socket = null;
         final AsyncSocketFactory f = new AsyncSocketFactory(factory, host, port);
         final Thread t = new Thread(f, 
@@ -70,25 +74,36 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
                         now = System.currentTimeMillis();
                     } while (now < until);
                 } catch (final InterruptedException e) {
+                    log.warning("Interrupted while waiting for socket: " + e.getMessage());
                     throw new InterruptedIOException(
                         "interrupted during socket connection attempt");
                 }
             }
         } catch (IOException e) {
+            log.warning("IOException while creating socket: " + e.getMessage());
+
             /* will close socket if it ever connects */
             f.clean();
             t.interrupt();
             throw e;
         } finally {
+            log.info("Finally block for " + host + ":" + port + " with thread: " + t.getName() + " and isAlive: " + t.isAlive());
+            if (socket != null) {
+                log.info("Socket is not null for " + host + ":" + port);
+            } else {
+                log.info("Socket is null for " + host + ":" + port  );
+            }
             if (t.isAlive()) {
                 try {
                     t.join(1000);
                 } catch (InterruptedException e) {
+                    log.warning("Interrupted while waiting for thread to join for " + host + ":" + port);
                     Thread.currentThread().interrupt();
                 }
             }
         }
         if (socket == null) {
+            log.warning("Connect timed out: " + host + ":" + port);
             throw new IOException("connect timed out: " + host + ":" + port);
         }
         socket.setSoTimeout(timeoutMs);
@@ -99,6 +114,7 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
     Socket getSocketFromFactory(final AsyncSocketFactory factory) throws IOException {
         final Exception e = factory.getException();
         if (e != null) {
+            log.warning("Exception in getSocketFromFactory: " + e.getMessage());
             e.fillInStackTrace();
             if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
@@ -116,9 +132,9 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         private final String host;
         private final int port;
         
-        private volatile Exception exception = null;
-        private volatile Socket socket = null;
-        private volatile boolean shouldClose = false;
+        private volatile Exception exception;
+        private volatile Socket socket;
+        private volatile boolean shouldClose;
         private final Object lock = new Object();
         
         AsyncSocketFactory(
@@ -129,12 +145,14 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
         }
 
         public void run() {
+            log.info("Running AsyncSocketFactory for " + host + ":" + port);
             try {
                 final Socket s = factory.createSocket(host, port);
                 synchronized (this.lock) {
                     if (Thread.currentThread().isInterrupted()) {
                         // Thread was interrupted, close socket and exit
                         try {
+                            log.info("Closing socket due to thread interruption for " + host + ":" + port);
                             s.close();
                         } catch (final IOException e) { /* empty on purpose */ }
                         return;
@@ -145,23 +163,29 @@ public class JmxfetchRmiClientSocketFactory implements RMIClientSocketFactory {
                 synchronized (this.lock) {
                     if (this.shouldClose) {
                         try {
+                            log.info("Closing socket as shouldClose is true for " + host + ":" + port);
                             this.socket.close();
                         } catch (final IOException e) { /* empty on purpose */ }
                     }
                 }
             } catch (final Exception e) {
+                log.warning("Exception in AsyncSocketFactory: " + e.getMessage() + " for " + host + ":" + port);
                 synchronized (this.lock) {
                     this.exception = e;
                     this.lock.notify();
                 }
+                this.clean();
             }
+            log.info("AsyncSocketFactory finished for " + host + ":" + port);
         }
 
         void clean() {
             synchronized (this.lock) {
+                log.info("Cleaning up socket for " + host + ":" + port);
                 if (this.socket != null) {
                     try {
                         this.socket.close();
+                        log.info("Socket closed for " + host + ":" + port);
                     } catch (final IOException e) { /* empty on purpose */ }
                 }
                 this.shouldClose = true;

@@ -42,12 +42,28 @@ public abstract class Connection {
 
     protected void createConnection() throws IOException {
         this.env.put("attribute.remote.x.request.waiting.timeout", CONNECTION_TIMEOUT);
+        
         this.closeConnector();
         log.info("Connecting to: " + this.address);
-        this.connector = JMXConnectorFactory.connect(this.address, this.env);
         try {
+            this.connector = JMXConnectorFactory.connect(this.address, this.env);
+        } catch (IOException e) {
+            log.error("Error creating connector for address: " + this.address + " with error: " + e.getMessage());
+
+            // Handle ConnectException specifically for socket cleanup
+            if (e instanceof java.rmi.ConnectException) {
+                log.warn("RMI ConnectException detected, performing socket cleanup");
+                // Force garbage collection to help clean up any lingering socket references
+                System.gc();
+            }
+
+            throw e;
+        }
+        try {
+            log.info("Getting MBeanServerConnection for address: " + this.address);
             this.mbs = this.connector.getMBeanServerConnection();
         } catch (IOException e) {
+            log.error("Error creating connection for address: " + this.address + " with error: " + e.getMessage());
             // close the connector if the connection fails
             this.closeConnector();
             throw e;
@@ -68,11 +84,14 @@ public abstract class Connection {
     /** Closes the connector. */
     public void closeConnector() {
         if (this.connector != null) {
+            log.info("Closing connector for address: " + this.address);
             try {
                 this.connector.close();
             } catch (IOException e) {
                 // ignore
             }
+        } else {
+            log.info("Connector is null for address: " + this.address);
         }
     }
 
