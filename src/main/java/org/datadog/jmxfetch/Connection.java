@@ -48,7 +48,8 @@ public abstract class Connection {
         try {
             this.connector = JMXConnectorFactory.connect(this.address, this.env);
         } catch (IOException e) {
-            log.error("Error creating connector for address: " + this.address + " with error: " + e.getMessage());
+            log.error("Error creating connector for address: " + this.address
+                + " with error: " + e.getMessage());
 
             // Handle ConnectException specifically for socket cleanup
             if (e instanceof java.rmi.ConnectException) {
@@ -63,7 +64,9 @@ public abstract class Connection {
             log.info("Getting MBeanServerConnection for address: " + this.address);
             this.mbs = this.connector.getMBeanServerConnection();
         } catch (IOException e) {
-            log.error("Error creating connection for address: " + this.address + " with error: " + e.getMessage());
+            log.error(
+                "Error creating connection for address: " + this.address
+                + " with error: " + e.getMessage());
             // close the connector if the connection fails
             this.closeConnector();
             throw e;
