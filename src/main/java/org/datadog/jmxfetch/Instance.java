@@ -7,8 +7,6 @@ import org.datadog.jmxfetch.service.ServiceNameProvider;
 import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.yaml.snakeyaml.Yaml;
 
-
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -297,11 +295,14 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        List<Map<String, Object>> defaultConf =
-                (List<Map<String, Object>>)
-                        YAML.get().load(this.getClass().getResourceAsStream(configResourcePath));
-        for (Map<String, Object> conf : defaultConf) {
-            configurationList.add(new Configuration(conf));
+        try (InputStream is = this.getClass().getResourceAsStream(configResourcePath)) {
+            List<Map<String, Object>> defaultConf;
+            defaultConf = YAML.get().load(is);
+            for (Map<String, Object> conf : defaultConf) {
+                configurationList.add(new Configuration(conf));
+            }
+        } catch (IOException e) {
+            log.warn("Cannot parse internal default config file {}", configResourcePath, e);
         }
     }
 
@@ -440,40 +441,40 @@ public class Instance {
             throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
-        
+
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
         this.refreshBeansList();
         this.initialRefreshTime = this.lastRefreshTime;
         log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
-        
+
         // Resolve configuration-level dynamic tags for all configurations
         // Must be done after refreshBeansList() so the beans exist
         resolveConfigurationDynamicTags();
-        
+
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at {}", this);
     }
-    
+
     private void resolveConfigurationDynamicTags() {
         if (configurationList == null || configurationList.isEmpty()) {
             return;
         }
-        
+
         this.dynamicTagsCache = new HashMap<>();
         List<DynamicTag> allDynamicTags = new ArrayList<>();
-        
+
         for (Configuration config : configurationList) {
             List<DynamicTag> dynamicTags = config.getDynamicTags();
             if (dynamicTags != null && !dynamicTags.isEmpty()) {
                 allDynamicTags.addAll(dynamicTags);
             }
         }
-        
+
         if (allDynamicTags.isEmpty()) {
             return;
         }
-        
+
         int successfulResolutions = 0;
         for (DynamicTag dynamicTag : allDynamicTags) {
             String cacheKey = dynamicTag.getBeanAttributeKey();
@@ -487,30 +488,30 @@ public class Instance {
                 successfulResolutions++;
             }
         }
-        
-        log.info("Resolved {} unique dynamic tag(s) from {} total references for instance {}", 
+
+        log.info("Resolved {} unique dynamic tag(s) from {} total references for instance {}",
                 successfulResolutions, allDynamicTags.size(), instanceName);
     }
-    
+
     /**
      * Get resolved dynamic tags for a specific configuration.
      * This resolves the dynamic tags defined in the configuration using the cached values.
-     * 
+     *
      * @param config the configuration to get resolved tags for
      * @return map of tag name to tag value
      */
     private Map<String, String> getResolvedDynamicTagsForConfig(Configuration config) {
         Map<String, String> resolvedTags = new HashMap<>();
-        
+
         if (this.dynamicTagsCache == null || this.dynamicTagsCache.isEmpty()) {
             return resolvedTags;
         }
-        
+
         List<DynamicTag> dynamicTags = config.getDynamicTags();
         if (dynamicTags == null || dynamicTags.isEmpty()) {
             return resolvedTags;
         }
-        
+
         for (DynamicTag dynamicTag : dynamicTags) {
             String cacheKey = dynamicTag.getBeanAttributeKey();
             Map.Entry<String, String> cached = this.dynamicTagsCache.get(cacheKey);
@@ -518,7 +519,7 @@ public class Instance {
                 resolvedTags.put(cached.getKey(), cached.getValue());
             }
         }
-        
+
         return resolvedTags;
     }
 
@@ -756,7 +757,7 @@ public class Instance {
                 for (Configuration conf : configurationList) {
                     try {
                         if (jmxAttribute.match(conf)) {
-                            Map<String, String> resolvedDynamicTags = 
+                            Map<String, String> resolvedDynamicTags =
                                     getResolvedDynamicTagsForConfig(conf);
                             jmxAttribute.setResolvedDynamicTags(resolvedDynamicTags);
                             jmxAttribute.setMatchingConf(conf);
