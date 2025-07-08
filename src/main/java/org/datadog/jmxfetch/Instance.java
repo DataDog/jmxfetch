@@ -326,7 +326,8 @@ public class Instance {
                 String yamlPath = new File(fileName).getAbsolutePath();
 
                 log.info("Reading metric config file " + yamlPath);
-                try (BufferedInputStream yamlInputStream = new BufferedInputStream(new FileInputStream(yamlPath))){
+                try (BufferedInputStream yamlInputStream =
+                             new BufferedInputStream(new FileInputStream(yamlPath))) {
                     List<Map<String, Object>> confs =
                             (List<Map<String, Object>>)
                                     YAML.get().load(yamlInputStream);
