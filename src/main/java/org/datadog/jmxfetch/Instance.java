@@ -244,7 +244,13 @@ public class Instance {
 
         Boolean collectDefaultJvmMetrics = (Boolean) instanceMap.get("collect_default_jvm_metrics");
         if (collectDefaultJvmMetrics == null || collectDefaultJvmMetrics) {
-            loadDefaultConfig("default-jmx-metrics.yaml");
+            // override the test definitions
+            Object value = instanceMap.get("default-jmx-metrics-definitions");
+            if (value instanceof String) {
+                loadDefaultConfig((String) value);
+            } else {
+                loadDefaultConfig("default-jmx-metrics.yaml");
+            }
             loadDefaultConfig(gcMetricConfig);
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");

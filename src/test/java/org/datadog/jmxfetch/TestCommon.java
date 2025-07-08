@@ -33,30 +33,6 @@ import org.datadog.jmxfetch.util.LogLevel;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
-/**
- * Config utility
- */
-final class ConfigUtil {
-    public final Path tempConfdDir;
-
-    public ConfigUtil(File file) {
-        this.tempConfdDir = file.toPath();
-    }
-
-    public Path makeTempYamlConfigFile(String yamlName, List<String> lines) {
-        try {
-            return Files.write(
-                    Files.createTempFile(tempConfdDir, yamlName, ".yaml"),
-                    lines,
-                    StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-          throw new UncheckedIOException(e);
-        }
-    }
-}
-
-
 public class TestCommon {
     AppConfig appConfig = spy(AppConfig.builder().build());
     App app;
@@ -215,8 +191,16 @@ public class TestCommon {
         app.init(false);
     }
 
-    ConfigUtil getConfigUtil() {
-        return new ConfigUtil(temporaryFolder.getRoot());
+    public Path makeTempYamlConfigFile(String yamlName, List<String> lines) {
+        try {
+            return Files.write(
+                    Files.createTempFile(temporaryFolder.getRoot().toPath(), yamlName, ".yaml"),
+                    lines,
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /** Run a JMXFetch iteration. */
