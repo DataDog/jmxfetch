@@ -16,12 +16,7 @@ import org.datadog.jmxfetch.util.FileHelper;
 import org.datadog.jmxfetch.util.LogLevel;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -764,7 +759,7 @@ public class App {
                 final String name = file.getName().replace(".yaml", "");
                 final String yamlPath = file.getAbsolutePath();
                 log.info("Reading {}", yamlPath);
-                try (FileInputStream yamlInputStream = new FileInputStream(yamlPath)) {
+                try (BufferedInputStream yamlInputStream = new BufferedInputStream(new FileInputStream(yamlPath))) {
                     configs.put(name, new YamlParser(yamlInputStream));
                 } catch (FileNotFoundException e) {
                     log.warn("Cannot find " + yamlPath);
