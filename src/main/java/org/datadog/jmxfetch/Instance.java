@@ -296,11 +296,14 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        InputStream is = this.getClass().getResourceAsStream(configResourcePath);
-        List<Map<String, Object>> defaultConf = (List<Map<String, Object>>)
-                YAML.get().loadFromInputStream(is);
-        for (Map<String, Object> conf : defaultConf) {
-            configurationList.add(new Configuration(conf));
+        try (InputStream is = this.getClass().getResourceAsStream(configResourcePath)) {
+            List<Map<String, Object>> defaultConf;
+            defaultConf = (List<Map<String, Object>>) YAML.get().loadFromInputStream(is);
+            for (Map<String, Object> conf : defaultConf) {
+                configurationList.add(new Configuration(conf));
+            }
+        } catch (IOException e) {
+            log.warn("Cannot parse internal default config file {}", configResourcePath, e);
         }
     }
 
