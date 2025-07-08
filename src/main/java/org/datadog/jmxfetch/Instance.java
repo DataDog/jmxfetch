@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml;
 
 
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -316,10 +317,9 @@ public class Instance {
                     + "migrate to using standard agent config files in the conf.d directory.");
             for (String fileName : metricConfigFiles) {
                 String yamlPath = new File(fileName).getAbsolutePath();
-                FileInputStream yamlInputStream = null;
+
                 log.info("Reading metric config file " + yamlPath);
-                try {
-                    yamlInputStream = new FileInputStream(yamlPath);
+                try (BufferedInputStream yamlInputStream = new BufferedInputStream(new FileInputStream(yamlPath))){
                     List<Map<String, Object>> confs =
                             (List<Map<String, Object>>)
                                     YAML.get().load(yamlInputStream);
@@ -330,14 +330,6 @@ public class Instance {
                     log.warn("Cannot find metric config file " + yamlPath);
                 } catch (Exception e) {
                     log.warn("Cannot parse yaml file " + yamlPath, e);
-                } finally {
-                    if (yamlInputStream != null) {
-                        try {
-                            yamlInputStream.close();
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    }
                 }
             }
         }
