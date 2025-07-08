@@ -197,7 +197,7 @@ public class TestReconnectContainer extends TestCommon {
     }
 
     private Path config(String ipAddress, String domain) {
-        return getConfigUtil().makeTempYamlConfigFile(
+        return makeTempYamlConfigFile(
                 "config",
                 Arrays.asList(
                         "init_config:",

@@ -133,6 +133,7 @@
       Usage.used:
         alias: jvm.gc.eden_size
         metric_type: gauge
+# Generational ZGC
 - include:
     domain: java.lang
     type: MemoryPool
@@ -197,6 +198,16 @@
       Usage.used:
         alias: jvm.gc.old_gen_size
         metric_type: gauge
+# Non-Generational ZGC
+- include:
+    domain: java.lang
+    type: MemoryPool
+    name: ZHeap
+    attribute:
+      Usage.used:
+        alias: jvm.gc.old_gen_size
+        metric_type: gauge
+# Generational ZGC
 - include:
     domain: java.lang
     type: MemoryPool

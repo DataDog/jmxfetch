@@ -41,10 +41,10 @@ public class MetricsAssert {
             if (mName.equals(name)) {
 
                 if (!value.equals(-1)) {
-                    assertEquals((Double) value.doubleValue(), mValue);
+                    assertEquals("Measured value must be equal to value", (Double) value.doubleValue(), mValue);
                 } else if (!lowerBound.equals(-1) || !upperBound.equals(-1)) {
-                    assertTrue(mValue > (Double) lowerBound.doubleValue());
-                    assertTrue(mValue < (Double) upperBound.doubleValue());
+                    assertTrue("Measured value must be greater than lower bound", mValue > (Double) lowerBound.doubleValue());
+                    assertTrue("Measured value must be lesser than lower bound", mValue < (Double) upperBound.doubleValue());
                 }
 
                 if (countTags != -1) {
