@@ -6,12 +6,9 @@ import static org.mockito.Mockito.when;
 
 import com.beust.jcommander.JCommander;
 
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -33,27 +30,29 @@ import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.MetricsAssert;
 import org.datadog.jmxfetch.util.LogLevel;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
+/**
+ * Config utility
+ */
 final class ConfigUtil {
-    public static Path writeConfigYamlToTemp(String content, String yamlName) throws IOException {
-        Path tempDirectory = Files.createTempDirectory("temp-dir");
-        // Create a temporary file within the temporary directory
-        Path tempFile = Files.createTempFile(tempDirectory, yamlName, ".yaml");
+    public final Path tempConfdDir;
 
-        // Write the contents of the file to the temporary file
-        BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile.toFile()));
-        writer.write(content);
-        writer.close();
-
-        return tempFile;
+    public ConfigUtil(File file) {
+        this.tempConfdDir = file.toPath();
     }
 
-    public static String concatWithNewlines(String... lines) {
-        StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            sb.append(line).append(System.lineSeparator());
+    public Path makeTempYamlConfigFile(String yamlName, List<String> lines) {
+        try {
+            return Files.write(
+                    Files.createTempFile(tempConfdDir, yamlName, ".yaml"),
+                    lines,
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
         }
-        return sb.toString();
     }
 }
 
@@ -66,9 +65,12 @@ public class TestCommon {
     List<Map<String, Object>> metrics = new ArrayList<>();
     List<Map<String, Object>> serviceChecks;
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     /** Setup logger. */
     @BeforeClass
-    public static void init() throws Exception {
+    public static void init() {
         String level = System.getProperty("tests.log_level");
         if (level == null) {
             level = "ALL";
@@ -132,10 +134,7 @@ public class TestCommon {
         // We initialize the main app that will collect these metrics using JMX
         String confdDirectory =
                 Thread.currentThread().getContextClassLoader().getResource(yamlFileName).getPath();
-        confdDirectory =
-                new String(
-                        confdDirectory.substring(
-                                0, confdDirectory.length() - yamlFileName.length()));
+        confdDirectory = confdDirectory.substring(0, confdDirectory.length() - yamlFileName.length());
         List<String> params = new ArrayList<String>();
         boolean sdEnabled = (autoDiscoveryPipeFile.length() > 0);
         params.add("--reporter");
@@ -154,7 +153,7 @@ public class TestCommon {
             params.add(5, "/foo"); // could be anything we're stubbing it out
             params.add(6, "--sd_enabled");
         }
-        new JCommander(appConfig, params.toArray(new String[params.size()]));
+        new JCommander(appConfig, params.toArray(new String[0]));
 
         if (sdEnabled) {
             String autoDiscoveryPipe =
@@ -179,7 +178,7 @@ public class TestCommon {
         app.init(false);
     }
 
-    protected void initApplication(String yamlFileName) throws FileNotFoundException, IOException {
+    protected void initApplication(String yamlFileName) throws IOException {
         initApplication(yamlFileName, "");
     }
 
@@ -188,31 +187,37 @@ public class TestCommon {
      * The configuration can be specified as a yaml literal with each arg
      * representing one line of the Yaml file
      * Does not support any SD/AD features.
+     *
+     * @param yamlConfigContents the YAML configuration contents, each representing a configuration file
     */
-    protected void initApplicationWithYamlLines(String... yamlLines)
-            throws IOException {
-        String yamlConfig = ConfigUtil.concatWithNewlines(yamlLines);
-        Path tempFile = ConfigUtil.writeConfigYamlToTemp(yamlConfig, "config");
+    protected void initApplicationWithYamlLines(Path... yamlConfigs) {
+        if (yamlConfigs == null || yamlConfigs.length == 0) {
+            throw new IllegalArgumentException("yamlConfigContents cannot be null or empty");
+        }
 
-        String confdDirectory = tempFile.getParent().toString();
-        String yamlFileName = tempFile.getFileName().toString();
+        String confdDirectory = yamlConfigs[0].getParent().toString();
 
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add("--reporter");
         params.add("console");
 
-        if (confdDirectory != null) {
+        for (Path yamlConfig : yamlConfigs) {
             params.add("-c");
-            params.add(yamlFileName);
-            params.add("--conf_directory");
-            params.add(confdDirectory);
-            params.add("collect");
+            params.add(yamlConfig.getFileName().toString());
         }
-        new JCommander(appConfig, params.toArray(new String[params.size()]));
+
+        params.add("--conf_directory");
+        params.add(confdDirectory);
+        params.add("collect");
+
+        new JCommander(appConfig, params.toArray(new String[0]));
         this.app = new App(appConfig);
         app.init(false);
     }
 
+    ConfigUtil getConfigUtil() {
+        return new ConfigUtil(temporaryFolder.getRoot());
+    }
 
     /** Run a JMXFetch iteration. */
     protected void run() {
@@ -255,7 +260,7 @@ public class TestCommon {
      * @param additionalTags metric tags inherited from the bean properties
      * @param countTags number of metric tags
      * @param metricType type of the metric (gauge, histogram, ...)
-     * @return fail if the metric was not found
+     * @throws AssertionError if the metric was not found
      */
     public void assertMetric(
             String name,
