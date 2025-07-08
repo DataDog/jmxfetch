@@ -181,21 +181,29 @@ public class TestGCMetrics extends TestCommon {
                 "jvm.gc.major_collection_time", "global", "counter");
         }
     }
-    
-    private List<Map<String, Object>> startAndGetMetrics(final MisbehavingJMXServer server,
-        final boolean newGCMetrics) throws IOException {
+
+    private List<Map<String, Object>> startAndGetMetrics(
+            final MisbehavingJMXServer server,
+            final boolean newGCMetrics
+    ) {
         server.start();
         this.initApplicationWithYamlLines(
-            "init_config:",
-            "  is_jmx: true",
-            "  new_gc_metrics: " + newGCMetrics,
-            "",
-            "instances:",
-            "    -   name: jmxint_container",
-            "        host: " + server.getIp(),
-            "        collect_default_jvm_metrics: true",
-            "        max_returned_metrics: 300000",
-            "        port: " + server.getRMIPort());
+                getConfigUtil().makeTempYamlConfigFile(
+                        "config",
+                        Arrays.asList(
+                                "init_config:",
+                                "  is_jmx: true",
+                                "  new_gc_metrics: " + newGCMetrics,
+                                "",
+                                "instances:",
+                                "    -   name: jmxint_container",
+                                "        host: " + server.getIp(),
+                                "        collect_default_jvm_metrics: true",
+                                "        max_returned_metrics: 300000",
+                                "        port: " + server.getRMIPort()
+                        )
+                )
+        );
         // Run one iteration first
         // TODO: Investigate why we have to run this twice - AMLII-1353
         this.app.doIteration();
