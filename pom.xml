@@ -44,7 +44,7 @@
         <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M6</maven-surefire-plugin.version>
-        <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.8.0</central-publishing-maven-plugin.version>
         <!-- Note: using project checkstyle with AOSP style
         find the default google java checkstyle config here -
         <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
@@ -81,34 +81,16 @@
                 </property>
             </activation>
 
-            <distributionManagement>
-                <snapshotRepository>
-                  <id>nexus</id>
-                  <!-- Use the localhost endpoint for testing -->
-                  <!-- <url>http://localhost:8081/repository/maven-snapshots/</url> -->
-                  <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                </snapshotRepository>
-                <repository>
-                    <id>nexus</id>
-                    <!-- Use the localhost endpoint for testing -->
-                    <!-- <url>http://localhost:8081/repository/maven-releases/</url> -->
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
-
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${nexus-staging-maven-plugin.version}</version>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central-publishing-maven-plugin.version}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>nexus</serverId>
-                            <!-- Use the localhost endpoint for testing -->
-                            <!-- <nexusUrl>http://localhost:8081/repository/maven-releases/</nexusUrl> -->
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <publishingServerId>central</publishingServerId>
+                            <waitUntil>validated</waitUntil>
                         </configuration>
                     </plugin>
                     <plugin>
