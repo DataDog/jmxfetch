@@ -49,7 +49,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultOldGC() throws IOException {
+    public void testDefaultOldGC() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, false);
             List<String> gcGenerations = Arrays.asList(
@@ -61,7 +61,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsUseParallelGC() throws IOException {
+    public void testDefaultNewGCMetricsUseParallelGC() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_11).appendJavaOpts("-XX:+UseParallelGC").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
@@ -95,7 +95,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsUseG1GC() throws IOException {
+    public void testDefaultNewGCMetricsUseG1GC() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_17).appendJavaOpts("-XX:+UseG1GC").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
@@ -112,7 +112,26 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsUseZGC() throws IOException {
+    public void zgcMemoryPools() {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder()
+            .withJDKImage(JDK_17).appendJavaOpts("-XX:+UseZGC").build()) {
+            List<Map<String, Object>> maps = startAndGetMetrics(server, true, false);
+            assertMemoryPoolMetric(maps, "jvm.gc.old_gen_size", "ZHeap");
+        }
+    }
+
+    @Test
+    public void zgcGenerationalMemoryPools() {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder()
+            .withJDKImage(JDK_21).appendJavaOpts("-XX:+UseZGC").appendJavaOpts("-XX:+ZGenerational").build()) {
+            List<Map<String, Object>> maps = startAndGetMetrics(server, true, false);
+            assertMemoryPoolMetric(maps, "jvm.gc.eden_size", "ZGC Young Generation");
+            assertMemoryPoolMetric(maps, "jvm.gc.old_gen_size", "ZGC Old Generation");
+        }
+    }
+
+    @Test
+    public void testDefaultNewGCMetricsUseZGC() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_17).appendJavaOpts("-XX:+UseZGC").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
@@ -129,7 +148,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsUseGenerationalZGC() throws IOException {
+    public void testDefaultNewGCMetricsUseGenerationalZGC() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_21).appendJavaOpts("-XX:+UseZGC -XX:+ZGenerational").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
@@ -149,7 +168,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsIBMJ9Balanced() throws IOException {
+    public void testDefaultNewGCMetricsIBMJ9Balanced() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_11_OPENJ9).appendJavaOpts("-Xgcpolicy:balanced").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
@@ -166,7 +185,7 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
-    public void testDefaultNewGCMetricsIBMJ9Gencon() throws IOException {
+    public void testDefaultNewGCMetricsIBMJ9Gencon() {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_11_OPENJ9).appendJavaOpts("-Xgcpolicy:gencon").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
@@ -181,21 +200,40 @@ public class TestGCMetrics extends TestCommon {
                 "jvm.gc.major_collection_time", "global", "counter");
         }
     }
-    
-    private List<Map<String, Object>> startAndGetMetrics(final MisbehavingJMXServer server,
-        final boolean newGCMetrics) throws IOException {
+
+    private List<Map<String, Object>> startAndGetMetrics(
+            final MisbehavingJMXServer server,
+            final boolean newGCMetrics
+    ) {
+        return startAndGetMetrics(server, newGCMetrics, true);
+    }
+
+    private List<Map<String, Object>> startAndGetMetrics(
+            final MisbehavingJMXServer server,
+            final boolean newGCMetrics,
+            boolean useSimplifiedDefaultConfig
+    ) {
+        String defaultConfig = useSimplifiedDefaultConfig ? "default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml" : "";
+
         server.start();
         this.initApplicationWithYamlLines(
-            "init_config:",
-            "  is_jmx: true",
-            "  new_gc_metrics: " + newGCMetrics,
-            "",
-            "instances:",
-            "    -   name: jmxint_container",
-            "        host: " + server.getIp(),
-            "        collect_default_jvm_metrics: true",
-            "        max_returned_metrics: 300000",
-            "        port: " + server.getRMIPort());
+                makeTempYamlConfigFile(
+                        "config",
+                        Arrays.asList(
+                                "init_config:",
+                                "  is_jmx: true",
+                                "  new_gc_metrics: " + newGCMetrics,
+                                "",
+                                "instances:",
+                                "    -   name: jmxint_container",
+                                "        host: " + server.getIp(),
+                                "        collect_default_jvm_metrics: true",
+                                "        " + defaultConfig,
+                                "        max_returned_metrics: 300000",
+                                "        port: " + server.getRMIPort()
+                        )
+                )
+        );
         // Run one iteration first
         // TODO: Investigate why we have to run this twice - AMLII-1353
         this.app.doIteration();
@@ -224,6 +262,26 @@ public class TestGCMetrics extends TestCommon {
             5,
             metricType,
             actualMetrics);
+    }
+
+    private static void assertMemoryPoolMetric(
+            final List<Map<String, Object>> actualMetrics,
+            final String expectedMetric,
+            String poolName
+    ) {
+        MetricsAssert.assertMetric(
+                expectedMetric,
+                -1,
+                -1,
+                -1,
+                Collections.singletonList(String.format("name:%s", poolName)),
+                Arrays.asList(
+                        "instance:jmxint_container",
+                        "jmx_domain:java.lang",
+                        "type:MemoryPool"),
+                5,
+                "gauge",
+                actualMetrics);
     }
 
     /*

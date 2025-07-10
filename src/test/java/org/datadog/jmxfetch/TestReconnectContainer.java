@@ -7,6 +7,8 @@ import static org.datadog.jmxfetch.util.MetricsAssert.assertDomainPresent;
 import static org.datadog.jmxfetch.util.MetricsAssert.isDomainPresent;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -135,22 +137,9 @@ public class TestReconnectContainer extends TestCommon {
     }
 
     @Test
-    public void testJMXFetchBasic() throws IOException, InterruptedException {
+    public void testJMXFetchBasic() {
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
-        this.initApplicationWithYamlLines(
-            "init_config:",
-            "  is_jmx: true",
-            "",
-            "instances:",
-            "    -   name: jmxint_container",
-            "        host: " + ipAddress,
-            "        collect_default_jvm_metrics: false",
-            "        max_returned_metrics: 300000",
-            "        port: " + rmiPort,
-            "        conf:",
-            "          - include:",
-            "              domain: Bohnanza"
-        );
+        this.initApplicationWithYamlLines(config(ipAddress, "Bohnanza"));
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
@@ -158,27 +147,14 @@ public class TestReconnectContainer extends TestCommon {
     }
 
     @Test
-    public void testJMXFetchManyMetrics() throws IOException, InterruptedException {
+    public void testJMXFetchManyMetrics() throws IOException {
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
         int numBeans = 100;
         int numAttributesPerBean = 4;
 
         String testDomain = "test-domain";
         this.controlClient.createMBeans(testDomain, numBeans, numAttributesPerBean, 0, 0);
-        this.initApplicationWithYamlLines(
-            "init_config:",
-            "  is_jmx: true",
-            "",
-            "instances:",
-            "    -   name: jmxint_container",
-            "        host: " + ipAddress,
-            "        collect_default_jvm_metrics: false",
-            "        max_returned_metrics: 300000",
-            "        port: " + rmiPort,
-            "        conf:",
-            "          - include:",
-            "              domain: " + testDomain
-        );
+        this.initApplicationWithYamlLines(config(ipAddress, testDomain));
 
         this.app.doIteration();
         List<Map<String, Object>> metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
@@ -187,22 +163,9 @@ public class TestReconnectContainer extends TestCommon {
     }
 
     @Test
-    public void testJMXFetchReconnect() throws IOException, InterruptedException {
+    public void testJMXFetchReconnect() throws IOException {
         String ipAddress = cont.getContainerInfo().getNetworkSettings().getIpAddress();
-        this.initApplicationWithYamlLines(
-            "init_config:",
-            "  is_jmx: true",
-            "",
-            "instances:",
-            "    -   name: jmxint_container",
-            "        host: " + ipAddress,
-            "        collect_default_jvm_metrics: false",
-            "        max_returned_metrics: 300000",
-            "        port: " + rmiPort,
-            "        conf:",
-            "          - include:",
-            "              domain: Bohnanza"
-        );
+        this.initApplicationWithYamlLines(config(ipAddress, "Bohnanza"));
 
 
         this.app.doIteration();
@@ -232,4 +195,25 @@ public class TestReconnectContainer extends TestCommon {
         metrics = ((ConsoleReporter) this.appConfig.getReporter()).getMetrics();
         assertEquals(1, metrics.size());
     }
+
+    private Path config(String ipAddress, String domain) {
+        return makeTempYamlConfigFile(
+                "config",
+                Arrays.asList(
+                        "init_config:",
+                        "  is_jmx: true",
+                        "",
+                        "instances:",
+                        "    -   name: jmxint_container",
+                        "        host: " + ipAddress,
+                        "        collect_default_jvm_metrics: false",
+                        "        max_returned_metrics: 300000",
+                        "        port: " + rmiPort,
+                        "        conf:",
+                        "          - include:",
+                        "              domain: " + domain
+                )
+        );
+    }
+
 }

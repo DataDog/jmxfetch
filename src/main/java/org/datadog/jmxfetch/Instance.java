@@ -8,6 +8,7 @@ import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -243,7 +244,13 @@ public class Instance {
 
         Boolean collectDefaultJvmMetrics = (Boolean) instanceMap.get("collect_default_jvm_metrics");
         if (collectDefaultJvmMetrics == null || collectDefaultJvmMetrics) {
-            loadDefaultConfig("default-jmx-metrics.yaml");
+            // override the test definitions
+            Object value = instanceMap.get("default-jmx-metrics-definitions");
+            if (value instanceof String) {
+                loadDefaultConfig((String) value);
+            } else {
+                loadDefaultConfig("default-jmx-metrics.yaml");
+            }
             loadDefaultConfig(gcMetricConfig);
         } else {
             log.info("collect_default_jvm_metrics is false - not collecting default JVM metrics");
@@ -295,11 +302,14 @@ public class Instance {
     }
 
     private void loadDefaultConfig(String configResourcePath) {
-        InputStream is = this.getClass().getResourceAsStream(configResourcePath);
-        List<Map<String, Object>> defaultConf = (List<Map<String, Object>>)
-                YAML.get().loadFromInputStream(is);
-        for (Map<String, Object> conf : defaultConf) {
-            configurationList.add(new Configuration(conf));
+        try (InputStream is = this.getClass().getResourceAsStream(configResourcePath)) {
+            List<Map<String, Object>> defaultConf;
+            defaultConf = (List<Map<String, Object>>) YAML.get().loadFromInputStream(is);
+            for (Map<String, Object> conf : defaultConf) {
+                configurationList.add(new Configuration(conf));
+            }
+        } catch (IOException e) {
+            log.warn("Cannot parse internal default config file {}", configResourcePath, e);
         }
     }
 
@@ -315,10 +325,10 @@ public class Instance {
                     + "migrate to using standard agent config files in the conf.d directory.");
             for (String fileName : metricConfigFiles) {
                 String yamlPath = new File(fileName).getAbsolutePath();
-                FileInputStream yamlInputStream = null;
+
                 log.info("Reading metric config file " + yamlPath);
-                try {
-                    yamlInputStream = new FileInputStream(yamlPath);
+                try (BufferedInputStream yamlInputStream =
+                             new BufferedInputStream(new FileInputStream(yamlPath))) {
                     List<Map<String, Object>> confs =
                             (List<Map<String, Object>>)
                                     YAML.get().loadFromInputStream(yamlInputStream);
@@ -329,14 +339,6 @@ public class Instance {
                     log.warn("Cannot find metric config file " + yamlPath);
                 } catch (Exception e) {
                     log.warn("Cannot parse yaml file " + yamlPath, e);
-                } finally {
-                    if (yamlInputStream != null) {
-                        try {
-                            yamlInputStream.close();
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    }
                 }
             }
         }
