@@ -1,6 +1,6 @@
 Changelog
 =========
-# 0.49.9 / TBC
+# 0.49.9 / 2025-07-15
 * [SECURITY] Bump `jackson` dependency to version `2.13.0` to mitigate [CVE-2025-49128]() [#565][]
 
 # 0.49.8 / 2025-06-03
