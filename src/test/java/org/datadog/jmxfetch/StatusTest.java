@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +14,7 @@ import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.snakeyaml.engine.v2.api.Load;
-import org.snakeyaml.engine.v2.api.LoadSettings;
+import org.yaml.snakeyaml.Yaml;
 
 public class StatusTest {
 
@@ -45,13 +45,12 @@ public class StatusTest {
         status.addInstanceStats("fake_check", "fake_instance", 10, 3, "fake_message", Status.STATUS_OK, instance);
         status.flush();
 
-        LoadSettings settings = LoadSettings.builder().build(); //TODO
-        Load load = new Load(settings);
+        Yaml yaml = new Yaml();
         InputStream inputStream = new FileInputStream(tempFilePath);
 
-        Map<?, ?> yamlMap = (Map<?, ?>) load.loadFromInputStream(inputStream);
-        Map<?, ?> checks = (Map<?, ?>) yamlMap.get("checks");
-        Map<?, ?> initializedChecks = (Map<?, ?>) checks.get("initialized_checks");
+        HashMap yamlMap = yaml.load(inputStream);
+        HashMap checks = (HashMap) yamlMap.get("checks");
+        HashMap initializedChecks = (HashMap) checks.get("initialized_checks");
         List<Map<String, Object>> fakeCheck = (List<Map<String, Object>>) initializedChecks.get("fake_check");
         Map<String, Object> stats = fakeCheck.get(0);
         assertEquals("fake_instance", stats.get("instance_name"));
