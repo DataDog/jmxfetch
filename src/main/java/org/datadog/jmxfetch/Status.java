@@ -5,8 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.datadog.jmxfetch.util.MetadataHelper;
-import org.snakeyaml.engine.v2.api.Dump;
-import org.snakeyaml.engine.v2.api.DumpSettings;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -148,17 +147,16 @@ public class Status {
     }
 
     private String generateYaml() {
-        Map<String, Object> status = new HashMap<>();
+        Map<String, Object> status = new HashMap<String, Object>();
         status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         status.put("errors", this.errors);
-        DumpSettings settings = DumpSettings.builder().build();
-        return new Dump(settings).dumpToString(status);
+        return new Yaml().dump(status);
     }
 
     private String generateJson() throws IOException {
-        Map<String, Object> status = new HashMap<>();
+        Map<String, Object> status = new HashMap<String, Object>();
         status.put("info", this.info);
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
