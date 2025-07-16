@@ -1,7 +1,10 @@
 Changelog
 =========
-# 0.49.9 / TBC
+# 0.49.10 / TBC
+
+# 0.49.9 / 2025-07-16
 * [SECURITY] Bump `jackson` dependency to version `2.13.0` to mitigate [CVE-2025-49128]() [#565][]
+* [BUGFIX] Reverted [#554][] as it broke support for Java 7 [#572][]
 
 # 0.49.8 / 2025-06-03
 * [FEATURE] Added support for GraalVM Native GC metrics [#560][] (Thanks [@ygree][])
@@ -802,6 +805,8 @@ Changelog
 [#553]: https://github.com/DataDog/jmxfetch/issues/553
 [#554]: https://github.com/DataDog/jmxfetch/issues/554
 [#560]: https://github.com/DataDog/jmxfetch/issues/560
+[#565]: https://github.com/DataDog/jmxfetch/issues/566
+[#572]: https://github.com/DataDog/jmxfetch/issues/572
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
