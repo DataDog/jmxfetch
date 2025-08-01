@@ -1,8 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.jr.ob.JSON;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,11 +32,7 @@ class JsonParser {
     private Map<String, Object> parsedJson;
 
     public JsonParser(InputStream jsonInputStream) throws IOException {
-        try {
-            parsedJson = JSON.std.mapFrom(new InputStreamReader(jsonInputStream));
-        } catch (JsonProcessingException ex) {
-            throw new JsonException(ex);
-        }
+        throw new IOException("TODO");
     }
 
     public JsonParser(JsonParser other) {

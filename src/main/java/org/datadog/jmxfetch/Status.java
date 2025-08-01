@@ -1,6 +1,5 @@
 package org.datadog.jmxfetch;
 
-import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.util.InstanceTelemetry;
@@ -161,7 +160,7 @@ public class Status {
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         status.put("errors", this.errors);
-        return JSON.std.with(JSON.Feature.WRITE_NULL_PROPERTIES).asString(status);
+        throw new IOException("TODO");
     }
 
     /** Flushes current status. */
