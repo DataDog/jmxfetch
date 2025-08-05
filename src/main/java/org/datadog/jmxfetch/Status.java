@@ -123,10 +123,10 @@ public class Status {
         }
         if (instanceTelemetryBean != null) {
             instStats.put("instance_bean_count", instanceTelemetryBean.getBeansFetched());
-            instStats.put("instance_attribute_count", 
+            instStats.put("instance_attribute_count",
                           instanceTelemetryBean.getTopLevelAttributeCount());
             instStats.put("instance_metric_count", instanceTelemetryBean.getMetricCount());
-            instStats.put("instance_wildcard_domain_query_count", 
+            instStats.put("instance_wildcard_domain_query_count",
                           instanceTelemetryBean.getWildcardDomainQueryCount());
             instStats.put("instance_bean_match_ratio",
                           instanceTelemetryBean.getBeanMatchRatio());
@@ -160,7 +160,7 @@ public class Status {
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         status.put("errors", this.errors);
-        throw new IOException("TODO");
+        return JsonPrinter.toString(status);
     }
 
     /** Flushes current status. */

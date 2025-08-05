@@ -1,4 +1,4 @@
- package org.datadog.jmxfetch;
+package org.datadog.jmxfetch;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -270,7 +270,7 @@ public class AppConfig {
      * If set to true, other instances will be ignored.
      */
     @Builder.Default
-    private boolean targetDirectInstances = false;
+    private boolean targetDirectInstances = true;
 
     /**
      * Boolean setting to determine whether internal executors are launched as daemons or not.

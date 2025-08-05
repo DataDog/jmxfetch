@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.JsonPrinter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,11 +59,8 @@ public class JsonReporter extends Reporter {
         series.add(serie);
 
         System.out.println("=== JSON ===");
-        try {
-            throw new IOException("TODO");
-        } catch (IOException e) {
-            log.error("Couln't produce JSON output");
-        }
+        JsonPrinter.prettyPrint(System.out, series);
+        System.out.println();
         metrics.clear();
     }
 
