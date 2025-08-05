@@ -41,19 +41,22 @@ public class TestJsonParser {
     @Test
     public void values() throws Exception {
         assertParsent("");
-        assertParses(0.0, "0");
+        assertParses(0, "0");
         assertParses(0.0, "0.0");
         assertParses(0.0, "0e1");
         assertParses(0.0, "0.0e1");
         assertParses(-0.0, "-0");
-        assertParses(1., "1");
-        assertParses(12., "12");
+        assertParses(-0.0, "-0.0");
+        assertParses(1, "1");
+        assertParses(12, "12");
         assertParses(42.5, "42.5");
         assertParses(42.52, "42.52");
         assertParses(425.2, "42.52e1");
         assertParses(4252., "42.52e02");
         assertParses(4.252, "42.52e-1");
         assertParses(4.252e-11, "42.52e-12");
+        assertParses(18014398509481985L, "18014398509481985");
+        assertParses(3.6893488147419103e+19, "36893488147419103232");
         assertParses("", "\"\"");
         assertParses("a", "\"a\"");
         assertParses("01abc", "\"01abc\"");
@@ -64,8 +67,8 @@ public class TestJsonParser {
         assertParsent("truefalse");
         assertParses(Arrays.asList(), "[]");
         assertParses(Arrays.asList(), "[\n]");
-        assertParses(Arrays.asList(1.0), "[1]");
-        assertParses(Arrays.asList(1.0), "[ 1\n]");
+        assertParses(Arrays.asList(1), "[1]");
+        assertParses(Arrays.asList(1), "[ 1\n]");
         assertParsent("[1,]");
         assertParses(Arrays.asList(true, false, null, 14.5, "abc"), "[true, false, null, 14.5, \"abc\"]");
         assertParsent("[truefalse]");
@@ -116,7 +119,7 @@ public class TestJsonParser {
     @Test
     public void object() throws Exception {
         Object obj = parse("{\"timestamp\": 1754309434, \"configs\": { \"foo\": { \"instances\": [ { \"host\": \"none\" }, {  } ], \"init_config\": { } }, \"bar\": {} } }");
-        assertEquals(1754309434.0, get(obj, "timestamp"));
+        assertEquals(1754309434, get(obj, "timestamp"));
         assertEquals("none", get(obj, "configs", "foo", "instances", 0, "host"));
         assertEquals(new HashMap(), get(obj, "configs", "foo", "instances", 1));
         assertEquals(new HashMap(), get(obj, "configs", "bar"));

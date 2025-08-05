@@ -342,7 +342,7 @@ class JsonParser {
         private static final AsciiSet DIGITS = AsciiSet.of('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
         private static final AsciiSet PLUS_MINUS = AsciiSet.of('+', '-');
         private static final AsciiSet EXP = AsciiSet.of('e', 'E');
-        private Double parse_number() throws JsonException {
+        private Number parse_number() throws JsonException {
             back();
             accept('-');
 
@@ -364,11 +364,14 @@ class JsonParser {
                 throw new JsonException(this, "unexpected character at start of a number");
             }
 
+            boolean integer = true;
             if (!done() && accept('.')) {
+                integer = false;
                 accept_run(DIGITS);
             }
 
             if (!done() && accept(EXP)) {
+                integer = false;
                 accept(PLUS_MINUS);
                 accept_run(DIGITS);
             }
@@ -377,8 +380,20 @@ class JsonParser {
                 throw new JsonException(this, "number literal is too long");
             }
 
+            String token = take(0);
+            if (integer && !"-0".equals(token)) {
+                try {
+                    long v = Long.valueOf(token);
+                    if (v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE) {
+                        return (int)v;
+                    }
+                    return v;
+                } catch (NumberFormatException ex) {
+                    // try as double next
+                }
+            }
             try {
-                return Double.valueOf(take(0));
+                return Double.valueOf(token);
             } catch (NumberFormatException ex) {
                 throw new JsonException(this, "unable to parse number literal", ex);
             }
