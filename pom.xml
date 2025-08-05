@@ -408,7 +408,7 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-          </plugins>
+        </plugins>
     </build>
 
     <reporting>
