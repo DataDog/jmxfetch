@@ -252,6 +252,12 @@
             <version>${hamcrest.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.code-intelligence</groupId>
+            <artifactId>jazzer-junit</artifactId>
+            <version>0.16.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <scm>
         <connection>scm:git:git@github.com:Datadog/jmxfetch.git</connection>
@@ -402,7 +408,7 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-        </plugins>
+          </plugins>
     </build>
 
     <reporting>
