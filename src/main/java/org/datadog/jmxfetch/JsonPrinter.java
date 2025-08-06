@@ -19,24 +19,20 @@ public class JsonPrinter {
         this.out = out;
     }
 
-    public JsonPrinter(OutputStream out) {
-        this(new PrintWriter(out));
-    }
-
-    public JsonPrinter(Writer out) {
-        this(new PrintWriter(out));
-    }
-
     public static void prettyPrint(PrintWriter dst, Object obj) {
         new JsonPrinter(dst).prettyPrint(obj);
     }
 
     public static void prettyPrint(OutputStream dst, Object obj) {
-        new JsonPrinter(dst).prettyPrint(obj);
+        PrintWriter pw = new PrintWriter(dst);
+        new JsonPrinter(pw).prettyPrint(obj);
+        pw.close();
     }
 
     public static void prettyPrint(Writer dst, Object obj) {
-        new JsonPrinter(dst).prettyPrint(obj);
+        PrintWriter pw = new PrintWriter(dst);
+        new JsonPrinter(pw).prettyPrint(obj);
+        pw.close();
     }
 
     /**

@@ -15,7 +15,7 @@ public class TestJsonPrinter {
     String print(Object obj) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(bos, false, "UTF-8");
-        new JsonPrinter(ps).prettyPrint(obj);
+        JsonPrinter.prettyPrint(ps, obj);
         ps.flush();
         return bos.toString("UTF-8");
     }
