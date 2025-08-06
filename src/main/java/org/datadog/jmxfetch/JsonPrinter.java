@@ -15,6 +15,10 @@ public class JsonPrinter {
     PrintWriter out;
     StringBuilder indent = new StringBuilder();
 
+    /**
+     * Constructs a new JsonPrinter with the specified PrintWriter.
+     * @param out the PrintWriter to write JSON output to
+     */
     public JsonPrinter(PrintWriter out) {
         this.out = out;
     }
@@ -23,12 +27,22 @@ public class JsonPrinter {
         new JsonPrinter(dst).prettyPrint(obj);
     }
 
+    /**
+     * Pretty prints the given object as JSON to an OutputStream.
+     * @param dst the OutputStream to write to
+     * @param obj the object to print as JSON
+     */
     public static void prettyPrint(OutputStream dst, Object obj) {
         PrintWriter pw = new PrintWriter(dst);
         new JsonPrinter(pw).prettyPrint(obj);
         pw.close();
     }
 
+    /**
+     * Pretty prints the given object as JSON to a Writer.
+     * @param dst the Writer to write to
+     * @param obj the object to print as JSON
+     */
     public static void prettyPrint(Writer dst, Object obj) {
         PrintWriter pw = new PrintWriter(dst);
         new JsonPrinter(pw).prettyPrint(obj);
@@ -116,7 +130,8 @@ public class JsonPrinter {
                 if (key instanceof String) {
                     prettyPrint(e.getKey());
                 } else {
-                    throw new RuntimeException("invalid object key type in a map: " + key.getClass().getName());
+                    throw new RuntimeException(
+                            "invalid object key type in a map: " + key.getClass().getName());
                 }
                 out.print(" : ");
                 prettyPrint(e.getValue());
