@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -7,37 +9,40 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 @SuppressWarnings("unchecked")
 class JsonParser {
     public static final class JsonException extends Exception {
         Parser parser;
+
         public JsonException(String message) {
             super(message);
         }
+
         public JsonException(Parser parser, String message, Throwable cause) {
             super(message, cause);
             this.parser = parser;
         }
+
         public JsonException(Parser parser, String message) {
             super(message);
             this.parser = parser;
         }
+
         @Override
         public String toString() {
             String ch = "n/a";
             int pos = parser.pos - 1;
             if (pos >= 0) {
-                byte c = parser.buf[pos];
-                ch = (c > 32 && c < 127) ? String.format("'%c'", c) : String.format("0x%02x", c);
+                byte bv = parser.buf[pos];
+                ch = (bv > 32 && bv < 127) ? String.format("'%c'", bv)
+                        : String.format("0x%02x", bv);
             }
             return String.format("at pos %d char %s: %s", pos, ch, getMessage());
         }
     }
 
     private static class AsciiSet {
-        boolean map[];
+        boolean[] map;
 
         AsciiSet(char ...chars) {
             map = new boolean[128];
@@ -49,11 +54,11 @@ class JsonParser {
             }
         }
 
-        boolean get(byte b) {
-            if (b < 0) {
+        boolean get(byte bv) {
+            if (bv < 0) {
                 return false;
             }
-            return map[b];
+            return map[bv];
         }
 
         static AsciiSet of(char ...chars) {
@@ -99,14 +104,14 @@ class JsonParser {
             cap = newcap;
         }
 
-        void put(byte b) {
+        void put(byte bv) {
             reserve(1);
-            buf[len++] = b;
+            buf[len++] = bv;
         }
 
-        void put(byte[] b, int offset, int count) {
+        void put(byte[] bytes, int offset, int count) {
             reserve(count);
-            System.arraycopy(b, offset, buf, len, count);
+            System.arraycopy(bytes, offset, buf, len, count);
             len += count;
         }
 
@@ -147,9 +152,9 @@ class JsonParser {
         }
 
         private String take(int skipEnd) {
-            String s = new String(buf, beg, pos - beg - skipEnd, UTF_8);
+            String res = new String(buf, beg, pos - beg - skipEnd, UTF_8);
             skip();
-            return s;
+            return res;
         }
 
         private void take(ByteVector dst, int skipEnd) {
@@ -169,9 +174,9 @@ class JsonParser {
             if (done()) {
                 throw new JsonException(this, "unexpected end of stream");
             }
-            byte b = buf[pos];
+            byte bv = buf[pos];
             pos++;
-            return b;
+            return bv;
         }
 
         private char next() throws JsonException {
@@ -186,17 +191,17 @@ class JsonParser {
             return false;
         }
 
-        private boolean accept(char b) throws JsonException {
-            if (next() == b) {
+        private boolean accept(char ch) throws JsonException {
+            if (next() == ch) {
                 return true;
             }
             back();
             return false;
         }
 
-        private boolean contains(byte[] set, byte b) {
+        private boolean contains(byte[] set, byte bv) {
             for (byte bs : set) {
-                if (bs == b) {
+                if (bs == bv) {
                     return true;
                 }
             }
@@ -217,6 +222,7 @@ class JsonParser {
         }
 
         private static final AsciiSet WS = AsciiSet.of('\t', '\n', '\r', ' ');
+
         private void skip_ws() throws JsonException {
             accept_run(WS);
             skip();
@@ -238,32 +244,32 @@ class JsonParser {
             try {
                 skip_ws();
                 switch (next()) {
-                case '{':
-                    return parse_object();
-                case '[':
-                    return parse_array();
-                case '-':
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                case '8':
-                case '9':
-                    return parse_number();
-                case '"':
-                    return parse_string();
-                case 't':
-                    return parse_true();
-                case 'f':
-                    return parse_false();
-                case 'n':
-                    return parse_null();
-                default:
-                    throw new JsonException(this, "unexpected character");
+                    case '{':
+                        return parse_object();
+                    case '[':
+                        return parse_array();
+                    case '-':
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        return parse_number();
+                    case '"':
+                        return parse_string();
+                    case 't':
+                        return parse_true();
+                    case 'f':
+                        return parse_false();
+                    case 'n':
+                        return parse_null();
+                    default:
+                        throw new JsonException(this, "unexpected character");
                 }
             } finally {
                 depth--;
@@ -297,13 +303,13 @@ class JsonParser {
 
                 skip_ws();
                 switch (next()) {
-                case ',':
-                    continue object;
-                case '}':
-                    skip();
-                    return res;
-                default:
-                    throw new JsonException(this, "unexpected character after object value");
+                    case ',':
+                        continue object;
+                    case '}':
+                        skip();
+                        return res;
+                    default:
+                        throw new JsonException(this, "unexpected character after object value");
                 }
             }
 
@@ -327,41 +333,43 @@ class JsonParser {
                 skip_ws();
 
                 switch (next()) {
-                case ',':
-                    continue array;
-                case ']':
-                    return res;
-                default:
-                    throw new JsonException(this, "unexpected character after array item");
+                    case ',':
+                        continue array;
+                    case ']':
+                        return res;
+                    default:
+                        throw new JsonException(this, "unexpected character after array item");
                 }
             }
 
             throw new JsonException(this, "too many items in an array");
         }
 
-        private static final AsciiSet DIGITS = AsciiSet.of('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
+        private static final AsciiSet DIGITS = AsciiSet.of(
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
         private static final AsciiSet PLUS_MINUS = AsciiSet.of('+', '-');
         private static final AsciiSet EXP = AsciiSet.of('e', 'E');
+
         private Number parse_number() throws JsonException {
             back();
             accept('-');
 
             switch (next()) {
-            case '0':
-                break;
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                accept_run(DIGITS);
-                break;
-            default:
-                throw new JsonException(this, "unexpected character at start of a number");
+                case '0':
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    accept_run(DIGITS);
+                    break;
+                default:
+                    throw new JsonException(this, "unexpected character at start of a number");
             }
 
             boolean integer = true;
@@ -383,11 +391,11 @@ class JsonParser {
             String token = take(0);
             if (integer && !"-0".equals(token)) {
                 try {
-                    long v = Long.valueOf(token);
-                    if (v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE) {
-                        return (int)v;
+                    long val = Long.valueOf(token);
+                    if (val >= Integer.MIN_VALUE && val <= Integer.MAX_VALUE) {
+                        return (int)val;
                     }
-                    return v;
+                    return val;
                 } catch (NumberFormatException ex) {
                     // try as double next
                 }
@@ -406,47 +414,50 @@ class JsonParser {
 
             while (str.length() + length() < max_string_length) {
                 switch (next()) {
-                case '"':
-                    if (str.empty()) {
-                        return take(1);
-                    }
-                    take(str, 1);
-                    return str.to_string();
-                case '\\':
-                    take(str, 1);
-                    switch (next()) {
                     case '"':
-                        str.put((byte)'"');
-                        break;
+                        if (str.empty()) {
+                            return take(1);
+                        }
+                        take(str, 1);
+                        return str.to_string();
                     case '\\':
-                        str.put((byte)'\\');
-                        break;
-                    case '/':
-                        str.put((byte)'/');
-                        break;
-                    case 'b':
-                        str.put((byte)'\b');
-                        break;
-                    case 'f':
-                        str.put((byte)'\f');
-                        break;
-                    case 'n':
-                        str.put((byte)'\n');
-                        break;
-                    case 'r':
-                        str.put((byte)'\r');
-                        break;
-                    case 't':
-                        str.put((byte)'\t');
-                        break;
-                    case 'u':
-                        parse_unicode_escape_maybe_surrogate();
+                        take(str, 1);
+                        switch (next()) {
+                            case '"':
+                                str.put((byte)'"');
+                                break;
+                            case '\\':
+                                str.put((byte)'\\');
+                                break;
+                            case '/':
+                                str.put((byte)'/');
+                                break;
+                            case 'b':
+                                str.put((byte)'\b');
+                                break;
+                            case 'f':
+                                str.put((byte)'\f');
+                                break;
+                            case 'n':
+                                str.put((byte)'\n');
+                                break;
+                            case 'r':
+                                str.put((byte)'\r');
+                                break;
+                            case 't':
+                                str.put((byte)'\t');
+                                break;
+                            case 'u':
+                                parse_unicode_escape_maybe_surrogate();
+                                break;
+                            default:
+                                throw new JsonException(this, "invalid escape sequence");
+                        }
+                        skip();
                         break;
                     default:
-                        throw new JsonException(this, "invalid escape sequence");
-                    }
-                    skip();
-                    break;
+                        // Regular character, continue to next iteration
+                        break;
                 }
             }
 
@@ -458,7 +469,8 @@ class JsonParser {
 
             if (ch >= 0xd800 && ch < 0xdc00) {
                 if (!(accept('\\') && accept('u'))) {
-                    throw new JsonException(this, "escaped unicode surrogate pair must be followed by another one");
+                    throw new JsonException(this,
+                            "escaped unicode surrogate pair must be followed by another one");
                 }
                 int low = parse_unicode_escape();
                 if (!(low >= 0xdc00 && low < 0xe000)) {
@@ -484,7 +496,9 @@ class JsonParser {
             }
         }
 
-        private static final AsciiSet HEX = AsciiSet.of(DIGITS, 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F');
+        private static final AsciiSet HEX = AsciiSet.of(DIGITS,
+                'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F');
+
         private int parse_unicode_escape() throws JsonException {
             skip();
             if (!(accept(HEX) && accept(HEX) && accept(HEX) && accept(HEX))) {
@@ -499,12 +513,14 @@ class JsonParser {
             }
             throw new JsonException(this, "invalid keyword");
         }
+
         private Object parse_true() throws JsonException {
             if (accept('r') && accept('u') && accept('e')) {
                 return true;
             }
             throw new JsonException(this, "invalid keyword");
         }
+
         private Object parse_false() throws JsonException {
             if (accept('a') && accept('l') && accept('s') && accept('e')) {
                 return false;

@@ -39,60 +39,59 @@ public class JsonPrinter {
         new JsonPrinter(dst).prettyPrint(obj);
     }
 
-    public static String toString(Object obj) {
-        StringWriter sw = new StringWriter();
-        prettyPrint(sw, obj);
-        return sw.toString();
-    }
-
+    /**
+     * Pretty prints the given object as JSON.
+     * @param obj the object to print
+     */
     public void prettyPrint(Object obj) {
         if (obj == null) {
             out.print("null");
         } else if (obj instanceof Boolean) {
             out.print(obj);
-        } else if (obj instanceof Byte || obj instanceof Short || obj instanceof Integer || obj instanceof Long) {
-            long v = ((Number) obj).longValue();
-            out.print(v);
+        } else if (obj instanceof Byte || obj instanceof Short
+                || obj instanceof Integer || obj instanceof Long) {
+            long val = ((Number) obj).longValue();
+            out.print(val);
         } else if (obj instanceof Number) {
-            double v = ((Number) obj).doubleValue();
-            if (Double.isNaN(v)) {
+            double val = ((Number) obj).doubleValue();
+            if (Double.isNaN(val)) {
                 out.print("\"NaN\"");
-            } else if (Double.isInfinite(v)) {
-                out.format("\"%sInf\"", v < 0 ? "-" : "");
+            } else if (Double.isInfinite(val)) {
+                out.format("\"%sInf\"", val < 0 ? "-" : "");
             } else {
-                out.print(v);
+                out.print(val);
             }
         } else if (obj instanceof String) {
             out.print("\"");
             for (char c : ((String) obj).toCharArray()) {
                 switch (c) {
-                case '"':
-                    out.print("\\\"");
-                    break;
-                case '\\':
-                    out.print("\\\\");
-                    break;
-                case '\b':
-                    out.print("\\b");
-                    break;
-                case '\f':
-                    out.print("\\f");
-                    break;
-                case '\n':
-                    out.print("\\n");
-                    break;
-                case '\r':
-                    out.print("\\r");
-                    break;
-                case '\t':
-                    out.print("\\t");
-                    break;
-                default:
-                    if (c < 32) {
-                        out.format("\\u%04x", (int)c);
-                    } else {
-                        out.print(c);
-                    }
+                    case '"':
+                        out.print("\\\"");
+                        break;
+                    case '\\':
+                        out.print("\\\\");
+                        break;
+                    case '\b':
+                        out.print("\\b");
+                        break;
+                    case '\f':
+                        out.print("\\f");
+                        break;
+                    case '\n':
+                        out.print("\\n");
+                        break;
+                    case '\r':
+                        out.print("\\r");
+                        break;
+                    case '\t':
+                        out.print("\\t");
+                        break;
+                    default:
+                        if (c < 32) {
+                            out.format("\\u%04x", (int)c);
+                        } else {
+                            out.print(c);
+                        }
                 }
             }
             out.print("\"");
@@ -128,5 +127,16 @@ public class JsonPrinter {
         } else {
             throw new RuntimeException("unsupported json data type");
         }
+    }
+
+    /**
+     * Converts an object to its JSON string representation.
+     * @param obj the object to convert
+     * @return the JSON string representation
+     */
+    public static String toString(Object obj) {
+        StringWriter sw = new StringWriter();
+        prettyPrint(sw, obj);
+        return sw.toString();
     }
 }
