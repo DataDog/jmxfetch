@@ -94,7 +94,7 @@ public class JsonPrinter {
         } else if (obj instanceof List) {
             out.print("[ ");
             boolean first = true;
-            for (Object item : (List<Object>) obj) {
+            for (Object item : (List<?>) obj) {
                 if (!first) {
                     out.print(", ");
                 }
@@ -106,13 +106,18 @@ public class JsonPrinter {
             out.println("{");
             indent.append(TAB);
             boolean first = true;
-            for (Map.Entry<String, Object> e : ((Map<String, Object>) obj).entrySet()) {
+            for (Map.Entry e : ((Map<?, ?>) obj).entrySet()) {
                 if (!first) {
                     out.println(", ");
                 }
                 first = false;
                 out.print(indent);
-                prettyPrint(e.getKey());
+                Object key = e.getKey();
+                if (key instanceof String) {
+                    prettyPrint(e.getKey());
+                } else {
+                    throw new RuntimeException("invalid object key type in a map: " + key.getClass().getName());
+                }
                 out.print(" : ");
                 prettyPrint(e.getValue());
             }
