@@ -199,15 +199,6 @@ class JsonParser {
             return false;
         }
 
-        private boolean contains(byte[] set, byte bv) {
-            for (byte bs : set) {
-                if (bs == bv) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         private void accept_run(AsciiSet set) throws JsonException {
             while (!done() && accept(set)) {
             }
