@@ -35,7 +35,7 @@ public class JsonPrinter {
     public static void prettyPrint(OutputStream dst, Object obj) {
         PrintWriter pw = new PrintWriter(dst);
         new JsonPrinter(pw).prettyPrint(obj);
-        pw.close();
+        pw.flush();
     }
 
     /**
@@ -46,7 +46,7 @@ public class JsonPrinter {
     public static void prettyPrint(Writer dst, Object obj) {
         PrintWriter pw = new PrintWriter(dst);
         new JsonPrinter(pw).prettyPrint(obj);
-        pw.close();
+        pw.flush();
     }
 
     /**
