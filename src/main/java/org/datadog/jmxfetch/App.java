@@ -826,8 +826,7 @@ public class App {
                 return update;
             }
             byte[] utf8 = response.getResponseBody().getBytes(UTF_8);
-            InputStream jsonInputStream = new ByteArrayInputStream(utf8);
-            JsonParser parser = new JsonParser(jsonInputStream);
+            JsonParser parser = new JsonParser(utf8);
             int timestamp = (Integer) parser.getJsonTimestamp();
             if (timestamp > lastJsonConfigTs) {
                 adJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
@@ -840,8 +839,6 @@ public class App {
             }
         } catch (JsonParser.JsonException e) {
             log.error("error processing JSON response: " + e);
-        } catch (IOException e) {
-            log.error("unable to collect remote JMX configs: " + e);
         }
 
         return update;

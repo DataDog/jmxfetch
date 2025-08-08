@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,22 @@ public class TestConfiguration {
     static List<Configuration> configurations = new ArrayList<Configuration>();
     static JsonParser adConfigs;
 
+    // InputStream#readAllBytes() is only from java 9.
+    static byte[] readAll(FileInputStream is) throws IOException {
+        JsonParser.ByteVector buf = new JsonParser.ByteVector();
+        final int chunk_size = 4096;
+        int n;
+        while (true) {
+            buf.reserve(chunk_size);
+            n = is.read(buf.buf, buf.len, chunk_size);
+            if (n <= 0) {
+                break;
+            }
+            buf.len += n;
+        }
+        return Arrays.copyOf(buf.buf, buf.len);
+    }
+
     /**
      * Setup Configuration tests
      *
@@ -28,7 +45,7 @@ public class TestConfiguration {
      */
     @SuppressWarnings("unchecked")
     @BeforeClass
-    public static void init() throws FileNotFoundException, IOException {
+    public static void init() throws Exception {
         File f = new File("src/test/resources/", "jmx_bean_scope.yaml");
         String yamlPath = f.getAbsolutePath();
         FileInputStream yamlInputStream = new FileInputStream(yamlPath);
@@ -48,7 +65,7 @@ public class TestConfiguration {
         f = new File("src/test/resources/", "auto_discovery_configs.json");
         String jsonPath = f.getAbsolutePath();
         FileInputStream jsonInputStream = new FileInputStream(jsonPath);
-        adConfigs = new JsonParser(jsonInputStream);
+        adConfigs = new JsonParser(readAll(jsonInputStream));
     }
 
     /**
