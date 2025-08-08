@@ -1,7 +1,5 @@
 package org.datadog.jmxfetch.util.server;
 
-import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
 
