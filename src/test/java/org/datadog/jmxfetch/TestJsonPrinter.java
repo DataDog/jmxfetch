@@ -2,7 +2,7 @@ package org.datadog.jmxfetch;
 
 import org.junit.Test;
 
-import java.io.PrintStream;
+import java.io.StringWriter;
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.HashMap;
@@ -13,11 +13,9 @@ import static org.junit.Assert.assertEquals;
 
 public class TestJsonPrinter {
     String print(Object obj) throws Exception {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(bos, false, "UTF-8");
-        JsonPrinter.prettyPrint(ps, obj);
-        ps.flush();
-        return bos.toString("UTF-8");
+        StringWriter sw = new StringWriter();
+        JsonPrinter.prettyPrint(sw, obj);
+        return sw.toString();
     }
 
     @Test
