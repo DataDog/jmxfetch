@@ -79,6 +79,8 @@ deploy_to_sonatype:
     - echo "Building release..."
     - ./mvnw -Djdk.attach.allowAttachSelf=true -DperformRelease=true -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
 
+    - sha256sum ./target/*-jar-with-dependencies.jar
+
   artifacts:
     expire_in: 12 mos
     paths:
