@@ -30,7 +30,7 @@ public class TestJsonParser {
         assertEquals(exp, parse("\t\t" + s + "\n\n"));
     }
 
-    private void assertParsent(final String s) {
+    private void assertParsesNot(final String s) {
         assertThrows(JsonParser.JsonException.class, new ThrowingRunnable() {
             public void run() throws JsonParser.JsonException {
                 parse(s);
@@ -40,7 +40,7 @@ public class TestJsonParser {
 
     @Test
     public void values() throws Exception {
-        assertParsent("");
+        assertParsesNot("");
         assertParses(0, "0");
         assertParses(0.0, "0.0");
         assertParses(0.0, "0e1");
@@ -64,15 +64,15 @@ public class TestJsonParser {
         assertParses(true, "true");
         assertParses(false, "false");
         assertNull(parse("null"));
-        assertParsent("truefalse");
+        assertParsesNot("truefalse");
         assertParses(Arrays.asList(), "[]");
         assertParses(Arrays.asList(), "[\n]");
         assertParses(Arrays.asList(1), "[1]");
         assertParses(Arrays.asList(1), "[ 1\n]");
-        assertParsent("[1,]");
+        assertParsesNot("[1,]");
         assertParses(Arrays.asList(true, false, null, 14.5, "abc"), "[true, false, null, 14.5, \"abc\"]");
-        assertParsent("[truefalse]");
-        assertParsent("nulltrue");
+        assertParsesNot("[truefalse]");
+        assertParsesNot("nulltrue");
     }
 
     static String repeat(String l, String a, String b, String r, int count) {
@@ -91,18 +91,18 @@ public class TestJsonParser {
     @Test
     public void limits() throws JsonParser.JsonException {
         parse(repeat("\"", "x", "", "\"", 99999));
-        assertParsent(repeat("\"", "x", "", "\"", 100000));
+        assertParsesNot(repeat("\"", "x", "", "\"", 100000));
         parse(repeat("\"", "\\t", "", "\"", 99999));
-        assertParsent(repeat("\"", "\\u000a", "", "\"", 100000));
+        assertParsesNot(repeat("\"", "\\u000a", "", "\"", 100000));
         parse(repeat("\"", "\\t", "", "\"", 99999));
-        assertParsent(repeat("\"", "\\u000a", "", "\"", 100000));
+        assertParsesNot(repeat("\"", "\\u000a", "", "\"", 100000));
 
         parse(repeat("", "[", "]", "", 1000));
-        assertParsent(repeat("", "[", "]", "", 1001));
+        assertParsesNot(repeat("", "[", "]", "", 1001));
         parse(repeat("{", "\"\":{", "}", "}", 999));
-        assertParsent(repeat("{", "\"\":{", "}", "}", 1000));
+        assertParsesNot(repeat("{", "\"\":{", "}", "}", 1000));
         parse(repeat("", "{\"\":[", "]}", "", 500));
-        assertParsent(repeat("", "{\"\":[", "]}", "", 501));
+        assertParsesNot(repeat("", "{\"\":[", "]}", "", 501));
     }
 
     private Object get(Object obj, Object ...keys) throws Exception {
@@ -133,9 +133,9 @@ public class TestJsonParser {
 
     @Test
     public void unicode_bad_surrogate() {
-        assertParsent("\"\\ud83c\ufe0f\"");
-        assertParsent("\"\\ud83c!");
-        assertParsent("\"\\ud83c");
+        assertParsesNot("\"\\ud83c\ufe0f\"");
+        assertParsesNot("\"\\ud83c!");
+        assertParsesNot("\"\\ud83c");
     }
 
     @FuzzTest(maxDuration="4h")
