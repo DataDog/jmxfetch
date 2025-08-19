@@ -413,38 +413,7 @@ class JsonParser {
                         return str.to_string();
                     case '\\':
                         take(str, 1);
-                        switch (next()) {
-                            case '"':
-                                str.put((byte)'"');
-                                break;
-                            case '\\':
-                                str.put((byte)'\\');
-                                break;
-                            case '/':
-                                str.put((byte)'/');
-                                break;
-                            case 'b':
-                                str.put((byte)'\b');
-                                break;
-                            case 'f':
-                                str.put((byte)'\f');
-                                break;
-                            case 'n':
-                                str.put((byte)'\n');
-                                break;
-                            case 'r':
-                                str.put((byte)'\r');
-                                break;
-                            case 't':
-                                str.put((byte)'\t');
-                                break;
-                            case 'u':
-                                parse_unicode_escape_maybe_surrogate();
-                                break;
-                            default:
-                                throw new JsonException(this, "invalid escape sequence");
-                        }
-                        skip();
+                        parse_string_escape();
                         break;
                     default:
                         // Regular character, continue to next iteration
@@ -453,6 +422,41 @@ class JsonParser {
             }
 
             throw new JsonException(this, "string is too long");
+        }
+
+        private void parse_string_escape() throws JsonException {
+            switch (next()) {
+                case '"':
+                    str.put((byte)'"');
+                    break;
+                case '\\':
+                    str.put((byte)'\\');
+                    break;
+                case '/':
+                    str.put((byte)'/');
+                    break;
+                case 'b':
+                    str.put((byte)'\b');
+                    break;
+                case 'f':
+                    str.put((byte)'\f');
+                    break;
+                case 'n':
+                    str.put((byte)'\n');
+                    break;
+                case 'r':
+                    str.put((byte)'\r');
+                    break;
+                case 't':
+                    str.put((byte)'\t');
+                    break;
+                case 'u':
+                    parse_unicode_escape_maybe_surrogate();
+                    break;
+                default:
+                    throw new JsonException(this, "invalid escape sequence");
+            }
+            skip();
         }
 
         private void parse_unicode_escape_maybe_surrogate() throws JsonException {
