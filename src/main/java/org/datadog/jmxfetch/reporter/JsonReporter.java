@@ -1,10 +1,10 @@
 package org.datadog.jmxfetch.reporter;
 
-import com.fasterxml.jackson.jr.ob.JSON;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.Instance;
 import org.datadog.jmxfetch.JmxAttribute;
+import org.datadog.jmxfetch.JsonPrinter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,16 +59,8 @@ public class JsonReporter extends Reporter {
         series.add(serie);
 
         System.out.println("=== JSON ===");
-        try {
-            System.out.println(
-                JSON.std.with(
-                    JSON.Feature.PRETTY_PRINT_OUTPUT,
-                    JSON.Feature.WRITE_NULL_PROPERTIES
-                ).asString(series)
-            );
-        } catch (IOException e) {
-            log.error("Couln't produce JSON output");
-        }
+        JsonPrinter.prettyPrint(System.out, series);
+        System.out.println();
         metrics.clear();
     }
 
