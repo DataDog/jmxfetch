@@ -1,6 +1,9 @@
 Changelog
 =========
-# 0.49.10 / TBC
+# 0.50.1 / TBC
+
+# 0.50.0 / 2025-0822
+* [SECURITY] Removed `jackson` dependencies to mitigate [CVE-2025-52999](https://nvd.nist.gov/vuln/detail/CVE-2025-52999) [#574 ][]
 
 # 0.49.9 / 2025-07-16
 * [SECURITY] Bump `jackson` dependency to version `2.13.0` to mitigate [CVE-2025-49128]() [#565][]
@@ -807,6 +810,7 @@ Changelog
 [#560]: https://github.com/DataDog/jmxfetch/issues/560
 [#565]: https://github.com/DataDog/jmxfetch/issues/566
 [#572]: https://github.com/DataDog/jmxfetch/issues/572
+[#574]: https://github.com/DataDog/jmxfetch/issues/574
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
