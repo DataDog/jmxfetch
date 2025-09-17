@@ -27,6 +27,7 @@ public class SimpleAppContainer implements Startable {
 
     }
 
+    @SuppressWarnings("resource")
     public SimpleAppContainer(final String jreDockerImage, final String javaOpts, final int rmiPort) {
         this.jreDockerImage = jreDockerImage;
         this.javaOpts = javaOpts;
@@ -70,6 +71,7 @@ public class SimpleAppContainer implements Startable {
         this.server.stop();
     }
 
+    @Override
     public void close() {
         this.stop();
     }
