@@ -1,0 +1,19 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_dynamic_tags_test
+        tags:
+            - env:test
+            - cluster_id:$org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId
+            - kafka_version:$org.datadog.jmxfetch.test:type=DynamicTagTestApp#Version
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+               type: DynamicTagTestApp
+               attribute:
+                    Metric:
+                        metric_type: gauge
+                        alias: test.dynamic.tags.metric
+
+

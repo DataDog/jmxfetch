@@ -79,6 +79,7 @@ public class Instance {
     private ObjectName instanceTelemetryBeanName;
     private MBeanServer mbs;
     private Boolean normalizeBeanParamTags;
+    private List<DynamicTag> dynamicTags;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -107,6 +108,10 @@ public class Instance {
                 instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
         this.initConfig = initConfig != null ? new HashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
+        
+        // Parse dynamic tags before processing regular tags
+        this.dynamicTags = DynamicTag.parseFromObject(instanceMap.get("tags"));
+        
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
         this.matchingAttributes = new ArrayList<JmxAttribute>();
@@ -387,6 +392,7 @@ public class Instance {
     /**
      * Format the instance tags defined in the YAML configuration file to a `HashMap`.
      * Supported inputs: `List`, `Map`.
+     * Dynamic tags (starting with $) are skipped here and will be resolved after connection.
      */
     private static Map<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
         Map<String, String> tags = new HashMap<String, String>();
@@ -395,9 +401,27 @@ public class Instance {
         }
         if (tagsMap != null) {
             if (tagsMap instanceof Map) {
-                tags.putAll((Map<String, String>) tagsMap);
+                // Add non-dynamic tags, skip dynamic tags (they'll be resolved later)
+                for (Map.Entry<String, String> entry : ((Map<String, String>) tagsMap).entrySet()) {
+                    if (entry.getValue() == null || !entry.getValue().startsWith("$")) {
+                        tags.put(entry.getKey(), entry.getValue());
+                    } else {
+                        log.debug("Skipping dynamic tag '{}' in initial tag parsing, "
+                                + "will be resolved after connection", entry.getKey());
+                    }
+                }
             } else if (tagsMap instanceof List) {
                 for (String tag : (List<String>) tagsMap) {
+                    // Check if this is a dynamic tag (contains : and value starts with $)
+                    int colonIndex = tag.indexOf(':');
+                    if (colonIndex > 0) {
+                        String tagValue = tag.substring(colonIndex + 1);
+                        if (tagValue.startsWith("$")) {
+                            log.debug("Skipping dynamic tag '{}' in initial tag parsing, "
+                                    + "will be resolved after connection", tag);
+                            continue;
+                        }
+                    }
                     tags.put(tag, null);
                 }
             } else {
@@ -447,6 +471,10 @@ public class Instance {
             throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
+        
+        // Resolve dynamic tags after connection is established
+        resolveDynamicTags();
+        
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
         this.refreshBeansList();
@@ -454,6 +482,29 @@ public class Instance {
         log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at {}", this);
+    }
+    
+    /**
+     * Resolves dynamic tags by fetching their values from JMX beans.
+     * This method is called after the JMX connection is established.
+     */
+    private void resolveDynamicTags() {
+        if (dynamicTags == null || dynamicTags.isEmpty()) {
+            return;
+        }
+        
+        log.info("Resolving {} dynamic tag(s) for instance {}", dynamicTags.size(), instanceName);
+        
+        Map<String, String> resolvedTags = DynamicTag.resolveAll(dynamicTags, connection);
+        
+        if (!resolvedTags.isEmpty()) {
+            // Add resolved tags to the instance tags
+            this.tags.putAll(resolvedTags);
+            log.info("Successfully resolved {} dynamic tag(s) for instance {}: {}", 
+                    resolvedTags.size(), instanceName, resolvedTags);
+        } else {
+            log.warn("No dynamic tags could be resolved for instance {}", instanceName);
+        }
     }
 
     /** Returns a string representation for the instance. */
