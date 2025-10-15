@@ -1,9 +1,5 @@
 package org.datadog.jmxfetch;
 
-/**
- * Test application for dynamic tag resolution.
- * Exposes various attributes that can be used as dynamic tags.
- */
 public class DynamicTagTestApp implements DynamicTagTestAppMBean {
     private final String clusterId;
     private final String version;

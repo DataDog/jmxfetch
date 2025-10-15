@@ -138,6 +138,13 @@ public abstract class JmxAttribute {
                 }
             }
         }
+        
+        Map<String, String> resolvedDynamicTags = this.matchingConf.getResolvedDynamicTags();
+        if (resolvedDynamicTags != null && !resolvedDynamicTags.isEmpty()) {
+            for (Map.Entry<String, String> tag : resolvedDynamicTags.entrySet()) {
+                this.defaultTagsList.add(tag.getKey() + ":" + tag.getValue());
+            }
+        }
     }
 
     private void addServiceTags() {

@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,12 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.management.MBeanServerConnection;
 
+@Slf4j
 public class Configuration {
 
     private Map<String, Object> conf;
     private Filter include;
     private Filter exclude;
+    private Map<String, String> resolvedDynamicTags = null;
 
     /**
      * Access configuration elements more easily
@@ -44,6 +49,44 @@ public class Configuration {
 
     private Boolean hasInclude() {
         return getInclude() != null && !getInclude().isEmptyFilter();
+    }
+    
+    /** Resolve dynamic tags for this configuration using cached values. */
+    public void resolveDynamicTags(
+            MBeanServerConnection connection, Map<String, Map.Entry<String, String>> cache) {
+        if (resolvedDynamicTags != null) {
+            return;
+        }
+        
+        resolvedDynamicTags = new HashMap<String, String>();
+        
+        if (include == null) {
+            return;
+        }
+        
+        List<DynamicTag> dynamicTags = include.getDynamicTags();
+        if (dynamicTags == null || dynamicTags.isEmpty()) {
+            return;
+        }
+        
+        for (DynamicTag dynamicTag : dynamicTags) {
+            String cacheKey = dynamicTag.getBeanName() + "#" + dynamicTag.getAttributeName();
+            Map.Entry<String, String> cached = cache.get(cacheKey);
+            if (cached != null) {
+                resolvedDynamicTags.put(cached.getKey(), cached.getValue());
+            }
+        }
+        
+        log.debug("Applied {} dynamic tag(s) to configuration from cache", 
+                resolvedDynamicTags.size());
+    }
+    
+    /** Get all resolved dynamic tags for this configuration. */
+    public Map<String, String> getResolvedDynamicTags() {
+        if (resolvedDynamicTags == null) {
+            return new HashMap<String, String>();
+        }
+        return resolvedDynamicTags;
     }
 
     /**

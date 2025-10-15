@@ -68,6 +68,11 @@ public class Connection {
         }
         return attr;
     }
+    
+    /** Gets the underlying MBeanServerConnection. */
+    public MBeanServerConnection getMBeanServerConnection() {
+        return mbs;
+    }
 
     /** Closes the connector. */
     public void closeConnector() {

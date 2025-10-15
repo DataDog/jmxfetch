@@ -79,7 +79,6 @@ public class Instance {
     private ObjectName instanceTelemetryBeanName;
     private MBeanServer mbs;
     private Boolean normalizeBeanParamTags;
-    private List<DynamicTag> dynamicTags;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -108,10 +107,6 @@ public class Instance {
                 instanceMap != null ? new HashMap<String, Object>(instanceMap) : null;
         this.initConfig = initConfig != null ? new HashMap<String, Object>(initConfig) : null;
         this.instanceName = (String) instanceMap.get("name");
-        
-        // Parse dynamic tags before processing regular tags
-        this.dynamicTags = DynamicTag.parseFromObject(instanceMap.get("tags"));
-        
         this.tags = getTagsMap(instanceMap.get("tags"), appConfig);
         this.checkName = checkName;
         this.matchingAttributes = new ArrayList<JmxAttribute>();
@@ -392,7 +387,6 @@ public class Instance {
     /**
      * Format the instance tags defined in the YAML configuration file to a `HashMap`.
      * Supported inputs: `List`, `Map`.
-     * Dynamic tags (starting with $) are skipped here and will be resolved after connection.
      */
     private static Map<String, String> getTagsMap(Object tagsMap, AppConfig appConfig) {
         Map<String, String> tags = new HashMap<String, String>();
@@ -401,27 +395,9 @@ public class Instance {
         }
         if (tagsMap != null) {
             if (tagsMap instanceof Map) {
-                // Add non-dynamic tags, skip dynamic tags (they'll be resolved later)
-                for (Map.Entry<String, String> entry : ((Map<String, String>) tagsMap).entrySet()) {
-                    if (entry.getValue() == null || !entry.getValue().startsWith("$")) {
-                        tags.put(entry.getKey(), entry.getValue());
-                    } else {
-                        log.debug("Skipping dynamic tag '{}' in initial tag parsing, "
-                                + "will be resolved after connection", entry.getKey());
-                    }
-                }
+                tags.putAll((Map<String, String>) tagsMap);
             } else if (tagsMap instanceof List) {
                 for (String tag : (List<String>) tagsMap) {
-                    // Check if this is a dynamic tag (contains : and value starts with $)
-                    int colonIndex = tag.indexOf(':');
-                    if (colonIndex > 0) {
-                        String tagValue = tag.substring(colonIndex + 1);
-                        if (tagValue.startsWith("$")) {
-                            log.debug("Skipping dynamic tag '{}' in initial tag parsing, "
-                                    + "will be resolved after connection", tag);
-                            continue;
-                        }
-                    }
                     tags.put(tag, null);
                 }
             } else {
@@ -472,8 +448,8 @@ public class Instance {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
         
-        // Resolve dynamic tags after connection is established
-        resolveDynamicTags();
+        // Resolve configuration-level dynamic tags for all configurations
+        resolveConfigurationDynamicTags();
         
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
@@ -484,26 +460,44 @@ public class Instance {
         log.info("Done initializing JMX Server at {}", this);
     }
     
-    /**
-     * Resolves dynamic tags by fetching their values from JMX beans.
-     * This method is called after the JMX connection is established.
-     */
-    private void resolveDynamicTags() {
-        if (dynamicTags == null || dynamicTags.isEmpty()) {
+    private void resolveConfigurationDynamicTags() {
+        if (configurationList == null || configurationList.isEmpty()) {
             return;
         }
         
-        log.info("Resolving {} dynamic tag(s) for instance {}", dynamicTags.size(), instanceName);
+        Map<String, Map.Entry<String, String>> cache = new HashMap<>();
+        List<DynamicTag> allDynamicTags = new ArrayList<>();
         
-        Map<String, String> resolvedTags = DynamicTag.resolveAll(dynamicTags, connection);
+        for (Configuration config : configurationList) {
+            Filter include = config.getInclude();
+            if (include != null) {
+                List<DynamicTag> dynamicTags = include.getDynamicTags();
+                if (dynamicTags != null && !dynamicTags.isEmpty()) {
+                    allDynamicTags.addAll(dynamicTags);
+                }
+            }
+        }
         
-        if (!resolvedTags.isEmpty()) {
-            // Add resolved tags to the instance tags
-            this.tags.putAll(resolvedTags);
-            log.info("Successfully resolved {} dynamic tag(s) for instance {}: {}", 
-                    resolvedTags.size(), instanceName, resolvedTags);
-        } else {
-            log.warn("No dynamic tags could be resolved for instance {}", instanceName);
+        if (allDynamicTags.isEmpty()) {
+            return;
+        }
+        
+        for (DynamicTag dynamicTag : allDynamicTags) {
+            String cacheKey = dynamicTag.getBeanName() + "#" + dynamicTag.getAttributeName();
+            if (!cache.containsKey(cacheKey)) {
+                Map.Entry<String, String> resolved = 
+                        dynamicTag.resolve(connection.getMBeanServerConnection());
+                if (resolved != null) {
+                    cache.put(cacheKey, resolved);
+                }
+            }
+        }
+        
+        log.info("Resolved {} unique dynamic tag(s) from {} total references for instance {}", 
+                cache.size(), allDynamicTags.size(), instanceName);
+        
+        for (Configuration config : configurationList) {
+            config.resolveDynamicTags(connection.getMBeanServerConnection(), cache);
         }
     }
 

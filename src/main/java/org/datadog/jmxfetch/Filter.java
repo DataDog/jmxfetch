@@ -16,6 +16,8 @@ class Filter {
     List<Pattern> beanRegexes = null;
     List<String> excludeTags = null;
     Map<String, String> additionalTags = null;
+    List<DynamicTag> dynamicTags = null;
+    boolean tagsParsed = false;
 
     /**
      * A simple class to manipulate include/exclude filter elements more easily A filter may
@@ -120,17 +122,52 @@ class Filter {
         return this.excludeTags;
     }
 
-    public Map<String, String> getAdditionalTags() {
-        // Return additional tags
-        if (this.additionalTags == null) {
-            if (filter.get("tags") == null) {
-                this.additionalTags = new HashMap<String, String>();
+    private void parseTags() {
+        if (tagsParsed) {
+            return;
+        }
+        
+        tagsParsed = true;
+        this.additionalTags = new HashMap<String, String>();
+        this.dynamicTags = new ArrayList<DynamicTag>();
+        
+        if (filter.get("tags") == null) {
+            return;
+        }
+        
+        Map<String, String> allTags = (Map<String, String>) filter.get("tags");
+        
+        for (Map.Entry<String, String> entry : allTags.entrySet()) {
+            String tagName = entry.getKey();
+            String tagValue = entry.getValue();
+            
+            if (tagValue != null && tagValue.contains("#") && tagValue.startsWith("$")) {
+                try {
+                    DynamicTag dynamicTag = DynamicTag.parse(tagName, tagValue);
+                    this.dynamicTags.add(dynamicTag);
+                } catch (Exception e) {
+                    this.additionalTags.put(tagName, tagValue);
+                }
             } else {
-                this.additionalTags = (Map<String, String>) filter.get("tags");
+                this.additionalTags.put(tagName, tagValue);
             }
         }
-
+    }
+    
+    public Map<String, String> getAdditionalTags() {
+        if (this.additionalTags == null) {
+            parseTags();
+        }
+        
         return this.additionalTags;
+    }
+    
+    public List<DynamicTag> getDynamicTags() {
+        if (this.dynamicTags == null) {
+            parseTags();
+        }
+        
+        return this.dynamicTags;
     }
 
     public String getDomain() {
