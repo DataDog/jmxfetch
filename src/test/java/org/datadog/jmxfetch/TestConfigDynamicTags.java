@@ -20,24 +20,7 @@ public class TestConfigDynamicTags extends TestCommon {
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
         
-        initApplicationWithYamlLines(
-                "init_config:",
-                "instances:",
-                "  - process_name_regex: '.*surefire.*'",
-                "    name: jmx_config_dynamic_tags_test",
-                "    conf:",
-                "      - include:",
-                "         domain: org.datadog.jmxfetch.test",
-                "         type: DynamicTagTestApp",
-                "         tags:",
-                "           env: test",
-                "           cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId",
-                "           kafka_version: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#Version",
-                "         attribute:",
-                "            Metric:",
-                "                metric_type: gauge",
-                "                alias: test.config.dynamic.tags.metric"
-        );
+        initApplication("jmx_config_dynamic_tags.yaml");
         
         run();
         
@@ -91,33 +74,7 @@ public class TestConfigDynamicTags extends TestCommon {
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
         
-        initApplicationWithYamlLines(
-                "init_config:",
-                "instances:",
-                "  - process_name_regex: '.*surefire.*'",
-                "    name: jmx_config_dynamic_tags_multi_test",
-                "    conf:",
-                "      - include:",
-                "         domain: org.datadog.jmxfetch.test",
-                "         type: DynamicTagTestApp",
-                "         name: Instance1",
-                "         tags:",
-                "           cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance1#ClusterId",
-                "         attribute:",
-                "            Metric:",
-                "                metric_type: gauge",
-                "                alias: test.instance1.metric",
-                "      - include:",
-                "         domain: org.datadog.jmxfetch.test",
-                "         type: DynamicTagTestApp",
-                "         name: Instance2",
-                "         tags:",
-                "           version: $org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance2#Version",
-                "         attribute:",
-                "            Metric:",
-                "                metric_type: gauge",
-                "                alias: test.instance2.metric"
-        );
+        initApplication("jmx_config_dynamic_tags_multi.yaml");
         
         run();
         
@@ -178,24 +135,7 @@ public class TestConfigDynamicTags extends TestCommon {
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
         
-        initApplicationWithYamlLines(
-                "init_config:",
-                "instances:",
-                "  - process_name_regex: '.*surefire.*'",
-                "    name: jmx_config_dynamic_tags_bean_params_test",
-                "    conf:",
-                "      - include:",
-                "         domain: org.datadog.jmxfetch.test",
-                "         type: DynamicTagTestApp",
-                "         tags:",
-                "           bean_type: $type",
-                "           bean_name: $name",
-                "           cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=TestBean#ClusterId",
-                "         attribute:",
-                "            Metric:",
-                "                metric_type: gauge",
-                "                alias: test.bean.params.metric"
-        );
+        initApplication("jmx_config_dynamic_tags_bean_params.yaml");
         
         run();
         
@@ -233,31 +173,7 @@ public class TestConfigDynamicTags extends TestCommon {
                 new SimpleTestJavaApp(),
                 "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
         
-        initApplicationWithYamlLines(
-                "init_config:",
-                "instances:",
-                "  - process_name_regex: '.*surefire.*'",
-                "    name: jmx_config_dynamic_tags_caching_test",
-                "    conf:",
-                "      - include:",
-                "         domain: org.datadog.jmxfetch.test",
-                "         type: DynamicTagTestApp",
-                "         tags:",
-                "           cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId",
-                "         attribute:",
-                "            Metric:",
-                "                metric_type: gauge",
-                "                alias: test.metric1",
-                "      - include:",
-                "         domain: org.datadog.jmxfetch.test",
-                "         type: DynamicTagTestApp",
-                "         tags:",
-                "           cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId",
-                "         attribute:",
-                "            Port:",
-                "                metric_type: gauge",
-                "                alias: test.metric2"
-        );
+        initApplication("jmx_config_dynamic_tags_caching.yaml");
         
         run();
         
