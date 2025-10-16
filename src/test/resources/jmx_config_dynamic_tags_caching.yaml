@@ -8,8 +8,10 @@ instances:
             - include:
                domain: org.datadog.jmxfetch.test
                type: DynamicTagTestApp
-               tags:
-                   cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId
+               dynamic_tags:
+                   cluster_id:
+                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                       attribute: ClusterId
                attribute:
                     Metric:
                         metric_type: gauge
@@ -19,8 +21,10 @@ instances:
             - include:
                domain: org.datadog.jmxfetch.test
                type: DynamicTagTestApp
-               tags:
-                   cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId
+               dynamic_tags:
+                   cluster_id:
+                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                       attribute: ClusterId
                attribute:
                     Port:
                         metric_type: gauge

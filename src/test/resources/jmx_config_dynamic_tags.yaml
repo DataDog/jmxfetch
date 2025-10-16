@@ -9,8 +9,13 @@ instances:
                type: DynamicTagTestApp
                tags:
                    env: test
-                   cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#ClusterId
-                   kafka_version: $org.datadog.jmxfetch.test:type=DynamicTagTestApp#Version
+               dynamic_tags:
+                   cluster_id:
+                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                       attribute: ClusterId
+                   kafka_version:
+                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                       attribute: Version
                attribute:
                     Metric:
                         metric_type: gauge

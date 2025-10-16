@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +42,9 @@ class Filter {
     }
 
     public Set<String> keySet() {
-        return filter.keySet();
+        Set<String> keys = new HashSet<>(filter.keySet());
+        keys.remove("dynamic_tags");
+        return keys;
     }
 
     @SuppressWarnings({"unchecked"})
@@ -131,25 +134,23 @@ class Filter {
         this.additionalTags = new HashMap<String, String>();
         this.dynamicTags = new ArrayList<DynamicTag>();
         
-        if (filter.get("tags") == null) {
-            return;
+        if (filter.get("tags") != null) {
+            Map<String, String> allTags = (Map<String, String>) filter.get("tags");
+            this.additionalTags.putAll(allTags);
         }
         
-        Map<String, String> allTags = (Map<String, String>) filter.get("tags");
-        
-        for (Map.Entry<String, String> entry : allTags.entrySet()) {
-            String tagName = entry.getKey();
-            String tagValue = entry.getValue();
+        if (filter.get("dynamic_tags") != null) {
+            Map<String, Object> dynamicTagsConfig = 
+                    (Map<String, Object>) filter.get("dynamic_tags");
             
-            if (tagValue != null && tagValue.contains("#") && tagValue.startsWith("$")) {
-                try {
-                    DynamicTag dynamicTag = DynamicTag.parse(tagName, tagValue);
+            for (Map.Entry<String, Object> entry : dynamicTagsConfig.entrySet()) {
+                String tagName = entry.getKey();
+                Object tagConfig = entry.getValue();
+                
+                DynamicTag dynamicTag = DynamicTag.parse(tagName, tagConfig);
+                if (dynamicTag != null) {
                     this.dynamicTags.add(dynamicTag);
-                } catch (Exception e) {
-                    this.additionalTags.put(tagName, tagValue);
                 }
-            } else {
-                this.additionalTags.put(tagName, tagValue);
             }
         }
     }

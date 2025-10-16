@@ -10,7 +10,10 @@ instances:
                tags:
                    bean_type: $type
                    bean_name: $name
-                   cluster_id: $org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=TestBean#ClusterId
+               dynamic_tags:
+                   cluster_id:
+                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=TestBean
+                       attribute: ClusterId
                attribute:
                     Metric:
                         metric_type: gauge

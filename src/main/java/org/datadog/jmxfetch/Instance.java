@@ -485,8 +485,7 @@ public class Instance {
         for (DynamicTag dynamicTag : allDynamicTags) {
             String cacheKey = dynamicTag.getBeanName() + "#" + dynamicTag.getAttributeName();
             if (!cache.containsKey(cacheKey)) {
-                Map.Entry<String, String> resolved = 
-                        dynamicTag.resolve(connection.getMBeanServerConnection());
+                Map.Entry<String, String> resolved = dynamicTag.resolve(connection);
                 if (resolved != null) {
                     cache.put(cacheKey, resolved);
                 }
@@ -497,7 +496,7 @@ public class Instance {
                 cache.size(), allDynamicTags.size(), instanceName);
         
         for (Configuration config : configurationList) {
-            config.resolveDynamicTags(connection.getMBeanServerConnection(), cache);
+            config.resolveDynamicTags(cache);
         }
     }
 

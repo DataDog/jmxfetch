@@ -50,10 +50,14 @@ public class Configuration {
     private Boolean hasInclude() {
         return getInclude() != null && !getInclude().isEmptyFilter();
     }
-    
-    /** Resolve dynamic tags for this configuration using cached values. */
-    public void resolveDynamicTags(
-            MBeanServerConnection connection, Map<String, Map.Entry<String, String>> cache) {
+
+    /**
+     * Resolves dynamic tags (bean name, attribute name) to the JMX bean value,
+     * and stores the result in resolvedDynamicTags.
+     *
+     * @param cache shared cache mapping "(beanName, attributeName)" to "(tagName, tagValue)"
+     */
+    public void resolveDynamicTags(Map<String, Map.Entry<String, String>> cache) {
         if (resolvedDynamicTags != null) {
             return;
         }
