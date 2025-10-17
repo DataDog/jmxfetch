@@ -1,0 +1,33 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_config_dynamic_tags_caching_test
+        conf:
+            # Config 1: Uses cluster_id
+            - include:
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  attribute:
+                      Metric:
+                          metric_type: gauge
+                          alias: test.metric1
+              dynamic_tags:
+                  - tag_name: cluster_id
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    attribute: ClusterId
+            
+            # Config 2: Uses same cluster_id (should be cached)
+            - include:
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  attribute:
+                      Port:
+                          metric_type: gauge
+                          alias: test.metric2
+              dynamic_tags:
+                  - tag_name: cluster_id
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    attribute: ClusterId
+
+

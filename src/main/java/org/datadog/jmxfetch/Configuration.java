@@ -1,5 +1,7 @@
 package org.datadog.jmxfetch;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,11 +11,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+@Slf4j
 public class Configuration {
 
     private Map<String, Object> conf;
     private Filter include;
     private Filter exclude;
+    private List<DynamicTag> dynamicTags = null;
 
     /**
      * Access configuration elements more easily
@@ -24,6 +28,37 @@ public class Configuration {
         this.conf = conf;
         this.include = new Filter(conf.get("include"));
         this.exclude = new Filter(conf.get("exclude"));
+        this.parseDynamicTags(conf.get("dynamic_tags"));
+    }
+    
+    /**
+     * Parse dynamic tags from configuration.
+     * Expected format:
+     * dynamic_tags:
+     *   - tag_name: cluster_id
+     *     bean_name: kafka.server:type=KafkaServer,name=ClusterId
+     *     attribute: Value
+     */
+    private void parseDynamicTags(Object dynamicTagsConfig) {
+        this.dynamicTags = new ArrayList<DynamicTag>();
+        
+        if (dynamicTagsConfig == null) {
+            return;
+        }
+        
+        if (!(dynamicTagsConfig instanceof List)) {
+            log.warn("Invalid dynamic_tags configuration: expected list of tag definitions");
+            return;
+        }
+        
+        List<Object> dynamicTagsList = (List<Object>) dynamicTagsConfig;
+        
+        for (Object tagConfig : dynamicTagsList) {
+            DynamicTag dynamicTag = DynamicTag.parse(tagConfig);
+            if (dynamicTag != null) {
+                this.dynamicTags.add(dynamicTag);
+            }
+        }
     }
 
     public Map<String, Object> getConf() {
@@ -44,6 +79,14 @@ public class Configuration {
 
     private Boolean hasInclude() {
         return getInclude() != null && !getInclude().isEmptyFilter();
+    }
+    
+    /** Get list of dynamic tags defined for this configuration. */
+    public List<DynamicTag> getDynamicTags() {
+        if (dynamicTags == null) {
+            return new ArrayList<DynamicTag>();
+        }
+        return dynamicTags;
     }
 
     /**

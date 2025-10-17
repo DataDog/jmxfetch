@@ -59,6 +59,7 @@ public abstract class JmxAttribute {
             new HashMap<String, Map<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
+    private Map<String, String> resolvedDynamicTags;
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
@@ -136,6 +137,15 @@ public abstract class JmxAttribute {
                 } else {
                     log.warn("Unable to apply tag " + tag.getKey() + " - with unknown alias");
                 }
+            }
+        }
+    }
+    
+    /** Add dynamic tags that were resolved at connection time. */
+    private void addDynamicTags() {
+        if (this.resolvedDynamicTags != null && !this.resolvedDynamicTags.isEmpty()) {
+            for (Map.Entry<String, String> tag : this.resolvedDynamicTags.entrySet()) {
+                this.defaultTagsList.add(tag.getKey() + ":" + tag.getValue());
             }
         }
     }
@@ -496,12 +506,16 @@ public abstract class JmxAttribute {
     }
 
     /** Sets a matching configuration for the attribute. */
-    public void setMatchingConf(Configuration matchingConf) {
+    public void setMatchingConf(Configuration matchingConf, 
+            Map<String, String> resolvedDynamicTags) {
         this.matchingConf = matchingConf;
+        this.resolvedDynamicTags = resolvedDynamicTags;
 
         // Now that we have the matchingConf we can:
         // - add additional tags
         this.addAdditionalTags();
+        // - add dynamic tags that were resolved at connection time
+        this.addDynamicTags();
         // - filter out excluded tags
         this.applyTagsBlackList();
         // Add the service tag(s) - comes last because if the service tag is blacklisted as
