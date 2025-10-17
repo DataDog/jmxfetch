@@ -448,14 +448,16 @@ public class Instance {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
         
-        // Resolve configuration-level dynamic tags for all configurations
-        resolveConfigurationDynamicTags();
-        
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
         this.refreshBeansList();
         this.initialRefreshTime = this.lastRefreshTime;
         log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
+        
+        // Resolve configuration-level dynamic tags for all configurations
+        // Must be done after refreshBeansList() so the beans exist
+        resolveConfigurationDynamicTags();
+        
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at {}", this);
     }
