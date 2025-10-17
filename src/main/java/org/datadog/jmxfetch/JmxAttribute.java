@@ -138,7 +138,10 @@ public abstract class JmxAttribute {
                 }
             }
         }
-        
+    }
+    
+    /** Add dynamic tags that were resolved at connection time. */
+    private void addDynamicTags() {
         Map<String, String> resolvedDynamicTags = this.matchingConf.getResolvedDynamicTags();
         if (resolvedDynamicTags != null && !resolvedDynamicTags.isEmpty()) {
             for (Map.Entry<String, String> tag : resolvedDynamicTags.entrySet()) {
@@ -509,6 +512,8 @@ public abstract class JmxAttribute {
         // Now that we have the matchingConf we can:
         // - add additional tags
         this.addAdditionalTags();
+        // - add dynamic tags that were resolved at connection time
+        this.addDynamicTags();
         // - filter out excluded tags
         this.applyTagsBlackList();
         // Add the service tag(s) - comes last because if the service tag is blacklisted as
