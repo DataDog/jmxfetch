@@ -15,9 +15,9 @@ instances:
                           alias: test.config.dynamic.tags.metric
               dynamic_tags:
                   - tag_name: cluster_id
-                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
                     attribute: ClusterId
                   - tag_name: kafka_version
-                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
                     attribute: Version
 

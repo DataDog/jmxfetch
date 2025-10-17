@@ -59,6 +59,7 @@ public abstract class JmxAttribute {
             new HashMap<String, Map<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
+    private Map<String, String> resolvedDynamicTags;
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
@@ -142,9 +143,8 @@ public abstract class JmxAttribute {
     
     /** Add dynamic tags that were resolved at connection time. */
     private void addDynamicTags() {
-        Map<String, String> resolvedDynamicTags = this.matchingConf.getResolvedDynamicTags();
-        if (resolvedDynamicTags != null && !resolvedDynamicTags.isEmpty()) {
-            for (Map.Entry<String, String> tag : resolvedDynamicTags.entrySet()) {
+        if (this.resolvedDynamicTags != null && !this.resolvedDynamicTags.isEmpty()) {
+            for (Map.Entry<String, String> tag : this.resolvedDynamicTags.entrySet()) {
                 this.defaultTagsList.add(tag.getKey() + ":" + tag.getValue());
             }
         }
@@ -506,8 +506,10 @@ public abstract class JmxAttribute {
     }
 
     /** Sets a matching configuration for the attribute. */
-    public void setMatchingConf(Configuration matchingConf) {
+    public void setMatchingConf(Configuration matchingConf, 
+            Map<String, String> resolvedDynamicTags) {
         this.matchingConf = matchingConf;
+        this.resolvedDynamicTags = resolvedDynamicTags;
 
         // Now that we have the matchingConf we can:
         // - add additional tags

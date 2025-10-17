@@ -14,7 +14,7 @@ instances:
                           alias: test.metric1
               dynamic_tags:
                   - tag_name: cluster_id
-                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
                     attribute: ClusterId
             
             # Config 2: Uses same cluster_id (should be cached)
@@ -27,7 +27,7 @@ instances:
                           alias: test.metric2
               dynamic_tags:
                   - tag_name: cluster_id
-                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
                     attribute: ClusterId
 
 

@@ -16,7 +16,7 @@ instances:
                           alias: test.bean.params.metric
               dynamic_tags:
                   - tag_name: cluster_id
-                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=TestBean
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=TestBean
                     attribute: ClusterId
 
 

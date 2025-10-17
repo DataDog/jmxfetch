@@ -18,7 +18,6 @@ public class Configuration {
     private Filter include;
     private Filter exclude;
     private List<DynamicTag> dynamicTags = null;
-    private Map<String, String> resolvedDynamicTags = null;
 
     /**
      * Access configuration elements more easily
@@ -37,7 +36,7 @@ public class Configuration {
      * Expected format:
      * dynamic_tags:
      *   - tag_name: cluster_id
-     *     bean: kafka.server:type=KafkaServer,name=ClusterId
+     *     bean_name: kafka.server:type=KafkaServer,name=ClusterId
      *     attribute: Value
      */
     private void parseDynamicTags(Object dynamicTagsConfig) {
@@ -81,35 +80,6 @@ public class Configuration {
     private Boolean hasInclude() {
         return getInclude() != null && !getInclude().isEmptyFilter();
     }
-
-    /**
-     * Resolves dynamic tags (bean name, attribute name) to the JMX bean value,
-     * and stores the result in resolvedDynamicTags.
-     *
-     * @param cache shared cache mapping "(beanName, attributeName)" to "(tagName, tagValue)"
-     */
-    public void resolveDynamicTags(Map<String, Map.Entry<String, String>> cache) {
-        if (resolvedDynamicTags != null) {
-            return;
-        }
-        
-        resolvedDynamicTags = new HashMap<String, String>();
-        
-        if (dynamicTags == null || dynamicTags.isEmpty()) {
-            return;
-        }
-        
-        for (DynamicTag dynamicTag : dynamicTags) {
-            String cacheKey = dynamicTag.getBeanName() + "#" + dynamicTag.getAttributeName();
-            Map.Entry<String, String> cached = cache.get(cacheKey);
-            if (cached != null) {
-                resolvedDynamicTags.put(cached.getKey(), cached.getValue());
-            }
-        }
-        
-        log.debug("Applied {} dynamic tag(s) to configuration from cache", 
-                resolvedDynamicTags.size());
-    }
     
     /** Get list of dynamic tags defined for this configuration. */
     public List<DynamicTag> getDynamicTags() {
@@ -117,14 +87,6 @@ public class Configuration {
             return new ArrayList<DynamicTag>();
         }
         return dynamicTags;
-    }
-    
-    /** Get all resolved dynamic tags for this configuration. */
-    public Map<String, String> getResolvedDynamicTags() {
-        if (resolvedDynamicTags == null) {
-            return new HashMap<String, String>();
-        }
-        return resolvedDynamicTags;
     }
 
     /**

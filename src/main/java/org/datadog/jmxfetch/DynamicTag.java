@@ -20,18 +20,22 @@ public class DynamicTag {
         }
         
         if (!(tagConfig instanceof Map)) {
-            log.warn("Invalid dynamic tag config: expected map with 'tag_name', 'bean' and "
+            log.warn("Invalid dynamic tag config: expected map with 'tag_name', 'bean_name' and "
                     + "'attribute' keys");
             return null;
         }
         
         Map<String, Object> config = (Map<String, Object>) tagConfig;
         Object tagNameObj = config.get("tag_name");
-        Object beanObj = config.get("bean");
+        Object beanObj = config.get("bean_name");
         Object attrObj = config.get("attribute");
         
         if (tagNameObj == null || beanObj == null || attrObj == null) {
-            log.warn("Invalid dynamic tag config: missing 'tag_name', 'bean' or 'attribute' key"); 
+            String missing = "Invalid dynamic tag config: missing"
+                    + (tagNameObj == null ? " tag_name" : "")
+                    + (beanObj == null ? " bean_name" : "")
+                    + (attrObj == null ? " attribute" : "");
+            log.warn(missing);
             return null;
         }
         
