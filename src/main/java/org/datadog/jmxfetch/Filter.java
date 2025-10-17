@@ -16,7 +16,6 @@ class Filter {
     List<Pattern> beanRegexes = null;
     List<String> excludeTags = null;
     Map<String, String> additionalTags = null;
-    boolean tagsParsed = false;
 
     /**
      * A simple class to manipulate include/exclude filter elements more easily A filter may
@@ -121,25 +120,16 @@ class Filter {
         return this.excludeTags;
     }
 
-    private void parseTags() {
-        if (tagsParsed) {
-            return;
-        }
-        
-        tagsParsed = true;
-        this.additionalTags = new HashMap<String, String>();
-        
-        if (filter.get("tags") != null) {
-            Map<String, String> allTags = (Map<String, String>) filter.get("tags");
-            this.additionalTags.putAll(allTags);
-        }
-    }
-    
     public Map<String, String> getAdditionalTags() {
+        // Return additional tags
         if (this.additionalTags == null) {
-            parseTags();
+            if (filter.get("tags") == null) {
+                this.additionalTags = new HashMap<String, String>();
+            } else {
+                this.additionalTags = (Map<String, String>) filter.get("tags");
+            }
         }
-        
+
         return this.additionalTags;
     }
 
