@@ -6,29 +6,29 @@ instances:
         conf:
             # Config 1: Has cluster_id dynamic tag
             - include:
-               domain: org.datadog.jmxfetch.test
-               type: DynamicTagTestApp
-               name: Instance1
-               dynamic_tags:
-                   cluster_id:
-                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance1
-                       attribute: ClusterId
-               attribute:
-                    Metric:
-                        metric_type: gauge
-                        alias: test.instance1.metric
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  name: Instance1
+                  attribute:
+                      Metric:
+                          metric_type: gauge
+                          alias: test.instance1.metric
+              dynamic_tags:
+                  - tag_name: cluster_id
+                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance1
+                    attribute: ClusterId
             
             # Config 2: Has version dynamic tag
             - include:
-               domain: org.datadog.jmxfetch.test
-               type: DynamicTagTestApp
-               name: Instance2
-               dynamic_tags:
-                   version:
-                       bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance2
-                       attribute: Version
-               attribute:
-                    Metric:
-                        metric_type: gauge
-                        alias: test.instance2.metric
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  name: Instance2
+                  attribute:
+                      Metric:
+                          metric_type: gauge
+                          alias: test.instance2.metric
+              dynamic_tags:
+                  - tag_name: version
+                    bean: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance2
+                    attribute: Version
 

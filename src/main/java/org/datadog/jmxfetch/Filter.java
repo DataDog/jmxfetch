@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +16,6 @@ class Filter {
     List<Pattern> beanRegexes = null;
     List<String> excludeTags = null;
     Map<String, String> additionalTags = null;
-    List<DynamicTag> dynamicTags = null;
     boolean tagsParsed = false;
 
     /**
@@ -42,9 +40,7 @@ class Filter {
     }
 
     public Set<String> keySet() {
-        Set<String> keys = new HashSet<>(filter.keySet());
-        keys.remove("dynamic_tags");
-        return keys;
+        return filter.keySet();
     }
 
     @SuppressWarnings({"unchecked"})
@@ -132,26 +128,10 @@ class Filter {
         
         tagsParsed = true;
         this.additionalTags = new HashMap<String, String>();
-        this.dynamicTags = new ArrayList<DynamicTag>();
         
         if (filter.get("tags") != null) {
             Map<String, String> allTags = (Map<String, String>) filter.get("tags");
             this.additionalTags.putAll(allTags);
-        }
-        
-        if (filter.get("dynamic_tags") != null) {
-            Map<String, Object> dynamicTagsConfig = 
-                    (Map<String, Object>) filter.get("dynamic_tags");
-            
-            for (Map.Entry<String, Object> entry : dynamicTagsConfig.entrySet()) {
-                String tagName = entry.getKey();
-                Object tagConfig = entry.getValue();
-                
-                DynamicTag dynamicTag = DynamicTag.parse(tagName, tagConfig);
-                if (dynamicTag != null) {
-                    this.dynamicTags.add(dynamicTag);
-                }
-            }
         }
     }
     
@@ -161,14 +141,6 @@ class Filter {
         }
         
         return this.additionalTags;
-    }
-    
-    public List<DynamicTag> getDynamicTags() {
-        if (this.dynamicTags == null) {
-            parseTags();
-        }
-        
-        return this.dynamicTags;
     }
 
     public String getDomain() {

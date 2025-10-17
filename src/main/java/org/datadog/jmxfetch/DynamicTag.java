@@ -13,32 +13,33 @@ public class DynamicTag {
     private final String beanName;
     private final String attributeName;
     
-    /** Parse dynamic tag from configuration map. */
-    public static DynamicTag parse(String tagKey, Object tagConfig) {
+    /** Parse dynamic tag from configuration map (list entry format). */
+    public static DynamicTag parse(Object tagConfig) {
         if (tagConfig == null) {
             return null;
         }
         
         if (!(tagConfig instanceof Map)) {
-            log.warn("Invalid dynamic tag config for '{}': expected map with 'bean' and "
-                    + "'attribute' keys", tagKey);
+            log.warn("Invalid dynamic tag config: expected map with 'tag_name', 'bean' and "
+                    + "'attribute' keys");
             return null;
         }
         
         Map<String, Object> config = (Map<String, Object>) tagConfig;
+        Object tagNameObj = config.get("tag_name");
         Object beanObj = config.get("bean");
         Object attrObj = config.get("attribute");
         
-        if (beanObj == null || attrObj == null) {
-            log.warn("Invalid dynamic tag config for '{}': missing 'bean' or 'attribute' key", 
-                    tagKey);
+        if (tagNameObj == null || beanObj == null || attrObj == null) {
+            log.warn("Invalid dynamic tag config: missing 'tag_name', 'bean' or 'attribute' key"); 
             return null;
         }
         
+        String tagName = tagNameObj.toString();
         String beanName = beanObj.toString();
         String attributeName = attrObj.toString();
         
-        return new DynamicTag(tagKey, beanName, attributeName);
+        return new DynamicTag(tagName, beanName, attributeName);
     }
     
     private DynamicTag(String tagName, String beanName, String attributeName) {

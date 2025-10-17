@@ -469,12 +469,9 @@ public class Instance {
         List<DynamicTag> allDynamicTags = new ArrayList<>();
         
         for (Configuration config : configurationList) {
-            Filter include = config.getInclude();
-            if (include != null) {
-                List<DynamicTag> dynamicTags = include.getDynamicTags();
-                if (dynamicTags != null && !dynamicTags.isEmpty()) {
-                    allDynamicTags.addAll(dynamicTags);
-                }
+            List<DynamicTag> dynamicTags = config.getDynamicTags();
+            if (dynamicTags != null && !dynamicTags.isEmpty()) {
+                allDynamicTags.addAll(dynamicTags);
             }
         }
         

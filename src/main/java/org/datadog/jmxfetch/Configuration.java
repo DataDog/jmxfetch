@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.management.MBeanServerConnection;
 
 @Slf4j
 public class Configuration {
@@ -18,6 +17,7 @@ public class Configuration {
     private Map<String, Object> conf;
     private Filter include;
     private Filter exclude;
+    private List<DynamicTag> dynamicTags = null;
     private Map<String, String> resolvedDynamicTags = null;
 
     /**
@@ -29,6 +29,37 @@ public class Configuration {
         this.conf = conf;
         this.include = new Filter(conf.get("include"));
         this.exclude = new Filter(conf.get("exclude"));
+        this.parseDynamicTags(conf.get("dynamic_tags"));
+    }
+    
+    /**
+     * Parse dynamic tags from configuration.
+     * Expected format:
+     * dynamic_tags:
+     *   - tag_name: cluster_id
+     *     bean: kafka.server:type=KafkaServer,name=ClusterId
+     *     attribute: Value
+     */
+    private void parseDynamicTags(Object dynamicTagsConfig) {
+        this.dynamicTags = new ArrayList<DynamicTag>();
+        
+        if (dynamicTagsConfig == null) {
+            return;
+        }
+        
+        if (!(dynamicTagsConfig instanceof List)) {
+            log.warn("Invalid dynamic_tags configuration: expected list of tag definitions");
+            return;
+        }
+        
+        List<Object> dynamicTagsList = (List<Object>) dynamicTagsConfig;
+        
+        for (Object tagConfig : dynamicTagsList) {
+            DynamicTag dynamicTag = DynamicTag.parse(tagConfig);
+            if (dynamicTag != null) {
+                this.dynamicTags.add(dynamicTag);
+            }
+        }
     }
 
     public Map<String, Object> getConf() {
@@ -64,11 +95,6 @@ public class Configuration {
         
         resolvedDynamicTags = new HashMap<String, String>();
         
-        if (include == null) {
-            return;
-        }
-        
-        List<DynamicTag> dynamicTags = include.getDynamicTags();
         if (dynamicTags == null || dynamicTags.isEmpty()) {
             return;
         }
@@ -83,6 +109,14 @@ public class Configuration {
         
         log.debug("Applied {} dynamic tag(s) to configuration from cache", 
                 resolvedDynamicTags.size());
+    }
+    
+    /** Get list of dynamic tags defined for this configuration. */
+    public List<DynamicTag> getDynamicTags() {
+        if (dynamicTags == null) {
+            return new ArrayList<DynamicTag>();
+        }
+        return dynamicTags;
     }
     
     /** Get all resolved dynamic tags for this configuration. */
