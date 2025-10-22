@@ -64,6 +64,11 @@ public class DynamicTag {
         return attributeName;
     }
     
+    /** Gets a unique key for the bean and attribute combination. */
+    public String getBeanAttributeKey() {
+        return beanName + "#" + attributeName;
+    }
+    
     /** Resolve the dynamic tag by fetching the attribute value from JMX. */
     public Map.Entry<String, String> resolve(Connection connection) {
         try {

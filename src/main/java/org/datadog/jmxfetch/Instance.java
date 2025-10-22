@@ -482,18 +482,22 @@ public class Instance {
             return;
         }
         
+        int successfulResolutions = 0;
         for (DynamicTag dynamicTag : allDynamicTags) {
-            String cacheKey = dynamicTag.getBeanName() + "#" + dynamicTag.getAttributeName();
+            String cacheKey = dynamicTag.getBeanAttributeKey();
             if (!this.dynamicTagsCache.containsKey(cacheKey)) {
                 Map.Entry<String, String> resolved = dynamicTag.resolve(connection);
-                if (resolved != null) {
-                    this.dynamicTagsCache.put(cacheKey, resolved);
-                }
+                // Cache both successful and failed resolutions (null) to avoid retrying
+                this.dynamicTagsCache.put(cacheKey, resolved);
+            }
+            // Count successful resolutions (cached value is not null)
+            if (this.dynamicTagsCache.get(cacheKey) != null) {
+                successfulResolutions++;
             }
         }
         
         log.info("Resolved {} unique dynamic tag(s) from {} total references for instance {}", 
-                this.dynamicTagsCache.size(), allDynamicTags.size(), instanceName);
+                successfulResolutions, allDynamicTags.size(), instanceName);
     }
     
     /**
@@ -516,7 +520,7 @@ public class Instance {
         }
         
         for (DynamicTag dynamicTag : dynamicTags) {
-            String cacheKey = dynamicTag.getBeanName() + "#" + dynamicTag.getAttributeName();
+            String cacheKey = dynamicTag.getBeanAttributeKey();
             Map.Entry<String, String> cached = this.dynamicTagsCache.get(cacheKey);
             if (cached != null) {
                 resolvedTags.put(cached.getKey(), cached.getValue());
@@ -762,7 +766,8 @@ public class Instance {
                         if (jmxAttribute.match(conf)) {
                             Map<String, String> resolvedDynamicTags = 
                                     getResolvedDynamicTagsForConfig(conf);
-                            jmxAttribute.setMatchingConf(conf, resolvedDynamicTags);
+                            jmxAttribute.setResolvedDynamicTags(resolvedDynamicTags);
+                            jmxAttribute.setMatchingConf(conf);
                             metricsCount += jmxAttribute.getMetricsCount();
                             this.matchingAttributes.add(jmxAttribute);
 

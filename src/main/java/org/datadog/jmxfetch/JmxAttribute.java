@@ -505,11 +505,14 @@ public abstract class JmxAttribute {
         return matchingConf;
     }
 
-    /** Sets a matching configuration for the attribute. */
-    public void setMatchingConf(Configuration matchingConf, 
-            Map<String, String> resolvedDynamicTags) {
-        this.matchingConf = matchingConf;
+    /** Sets resolved dynamic tags for the attribute. */
+    public void setResolvedDynamicTags(Map<String, String> resolvedDynamicTags) {
         this.resolvedDynamicTags = resolvedDynamicTags;
+    }
+
+    /** Sets a matching configuration for the attribute. */
+    public void setMatchingConf(Configuration matchingConf) {
+        this.matchingConf = matchingConf;
 
         // Now that we have the matchingConf we can:
         // - add additional tags
