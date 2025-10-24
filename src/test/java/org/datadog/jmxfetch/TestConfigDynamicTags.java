@@ -195,6 +195,99 @@ public class TestConfigDynamicTags extends TestCommon {
                 metricsWithClusterId == 2);
     }
     
+    @Test
+    public void testConfigDynamicTagsMultiplePerConf() throws Exception {
+        registerMBean(
+                new DynamicTagTestApp("cluster-1", "version-1", 9999),
+                "org.datadog.jmxfetch.test:type=DynamicTagTestApp");
+        
+        initApplication("jmx_config_dynamic_tags_multiple_per_conf.yaml");
+        
+        run();
+        
+        List<Map<String, Object>> metrics = getMetrics();
+        assertTrue("Should have collected metrics", metrics.size() > 0);
+        
+        boolean foundMetric = false;
+        for (Map<String, Object> metric : metrics) {
+            String metricName = (String) metric.get("name");
+            
+            if ("test.metric.with.multiple.tags".equals(metricName)) {
+                foundMetric = true;
+                
+                List<String> tagList = getTagsAsList(metric);
+                
+                // Verify all three dynamic tags are present
+                assertTrue("Should have cluster_id dynamic tag", 
+                        tagList.contains("cluster_id:cluster-1"));
+                assertTrue("Should have version dynamic tag", 
+                        tagList.contains("version:version-1"));
+                assertTrue("Should have port dynamic tag", 
+                        tagList.contains("port:9999"));
+                
+                // Verify normal tags are also present
+                assertTrue("Should have env tag", 
+                        tagList.contains("env:test"));
+            }
+        }
+        
+        assertTrue("Should have found metric with multiple dynamic tags", foundMetric);
+    }
+    
+    @Test
+    public void testConfigDynamicTagsInvalid() throws Exception {
+        registerMBean(
+                new DynamicTagTestApp("cluster-1", "version-1", 9999),
+                "org.datadog.jmxfetch.test:type=DynamicTagTestApp");
+        
+        initApplication("jmx_config_dynamic_tags_invalid.yaml");
+        
+        run();
+        
+        List<Map<String, Object>> metrics = getMetrics();
+        assertTrue("Should have collected metrics", metrics.size() > 0);
+        
+        boolean foundMetric = false;
+        for (Map<String, Object> metric : metrics) {
+            String metricName = (String) metric.get("name");
+            
+            if ("test.metric.with.invalid.tags".equals(metricName)) {
+                foundMetric = true;
+                
+                List<String> tagList = getTagsAsList(metric);
+                
+                // Verify normal tags are still applied
+                assertTrue("Should have env tag", 
+                        tagList.contains("env:test"));
+                assertTrue("Should have region tag", 
+                        tagList.contains("region:us-east-1"));
+                
+                // Verify the valid dynamic tag is applied
+                assertTrue("Should have valid_port dynamic tag", 
+                        tagList.contains("valid_port:9999"));
+                
+                // Verify invalid dynamic tags are NOT applied
+                boolean hasMissingBeanTag = false;
+                boolean hasMissingAttrTag = false;
+                for (String tag : tagList) {
+                    if (tag.startsWith("missing_bean:")) {
+                        hasMissingBeanTag = true;
+                    }
+                    if (tag.startsWith("missing_attr:")) {
+                        hasMissingAttrTag = true;
+                    }
+                }
+                assertTrue("Should NOT have missing_bean tag (invalid config)", 
+                        !hasMissingBeanTag);
+                assertTrue("Should NOT have missing_attr tag (invalid config)", 
+                        !hasMissingAttrTag);
+            }
+        }
+        
+        assertTrue("Should have found metric (verifies invalid dynamic tags don't crash)", 
+                foundMetric);
+    }
+    
     private List<String> getTagsAsList(Map<String, Object> metric) {
         List<String> tagList = new ArrayList<>();
         Object tagsObj = metric.get("tags");
