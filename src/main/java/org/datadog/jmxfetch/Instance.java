@@ -79,6 +79,7 @@ public class Instance {
     private ObjectName instanceTelemetryBeanName;
     private MBeanServer mbs;
     private Boolean normalizeBeanParamTags;
+    private Map<String, Map.Entry<String, String>> dynamicTagsCache;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -447,13 +448,86 @@ public class Instance {
             throws IOException, FailedLoginException, SecurityException {
         log.info("Trying to connect to JMX Server at " + this.toString());
         connection = getConnection(instanceMap, forceNewConnection);
+        
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
         this.refreshBeansList();
         this.initialRefreshTime = this.lastRefreshTime;
         log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
+        
+        // Resolve configuration-level dynamic tags for all configurations
+        // Must be done after refreshBeansList() so the beans exist
+        resolveConfigurationDynamicTags();
+        
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at {}", this);
+    }
+    
+    private void resolveConfigurationDynamicTags() {
+        if (configurationList == null || configurationList.isEmpty()) {
+            return;
+        }
+        
+        this.dynamicTagsCache = new HashMap<>();
+        List<DynamicTag> allDynamicTags = new ArrayList<>();
+        
+        for (Configuration config : configurationList) {
+            List<DynamicTag> dynamicTags = config.getDynamicTags();
+            if (dynamicTags != null && !dynamicTags.isEmpty()) {
+                allDynamicTags.addAll(dynamicTags);
+            }
+        }
+        
+        if (allDynamicTags.isEmpty()) {
+            return;
+        }
+        
+        int successfulResolutions = 0;
+        for (DynamicTag dynamicTag : allDynamicTags) {
+            String cacheKey = dynamicTag.getBeanAttributeKey();
+            if (!this.dynamicTagsCache.containsKey(cacheKey)) {
+                Map.Entry<String, String> resolved = dynamicTag.resolve(connection);
+                // Cache both successful and failed resolutions (null) to avoid retrying
+                this.dynamicTagsCache.put(cacheKey, resolved);
+            }
+            // Count successful resolutions (cached value is not null)
+            if (this.dynamicTagsCache.get(cacheKey) != null) {
+                successfulResolutions++;
+            }
+        }
+        
+        log.info("Resolved {} unique dynamic tag(s) from {} total references for instance {}", 
+                successfulResolutions, allDynamicTags.size(), instanceName);
+    }
+    
+    /**
+     * Get resolved dynamic tags for a specific configuration.
+     * This resolves the dynamic tags defined in the configuration using the cached values.
+     * 
+     * @param config the configuration to get resolved tags for
+     * @return map of tag name to tag value
+     */
+    private Map<String, String> getResolvedDynamicTagsForConfig(Configuration config) {
+        Map<String, String> resolvedTags = new HashMap<>();
+        
+        if (this.dynamicTagsCache == null || this.dynamicTagsCache.isEmpty()) {
+            return resolvedTags;
+        }
+        
+        List<DynamicTag> dynamicTags = config.getDynamicTags();
+        if (dynamicTags == null || dynamicTags.isEmpty()) {
+            return resolvedTags;
+        }
+        
+        for (DynamicTag dynamicTag : dynamicTags) {
+            String cacheKey = dynamicTag.getBeanAttributeKey();
+            Map.Entry<String, String> cached = this.dynamicTagsCache.get(cacheKey);
+            if (cached != null) {
+                resolvedTags.put(cached.getKey(), cached.getValue());
+            }
+        }
+        
+        return resolvedTags;
     }
 
     /** Returns a string representation for the instance. */
@@ -690,6 +764,9 @@ public class Instance {
                 for (Configuration conf : configurationList) {
                     try {
                         if (jmxAttribute.match(conf)) {
+                            Map<String, String> resolvedDynamicTags = 
+                                    getResolvedDynamicTagsForConfig(conf);
+                            jmxAttribute.setResolvedDynamicTags(resolvedDynamicTags);
                             jmxAttribute.setMatchingConf(conf);
                             metricsCount += jmxAttribute.getMetricsCount();
                             this.matchingAttributes.add(jmxAttribute);
