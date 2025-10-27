@@ -1,8 +1,11 @@
 Changelog
 =========
-# 0.50.1 / TBC
+# 0.51.1 / TBC
 
-# 0.50.0 / 2025-0822
+# 0.51.0 / 2025-10-28
+- [FEATURE] Add configuration-level dynamic tags for JMX attribute values via `dynamic_tags` [#581][]
+
+# 0.50.0 / 2025-08-22
 * [SECURITY] Removed `jackson` dependencies to mitigate [CVE-2025-52999](https://nvd.nist.gov/vuln/detail/CVE-2025-52999) [#574 ][]
 
 # 0.49.9 / 2025-07-16
@@ -811,6 +814,7 @@ Changelog
 [#565]: https://github.com/DataDog/jmxfetch/issues/566
 [#572]: https://github.com/DataDog/jmxfetch/issues/572
 [#574]: https://github.com/DataDog/jmxfetch/issues/574
+[#581]: https://github.com/DataDog/jmxfetch/pull/581
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
