@@ -181,7 +181,7 @@ otherwise the subsequent publishes will fail.
 
 ```
 Get help on usage:
-java -jar jmxfetch-0.51.0-jar-with-dependencies.jar --help
+java -jar jmxfetch-0.51.1-SNAPSHOT-jar-with-dependencies.jar --help
 ```
 
 ## Updating Maven Wrapper

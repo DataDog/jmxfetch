@@ -62,7 +62,7 @@ jobs:
       run: ./mvnw clean package -DskipTests
 
     - name: Run using JDK 7
-      run: docker run -i --rm -v $(pwd):/app -w /app openjdk:7-jdk java -jar ./target/jmxfetch-0.51.0-jar-with-dependencies.jar --help
+      run: docker run -i --rm -v $(pwd):/app -w /app openjdk:7-jdk java -jar ./target/jmxfetch-0.51.1-SNAPSHOT-jar-with-dependencies.jar --help
 
   test:
     name: Test (OpenJDK ${{ matrix.java-version }})
