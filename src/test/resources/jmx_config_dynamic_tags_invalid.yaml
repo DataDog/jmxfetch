@@ -1,0 +1,34 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_config_dynamic_tags_invalid_test
+        conf:
+            # Invalid dynamic tag configurations (should be handled gracefully)
+            # Normal tags should still be applied, but invalid dynamic tags should be ignored
+            - include:
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  attribute:
+                      Metric:
+                          metric_type: gauge
+                          alias: test.metric.with.invalid.tags
+                  tags:
+                      env: test
+                      region: us-east-1
+              dynamic_tags:
+                  # Missing tag_name - should be ignored with warning
+                  - bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    attribute: ClusterId
+                  # Missing bean_name - should be ignored with warning
+                  - tag_name: missing_bean
+                    attribute: Version
+                  # Missing attribute - should be ignored with warning
+                  - tag_name: missing_attr
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                  # Valid one - should work
+                  - tag_name: valid_port
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp
+                    attribute: Port
+
+

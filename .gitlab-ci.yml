@@ -4,7 +4,7 @@ stages:
   - run_unit_tests
 
 variables:
-  REGISTRY: 486234852809.dkr.ecr.us-east-1.amazonaws.com
+  REGISTRY: registry.ddbuild.io
   # ryuk is a privileged container started by testcontainers which cleans up containers at the end of testing
   # It is not necessary for our gitlab CI env as #ci-cd infra tears everything down at the end of a gitlab run
   TESTCONTAINERS_RYUK_DISABLED: "true"
@@ -22,7 +22,7 @@ run_unit_tests:
   tags:
     - "runner:docker"
 
-  image: eclipse-temurin:8u382-b05-jdk
+  image: &jdk-image eclipse-temurin:8u452-b09-jdk
 
   script:
     - ./mvnw -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
@@ -46,16 +46,20 @@ deploy_to_sonatype:
   tags:
     - "runner:docker"
 
-  image: eclipse-temurin:8u382-b05-jdk
+  image: *jdk-image
 
   script:
     # Ensure we don't print commands being run to the logs during credential
     # operations
     - set +x
 
-    - echo "Installing AWSCLI..."
+    - echo "Setting up Python virtual environment..."
     - apt update
-    - apt install -y python3 python3-pip
+    - apt install -y python3 python3-pip python3-venv
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - python3 -m pip install --upgrade pip
+    - echo "Installing AWSCLI..."
     - python3 -m pip install awscli
 
     - echo "Fetching Sonatype user..."
@@ -74,6 +78,8 @@ deploy_to_sonatype:
 
     - echo "Building release..."
     - ./mvnw -Djdk.attach.allowAttachSelf=true -DperformRelease=true -Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5 --settings ./settings.xml clean deploy
+
+    - sha256sum ./target/*-jar-with-dependencies.jar
 
   artifacts:
     expire_in: 12 mos

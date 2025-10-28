@@ -102,6 +102,31 @@ public class TestInstance extends TestCommon {
         }
     }
 
+    @Test
+    public void testParsableMaxReturnedMetrics() throws Exception {
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp();
+        // Populate testApp with a lot of metrics (>350) !
+        testApp.populateHashMap(400);
+        // Exposing a few metrics through JMX
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=ParsableMaxReturnedMetricsTest");
+        initApplication("jmx_parsable_max_returned_metrics_string.yaml");
+        run();
+
+        List<Map<String, Object>> metrics = getMetrics();
+        assertEquals(429, metrics.size());
+    }
+
+    @Test
+    public void testNonParsableMaxReturnedMetrics() throws Exception {
+        registerMBean(new SimpleTestJavaApp(), "org.datadog.jmxfetch.test:type=NonParsableMaxReturnedMetricsTest");
+        initApplication("jmx_non_parsable_max_returned_metrics_string.yaml");
+        run();
+
+        // Despite non parsable max_returned_metrics, metrics should still be collected.
+        List<Map<String, Object>> metrics = getMetrics();
+        assertEquals(29, metrics.size());
+    }
+
     // assertServiceTags is used by testServiceTagGlobal and testServiceTagInstanceOverride
     private void assertServiceTag(List<String> tagList, List<String> services) throws Exception {
         for (String service: services) {

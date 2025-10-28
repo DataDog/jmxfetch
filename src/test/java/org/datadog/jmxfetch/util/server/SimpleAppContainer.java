@@ -1,7 +1,6 @@
 package org.datadog.jmxfetch.util.server;
 
 import java.nio.file.Paths;
-import java.time.Duration;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -24,7 +23,7 @@ public class SimpleAppContainer implements Startable {
     private final GenericContainer<?> server;
 
     public SimpleAppContainer() {
-        this("eclipse-temurin:17", "", MisbehavingJMXServer.DEFAULT_RMI_PORT);
+        this(JDKImage.JDK_17.toString(), "", MisbehavingJMXServer.DEFAULT_RMI_PORT);
 
     }
 

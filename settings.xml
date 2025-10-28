@@ -3,7 +3,7 @@
           xmlns='http://maven.apache.org/SETTINGS/1.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
     <servers>
         <server>
-            <id>nexus</id>
+            <id>central</id>
             <username>${env.SONATYPE_USER}</username>
             <password>${env.SONATYPE_PASS}</password>
         </server>

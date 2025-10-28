@@ -81,6 +81,7 @@ public class Instance implements BeanTracker {
     private ObjectName instanceTelemetryBeanName;
     private MBeanServer mbs;
     private Boolean normalizeBeanParamTags;
+    private Map<String, Map.Entry<String, String>> dynamicTagsCache;
 
     /** Constructor, instantiates Instance based of a previous instance and appConfig. */
     public Instance(Instance instance, AppConfig appConfig) {
@@ -163,6 +164,15 @@ public class Instance implements BeanTracker {
         Object maxReturnedMetrics = this.instanceMap.get("max_returned_metrics");
         if (maxReturnedMetrics == null) {
             this.maxReturnedMetrics = MAX_RETURNED_METRICS;
+        } else if (maxReturnedMetrics instanceof String) {
+            try {
+                this.maxReturnedMetrics = Integer.parseInt((String) maxReturnedMetrics);
+            } catch (NumberFormatException e) {
+                log.warn(
+                    "Cannot convert max_returned_metrics to integer in your instance configuration."
+                    + " Defaulting to {}.", MAX_RETURNED_METRICS);
+                this.maxReturnedMetrics = MAX_RETURNED_METRICS;
+            }
         } else {
             this.maxReturnedMetrics = (Integer) maxReturnedMetrics;
         }
@@ -247,7 +257,10 @@ public class Instance implements BeanTracker {
         this.enableBeanSubscription = appConfig.getEnableBeanSubscription();
         log.info("JMXFetch Subscription mode enabled={}", this.enableBeanSubscription);
         this.beanSubscriptionActive = false;
-        instanceTelemetryBean = createInstanceTelemetryBean();
+        instanceTelemetryBean = new InstanceTelemetry();
+        if (appConfig.getJmxfetchTelemetry()) {
+            registerTelemetryBean(instanceTelemetryBean);
+        }
     }
 
     private ObjectName getObjName(String domain,String instance)
@@ -255,10 +268,9 @@ public class Instance implements BeanTracker {
         return new ObjectName(domain + ":target_instance=" + ObjectName.quote(instance));
     }
 
-    private InstanceTelemetry createInstanceTelemetryBean() {
-        mbs =  ManagementFactory.getPlatformMBeanServer();
-        InstanceTelemetry bean = new InstanceTelemetry();
-        log.debug("Created jmx bean for instance: " + this.getCheckName());
+    private InstanceTelemetry registerTelemetryBean(InstanceTelemetry bean) {
+        mbs = ManagementFactory.getPlatformMBeanServer();
+        log.debug("Created jmx bean for instance: {}", this.getCheckName());
 
         try {
             instanceTelemetryBeanName = getObjName(appConfig.getJmxfetchTelemetryDomain(),
@@ -272,7 +284,7 @@ public class Instance implements BeanTracker {
 
         try {
             mbs.registerMBean(bean,instanceTelemetryBeanName);
-            log.debug("Succesfully registered jmx bean for instance {} with ObjectName = {}",
+            log.debug("Successfully registered jmx bean for instance {} with ObjectName = {}",
                 this.getName(), instanceTelemetryBeanName);
         } catch (InstanceAlreadyExistsException
          | MBeanRegistrationException
@@ -429,11 +441,11 @@ public class Instance implements BeanTracker {
             log.info(
                     "Connection closed or does not exist. "
                     + "Attempting to create a new connection...");
-            return ConnectionFactory.createConnection(connectionParams);
+            return appConfig.getConnectionFactory().createConnection(connectionParams);
         } else if (forceNewConnection) {
             log.info("Forcing a new connection, attempting to create...");
             connection.closeConnector();
-            return ConnectionFactory.createConnection(connectionParams);
+            return appConfig.getConnectionFactory().createConnection(connectionParams);
         }
         return connection;
     }
@@ -449,14 +461,87 @@ public class Instance implements BeanTracker {
         } else {
             log.info("Bean subscription not enabled.");
         }
+
         log.info(
                 "Trying to collect bean list for the first time for JMX Server at {}", this);
 
         this.refreshBeansList(true);
         this.initialRefreshTime = this.lastRefreshTime;
         log.info("Connected to JMX Server at {} with {} beans", this, this.beans.size());
+
+        // Resolve configuration-level dynamic tags for all configurations
+        // Must be done after refreshBeansList() so the beans exist
+        resolveConfigurationDynamicTags();
+
         this.getMatchingAttributes();
         log.info("Done initializing JMX Server at {}", this);
+    }
+
+    private void resolveConfigurationDynamicTags() {
+        if (configurationList == null || configurationList.isEmpty()) {
+            return;
+        }
+
+        this.dynamicTagsCache = new HashMap<>();
+        List<DynamicTag> allDynamicTags = new ArrayList<>();
+
+        for (Configuration config : configurationList) {
+            List<DynamicTag> dynamicTags = config.getDynamicTags();
+            if (dynamicTags != null && !dynamicTags.isEmpty()) {
+                allDynamicTags.addAll(dynamicTags);
+            }
+        }
+
+        if (allDynamicTags.isEmpty()) {
+            return;
+        }
+
+        int successfulResolutions = 0;
+        for (DynamicTag dynamicTag : allDynamicTags) {
+            String cacheKey = dynamicTag.getBeanAttributeKey();
+            if (!this.dynamicTagsCache.containsKey(cacheKey)) {
+                Map.Entry<String, String> resolved = dynamicTag.resolve(connection);
+                // Cache both successful and failed resolutions (null) to avoid retrying
+                this.dynamicTagsCache.put(cacheKey, resolved);
+            }
+            // Count successful resolutions (cached value is not null)
+            if (this.dynamicTagsCache.get(cacheKey) != null) {
+                successfulResolutions++;
+            }
+        }
+
+        log.info("Resolved {} unique dynamic tag(s) from {} total references for instance {}",
+                successfulResolutions, allDynamicTags.size(), instanceName);
+    }
+
+    /**
+     * Get resolved dynamic tags for a specific configuration.
+     * This resolves the dynamic tags defined in the configuration using the cached values.
+     *
+     * @param config the configuration to get resolved tags for
+     * @return map of tag name to tag value
+     */
+    private Map<String, String> getResolvedDynamicTagsForConfig(Configuration config) {
+        Map<String, String> resolvedTags = new HashMap<>();
+
+        if (this.dynamicTagsCache == null || this.dynamicTagsCache.isEmpty()) {
+            return resolvedTags;
+        }
+
+        List<DynamicTag> dynamicTags = config.getDynamicTags();
+        if (dynamicTags == null || dynamicTags.isEmpty()) {
+            return resolvedTags;
+        }
+
+        for (DynamicTag dynamicTag : dynamicTags) {
+            String cacheKey = dynamicTag.getBeanAttributeKey();
+            Map.Entry<String, String> cached = this.dynamicTagsCache.get(cacheKey);
+            if (cached != null) {
+                resolvedTags.put(cached.getKey(), cached.getValue());
+            }
+        }
+
+        return resolvedTags;
     }
 
     /** Returns a string representation for the instance. */
@@ -549,7 +634,7 @@ public class Instance implements BeanTracker {
         return metrics;
     }
 
-    /** Returns whather or not the given period has elapsed since reference time. */
+    /** Returns whether or not the given period has elapsed since reference time. */
     public boolean isPeriodDue(long refTime, Integer refPeriod) {
         if (this.beanSubscriptionActive) {
             return false;
@@ -561,7 +646,7 @@ public class Instance implements BeanTracker {
         }
     }
 
-    /** Returns whather or not its time to collect metrics for the instance. */
+    /** Returns whether or not its time to collect metrics for the instance. */
     public boolean timeToCollect() {
         if (this.minCollectionPeriod == null) {
             return true;
@@ -745,9 +830,280 @@ public class Instance implements BeanTracker {
                 continue;
             }
 
+<<<<<<< HEAD
             int numMatchedAttributes = addMatchingAttributesForBean(beanName, info, limitReached);
             if (numMatchedAttributes > 0) {
                 beansWithAttributeMatch++;
+||||||| d70a4a4
+            for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+                if (metricsCount >= maxReturnedMetrics) {
+                    limitReached = true;
+                    if (action.equals(AppConfig.ACTION_COLLECT)) {
+                        log.warn("Maximum number of metrics reached.");
+                        break;
+                    } else if (!metricReachedDisplayed
+                            && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                            && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
+                        reporter.displayMetricReached();
+                        metricReachedDisplayed = true;
+                    }
+                }
+                JmxAttribute jmxAttribute;
+                String attributeType = attributeInfo.getType();
+
+                if (JmxSimpleAttribute.matchAttributeType(attributeType)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo simple type");
+                    jmxAttribute =
+                        new JmxSimpleAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                cassandraAliasing,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
+                } else if (JmxComplexAttribute.matchAttributeType(attributeType)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo composite type");
+                    jmxAttribute =
+                        new JmxComplexAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
+                } else if (JmxTabularAttribute.matchAttributeType(attributeType)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo tabular type");
+                    jmxAttribute =
+                        new JmxTabularAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
+                } else {
+                    try {
+                        log.debug(
+                                ATTRIBUTE
+                                + beanName
+                                + " : "
+                                + attributeInfo
+                                + " has an unsupported type: "
+                                + attributeType);
+                    } catch (NullPointerException e) {
+                        log.warn("Caught unexpected NullPointerException");
+                    }
+                    continue;
+                }
+
+                // For each attribute we try it with each configuration to see if there is one that
+                // matches
+                // If so, we store the attribute so metrics will be collected from it. Otherwise we
+                // discard it.
+                for (Configuration conf : configurationList) {
+                    try {
+                        if (jmxAttribute.match(conf)) {
+                            jmxAttribute.setMatchingConf(conf);
+                            metricsCount += jmxAttribute.getMetricsCount();
+                            this.matchingAttributes.add(jmxAttribute);
+
+                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                                    || action.equals(AppConfig.ACTION_LIST_MATCHING)
+                                    || action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                                    && !limitReached
+                                    || action.equals(AppConfig.ACTION_LIST_LIMITED)
+                                    && limitReached) {
+                                reporter.displayMatchingAttributeName(
+                                        jmxAttribute, metricsCount, maxReturnedMetrics);
+                            }
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.error(
+                                "Error while trying to match attributeInfo configuration "
+                                + "with the Attribute: "
+                                + beanName
+                                + " : "
+                                + attributeInfo,
+                                e);
+                    }
+                }
+                if (jmxAttribute.getMatchingConf() == null
+                        && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                            || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                    reporter.displayNonMatchingAttributeName(jmxAttribute);
+                }
+                if (jmxAttribute.getMatchingConf() != null) {
+                    attributeMatched = true;
+                }
+            }
+            if (attributeMatched) {
+                beansWithAttributeMatch += 1;
+=======
+            for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+                if (metricsCount >= maxReturnedMetrics) {
+                    limitReached = true;
+                    if (action.equals(AppConfig.ACTION_COLLECT)) {
+                        log.warn("Maximum number of metrics reached.");
+                        break;
+                    } else if (!metricReachedDisplayed
+                            && !action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                            && !action.equals(AppConfig.ACTION_LIST_NOT_MATCHING)) {
+                        reporter.displayMetricReached();
+                        metricReachedDisplayed = true;
+                    }
+                }
+                JmxAttribute jmxAttribute;
+                String attributeType = attributeInfo.getType();
+
+                if (JmxSimpleAttribute.matchAttributeType(attributeType)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo simple type");
+                    jmxAttribute =
+                        new JmxSimpleAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                cassandraAliasing,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
+                } else if (JmxComplexAttribute.matchAttributeType(attributeType)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo composite type");
+                    jmxAttribute =
+                        new JmxComplexAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
+                } else if (JmxTabularAttribute.matchAttributeType(attributeType)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo tabular type");
+                    jmxAttribute =
+                        new JmxTabularAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
+                } else {
+                    try {
+                        log.debug(
+                                ATTRIBUTE
+                                + beanName
+                                + " : "
+                                + attributeInfo
+                                + " has an unsupported type: "
+                                + attributeType);
+                    } catch (NullPointerException e) {
+                        log.warn("Caught unexpected NullPointerException");
+                    }
+                    continue;
+                }
+
+                // For each attribute we try it with each configuration to see if there is one that
+                // matches
+                // If so, we store the attribute so metrics will be collected from it. Otherwise we
+                // discard it.
+                for (Configuration conf : configurationList) {
+                    try {
+                        if (jmxAttribute.match(conf)) {
+                            Map<String, String> resolvedDynamicTags =
+                                    getResolvedDynamicTagsForConfig(conf);
+                            jmxAttribute.setResolvedDynamicTags(resolvedDynamicTags);
+                            jmxAttribute.setMatchingConf(conf);
+                            metricsCount += jmxAttribute.getMetricsCount();
+                            this.matchingAttributes.add(jmxAttribute);
+
+                            if (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                                    || action.equals(AppConfig.ACTION_LIST_MATCHING)
+                                    || action.equals(AppConfig.ACTION_LIST_COLLECTED)
+                                    && !limitReached
+                                    || action.equals(AppConfig.ACTION_LIST_LIMITED)
+                                    && limitReached) {
+                                reporter.displayMatchingAttributeName(
+                                        jmxAttribute, metricsCount, maxReturnedMetrics);
+                            }
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.error(
+                                "Error while trying to match attributeInfo configuration "
+                                + "with the Attribute: "
+                                + beanName
+                                + " : "
+                                + attributeInfo,
+                                e);
+                    }
+                }
+                if (jmxAttribute.getMatchingConf() == null
+                        && (action.equals(AppConfig.ACTION_LIST_EVERYTHING)
+                            || action.equals(AppConfig.ACTION_LIST_NOT_MATCHING))) {
+                    reporter.displayNonMatchingAttributeName(jmxAttribute);
+                }
+                if (jmxAttribute.getMatchingConf() != null) {
+                    attributeMatched = true;
+                }
+            }
+            if (attributeMatched) {
+                beansWithAttributeMatch += 1;
+>>>>>>> master
             }
         }
 
@@ -782,6 +1138,7 @@ public class Instance implements BeanTracker {
             beanName, matchedAttributesForBean);
 
         if (instanceTelemetryBean != null) {
+<<<<<<< HEAD
             int beanRegisterationsHandled = instanceTelemetryBean.getBeanRegistrationsHandled();
             instanceTelemetryBean.setBeanRegistrationsHandled(beanRegisterationsHandled + 1);
         }
@@ -827,6 +1184,13 @@ public class Instance implements BeanTracker {
                     + " to an appropriate value (currently {} seconds). Exception: ",
                     this.refreshBeansPeriod, e);
             this.beanSubscriptionActive = false;
+||||||| d70a4a4
+            instanceTelemetryBean.setBeanMatchRatio((double)
+                                  beansWithAttributeMatch / beans.size());
+=======
+            instanceTelemetryBean.setBeanMatchRatio((double)
+                                  beansWithAttributeMatch / beans.size());
+>>>>>>> master
         }
     }
 
@@ -991,18 +1355,21 @@ public class Instance implements BeanTracker {
     }
 
     private void cleanupTelemetryBean() {
+        if (!appConfig.getJmxfetchTelemetry()) {
+            // If telemetry is not enabled, no need to unregister the bean
+            return;
+        }
         try {
             mbs.unregisterMBean(instanceTelemetryBeanName);
-            log.debug("Successfully unregistered bean for instance: " + this.getCheckName());
+            log.debug("Successfully unregistered bean for instance: {}", this.getCheckName());
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
-            log.debug("Unable to unregister bean for instance: " + this.getCheckName());
+            log.debug("Unable to unregister bean for instance: {}", this.getCheckName());
         }
     }
 
     /** Clean up config and close connection. */
     public void cleanUp() {
         cleanupTelemetryBean();
-        this.appConfig = null;
         if (connection != null) {
             connection.closeConnector();
             connection = null;
@@ -1010,10 +1377,9 @@ public class Instance implements BeanTracker {
     }
 
     /**
-     * Asynchronoush cleanup of instance, including connection.
+     * Asynchronous cleanup of instance, including connection.
      * */
     public synchronized void cleanUpAsync() {
-        appConfig = null;
         cleanupTelemetryBean();
         class AsyncCleaner implements Runnable {
             Connection conn;

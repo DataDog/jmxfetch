@@ -2,7 +2,6 @@ package org.datadog.jmxfetch;
 
 import static org.datadog.jmxfetch.Instance.isDirectInstance;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -15,7 +14,6 @@ import org.datadog.jmxfetch.util.ByteArraySearcher;
 import org.datadog.jmxfetch.util.CustomLogger;
 import org.datadog.jmxfetch.util.FileHelper;
 import org.datadog.jmxfetch.util.LogLevel;
-import org.datadog.jmxfetch.util.MetadataHelper;
 import org.datadog.jmxfetch.util.ServiceCheckHelper;
 
 import java.io.ByteArrayInputStream;
@@ -133,7 +131,30 @@ public class App {
         }
         this.configs = getConfigs(this.appConfig);
 
-        this.initTelemetryBean();
+        this.appTelemetry = new AppTelemetry();
+
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            log.info("Enabling JMX Fetch Telemetry");
+            this.registerTelemetryBean(this.appTelemetry);
+        }
+    }
+
+    private void registerTelemetryBean(AppTelemetry bean) {
+        MBeanServer mbs =  ManagementFactory.getPlatformMBeanServer();
+        ObjectName appTelemetryBeanName = getAppTelemetryBeanName();
+        if (appTelemetryBeanName == null) {
+            return;
+        }
+
+        try {
+            mbs.registerMBean(bean, appTelemetryBeanName);
+            log.debug("Successfully registered app telemetry bean");
+        } catch (InstanceAlreadyExistsException
+                 | MBeanRegistrationException
+                 | NotCompliantMBeanException e) {
+            log.warn("Could not register bean named '{}' for instance: ",
+                appTelemetryBeanName.toString(), e);
+        }
     }
 
     private ObjectName getAppTelemetryBeanName() {
@@ -163,7 +184,7 @@ public class App {
 
         try {
             mbs.registerMBean(bean, appTelemetryBeanName);
-            log.debug("Succesfully registered app telemetry bean");
+            log.debug("Successfully registered app telemetry bean");
         } catch (InstanceAlreadyExistsException
          | MBeanRegistrationException
          | NotCompliantMBeanException e) {
@@ -184,7 +205,7 @@ public class App {
 
         try {
             mbs.unregisterMBean(appTelemetryBeanName);
-            log.debug("Succesfully unregistered app telemetry bean");
+            log.debug("Successfully unregistered app telemetry bean");
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             log.warn("Could not unregister bean named '{}' for instance: ",
                 appTelemetryBeanName.toString(), e);
@@ -386,7 +407,7 @@ public class App {
 
             if (this.addConfig(name, yaml)) {
                 reinit = true;
-                log.debug("Configuration added succesfully reinit in order");
+                log.debug("Configuration added successfully reinit in order");
             } else {
                 log.debug("Unable to apply configuration.");
             }
@@ -523,7 +544,9 @@ public class App {
         for (Instance in : this.getInstances()) {
             in.cleanUp();
         }
-        this.teardownTelemetry();
+        if (this.appConfig.getJmxfetchTelemetry()) {
+            this.teardownTelemetry();
+        }
         this.collectionProcessor.stop();
         this.recoveryProcessor.stop();
     }
@@ -806,8 +829,7 @@ public class App {
                 return update;
             }
             byte[] utf8 = response.getResponseBody().getBytes(UTF_8);
-            InputStream jsonInputStream = new ByteArrayInputStream(utf8);
-            JsonParser parser = new JsonParser(jsonInputStream);
+            JsonParser parser = new JsonParser(utf8);
             int timestamp = (Integer) parser.getJsonTimestamp();
             if (timestamp > lastJsonConfigTs) {
                 adJsonConfigs = (Map<String, Object>) parser.getJsonConfigs();
@@ -818,10 +840,8 @@ public class App {
                     log.debug("received config for check '" + checkName + "'");
                 }
             }
-        } catch (JsonProcessingException e) {
+        } catch (JsonParser.JsonException e) {
             log.error("error processing JSON response: " + e);
-        } catch (IOException e) {
-            log.error("unable to collect remote JMX configs: " + e);
         }
 
         return update;

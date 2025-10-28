@@ -125,6 +125,8 @@ public class AppConfig {
             required = false)
     private boolean statsdTelemetry;
 
+    /* Do not default to true as this affects embedded mode where
+            customers can have custom MBean managers */
     @Parameter(
             names = {"--jmxfetch_telemetry", "-jt"},
             description = "Enable additional jmxfetch telemetry reporting",
@@ -313,6 +315,12 @@ public class AppConfig {
      */
     private ServiceNameProvider serviceNameProvider;
 
+    /**
+     * Controls how JMX connections are created.
+     */
+    @Builder.Default
+    private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
+
     @Builder.Default
     private Status status = new Status();
 
@@ -499,6 +507,10 @@ public class AppConfig {
 
     public ServiceNameProvider getServiceNameProvider() {
         return serviceNameProvider;
+    }
+
+    public ConnectionFactory getConnectionFactory() {
+        return connectionFactory;
     }
 
     /**

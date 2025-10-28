@@ -59,6 +59,7 @@ public abstract class JmxAttribute {
             new HashMap<String, Map<Object, Object>>();
     protected String[] tags;
     private Configuration matchingConf;
+    private Map<String, String> resolvedDynamicTags;
     private List<String> defaultTagsList;
     private boolean cassandraAliasing;
     protected String checkName;
@@ -141,6 +142,15 @@ public abstract class JmxAttribute {
             }
         }
     }
+    
+    /** Add dynamic tags that were resolved at connection time. */
+    private void addDynamicTags() {
+        if (this.resolvedDynamicTags != null && !this.resolvedDynamicTags.isEmpty()) {
+            for (Map.Entry<String, String> tag : this.resolvedDynamicTags.entrySet()) {
+                this.defaultTagsList.add(tag.getKey() + ":" + tag.getValue());
+            }
+        }
+    }
 
     private void addServiceTags() {
         Iterable<String> serviceNames = this.serviceNameProvider.getServiceNames();
@@ -198,7 +208,7 @@ public abstract class JmxAttribute {
     }
 
     /**
-     * Wrapper for javax.management.ObjectName.unqoute that removes quotes from the bean parameter
+     * Wrapper for javax.management.ObjectName.unquote that removes quotes from the bean parameter
      * value if possible. If not, it hits the catch block and returns the original parameter.
      */
     private String unquote(String beanParameter) {
@@ -381,9 +391,9 @@ public abstract class JmxAttribute {
         if (value instanceof String) {
             return Double.parseDouble((String) value);
         } else if (value instanceof Integer) {
-            return new Double((Integer) (value));
+            return Double.valueOf((Integer) (value));
         } else if (value instanceof AtomicInteger) {
-            return new Double(((AtomicInteger) (value)).get());
+            return Double.valueOf(((AtomicInteger) (value)).get());
         } else if (value instanceof AtomicLong) {
             Long longValue = ((AtomicLong) (value)).get();
             return longValue.doubleValue();
@@ -392,13 +402,13 @@ public abstract class JmxAttribute {
         } else if (value instanceof Boolean) {
             return ((Boolean) value ? 1.0 : 0.0);
         } else if (value instanceof Long) {
-            Long longValue = new Long((Long) value);
+            Long longValue = Long.valueOf((Long) value);
             return longValue.doubleValue();
         } else if (value instanceof Number) {
             return ((Number) value).doubleValue();
         } else {
             try {
-                return new Double((Double) value);
+                return Double.valueOf((Double) value);
             } catch (Exception e) {
                 throw new NumberFormatException();
             }
@@ -512,6 +522,11 @@ public abstract class JmxAttribute {
         return matchingConf;
     }
 
+    /** Sets resolved dynamic tags for the attribute. */
+    public void setResolvedDynamicTags(Map<String, String> resolvedDynamicTags) {
+        this.resolvedDynamicTags = resolvedDynamicTags;
+    }
+
     /** Sets a matching configuration for the attribute. */
     public void setMatchingConf(Configuration matchingConf) {
         this.matchingConf = matchingConf;
@@ -519,6 +534,8 @@ public abstract class JmxAttribute {
         // Now that we have the matchingConf we can:
         // - add additional tags
         this.addAdditionalTags();
+        // - add dynamic tags that were resolved at connection time
+        this.addDynamicTags();
         // - filter out excluded tags
         this.applyTagsBlackList();
         // Add the service tag(s) - comes last because if the service tag is blacklisted as

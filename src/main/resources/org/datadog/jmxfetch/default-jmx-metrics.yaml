@@ -87,6 +87,9 @@
       LoadedClassCount:
         alias: jvm.loaded_classes
         metric_type: gauge
+      UnloadedClassCount:
+        alias: jvm.unloaded_classes
+        metric_type: gauge
 
 # Open File Descriptors
 - include:
@@ -126,6 +129,14 @@
     domain: java.lang
     type: MemoryPool
     name: G1 Eden Space
+    attribute:
+      Usage.used:
+        alias: jvm.gc.eden_size
+        metric_type: gauge
+- include:
+    domain: java.lang
+    type: MemoryPool
+    name: ZGC Young Generation
     attribute:
       Usage.used:
         alias: jvm.gc.eden_size
@@ -182,6 +193,14 @@
     domain: java.lang
     type: MemoryPool
     name: G1 Old Gen
+    attribute:
+      Usage.used:
+        alias: jvm.gc.old_gen_size
+        metric_type: gauge
+- include:
+    domain: java.lang
+    type: MemoryPool
+    name: ZGC Old Generation
     attribute:
       Usage.used:
         alias: jvm.gc.old_gen_size

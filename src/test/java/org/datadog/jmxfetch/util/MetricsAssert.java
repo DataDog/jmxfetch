@@ -48,14 +48,14 @@ public class MetricsAssert {
                 }
 
                 if (countTags != -1) {
-                    assertEquals(countTags, mTags.size());
+                    assertEquals("Tag count didn't match", countTags, mTags.size());
                 }
                 for (String t : tags) {
-                    assertThat(mTags, hasItem(t));
+                    assertThat("Did not contain tag", mTags, hasItem(t));
                 }
 
                 if (metricType != null) {
-                    assertEquals(metricType, m.get("type"));
+                    assertEquals("Metric types not equal", metricType, m.get("type"));
                 }
                 // Brand the metric
                 m.put("tested", true);

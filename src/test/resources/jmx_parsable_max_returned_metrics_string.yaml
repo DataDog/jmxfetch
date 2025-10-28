@@ -1,0 +1,10 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        max_returned_metrics: "500"
+        conf:
+            - include:
+               domain: org.datadog.jmxfetch.test
+

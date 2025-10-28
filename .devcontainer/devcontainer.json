@@ -1,0 +1,37 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/java
+{
+	"name": "Java",
+	"image": "mcr.microsoft.com/devcontainers/java:8",
+
+	"features": {
+		"ghcr.io/devcontainers/features/java:1": {
+			"additionalVersions": "21-tem, 17.0.15-tem, 11.0.27-tem",
+			"installGradle": "true",
+			"installMaven": "true",
+		},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {  // Needed for Testcontainers for Java
+			"disableIp6tables": true
+		}
+	},
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"streetsidesoftware.code-spell-checker"
+			]
+		}
+	}
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "java -version",
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

@@ -175,7 +175,7 @@ public abstract class Reporter {
     /** Increments the service check count - for book-keeping purposes. */
     public void incrementServiceCheckCount(String checkName) {
         int scCount = this.getServiceCheckCount(checkName);
-        this.getServiceCheckCountMap().put(checkName, new Integer(scCount + 1));
+        this.getServiceCheckCountMap().put(checkName, Integer.valueOf(scCount + 1));
     }
 
     public int getServiceCheckCount(String checkName) {
@@ -184,7 +184,7 @@ public abstract class Reporter {
     }
 
     public void resetServiceCheckCount(String checkName) {
-        this.serviceCheckCount.put(checkName, new Integer(0));
+        this.serviceCheckCount.put(checkName, Integer.valueOf(0));
     }
 
     protected Map<String, Integer> getServiceCheckCountMap() {

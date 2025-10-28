@@ -1,0 +1,34 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_config_dynamic_tags_multi_test
+        conf:
+            # Config 1: Has cluster_id dynamic tag
+            - include:
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  name: Instance1
+                  attribute:
+                      Metric:
+                          metric_type: gauge
+                          alias: test.instance1.metric
+              dynamic_tags:
+                  - tag_name: cluster_id
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance1
+                    attribute: ClusterId
+            
+            # Config 2: Has version dynamic tag
+            - include:
+                  domain: org.datadog.jmxfetch.test
+                  type: DynamicTagTestApp
+                  name: Instance2
+                  attribute:
+                      Metric:
+                          metric_type: gauge
+                          alias: test.instance2.metric
+              dynamic_tags:
+                  - tag_name: version
+                    bean_name: org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Instance2
+                    attribute: Version
+

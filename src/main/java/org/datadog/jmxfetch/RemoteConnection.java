@@ -59,8 +59,13 @@ public class RemoteConnection extends Connection {
             rmiConnectionTimeout = DEFAULT_RMI_CONNECTION_TIMEOUT;
         }
 
-        user = (String) connectionParams.get("user");
-        password = (String) connectionParams.get("password");
+        if (connectionParams.containsKey("user") && connectionParams.containsKey("password")) {
+            if (connectionParams.get("user") != null && connectionParams.get("password") != null) {
+                user = (String) connectionParams.get("user");
+                password = (String) connectionParams.get("password");
+            }
+        }
+
         jmxUrl = (String) connectionParams.get("jmx_url");
 
         if (connectionParams.containsKey("path")) {
@@ -109,7 +114,13 @@ public class RemoteConnection extends Connection {
             new JmxfetchRmiClientSocketFactory(rmiTimeout, rmiConnectionTimeout, useSsl);
         environment.put("com.sun.jndi.rmi.factory.socket", csf);
         environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
-        environment.put(JMXConnector.CREDENTIALS, new String[] { user, password });
+
+        // Don't set `JMXConnector.CREDENTIALS` if `user` or `password` null as this will cause
+        // a `NullPointerException` when creating a remote connection if null
+        // https://github.com/DataDog/jmxfetch/issues/545
+        if (this.user != null && this.password != null) {
+            environment.put(JMXConnector.CREDENTIALS, new String[] { user, password });
+        }
         return environment;
     }
 

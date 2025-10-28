@@ -61,10 +61,9 @@ public class TestApp extends TestCommon {
 
         // Collecting metrics
         run();
-        List<Map<String, Object>> metrics = getMetrics();
 
         // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(14, metrics.size());
+        assertEquals(14, getMetrics().size());
 
         List<String> tags =
                 Arrays.asList(
@@ -777,12 +776,10 @@ public class TestApp extends TestCommon {
         initApplication("jmx_canonical.yaml");
 
         run();
-        List<Map<String, Object>> metrics = getMetrics();
-
         // 29 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
         // + 2 multi-value, see jmx.yaml in the test/resources folder
-        assertEquals(29, metrics.size());
+        assertEquals(29, getMetrics().size());
 
         // We test for the presence and the value of the metrics we want to collect
         List<String> commonTags =
@@ -810,11 +807,10 @@ public class TestApp extends TestCommon {
 
         // We run a second collection. The counter should now be present
         run();
-        metrics = getMetrics();
         // 30 = 13 metrics from java.lang + the 5 gauges we are explicitly collecting + 9 gauges
         // implicitly collected
         // + 2 multi-value + 2 counter, see jmx.yaml in the test/resources folder
-        assertEquals(31, metrics.size());
+        assertEquals(31, getMetrics().size());
 
         // We test for the same metrics but this time, the counter should be here
         // Previous metrics
@@ -846,13 +842,11 @@ public class TestApp extends TestCommon {
         testApp.decrementCounter(5);
 
         run();
-        metrics = getMetrics();
-        assertEquals(30, metrics.size());
+        assertEquals(30, getMetrics().size());
 
         // The metric should be back in the next cycle.
         run();
-        metrics = getMetrics();
-        assertEquals(31, metrics.size());
+        assertEquals(31, getMetrics().size());
         assertMetric("test.counter", 0.0, commonTags, 6);
 
         // Check that they are working again
@@ -862,8 +856,7 @@ public class TestApp extends TestCommon {
         testApp.populateTabularData(2);
 
         run();
-        metrics = getMetrics();
-        assertEquals(31, metrics.size());
+        assertEquals(31, getMetrics().size());
 
         // Previous metrics
         assertMetric("this.is.100", 100.0, commonTags, 9);
@@ -903,20 +896,17 @@ public class TestApp extends TestCommon {
 
         // First collection should not contain our count
         run();
-        metrics = getMetrics();
-        assertEquals(13, metrics.size());
+        assertEquals(13, getMetrics().size());
 
         // Since our count is still equal to 0, we should report a delta equal to 0
         run();
-        metrics = getMetrics();
-        assertEquals(14, metrics.size());
+        assertEquals(14, getMetrics().size());
         assertMetric("test.counter", 0, Collections.<String>emptyList(), 4);
 
         // For the 3rd collection we increment the count to 5 so we should get a +5 delta
         testApp.incrementCounter(5);
         run();
-        metrics = getMetrics();
-        assertEquals(14, metrics.size());
+        assertEquals(14, getMetrics().size());
         assertMetric("test.counter", 5, Collections.<String>emptyList(), 4);
 
         assertCoverage();
@@ -935,13 +925,11 @@ public class TestApp extends TestCommon {
 
         // First collection should not contain our count
         run();
-        metrics = getMetrics();
-        assertEquals(26, metrics.size());
+        assertEquals(26, getMetrics().size());
 
         // Since our count is still equal to 0, we should report a delta equal to 0
         run();
-        metrics = getMetrics();
-        assertEquals(28, metrics.size());
+        assertEquals(28, getMetrics().size());
         assertMetric("test.counter", 0, Collections.<String>emptyList(), 4);
         assertMetric("test.rate", 0, Collections.<String>emptyList(), 4);
 
@@ -949,8 +937,7 @@ public class TestApp extends TestCommon {
         // For the 3rd collection we increment the count to 5 so we should get a +5 delta
         testApp.incrementCounter(5);
         run();
-        metrics = getMetrics();
-        assertEquals(28, metrics.size());
+        assertEquals(28, getMetrics().size());
         assertMetric("test.counter", 0.95, 1, Collections.<String>emptyList(), 4);
         assertMetric("test.rate", 0.95, 1, Collections.<String>emptyList(), 4);
 
@@ -1136,6 +1123,48 @@ public class TestApp extends TestCommon {
 
         assertMetric("multiattr.foo_tagged", 1.0, tags, -1);
 
+        assertCoverage();
+    }
+
+    @Test
+    public void testJeeStatistics() throws Exception {
+        // We expose a few metrics through JMX
+        SimpleTestJavaApp testApp = new SimpleTestJavaApp(true);
+        registerMBean(testApp, "org.datadog.jmxfetch.test:type=SimpleTestJavaApp");
+
+        // We do a first collection
+        when(appConfig.isTargetDirectInstances()).thenReturn(true);
+        initApplication("jmx_jee_data.yaml");
+
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 metrics from java.lang + 17 defined - 1 undefined
+        assertEquals(29, metrics.size());
+
+        List<String> tags = Arrays.asList(
+                "instance:jmx_test_instance",
+                "jmx_domain:org.datadog.jmxfetch.test",
+                "type:SimpleTestJavaApp"
+        );
+        final String prefix = "jmx.org.datadog.jmxfetch.test.";
+
+        assertMetric(prefix + "jee_counter.count", testApp.getLong42424242(), tags, -1);
+        assertMetric(prefix + "jee_time.count", 1, tags, -1);
+        assertMetric(prefix + "jee_time.min_time", 0, tags, -1);
+        assertMetric(prefix + "jee_time.max_time", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_time.total_time", testApp.getLong42424242(), tags, -1);
+        assertMetric(prefix + "jee_range.low_water_mark", Long.MIN_VALUE, tags, -1);
+        assertMetric(prefix + "jee_range.high_water_mark", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_range.current", testApp.getLong42424242(), tags, -1);
+        assertMetric(prefix + "jee_boundary.lower_bound", Long.MIN_VALUE, tags, -1);
+        assertMetric(prefix + "jee_boundary.upper_bound", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.low_water_mark", Long.MIN_VALUE, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.high_water_mark", Long.MAX_VALUE, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.current", 0, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.lower_bound", -1, tags, -1);
+        assertMetric(prefix + "jee_bounded_range.upper_bound", 1, tags, -1);
+        assertMetric(prefix + "jee_stat.my_counter.count", testApp.getLong42424242(), tags, -1);
         assertCoverage();
     }
 
