@@ -3,7 +3,6 @@ package org.datadog.jmxfetch;
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;

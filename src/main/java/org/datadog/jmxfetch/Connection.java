@@ -3,22 +3,12 @@ package org.datadog.jmxfetch;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.SocketTimeoutException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
-import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
@@ -29,7 +19,7 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 @Slf4j
-public class Connection {
+public abstract class Connection {
     private static final long CONNECTION_TIMEOUT = 10000;
     private JMXConnector connector;
     protected MBeanServerConnection mbs;
@@ -37,32 +27,57 @@ public class Connection {
     protected JMXServiceURL address;
 
     /** Gets attributes for matching bean name. */
-    public MBeanInfo getMBeanInfo(ObjectName beanName)
+    public MBeanInfo getMBeanInfo(final ObjectName beanName)
             throws InstanceNotFoundException, IntrospectionException, ReflectionException,
                     IOException {
-        return mbs.getMBeanInfo(beanName);
+        return this.mbs.getMBeanInfo(beanName);
     }
 
     /** Queries beans on specific scope. Returns set of matching query names.. */
-    public Set<ObjectName> queryNames(ObjectName name) throws IOException {
-        String scope = (name != null) ? name.toString() : "*:*";
-        log.debug("Querying bean names on scope: " + scope);
-        return mbs.queryNames(name, null);
+    public Set<ObjectName> queryNames(final ObjectName name) throws IOException {
+        final String scope = (name != null) ? name.toString() : "*:*";
+        log.debug("Querying bean names on scope: {}", scope);
+        return this.mbs.queryNames(name, null);
     }
 
     protected void createConnection() throws IOException {
         this.env.put("attribute.remote.x.request.waiting.timeout", CONNECTION_TIMEOUT);
-        closeConnector();
+        
+        this.closeConnector();
         log.info("Connecting to: " + this.address);
-        connector = JMXConnectorFactory.connect(this.address, this.env);
-        mbs = connector.getMBeanServerConnection();
+        try {
+            this.connector = JMXConnectorFactory.connect(this.address, this.env);
+        } catch (IOException e) {
+            log.error("Error creating connector for address: " + this.address
+                + " with error: " + e.getMessage());
+
+            // Handle ConnectException specifically for socket cleanup
+            if (e instanceof java.rmi.ConnectException) {
+                log.warn("RMI ConnectException detected, performing socket cleanup");
+                // Force garbage collection to help clean up any lingering socket references
+                System.gc();
+            }
+
+            throw e;
+        }
+        try {
+            log.info("Getting MBeanServerConnection for address: " + this.address);
+            this.mbs = this.connector.getMBeanServerConnection();
+        } catch (IOException e) {
+            log.error(
+                "Error creating connection for address: " + this.address
+                + " with error: " + e.getMessage());
+            // close the connector if the connection fails
+            this.closeConnector();
+            throw e;
+        }
     }
 
     /** Gets attribute for matching bean and attribute name. */
-    public Object getAttribute(ObjectName objectName, String attributeName)
+    public Object getAttribute(final ObjectName objectName, final String attributeName)
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
-        Object attr = mbs.getAttribute(objectName, attributeName);
+        final Object attr = this.mbs.getAttribute(objectName, attributeName);
         if (attr instanceof javax.management.Attribute) {
             return ((Attribute) attr).getValue();
         }
@@ -71,22 +86,25 @@ public class Connection {
 
     /** Closes the connector. */
     public void closeConnector() {
-        if (connector != null) {
+        if (this.connector != null) {
+            log.info("Closing connector for address: " + this.address);
             try {
-                connector.close();
+                this.connector.close();
             } catch (IOException e) {
                 // ignore
             }
+        } else {
+            log.info("Connector is null for address: " + this.address);
         }
     }
 
     /** Returns a boolean describing if the connection is still alive. */
     public boolean isAlive() {
-        if (connector == null) {
+        if (this.connector == null) {
             return false;
         }
         try {
-            connector.getConnectionId();
+            this.connector.getConnectionId();
         } catch (IOException e) { // the connection is closed or broken
             return false;
         }
