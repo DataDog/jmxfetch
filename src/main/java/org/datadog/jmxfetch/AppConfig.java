@@ -233,6 +233,15 @@ public class AppConfig {
     private String statusLocation;
 
     @Parameter(
+            names = {"--enable_bean_subscription", "-B"},
+            description =
+                    "EXPERIMENTAL: If true, JMX beans will be discovered via subscription rather"
+                    + " than poll-based. Obsoletes 'initialBeanRefreshPeriod' and"
+                    + " 'beanRefreshPeriod'.",
+            required = false)
+    private boolean enableBeanSubscription;
+
+    @Parameter(
             names = {"--exit_file_location", "-e"},
             description =
                     "Absolute path of the trigger file to watch to exit. "
@@ -529,5 +538,13 @@ public class AppConfig {
 
     public String getVersion() {
         return MetadataHelper.getVersion();
+    }
+
+    public boolean getEnableBeanSubscription() {
+        // As noted in `pkg/jmxfetch/jmxfetch.go` in the agent, using an env var
+        // for enablement is a temporary measure until the stable JMXFetch is upgraded
+        // to a version supporting this CLI arg.
+        boolean isEnvEnabled = System.getenv("DD_JMX_BEAN_SUBSCRIPTION_ENABLED") != null;
+        return isEnvEnabled || enableBeanSubscription;
     }
 }

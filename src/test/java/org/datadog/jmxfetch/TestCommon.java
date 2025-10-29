@@ -15,6 +15,9 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.management.InstanceAlreadyExistsException;
@@ -99,12 +102,31 @@ public class TestCommon {
      * @throws InstanceNotFoundException
      * @throws MBeanRegistrationException
      */
-    public void unregisterMBeans() throws MBeanRegistrationException, InstanceNotFoundException {
+    public void unregisterAllMBeans() throws MBeanRegistrationException, InstanceNotFoundException {
         if (mbs != null) {
             for (ObjectName objectName : objectNames) {
                 mbs.unregisterMBean(objectName);
             }
             this.objectNames.clear();
+        }
+    }
+
+    /**
+     * Unregister a specific MBean.
+     *
+     * @throws InstanceNotFoundException
+     * @throws MBeanRegistrationException
+     */
+    protected void unregisterMBean(Object application, String objectStringName) throws MBeanRegistrationException, InstanceNotFoundException, MalformedObjectNameException {
+        if (mbs != null) {
+            ObjectName objectName = new ObjectName(objectStringName);
+            for (Iterator<ObjectName> it = objectNames.iterator(); it.hasNext();) {
+                ObjectName elem = it.next();
+                if (elem.compareTo(objectName) == 0) {
+                    it.remove();
+                }
+            }
+            mbs.unregisterMBean(objectName);
         }
     }
 
@@ -119,15 +141,21 @@ public class TestCommon {
             app.stop();
         }
         try {
-            unregisterMBeans();
+            unregisterAllMBeans();
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             // Ignore
         }
     }
 
     /** Init JMXFetch with the given YAML configuration file. */
-    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile)
+    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile, AppConfig passedAppConfig)
             throws FileNotFoundException, IOException {
+        AppConfig appConfig = this.appConfig;
+        if (passedAppConfig != null) {
+            appConfig = passedAppConfig;
+        }
+        this.appConfig = appConfig;
+
         // We do a first collection
         // We initialize the main app that will collect these metrics using JMX
         String confdDirectory =
@@ -180,7 +208,15 @@ public class TestCommon {
     }
 
     protected void initApplication(String yamlFileName) throws FileNotFoundException, IOException {
-        initApplication(yamlFileName, "");
+        initApplication(yamlFileName, "", null);
+    }
+
+    protected void initApplication(String yamlFileName, AppConfig appConfig) throws FileNotFoundException, IOException {
+        initApplication(yamlFileName, "", appConfig);
+    }
+
+    protected void initApplication(String yamlFileName, String autoDiscoveryPipeFile) throws FileNotFoundException, IOException {
+        initApplication(yamlFileName, autoDiscoveryPipeFile, null);
     }
 
     /*

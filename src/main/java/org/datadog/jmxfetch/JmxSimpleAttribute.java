@@ -74,7 +74,7 @@ public class JmxSimpleAttribute extends JmxAttribute {
     }
 
     @Override
-    public List<Metric> getMetrics()
+    public List<Metric> getMetricsImpl()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
         if (cachedMetric == null) {

@@ -80,7 +80,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     }
 
     @Override
-    public List<Metric> getMetrics() throws AttributeNotFoundException, MBeanException,
+    public List<Metric> getMetricsImpl() throws AttributeNotFoundException, MBeanException,
             ReflectionException, InstanceNotFoundException, IOException {
         List<Metric> metrics = new ArrayList<Metric>(subAttributeList.size());
         for (String subAttribute : subAttributeList) {
