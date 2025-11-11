@@ -76,6 +76,9 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             this.subAttributeList.addAll(JeeStatisticsAttributes.attributesFor(attributeValue));
         } else if (JeeStatisticsAttributes.isJeeStat(attributeValue)) {
             this.subAttributeList.addAll(JeeStatisticsAttributes.getStatisticNames(attributeValue));
+        } else {
+            log.trace("beanName {} attributeValue type {}: no match {}",
+                getBeanName(), attributeValue.getClass(), attributeValue);
         }
     }
 
