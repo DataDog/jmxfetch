@@ -49,4 +49,27 @@ abstract class JmxSubAttribute extends JmxAttribute {
         cachedMetrics.put(name, metric);
         return metric;
     }
+
+    /**
+     * Check if a sub-attribute matches the filter parameters.
+     *
+     * @param params the filter parameters
+     * @param subAttributeName the sub-attribute name to check
+     * @param matchOnEmpty whether to match if the attribute filter is null
+     * @return true if the sub-attribute matches
+     */
+    protected boolean matchSubAttribute(
+            Filter params, String subAttributeName, boolean matchOnEmpty) {
+        if ((params.getAttribute() instanceof Map<?, ?>)
+                && ((Map<String, Object>) (params.getAttribute()))
+                        .containsKey(subAttributeName)) {
+            return true;
+        } else if ((params.getAttribute() instanceof List<?>
+                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
+            return true;
+        } else if (params.getAttribute() == null) {
+            return matchOnEmpty;
+        }
+        return false;
+    }
 }

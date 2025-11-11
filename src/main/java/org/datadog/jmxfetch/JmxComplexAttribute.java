@@ -136,21 +136,6 @@ public class JmxComplexAttribute extends JmxSubAttribute {
         return matchAttribute(configuration) && !excludeMatchAttribute(configuration);
     }
 
-    private boolean matchSubAttribute(
-            Filter params, String subAttributeName, boolean matchOnEmpty) {
-        if ((params.getAttribute() instanceof Map<?, ?>)
-                && ((Map<String, Object>) (params.getAttribute()))
-                        .containsKey(subAttributeName)) {
-            return true;
-        } else if ((params.getAttribute() instanceof List<?>
-                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
-            return true;
-        } else if (params.getAttribute() == null) {
-            return matchOnEmpty;
-        }
-        return false;
-    }
-
     private boolean matchAttribute(Configuration configuration) {
         if (matchSubAttribute(configuration.getInclude(), getAttributeName(), true)) {
             return true;
