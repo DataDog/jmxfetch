@@ -2,6 +2,8 @@ package org.datadog.jmxfetch;
 
 import org.datadog.jmxfetch.service.ServiceNameProvider;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,5 +73,58 @@ abstract class JmxSubAttribute extends JmxAttribute {
             return matchOnEmpty;
         }
         return false;
+    }
+
+    /**
+     * Get the attribute configuration for a specific metric key.
+     *
+     * @param key the metric key
+     * @return the attribute configuration map, or null if not found
+     */
+    protected Map<String, ?> getAttributesFor(String key) {
+        Filter include = getMatchingConf().getInclude();
+        if (include != null) {
+            Object includeAttribute = include.getAttribute();
+            if (includeAttribute instanceof Map<?, ?>) {
+                return (Map<String, ?>) ((Map) includeAttribute).get(key);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sort and filter metrics based on limit and sort order.
+     *
+     * @param metricKey the metric key
+     * @param metrics the list of metrics to sort and filter
+     * @return the sorted and filtered list of metrics
+     */
+    protected List<Metric> sortAndFilter(String metricKey, List<Metric> metrics) {
+        Map<String, ?> attributes = getAttributesFor(metricKey);
+        if (attributes == null || !attributes.containsKey("limit")) {
+            return metrics;
+        }
+        Integer limit = (Integer) attributes.get("limit");
+        if (metrics.size() <= limit) {
+            return metrics;
+        }
+        MetricComparator comp = new MetricComparator();
+        Collections.sort(metrics, comp);
+        String sort = (String) attributes.get("sort");
+        if (sort == null || sort.equals("desc")) {
+            metrics.subList(0, limit).clear();
+        } else {
+            metrics.subList(metrics.size() - limit, metrics.size()).clear();
+        }
+        return metrics;
+    }
+
+    /**
+     * Comparator for sorting metrics by value.
+     */
+    protected static class MetricComparator implements Comparator<Metric> {
+        public int compare(Metric o1, Metric o2) {
+            return Double.compare(o1.getValue(), o2.getValue());
+        }
     }
 }
