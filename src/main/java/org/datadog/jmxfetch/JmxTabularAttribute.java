@@ -133,17 +133,6 @@ public class JmxTabularAttribute extends JmxSubAttribute {
         return tags;
     }
 
-    private Map<String, ?> getAttributesFor(String key) {
-        Filter include = getMatchingConf().getInclude();
-        if (include != null) {
-            Object includeAttribute = include.getAttribute();
-            if (includeAttribute instanceof Map<?, ?>) {
-                return (Map<String, ?>) ((Map) includeAttribute).get(key);
-            }
-        }
-        return null;
-    }
-
     @Override
     public List<Metric> getMetrics()
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
@@ -177,32 +166,6 @@ public class JmxTabularAttribute extends JmxSubAttribute {
         }
 
         return metrics;
-    }
-
-    private List<Metric> sortAndFilter(String metricKey, List<Metric> metrics) {
-        Map<String, ?> attributes = getAttributesFor(metricKey);
-        if (!attributes.containsKey("limit")) {
-            return metrics;
-        }
-        Integer limit = (Integer) attributes.get("limit");
-        if (metrics.size() <= limit) {
-            return metrics;
-        }
-        MetricComparator comp = new MetricComparator();
-        Collections.sort(metrics, comp);
-        String sort = (String) attributes.get("sort");
-        if (sort == null || sort.equals("desc")) {
-            metrics.subList(0, limit).clear();
-        } else {
-            metrics.subList(metrics.size() - limit, metrics.size()).clear();
-        }
-        return metrics;
-    }
-
-    private class MetricComparator implements Comparator<Metric> {
-        public int compare(Metric o1, Metric o2) {
-            return Double.compare(o1.getValue(), o2.getValue());
-        }
     }
 
     private Object getValue(String key, String subAttribute)
@@ -266,21 +229,6 @@ public class JmxTabularAttribute extends JmxSubAttribute {
         }
 
         return matchAttribute(configuration); // TODO && !excludeMatchAttribute(configuration);
-    }
-
-    private boolean matchSubAttribute(
-            Filter params, String subAttributeName, boolean matchOnEmpty) {
-        if ((params.getAttribute() instanceof Map<?, ?>)
-                && ((Map<String, Object>) (params.getAttribute()))
-                        .containsKey(subAttributeName)) {
-            return true;
-        } else if ((params.getAttribute() instanceof List<?>
-                && ((List<String>) (params.getAttribute())).contains(subAttributeName))) {
-            return true;
-        } else if (params.getAttribute() == null) {
-            return matchOnEmpty;
-        }
-        return false;
     }
 
     private boolean matchAttribute(Configuration configuration) {
