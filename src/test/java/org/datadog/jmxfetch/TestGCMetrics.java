@@ -213,26 +213,28 @@ public class TestGCMetrics extends TestCommon {
             final boolean newGCMetrics,
             boolean useSimplifiedDefaultConfig
     ) {
-        String defaultConfig = useSimplifiedDefaultConfig ? "default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml" : "";
-
         server.start();
+
+        List<String> configLines = new ArrayList<>(Arrays.asList(
+                "init_config:",
+                "  is_jmx: true",
+                "  new_gc_metrics: " + newGCMetrics,
+                "",
+                "instances:",
+                "    -   name: jmxint_container",
+                "        host: " + server.getIp(),
+                "        collect_default_jvm_metrics: true"
+        ));
+
+        if (useSimplifiedDefaultConfig) {
+            configLines.add("        default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml");
+        }
+
+        configLines.add("        max_returned_metrics: 300000");
+        configLines.add("        port: " + server.getRMIPort());
+
         this.initApplicationWithYamlLines(
-                makeTempYamlConfigFile(
-                        "config",
-                        Arrays.asList(
-                                "init_config:",
-                                "  is_jmx: true",
-                                "  new_gc_metrics: " + newGCMetrics,
-                                "",
-                                "instances:",
-                                "    -   name: jmxint_container",
-                                "        host: " + server.getIp(),
-                                "        collect_default_jvm_metrics: true",
-                                "        " + defaultConfig,
-                                "        max_returned_metrics: 300000",
-                                "        port: " + server.getRMIPort()
-                        )
-                )
+                makeTempYamlConfigFile("config", configLines)
         );
         // Run one iteration first
         // TODO: Investigate why we have to run this twice - AMLII-1353

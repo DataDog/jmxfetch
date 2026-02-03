@@ -302,6 +302,10 @@ public class Instance {
 
     private void loadDefaultConfig(String configResourcePath) {
         try (InputStream is = this.getClass().getResourceAsStream(configResourcePath)) {
+            if (is == null) {
+                log.warn("Cannot find internal default config file {}", configResourcePath);
+                return;
+            }
             List<Map<String, Object>> defaultConf;
             defaultConf = YAML.get().load(is);
             for (Map<String, Object> conf : defaultConf) {
