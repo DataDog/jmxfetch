@@ -964,8 +964,8 @@ public class TestApp extends TestCommon {
         run();
         List<Map<String, Object>> metrics = getMetrics();
 
-        // 14 = 13 metrics from java.lang + 1 metric explicitly defined in the yaml config file
-        assertEquals(63, metrics.size());
+        // Using simplified default JVM metrics for instances with process_name_regex
+        assertEquals(35, metrics.size());
 
         List<String> tags = Arrays.asList(
             "type:SimpleTestJavaApp",
