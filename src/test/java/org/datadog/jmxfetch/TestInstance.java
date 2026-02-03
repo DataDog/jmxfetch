@@ -194,7 +194,7 @@ public class TestInstance extends TestCommon {
 
     @Test
     public void testLoadMetricConfigFiles() throws Exception {
-        URL defaultConfig = Instance.class.getResource("default-jmx-metrics.yaml");
+        URL defaultConfig = Instance.class.getResource("simplified-default-jmx-metrics.yaml");
         AppConfig config = mock(AppConfig.class);
         when(config.getMetricConfigFiles()).thenReturn(Collections.singletonList(defaultConfig.getPath()));
         List<Configuration> configurationList = new ArrayList<Configuration>();

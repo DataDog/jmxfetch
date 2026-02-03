@@ -2,6 +2,7 @@ init_config:
 
 instances:
     -   process_name_regex: .*surefire.*
+        default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
         name: jmx_first_instance
         cassandra_aliasing: true
         conf:
@@ -10,6 +11,7 @@ instances:
                attribute:
                     - ShouldBe100
     -   process_name_regex: .*surefire.*
+        default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
         name: jmx_second_instance
         conf:
             - include:

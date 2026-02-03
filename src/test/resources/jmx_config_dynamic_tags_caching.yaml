@@ -2,6 +2,7 @@ init_config:
 
 instances:
     -   process_name_regex: .*surefire.*
+        default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
         name: jmx_config_dynamic_tags_caching_test
         conf:
             # Config 1: Uses cluster_id
