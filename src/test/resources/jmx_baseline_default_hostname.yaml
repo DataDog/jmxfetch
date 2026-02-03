@@ -3,6 +3,7 @@ init_config:
 instances:
   -   process_name_regex: .*surefire.*
       name: jmx_test_default_hostname
+      default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
       tags:
         - jmx:fetch
       conf:

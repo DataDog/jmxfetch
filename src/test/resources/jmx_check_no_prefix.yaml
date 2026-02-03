@@ -3,6 +3,7 @@ init_config:
 
 instances:
   -   jvm_direct: true
+      default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
       name: jmx_test_instance
       conf:
         - include:

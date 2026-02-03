@@ -2,6 +2,7 @@ init_config:
 
 instances:
     -   process_name_regex: .*surefire.*
+        default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
         name: jmx_config_dynamic_tags_multiple_per_conf_test
         conf:
             # Config with multiple dynamic tags (cluster_id AND version) on the same metric

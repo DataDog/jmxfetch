@@ -2,6 +2,7 @@ init_config:
 
 instances:
   -   process_name_regex: .*surefire.*
+      default-jmx-metrics-definitions: simplified-default-jmx-metrics.yaml
       min_collection_interval: 1
       refresh_beans_initial: 1
       refresh_beans: 3
