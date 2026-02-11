@@ -97,7 +97,7 @@ jobs:
           ${{ runner.os }}-m2-
           
     - name: Set up Docker
-      uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
+      uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4.7.0
       
     - name: Run tests
       run: ./mvnw test -B -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true
