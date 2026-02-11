@@ -84,8 +84,8 @@ public class App {
     private static int loopCounter;
     private int lastJsonConfigTs;
     private Map<String, Object> adJsonConfigs;
-    private Map<String, YamlParser> configs;
-    private Map<String, YamlParser> adPipeConfigs = new ConcurrentHashMap<>();
+    private Map<String, ConfigYaml> configs;
+    private Map<String, ConfigYaml> adPipeConfigs = new ConcurrentHashMap<>();
     private List<Instance> instances = new ArrayList<>();
     private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
@@ -403,7 +403,7 @@ public class App {
             final String name = getAutoDiscoveryName(config);
             log.debug("Attempting to apply config. Name: " + name);
             final InputStream stream = new ByteArrayInputStream(config.getBytes(UTF_8));
-            final YamlParser yaml = new YamlParser(stream);
+            final ConfigYaml yaml = new ConfigYaml(stream);
 
             if (this.addConfig(name, yaml)) {
                 reinit = true;
@@ -700,7 +700,7 @@ public class App {
      * Adds a configuration to the auto-discovery pipe-collected configuration list. This method is
      * deprecated.
      */
-    public boolean addConfig(final String name, final YamlParser config) {
+    public boolean addConfig(final String name, final ConfigYaml config) {
         // named groups not supported with Java6:
         //
         // "AUTO_DISCOVERY_PREFIX(?<check>.{1,80})_(?<version>\\d{0,AD_MAX_MAG_INSTANCES})"
@@ -746,8 +746,8 @@ public class App {
         return false;
     }
 
-    private Map<String, YamlParser> getConfigs(final AppConfig config) {
-        final Map<String, YamlParser> configs = new ConcurrentHashMap<>();
+    private Map<String, ConfigYaml> getConfigs(final AppConfig config) {
+        final Map<String, ConfigYaml> configs = new ConcurrentHashMap<>();
 
         this.loadFileConfigs(config, configs);
         this.loadResourceConfigs(config, configs);
@@ -756,7 +756,7 @@ public class App {
         return configs;
     }
 
-    private void loadFileConfigs(final AppConfig config, final Map<String, YamlParser> configs) {
+    private void loadFileConfigs(final AppConfig config, final Map<String, ConfigYaml> configs) {
         final List<String> fileList = config.getYamlFileList();
         if (fileList != null) {
             for (final String fileName : fileList) {
@@ -765,7 +765,7 @@ public class App {
                 final String yamlPath = file.getAbsolutePath();
                 log.info("Reading {}", yamlPath);
                 try (FileInputStream yamlInputStream = new FileInputStream(yamlPath)) {
-                    configs.put(name, new YamlParser(yamlInputStream));
+                    configs.put(name, new ConfigYaml(yamlInputStream));
                 } catch (FileNotFoundException e) {
                     log.warn("Cannot find " + yamlPath);
                 } catch (Exception e) {
@@ -776,7 +776,7 @@ public class App {
     }
 
     private void loadResourceConfigs(
-            final AppConfig config, final Map<String, YamlParser> configs) {
+            final AppConfig config, final Map<String, ConfigYaml> configs) {
         final List<String> resourceConfigList = config.getInstanceConfigResources();
         if (resourceConfigList != null) {
             final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -788,7 +788,7 @@ public class App {
                     log.warn("Cannot find " + resourceName);
                 } else {
                     try {
-                        configs.put(name, new YamlParser(inputStream));
+                        configs.put(name, new ConfigYaml(inputStream));
                     } catch (Exception e) {
                         log.warn("Cannot parse yaml file " + resourceName, e);
                     } finally {
@@ -933,11 +933,11 @@ public class App {
         final Set<String> instanceNamesSeen = new HashSet<>();
 
         log.info("Dealing with YAML config instances...");
-        final Iterator<Entry<String, YamlParser>> it = this.configs.entrySet().iterator();
-        final Iterator<Entry<String, YamlParser>> itPipeConfigs = this.adPipeConfigs
+        final Iterator<Entry<String, ConfigYaml>> it = this.configs.entrySet().iterator();
+        final Iterator<Entry<String, ConfigYaml>> itPipeConfigs = this.adPipeConfigs
                         .entrySet().iterator();
         while (it.hasNext() || itPipeConfigs.hasNext()) {
-            Map.Entry<String, YamlParser> entry;
+            Map.Entry<String, ConfigYaml> entry;
             boolean fromPipeIterator = false;
             if (it.hasNext()) {
                 entry = it.next();
@@ -947,14 +947,14 @@ public class App {
             }
 
             final String name = entry.getKey();
-            final YamlParser yamlConfig = entry.getValue();
+            final ConfigYaml yamlConfig = entry.getValue();
             // AD config cache doesn't remove configs - it just overwrites.
             if (!fromPipeIterator) {
                 it.remove();
             }
 
             final List<Map<String, Object>> configInstances =
-                    ((List<Map<String, Object>>) yamlConfig.getYamlInstances());
+                    ((List<Map<String, Object>>) yamlConfig.getInstances());
             if (configInstances == null || configInstances.size() == 0) {
                 final String warning = "No instance found in :" + name;
                 log.warn(warning);
