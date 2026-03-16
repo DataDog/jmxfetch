@@ -541,6 +541,9 @@ public class App {
     }
 
     void stop() {
+        for (Instance in : this.getInstances()) {
+            in.cleanUp();
+        }
         if (this.appConfig.getJmxfetchTelemetry()) {
             this.teardownTelemetry();
         }
