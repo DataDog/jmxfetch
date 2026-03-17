@@ -704,6 +704,27 @@ public class Instance {
                                 cassandraAliasing,
                                 emptyDefaultHostname,
                                 normalizeBeanParamTags);
+                } else if (PmiSubCollectionAttribute.matchAttribute(
+                        attributeType, beanName, attributeInfo, connection)) {
+                    log.debug(
+                            ATTRIBUTE
+                            + beanName
+                            + " : "
+                            + attributeInfo
+                            + " has attributeInfo WebSphere Stats type with "
+                            + "subCollections");
+                    jmxAttribute =
+                        new PmiSubCollectionAttribute(
+                                attributeInfo,
+                                beanName,
+                                className,
+                                instanceName,
+                                checkName,
+                                connection,
+                                serviceNameProvider,
+                                tags,
+                                emptyDefaultHostname,
+                                normalizeBeanParamTags);
                 } else if (JmxComplexAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
