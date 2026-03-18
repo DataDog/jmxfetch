@@ -1,0 +1,16 @@
+init_config:
+
+instances:
+    -   process_name_regex: .*surefire.*
+        name: jmx_test_instance
+        use_canonical_bean_name: true
+        conf:
+            - include:
+                 bean_regex: org.datadog.jmxfetch.test:name=(.*),scope=(.*),type=TestBean
+                 attribute:
+                     ShouldBe100:
+                         metric_type: gauge
+                         alias: this.is.100
+                 tags:
+                     bean_name: $1
+                     bean_scope: $2
