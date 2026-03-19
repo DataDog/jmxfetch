@@ -658,19 +658,20 @@ public class Instance {
             }
             String className;
             MBeanAttributeInfo[] attributeInfos;
+            String beanNameStr = beanName.getCanonicalName();
             try {
-                log.debug("Getting bean info for bean: {}", beanName.getCanonicalName());
+                log.debug("Getting bean info for bean: {}", beanNameStr);
                 MBeanInfo info = connection.getMBeanInfo(beanName);
 
-                log.debug("Getting class name for bean: {}", beanName.getCanonicalName());
+                log.debug("Getting class name for bean: {}", beanNameStr);
                 className = info.getClassName();
-                log.debug("Getting attributes for bean: {}", beanName.getCanonicalName());
+                log.debug("Getting attributes for bean: {}", beanNameStr);
                 attributeInfos = info.getAttributes();
             } catch (IOException e) {
                 // we should not continue
                 throw e;
             } catch (Exception e) {
-                log.warn("Cannot get attributes or class name for bean {}: ", beanName.getCanonicalName(), e);
+                log.warn("Cannot get attributes or class name for bean {}: ", beanNameStr, e);
                 continue;
             }
 
@@ -693,7 +694,7 @@ public class Instance {
                 if (JmxSimpleAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                            + beanName.getCanonicalName()
+                            + beanNameStr
                             + " : "
                             + attributeInfo
                             + " has attributeInfo simple type");
@@ -714,7 +715,7 @@ public class Instance {
                 } else if (JmxComplexAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                            + beanName.getCanonicalName()
+                            + beanNameStr
                             + " : "
                             + attributeInfo
                             + " has attributeInfo composite type");
@@ -734,7 +735,7 @@ public class Instance {
                 } else if (JmxTabularAttribute.matchAttributeType(attributeType)) {
                     log.debug(
                             ATTRIBUTE
-                            + beanName.getCanonicalName()
+                            + beanNameStr
                             + " : "
                             + attributeInfo
                             + " has attributeInfo tabular type");
@@ -755,7 +756,7 @@ public class Instance {
                     try {
                         log.debug(
                                 ATTRIBUTE
-                                + beanName.getCanonicalName()
+                                + beanNameStr
                                 + " : "
                                 + attributeInfo
                                 + " has an unsupported type: "
@@ -795,7 +796,7 @@ public class Instance {
                         log.error(
                                 "Error while trying to match attributeInfo configuration "
                                 + "with the Attribute: "
-                                + beanName.getCanonicalName()
+                                + beanNameStr
                                 + " : "
                                 + attributeInfo,
                                 e);
