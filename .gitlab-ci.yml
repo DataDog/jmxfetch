@@ -20,7 +20,7 @@ run_unit_tests:
       allow_failure: true
 
   tags:
-    - "runner:docker"
+    - "docker-in-docker:amd64"
 
   image: &jdk-image eclipse-temurin:8u452-b09-jdk
 
@@ -44,7 +44,7 @@ deploy_to_sonatype:
       allow_failure: true
 
   tags:
-    - "runner:docker"
+    - "docker-in-docker:amd64"
 
   image: *jdk-image
 
@@ -98,7 +98,7 @@ create_key:
   when: manual
 
   tags:
-    - "runner:docker"
+    - "docker-in-docker:amd64"
 
   image: $REGISTRY/ci/agent-key-management-tools/gpg:1
 
