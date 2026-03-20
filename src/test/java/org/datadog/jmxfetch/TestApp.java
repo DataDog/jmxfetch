@@ -50,6 +50,87 @@ public class TestApp extends TestCommon {
         assertEquals(1, tlm.getRunningInstanceCount());
     }
 
+    /** Tag metrics with MBean parameters with use_canonical_bean_name option enabled. */
+    @Test
+    public void testBeanRegexUseCanonicalBeanName() throws Exception {
+        // We expose a metric through JMX with properties in non-alphabetical order
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=TestBean,name=MyName,scope=MyScope");
+        initApplication("jmx_bean_regex_canonical_order.yaml");
+
+        // Collecting metrics
+        // The bean_regex in the yaml is written in canonical (alphabetical) order:
+        // name, scope, type — which differs from the registration order above.
+        // With use_canonical_bean_name: true, the regex matches because JMXFetch
+        // uses getCanonicalName() to sort properties before matching.
+        run();
+
+        List<String> tags =
+                Arrays.asList(
+                        "type:TestBean",
+                        "name:MyName",
+                        "scope:MyScope",
+                        "instance:jmx_test_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test",
+                        "dd.internal.jmx_check_name:jmx_bean_regex_canonical_order",
+                        "bean_name:MyName",
+                        "bean_scope:MyScope");
+
+        assertMetric("this.is.100", tags, 8);
+    }
+
+    /** Tag metrics with MBean parameters with use_canonical_bean_name option disabled (default). */
+    @Test
+    public void testBeanRegexDontUseCanonicalBeanName() throws Exception {
+        // We expose a metric through JMX with properties in non-alphabetical order
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=TestBean,name=MyName,scope=MyScope");
+        initApplication("jmx_bean_regex_no_canonical_order.yaml");
+
+        // Collecting metrics
+        // The bean_regex in the yaml is written in registration order:
+        // type, name, scope — matching the toString() output.
+        // With use_canonical_bean_name false, the regex matches
+        // because JMXFetch uses toString() which preserves registration order.
+        run();
+
+        List<String> tags =
+                Arrays.asList(
+                        "type:TestBean",
+                        "name:MyName",
+                        "scope:MyScope",
+                        "instance:jmx_test_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test",
+                        "dd.internal.jmx_check_name:jmx_bean_regex_no_canonical_order",
+                        "bean_name:MyName",
+                        "bean_scope:MyScope");
+
+        assertMetric("this.is.100", tags, 8);
+    }
+
+    /** Canonical-order regex does not match when use_canonical_bean_name is disabled. */
+    @Test
+    public void testBeanRegexCanonicalOrderNotMatchingWithoutFlag() throws Exception {
+        // We expose a metric through JMX with properties in non-alphabetical order
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=TestBean,name=MyName,scope=MyScope");
+        initApplication("jmx_bean_regex_canonical_order_no_flag.yaml");
+
+        // Collecting metrics
+        // The bean_regex is written in canonical (alphabetical) order: name, scope, type.
+        // But use_canonical_bean_name is false, so JMXFetch matches
+        // against toString() which preserves registration order: type, name, scope.
+        // The regex should NOT match — only default java.lang metrics are collected.
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 default metrics from java.lang, no custom metrics matched
+        assertEquals(13, metrics.size());
+    }
+
     /** Tag metrics with MBeans parameters. */
     @Test
     public void testBeanTags() throws Exception {

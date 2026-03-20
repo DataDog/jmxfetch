@@ -76,14 +76,17 @@ public abstract class JmxAttribute {
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             boolean emptyDefaultHostname,
-            boolean normalizeBeanParamTags) {
+            boolean normalizeBeanParamTags,
+            boolean useCanonicalBeanName) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.className = className;
         this.matchingConf = null;
         this.connection = connection;
         this.attributeName = attribute.getName();
-        this.beanStringName = beanName.toString();
+        this.beanStringName = useCanonicalBeanName
+                ? beanName.getCanonicalName()
+                : beanName.toString();
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
         this.serviceNameProvider = serviceNameProvider;
