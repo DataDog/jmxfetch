@@ -42,7 +42,8 @@ public class DynamicTag {
         }
 
         if (attrObj == null && keyPropObj == null) {
-            log.warn("Invalid dynamic tag config: must specify either 'attribute' or 'key_property'");
+            log.warn("Invalid dynamic tag config: must specify "
+                    + "either 'attribute' or 'key_property'");
             return null;
         }
 
@@ -135,8 +136,8 @@ public class DynamicTag {
         return new HashMap.SimpleEntry<>(tagName, stringValue);
     }
 
-    private Map.Entry<String, String> resolveKeyProperty(Connection connection, ObjectName objectName)
-            throws Exception {
+    private Map.Entry<String, String> resolveKeyProperty(
+            Connection connection, ObjectName objectName) throws Exception {
         Set<ObjectName> matchingBeans = connection.queryNames(objectName);
 
         if (matchingBeans == null || matchingBeans.isEmpty()) {
