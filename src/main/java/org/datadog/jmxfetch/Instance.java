@@ -204,6 +204,9 @@ public class Instance {
         }
 
         this.useCanonicalBeanName = (Boolean) instanceMap.get("use_canonical_bean_name");
+        if (this.useCanonicalBeanName == null && initConfig != null) {
+            this.useCanonicalBeanName = (Boolean) initConfig.get("use_canonical_bean_name");
+        }
         if (this.useCanonicalBeanName == null) {
             this.useCanonicalBeanName = false;
         }

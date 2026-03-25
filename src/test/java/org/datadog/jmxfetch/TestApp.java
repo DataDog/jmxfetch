@@ -131,6 +131,50 @@ public class TestApp extends TestCommon {
         assertEquals(13, metrics.size());
     }
 
+    /** use_canonical_bean_name in init_config applies to all instances. */
+    @Test
+    public void testBeanRegexCanonicalBeanNameFromInitConfig() throws Exception {
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=TestBean,name=MyName,scope=MyScope");
+        initApplication("jmx_bean_regex_canonical_order_init_config.yaml");
+
+        // bean_regex is in canonical (alphabetical) order: name, scope, type.
+        // use_canonical_bean_name: true is set in init_config, not on the instance.
+        // The regex should match because the init_config value is used as fallback.
+        run();
+
+        List<String> tags =
+                Arrays.asList(
+                        "type:TestBean",
+                        "scope:MyScope",
+                        "instance:jmx_test_instance",
+                        "jmx_domain:org.datadog.jmxfetch.test",
+                        "dd.internal.jmx_check_name:jmx_bean_regex_canonical_order_init_config",
+                        "bean_name:MyName",
+                        "bean_scope:MyScope");
+
+        assertMetric("this.is.100", tags, 8);
+    }
+
+    /** Instance-level use_canonical_bean_name overrides init_config. */
+    @Test
+    public void testBeanRegexCanonicalBeanNameInstanceOverridesInitConfig() throws Exception {
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:type=TestBean,name=MyName,scope=MyScope");
+        initApplication("jmx_bean_regex_canonical_init_config_instance_override.yaml");
+
+        // init_config sets use_canonical_bean_name: true, but instance sets it to false.
+        // bean_regex is in canonical order, which won't match toString() output.
+        // Instance value wins, so the regex should NOT match.
+        run();
+        List<Map<String, Object>> metrics = getMetrics();
+
+        // 13 default metrics from java.lang, no custom metrics matched
+        assertEquals(13, metrics.size());
+    }
+
     /** Tag metrics with MBeans parameters. */
     @Test
     public void testBeanTags() throws Exception {
