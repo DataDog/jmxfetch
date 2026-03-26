@@ -44,7 +44,8 @@ public class JmxTabularAttribute extends JmxSubAttribute {
             ServiceNameProvider serviceNameProvider,
             Map<String, String> instanceTags,
             boolean emptyDefaultHostname,
-            boolean normalizeBeanParamTags) {
+            boolean normalizeBeanParamTags,
+            boolean useCanonicalBeanName) {
         super(
                 attribute,
                 beanName,
@@ -56,7 +57,8 @@ public class JmxTabularAttribute extends JmxSubAttribute {
                 instanceTags,
                 false,
                 emptyDefaultHostname,
-                normalizeBeanParamTags);
+                normalizeBeanParamTags,
+                useCanonicalBeanName);
         subAttributeList = new HashMap<String, List<String>>();
     }
 
