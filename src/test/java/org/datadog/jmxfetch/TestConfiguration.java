@@ -49,9 +49,9 @@ public class TestConfiguration {
         File f = new File("src/test/resources/", "jmx_bean_scope.yaml");
         String yamlPath = f.getAbsolutePath();
         FileInputStream yamlInputStream = new FileInputStream(yamlPath);
-        YamlParser fileConfig = new YamlParser(yamlInputStream);
+        ConfigYaml fileConfig = new ConfigYaml(yamlInputStream);
         List<Map<String, Object>> configInstances =
-                ((List<Map<String, Object>>) fileConfig.getYamlInstances());
+                ((List<Map<String, Object>>) fileConfig.getInstances());
 
         for (Map<String, Object> config : configInstances) {
             Object yamlConf = config.get("conf");
@@ -117,9 +117,9 @@ public class TestConfiguration {
         File f = new File("src/test/resources/", "jmx_empty_filters.yaml");
         String yamlPath = f.getAbsolutePath();
         FileInputStream yamlInputStream = new FileInputStream(yamlPath);
-        YamlParser fileConfig = new YamlParser(yamlInputStream);
+        ConfigYaml fileConfig = new ConfigYaml(yamlInputStream);
         List<Map<String, Object>> configInstances =
-                ((List<Map<String, Object>>) fileConfig.getYamlInstances());
+                ((List<Map<String, Object>>) fileConfig.getInstances());
 
         List<Configuration> confs = new ArrayList<Configuration>();
         for (Map<String, Object> config : configInstances) {

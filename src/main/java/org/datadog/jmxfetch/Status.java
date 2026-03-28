@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.util.InstanceTelemetry;
 import org.datadog.jmxfetch.util.MetadataHelper;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -151,7 +150,7 @@ public class Status {
         status.put("timestamp", System.currentTimeMillis());
         status.put("checks", this.instanceStats);
         status.put("errors", this.errors);
-        return new Yaml().dump(status);
+        return ConfigYaml.dump(status);
     }
 
     private String generateJson() throws IOException {
