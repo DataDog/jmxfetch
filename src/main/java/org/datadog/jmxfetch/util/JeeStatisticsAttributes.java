@@ -21,22 +21,22 @@ import javax.management.ReflectionException;
 
 public class JeeStatisticsAttributes {
     /** Attributes for @see javax.management.j2ee.statistics.CountStatistic */
-    private static final List<String> COUNT_ATTRIBUTES = Collections.singletonList("count");
+    static final List<String> COUNT_ATTRIBUTES = Collections.singletonList("count");
 
     /** Attributes for @see javax.management.j2ee.statistics.BoundaryStatistic */
-    private static final List<String> BOUNDARY_ATTRIBUTES =
+    static final List<String> BOUNDARY_ATTRIBUTES =
         Collections.unmodifiableList(Arrays.asList("upperBound", "lowerBound"));
 
     /** Attributes for @see javax.management.j2ee.statistics.TimeStatistic */
-    private static final List<String> TIME_ATTRIBUTES =
+    static final List<String> TIME_ATTRIBUTES =
         Collections.unmodifiableList(Arrays.asList("count", "minTime", "maxTime", "totalTime"));
 
     /** Attributes for @see javax.management.j2ee.statistics.RangeStatistic */
-    private static final List<String> RANGE_ATTRIBUTES =
+    static final List<String> RANGE_ATTRIBUTES =
         Collections.unmodifiableList(Arrays.asList("highWaterMark", "lowWaterMark", "current"));
 
     /** Attributes for @see javax.management.j2ee.statistics.BoundedRangeStatistic */
-    private static final List<String> BOUNDED_RANGE_ATTRIBUTES =
+    static final List<String> BOUNDED_RANGE_ATTRIBUTES =
         Collections.unmodifiableList(
             Arrays.asList("upperBound", "lowerBound", "highWaterMark", "lowWaterMark", "current"));
 
@@ -44,7 +44,7 @@ public class JeeStatisticsAttributes {
     private static final WeakHashMap<ClassLoader, SoftReference<ReflectionHolder>>
         REFLECTION_CACHE = new WeakHashMap<>();
 
-    private static class ReflectionHolder {
+    static class ReflectionHolder {
 
         public final Class<?> classStat;
         public final MethodHandle mhStatGetStatisticNames;
@@ -122,7 +122,7 @@ public class JeeStatisticsAttributes {
             return map;
         }
 
-        private static MethodHandle maybeFindMethodHandleFor(
+        static MethodHandle maybeFindMethodHandleFor(
             final Class<?> cls, final String name, final Class<?>... parameterTypes) {
             if (cls == null) {
                 return null;
@@ -143,7 +143,7 @@ public class JeeStatisticsAttributes {
                 });
         }
 
-        private static Map<String, MethodHandle> buildMethodCacheFor(
+        static Map<String, MethodHandle> buildMethodCacheFor(
             final Class<?> cls, final List<String> attributes) {
             final Map<String, MethodHandle> map = new HashMap<>();
             for (String attribute : attributes) {
@@ -156,7 +156,7 @@ public class JeeStatisticsAttributes {
             return map;
         }
 
-        private static Class<?> maybeLookupClass(final String name, final ClassLoader classLoader) {
+        static Class<?> maybeLookupClass(final String name, final ClassLoader classLoader) {
             try {
                 return Class.forName(name, false, classLoader);
             } catch (Throwable t) {
@@ -168,7 +168,7 @@ public class JeeStatisticsAttributes {
             return null;
         }
 
-        private static String getterMethodName(String attribute) {
+        static String getterMethodName(String attribute) {
             // inspired from JavaBean PropertyDescriptor
             return "get" + attribute.substring(0, 1).toUpperCase(Locale.ROOT)
                 + attribute.substring(1);
@@ -210,6 +210,8 @@ public class JeeStatisticsAttributes {
         if (rh.classBoundaryStatistic != null && rh.classBoundaryStatistic.isInstance(instance)) {
             return BOUNDARY_ATTRIBUTES;
         }
+
+        LOGGER.debug("Getting attributes for class of type {} not supported", instance.getClass());
         return Collections.emptyList();
     }
 
