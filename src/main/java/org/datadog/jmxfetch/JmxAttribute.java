@@ -39,7 +39,8 @@ public abstract class JmxAttribute {
                     "class_regex",
                     "attribute",
                     "exclude_tags",
-                    "tags");
+                    "tags",
+                    "use_canonical_bean_name");
     private static final String FIRST_CAP_PATTERN = "(.)([A-Z][a-z]+)";
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
@@ -52,6 +53,8 @@ public abstract class JmxAttribute {
     private String domain;
     private String className;
     private String beanStringName;
+    private String canonicalBeanStringName;
+    private String toStringBeanStringName;
     private ServiceNameProvider serviceNameProvider;
     private Map<String, String> beanParameters;
     private String attributeName;
@@ -76,14 +79,19 @@ public abstract class JmxAttribute {
             Map<String, String> instanceTags,
             boolean cassandraAliasing,
             boolean emptyDefaultHostname,
-            boolean normalizeBeanParamTags) {
+            boolean normalizeBeanParamTags,
+            boolean useCanonicalBeanName) {
         this.attribute = attribute;
         this.beanName = beanName;
         this.className = className;
         this.matchingConf = null;
         this.connection = connection;
         this.attributeName = attribute.getName();
-        this.beanStringName = beanName.toString();
+        this.canonicalBeanStringName = beanName.getCanonicalName();
+        this.toStringBeanStringName = beanName.toString();
+        this.beanStringName = useCanonicalBeanName
+                ? canonicalBeanStringName
+                : toStringBeanStringName;
         this.cassandraAliasing = cassandraAliasing;
         this.checkName = checkName;
         this.serviceNameProvider = serviceNameProvider;
@@ -140,7 +148,7 @@ public abstract class JmxAttribute {
             }
         }
     }
-    
+
     /** Add dynamic tags that were resolved at connection time. */
     private void addDynamicTags() {
         if (this.resolvedDynamicTags != null && !this.resolvedDynamicTags.isEmpty()) {
@@ -404,8 +412,9 @@ public abstract class JmxAttribute {
             return matchIfNoRegex;
         }
 
+        String nameToMatch = resolveBeanStringName(filter);
         for (Pattern beanRegex : beanRegexes) {
-            Matcher matcher = beanRegex.matcher(beanStringName);
+            Matcher matcher = beanRegex.matcher(nameToMatch);
 
             if (matcher.matches()) {
                 for (int i = 0; i <= matcher.groupCount(); i++) {
@@ -419,8 +428,9 @@ public abstract class JmxAttribute {
 
     private boolean matchBeanName(Configuration configuration) {
         Filter include = configuration.getInclude();
+        String nameToMatch = resolveBeanStringName(include);
 
-        if (!include.isEmptyBeanName() && !include.getBeanNames().contains(beanStringName)) {
+        if (!include.isEmptyBeanName() && !include.getBeanNames().contains(nameToMatch)) {
             return false;
         }
 
@@ -442,8 +452,9 @@ public abstract class JmxAttribute {
     private boolean excludeMatchBeanName(Configuration conf) {
         Filter exclude = conf.getExclude();
         List<String> beanNames = exclude.getBeanNames();
+        String nameToMatch = resolveBeanStringName(exclude);
 
-        if (beanNames.contains(beanStringName)) {
+        if (beanNames.contains(nameToMatch)) {
             return true;
         }
 
@@ -664,6 +675,22 @@ public abstract class JmxAttribute {
     }
 
     String getBeanStringName() {
+        return beanStringName;
+    }
+
+    /**
+     * Resolve bean name string for matching against a specific filter.
+     * Filter-level use_canonical_bean_name overrides the instance-level default.
+     */
+    private String resolveBeanStringName(Filter filter) {
+        Boolean filterUseCanonicalBeanNameFlag = filter.getUseCanonicalBeanName();
+        if (filterUseCanonicalBeanNameFlag != null) {
+            if (filterUseCanonicalBeanNameFlag) {
+                return canonicalBeanStringName;
+            } else {
+                return toStringBeanStringName;
+            }
+        }
         return beanStringName;
     }
 
