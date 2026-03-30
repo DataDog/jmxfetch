@@ -685,7 +685,11 @@ public abstract class JmxAttribute {
     private String resolveBeanStringName(Filter filter) {
         Boolean filterUseCanonicalBeanNameFlag = filter.getUseCanonicalBeanName();
         if (filterUseCanonicalBeanNameFlag != null) {
-            return filterUseCanonicalBeanNameFlag ? canonicalBeanStringName : toStringBeanStringName;
+            if (filterUseCanonicalBeanNameFlag) {
+                return canonicalBeanStringName;
+            } else {
+                return toStringBeanStringName;
+            }
         }
         return beanStringName;
     }

@@ -185,7 +185,10 @@ class Filter {
         return toStringList(beanValues);
     }
 
-    /** Per-filter override for canonical bean name matching. Null means defer to instance default. */
+    /**
+     * Per-filter override for canonical bean name matching.
+     * Null means defer to instance default.
+     */
     public Boolean getUseCanonicalBeanName() {
         return (Boolean) filter.get("use_canonical_bean_name");
     }
