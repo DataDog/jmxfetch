@@ -288,6 +288,74 @@ public class TestConfigDynamicTags extends TestCommon {
                 foundMetric);
     }
     
+    @Test
+    public void testConfigDynamicTagsKeyProperty() throws Exception {
+        registerMBean(
+                new DynamicTagTestApp("test-cluster", "1.0.0", 9092),
+                "org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Broker1");
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+
+        initApplication("jmx_config_dynamic_tags_key_property.yaml");
+
+        run();
+
+        List<Map<String, Object>> metrics = getMetrics();
+        assertTrue("Should have collected metrics", metrics.size() > 0);
+
+        boolean foundMetric = false;
+        for (Map<String, Object> metric : metrics) {
+            String metricName = (String) metric.get("name");
+            if ("test.key.property.metric".equals(metricName)) {
+                foundMetric = true;
+
+                List<String> tagList = getTagsAsList(metric);
+                assertTrue("Should have app_id tag extracted from bean name key property",
+                        tagList.contains("app_id:Broker1"));
+
+                break;
+            }
+        }
+
+        assertTrue("Should have found the test metric", foundMetric);
+    }
+
+    @Test
+    public void testConfigDynamicTagsKeyPropertyAndAttribute() throws Exception {
+        registerMBean(
+                new DynamicTagTestApp("my-cluster", "2.0.0", 9092),
+                "org.datadog.jmxfetch.test:type=DynamicTagTestApp,name=Broker1");
+        registerMBean(
+                new SimpleTestJavaApp(),
+                "org.datadog.jmxfetch.test:foo=Bar,qux=Baz");
+
+        initApplication("jmx_config_dynamic_tags_key_property_and_attribute.yaml");
+
+        run();
+
+        List<Map<String, Object>> metrics = getMetrics();
+        assertTrue("Should have collected metrics", metrics.size() > 0);
+
+        boolean foundMetric = false;
+        for (Map<String, Object> metric : metrics) {
+            String metricName = (String) metric.get("name");
+            if ("test.key.property.and.attribute.metric".equals(metricName)) {
+                foundMetric = true;
+
+                List<String> tagList = getTagsAsList(metric);
+                assertTrue("Should have app_id tag from key_property",
+                        tagList.contains("app_id:Broker1"));
+                assertTrue("Should have cluster_id tag from attribute",
+                        tagList.contains("cluster_id:my-cluster"));
+
+                break;
+            }
+        }
+
+        assertTrue("Should have found the test metric", foundMetric);
+    }
+
     private List<String> getTagsAsList(Map<String, Object> metric) {
         List<String> tagList = new ArrayList<>();
         Object tagsObj = metric.get("tags");
