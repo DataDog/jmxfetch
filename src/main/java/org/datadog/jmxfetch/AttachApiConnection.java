@@ -20,7 +20,7 @@ public class AttachApiConnection extends Connection {
         processRegex = (String) connectionParams.get("process_name_regex");
         this.env = new HashMap<String, Object>();
         this.address = getAddress(connectionParams);
-        createConnection();
+        this.createConnection();
     }
 
     private JMXServiceURL getAddress(Map<String, Object> connectionParams)
