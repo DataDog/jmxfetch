@@ -1,6 +1,7 @@
 Changelog
 =========
 # 0.51.1 / TBC
+- [FEATURE] Add support for WebSphere PMI Stats objects with subCollections [#XXX][]
 
 # 0.51.0 / 2025-10-28
 - [FEATURE] Add configuration-level dynamic tags for JMX attribute values via `dynamic_tags` [#581][]
