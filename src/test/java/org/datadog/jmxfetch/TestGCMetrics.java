@@ -159,6 +159,35 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
+    public void testDefaultNewGCMetricsUseGenerationalShenandoahGCJDK24() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_24).appendJavaOpts("-XX:+UseShenandoahGC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(11));
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "Shenandoah Cycles", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "Shenandoah Cycles", "counter");
+        }
+    }
+
+    @Test
+    public void testDefaultNewGCMetricsUseExplicitGenerationalShenandoahGCJDK24()
+        throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_24).appendJavaOpts(
+            "-XX:+UseShenandoahGC -XX:+UnlockExperimentalVMOptions "
+            + "-XX:ShenandoahGCMode=generational").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(11));
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "Shenandoah Cycles", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "Shenandoah Cycles", "counter");
+        }
+    }
+
+    @Test
     public void testDefaultNewGCMetricsUseGenerationalZGC() throws IOException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_21).appendJavaOpts("-XX:+UseZGC -XX:+ZGenerational").build()) {
