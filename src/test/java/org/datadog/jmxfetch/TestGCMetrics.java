@@ -78,6 +78,23 @@ public class TestGCMetrics extends TestCommon {
     }
 
     @Test
+    public void testDefaultNewGCMetricsUseSerialGC() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_11).appendJavaOpts("-XX:+UseSerialGC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(13));
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_count", "Copy", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.minor_collection_time", "Copy", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "MarkSweepCompact", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "MarkSweepCompact", "counter");
+        }
+    }
+
+    @Test
     public void testDefaultNewGCMetricsUseConcMarkSweepGC() throws IOException {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_11).appendJavaOpts("-XX:+UseConcMarkSweepGC").build()) {
@@ -125,6 +142,19 @@ public class TestGCMetrics extends TestCommon {
                 "jvm.gc.zgc_cycles_collection_count", "ZGC Cycles", "counter");
             assertGCMetric(actualMetrics,
                 "jvm.gc.zgc_cycles_collection_time", "ZGC Cycles", "counter");
+        }
+    }
+
+    @Test
+    public void testDefaultNewGCMetricsUseShenandoahGC() throws IOException {
+        try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
+            JDK_17).appendJavaOpts("-XX:+UseShenandoahGC").build()) {
+            final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
+            assertThat(actualMetrics, hasSize(11));
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_count", "Shenandoah Cycles", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.major_collection_time", "Shenandoah Cycles", "counter");
         }
     }
 
