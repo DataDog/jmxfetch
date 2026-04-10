@@ -153,7 +153,7 @@ public class App {
                  | MBeanRegistrationException
                  | NotCompliantMBeanException e) {
             log.warn("Could not register bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                appTelemetryBeanName.getCanonicalName(), e);
         }
     }
 
@@ -189,7 +189,7 @@ public class App {
          | MBeanRegistrationException
          | NotCompliantMBeanException e) {
             log.warn("Could not register bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                appTelemetryBeanName.getCanonicalName(), e);
         }
 
         this.appTelemetry = bean;
@@ -208,7 +208,7 @@ public class App {
             log.debug("Successfully unregistered app telemetry bean");
         } catch (MBeanRegistrationException | InstanceNotFoundException e) {
             log.warn("Could not unregister bean named '{}' for instance: ",
-                appTelemetryBeanName.toString(), e);
+                appTelemetryBeanName.getCanonicalName(), e);
         }
     }
 
