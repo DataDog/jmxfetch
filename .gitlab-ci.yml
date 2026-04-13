@@ -22,7 +22,7 @@ run_unit_tests:
   tags:
     - "docker-in-docker:amd64"
 
-  image: &jdk-image eclipse-temurin:8u452-b09-jdk
+  image: &jdk-image $REGISTRY/images/mirror/eclipse-temurin:8-jdk
 
   script:
     - ./mvnw -Dhttps.protocols=TLSv1.2 -Dcheckstyle.skip=true -Dtests.log_level=info -Djdk.attach.allowAttachSelf=true -B test
