@@ -1,6 +1,10 @@
 Changelog
 =========
-# 0.51.1 / TBC
+# 0.52.0 / 2026-04-13
+* [FEATURE] Add `key_property` support for `dynamic_tags` to extract tag values from JMX bean name key properties [#601][]
+* [FEATURE] Add JMX metrics mappings for Generational Shenandoah GC [#596][] (Thanks [@krrg][])
+* [IMPROVEMENT] Add `use_canonical_bean_name` config option to guarantee consistent key property ordering in bean names [#597][]
+* [IMPROVEMENT] Automatically use `snakeyaml-engine` on Java 8+ with fallback to legacy `snakeyaml` on Java 7 [#585][]
 
 # 0.51.0 / 2025-10-28
 - [FEATURE] Add configuration-level dynamic tags for JMX attribute values via `dynamic_tags` [#581][]
@@ -815,6 +819,10 @@ Changelog
 [#572]: https://github.com/DataDog/jmxfetch/issues/572
 [#574]: https://github.com/DataDog/jmxfetch/issues/574
 [#581]: https://github.com/DataDog/jmxfetch/pull/581
+[#585]: https://github.com/DataDog/jmxfetch/issues/585
+[#596]: https://github.com/DataDog/jmxfetch/issues/596
+[#597]: https://github.com/DataDog/jmxfetch/issues/597
+[#601]: https://github.com/DataDog/jmxfetch/pull/601
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
@@ -825,3 +833,4 @@ Changelog
 [@mattdrees]: https://github.com/mattdrees
 [@nwillems]: https://github.com/nwillems
 [@ygree]: https://github.com/ygree
+[@krrg]: https://github.com/krrg
