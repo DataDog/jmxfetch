@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.52.1 / TBC
+
 # 0.52.0 / 2026-04-13
 * [FEATURE] Add `key_property` support for `dynamic_tags` to extract tag values from JMX bean name key properties [#601][]
 * [FEATURE] Add JMX metrics mappings for Generational Shenandoah GC [#596][] (Thanks [@krrg][])
