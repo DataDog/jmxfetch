@@ -60,9 +60,9 @@ jmxfetch-$ARGUMENTS-jar-with-dependencies.jar
 ```
 # X.Y.Z / TBC
 ```
-to:
+to (using today's date in `YYYY-MM-DD` format):
 ```
-# $ARGUMENTS / TBC
+# $ARGUMENTS / YYYY-MM-DD
 ```
 
 **Entries**: under the new heading, add one line per user-facing merged PR using this format:
