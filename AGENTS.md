@@ -211,6 +211,18 @@ src/test/java/org/datadog/jmxfetch/
 - **IDE Setup**: Enable annotation processors for Lombok support
 - **Maven Wrapper**: Always use `./mvnw` instead of system Maven
 
+## Release
+
+To prepare a release, use the `/prepare-release` skill:
+
+```
+/prepare-release 0.52.0
+```
+
+This updates `pom.xml`, `README.md`, `.github/workflows/test.yml`, and `CHANGELOG.md`
+(version bump, jar filename references, changelog entries, link definitions) and commits
+with `chore: Preparing X.Y.Z release`.
+
 ## Important Notes
 
 - Target compatibility is Java 1.7, so avoid Java 8+ language features
