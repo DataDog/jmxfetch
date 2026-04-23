@@ -54,17 +54,17 @@
         <apache-commons-lang3.version>3.5</apache-commons-lang3.version>
         <commons-io.version>2.4</commons-io.version>
         <hamcrest.version>2.2</hamcrest.version>
-        <java-dogstatsd-client.version>2.10.5</java-dogstatsd-client.version>
+        <java-dogstatsd-client.version>2.13.1</java-dogstatsd-client.version>
         <javax.management.j2ee-api.version>1.1.2</javax.management.j2ee-api.version>
-        <jcommander.version>1.35</jcommander.version>
+        <jcommander.version>1.82</jcommander.version>
         <junit.version>4.13.2</junit.version>
         <lombok.version>1.18.38</lombok.version>
         <mockito.version>2.28.2</mockito.version>
-        <slf4j.version>1.7.32</slf4j.version>
+        <slf4j.version>1.7.36</slf4j.version>
         <!-- used on Java 8+ when available on runtime classpath -->
         <snakeyaml-engine.version>2.9</snakeyaml-engine.version>
         <!-- used on Java 7 or if snakeyaml-engine is not available -->
-        <snakeyaml.version>2.0</snakeyaml.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
         <testcontainers.version>1.19.8</testcontainers.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
