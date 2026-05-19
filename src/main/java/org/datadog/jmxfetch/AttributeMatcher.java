@@ -34,7 +34,6 @@ class AttributeMatcher {
     private final AppConfig appConfig;
 
     private List<JmxAttribute> matchingAttributes = new ArrayList<JmxAttribute>();
-    private List<JmxAttribute> failingAttributes = new ArrayList<JmxAttribute>();
     private boolean limitReached = false;
     private int beansWithAttributeMatch = 0;
 
@@ -82,7 +81,6 @@ class AttributeMatcher {
         boolean metricReachedDisplayed = false;
 
         matchingAttributes = new ArrayList<JmxAttribute>();
-        failingAttributes = new ArrayList<JmxAttribute>();
         int metricsCount = 0;
 
         beansWithAttributeMatch = 0;
@@ -265,10 +263,6 @@ class AttributeMatcher {
 
     List<JmxAttribute> getMatchingAttributes() {
         return matchingAttributes;
-    }
-
-    List<JmxAttribute> getFailingAttributes() {
-        return failingAttributes;
     }
 
     boolean isLimitReached() {

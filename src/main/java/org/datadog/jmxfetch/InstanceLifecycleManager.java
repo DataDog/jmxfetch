@@ -8,8 +8,6 @@ import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.tasks.TaskMethod;
 import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
-import org.datadog.jmxfetch.util.AppTelemetry;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,20 +70,19 @@ class InstanceLifecycleManager {
                                 RECOVERY_POOL_NAME));
             }
 
-            List<TaskStatusHandler> statuses =
-                    this.recoveryProcessor.processTasks(
-                            cleanupInstanceTasks,
-                            this.appConfig.getReconnectionTimeout(),
-                            TimeUnit.SECONDS,
-                            new TaskMethod<Void>() {
-                                @Override
-                                public TaskStatusHandler invoke(
-                                        final Instance instance,
-                                        final Future<Void> future,
-                                        final Reporter reporter) {
-                                    return App.processRecoveryResults(instance, future, reporter);
-                                }
-                            });
+            this.recoveryProcessor.processTasks(
+                    cleanupInstanceTasks,
+                    this.appConfig.getReconnectionTimeout(),
+                    TimeUnit.SECONDS,
+                    new TaskMethod<Void>() {
+                        @Override
+                        public TaskStatusHandler invoke(
+                                final Instance instance,
+                                final Future<Void> future,
+                                final Reporter reporter) {
+                            return App.processRecoveryResults(instance, future, reporter);
+                        }
+                    });
 
         } catch (Exception e) {
             log.warn(
@@ -98,7 +95,7 @@ class InstanceLifecycleManager {
         }
     }
 
-    void fixBrokenInstances(final Reporter reporter, final AppTelemetry appTelemetry) {
+    void fixBrokenInstances(final Reporter reporter) {
         if (this.brokenInstanceMap.isEmpty()) {
             return;
         }
@@ -175,8 +172,7 @@ class InstanceLifecycleManager {
             final boolean forceNewConnection,
             final Map<String, ConfigYaml> configs,
             final Map<String, ConfigYaml> adPipeConfigs,
-            final Map<String, Object> adJsonConfigs,
-            final AppTelemetry appTelemetry) {
+            final Map<String, Object> adJsonConfigs) {
         log.info("Cleaning up instances...");
         this.clearInstances(this.instances);
         this.clearInstances(this.brokenInstanceMap.values());

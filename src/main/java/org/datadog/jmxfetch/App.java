@@ -564,7 +564,7 @@ public class App {
         }
 
         // Attempt to fix broken instances
-        this.lifecycleManager.fixBrokenInstances(reporter, this.appTelemetry);
+        this.lifecycleManager.fixBrokenInstances(reporter);
 
         try {
             this.appConfig.getStatus().flush();
@@ -805,8 +805,7 @@ public class App {
                 forceNewConnection,
                 this.configs,
                 this.adPipeConfigs,
-                this.adJsonConfigs,
-                this.appTelemetry);
+                this.adJsonConfigs);
     }
 
     Map<String,Object> getTelemetryInitConfig() {
