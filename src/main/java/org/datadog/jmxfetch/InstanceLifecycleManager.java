@@ -8,6 +8,7 @@ import org.datadog.jmxfetch.reporter.Reporter;
 import org.datadog.jmxfetch.tasks.TaskMethod;
 import org.datadog.jmxfetch.tasks.TaskProcessor;
 import org.datadog.jmxfetch.tasks.TaskStatusHandler;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
