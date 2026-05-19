@@ -43,4 +43,14 @@ public class TestJmxAttributeUtil {
             assertEquals(firstResults[i], JmxAttribute.convertMetricName(inputs[i]));
         }
     }
+
+    @Test
+    public void testConvertMetricNameCacheDoesNotMutate() {
+        // Verify LRU cache correctness: same input never produces a mutated result
+        String input = "jmx.HeapMemoryUsage";
+        String r1 = JmxAttribute.convertMetricName(input);
+        String r2 = JmxAttribute.convertMetricName(input);
+        assertEquals(r1, r2);
+        assertEquals("jmx.heap_memory_usage", r1);
+    }
 }
