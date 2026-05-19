@@ -27,9 +27,20 @@ public class TestJmxAttributeUtil {
     }
 
     @Test
-    public void testConvertMetricNameSameInputReturnsSameOutput() {
-        String first = JmxAttribute.convertMetricName("jmx.myCamelCase");
-        String second = JmxAttribute.convertMetricName("jmx.myCamelCase");
-        assertEquals(first, second);
+    public void testConvertMetricNameCacheConsistency() {
+        // Exercise cache: 10 distinct inputs, then re-call each to hit cache
+        String[] inputs = {
+            "jmx.myCamelCase", "jmx.MyMetric", "jmx.my-metric",
+            "jmx.my_.metric", "jmx.HeapMemoryUsage", "jmx.GcCount",
+            "jmx.ThreadCount", "jmx.ClassLoadingTotal", "jmx.UpTime", "jmx.FreeMemory"
+        };
+        String[] firstResults = new String[inputs.length];
+        for (int i = 0; i < inputs.length; i++) {
+            firstResults[i] = JmxAttribute.convertMetricName(inputs[i]);
+        }
+        // All cache hits must return identical results
+        for (int i = 0; i < inputs.length; i++) {
+            assertEquals(firstResults[i], JmxAttribute.convertMetricName(inputs[i]));
+        }
     }
 }

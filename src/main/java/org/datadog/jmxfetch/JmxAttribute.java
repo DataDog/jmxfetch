@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -52,12 +53,13 @@ public abstract class JmxAttribute {
     private static final Pattern DOT_UNDERSCORE_RE = Pattern.compile(DOT_UNDERSCORE);
     private static final int METRIC_NAME_CACHE_SIZE = 512;
     private static final Map<String, String> METRIC_NAME_CACHE =
-            new LinkedHashMap<String, String>(METRIC_NAME_CACHE_SIZE, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-                    return size() > METRIC_NAME_CACHE_SIZE;
-                }
-            };
+            Collections.synchronizedMap(
+                    new LinkedHashMap<String, String>(METRIC_NAME_CACHE_SIZE, 0.75f, true) {
+                        @Override
+                        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+                            return size() > METRIC_NAME_CACHE_SIZE;
+                        }
+                    });
     protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
 
     private MBeanAttributeInfo attribute;
