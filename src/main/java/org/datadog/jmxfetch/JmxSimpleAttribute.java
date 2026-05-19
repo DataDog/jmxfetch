@@ -94,6 +94,11 @@ public class JmxSimpleAttribute extends JmxAttribute {
         return SIMPLE_TYPES.contains(attributeType);
     }
 
+    @Override
+    public int getMetricsCount() {
+        return 1;
+    }
+
     /** Returns whether an attribute matches in a configuration spec. */
     public boolean match(Configuration configuration) {
         return matchDomain(configuration)

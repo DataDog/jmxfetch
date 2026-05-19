@@ -251,6 +251,15 @@ public class JmxTabularAttribute extends JmxSubAttribute {
     }
 
     @Override
+    public int getMetricsCount() {
+        int count = 0;
+        for (List<String> subAttrs : subAttributeList.values()) {
+            count += subAttrs.size();
+        }
+        return count;
+    }
+
+    @Override
     public boolean match(Configuration configuration) {
         if (!matchDomain(configuration)
                 || !matchClassName(configuration)

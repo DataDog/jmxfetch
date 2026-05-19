@@ -121,6 +121,11 @@ public class JmxComplexAttribute extends JmxSubAttribute {
     }
 
     @Override
+    public int getMetricsCount() {
+        return subAttributeList.size();
+    }
+
+    @Override
     public boolean match(Configuration configuration) {
         if (!matchDomain(configuration)
                 || !matchClassName(configuration)
