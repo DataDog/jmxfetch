@@ -1,7 +1,5 @@
 package org.datadog.jmxfetch;
 
-import static org.datadog.jmxfetch.Instance.isDirectInstance;
-
 import lombok.extern.slf4j.Slf4j;
 
 import org.datadog.jmxfetch.reporter.Reporter;
@@ -26,16 +24,10 @@ import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map.Entry;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -86,12 +78,11 @@ public class App {
     private Map<String, Object> adJsonConfigs;
     private Map<String, ConfigYaml> configs;
     private Map<String, ConfigYaml> adPipeConfigs = new ConcurrentHashMap<>();
-    private List<Instance> instances = new ArrayList<>();
-    private Map<String, Instance> brokenInstanceMap = new ConcurrentHashMap<>();
     private AtomicBoolean reinit = new AtomicBoolean(false);
 
     private TaskProcessor collectionProcessor;
     private TaskProcessor recoveryProcessor;
+    private InstanceLifecycleManager lifecycleManager;
 
     private final AppConfig appConfig;
     private HttpClient client;
@@ -124,6 +115,8 @@ public class App {
                 recoveryThreadPool, this.appConfig.getReporter());
         this.collectionProcessor = new TaskProcessor(
                 collectionThreadPool, this.appConfig.getReporter());
+        this.lifecycleManager = new InstanceLifecycleManager(
+                this.appConfig, this.recoveryProcessor, this);
         // setup client
         if (this.appConfig.remoteEnabled()) {
             this.client = new HttpClient(
@@ -292,53 +285,8 @@ public class App {
         return loopCounter;
     }
 
-    private void clearInstances(final Collection<Instance> instances) {
-        final List<InstanceTask<Void>> cleanupInstanceTasks =
-                new ArrayList<>(instances.size());
-        for (final Instance instance : instances) {
-            // create the cleanup task
-            cleanupInstanceTasks.add(new InstanceCleanupTask(instance));
-        }
-
-        try {
-            if (!this.recoveryProcessor.ready()) {
-                log.warn(
-                        "Executor has to be replaced for recovery processor, "
-                        + "previous one hogging threads");
-                this.recoveryProcessor.stop();
-                this.recoveryProcessor.setThreadPoolExecutor(
-                        this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
-                                RECOVERY_POOL_NAME));
-            }
-
-            List<TaskStatusHandler> statuses =
-                    this.recoveryProcessor.processTasks(
-                            cleanupInstanceTasks,
-                            this.appConfig.getReconnectionTimeout(),
-                            TimeUnit.SECONDS,
-                            new TaskMethod<Void>() {
-                                @Override
-                                public TaskStatusHandler invoke(
-                                        final Instance instance,
-                                        final Future<Void> future,
-                                        final Reporter reporter) {
-                                    return App.processRecoveryResults(instance, future, reporter);
-                                }
-                            });
-
-        } catch (Exception e) {
-            log.warn(
-                    "Unable to terminate all connections gracefully "
-                    + "- possible network connectivity issues.");
-        } finally {
-            // This is a best effort thing, we always clear the list - eventually 'orphaned'
-            // instances should get GC'd anyhow.
-            instances.clear();
-        }
-    }
-
     protected void clearAllInstances() {
-        this.clearInstances(this.instances);
+        this.lifecycleManager.clearInstances(this.lifecycleManager.getInstances());
     }
 
     /**
@@ -348,7 +296,7 @@ public class App {
      * @param size The thread pool size
      * @return The create executor
      */
-    private ExecutorService buildExecutorService(final int size, final String poolName) {
+    ExecutorService buildExecutorService(final int size, final String poolName) {
         return Executors.newFixedThreadPool(size, new ThreadFactory() {
 
             private final AtomicInteger counter = new AtomicInteger(0);
@@ -417,7 +365,7 @@ public class App {
     }
 
     protected List<Instance> getInstances() {
-        return this.instances;
+        return this.lifecycleManager.getInstances();
     }
 
     /* Display metrics on the console report */
@@ -510,7 +458,7 @@ public class App {
                 init(true);
             }
 
-            if (instances.size() > 0) {
+            if (this.lifecycleManager.getInstances().size() > 0) {
                 this.doIteration();
             } else {
                 log.warn("No instance could be initiated. Retrying initialization.");
@@ -557,14 +505,15 @@ public class App {
         loopCounter++;
 
         try {
+            final List<Instance> instances = this.lifecycleManager.getInstances();
             List<InstanceTask<List<Metric>>> getMetricsTasks =
-                    new ArrayList<>(this.instances.size());
+                    new ArrayList<>(instances.size());
 
-            for (Instance instance : this.instances) {
+            for (Instance instance : instances) {
                 getMetricsTasks.add(new MetricCollectionTask(instance));
             }
             if (this.appTelemetry != null) {
-                this.appTelemetry.setRunningInstanceCount(this.instances.size());
+                this.appTelemetry.setRunningInstanceCount(instances.size());
             }
 
             if (!this.collectionProcessor.ready()) {
@@ -604,7 +553,7 @@ public class App {
 
             log.warn("JMXFetch internal error invoking concurrent tasks: ", e);
 
-            for (Instance instance : this.instances) {
+            for (Instance instance : this.lifecycleManager.getInstances()) {
                 // don't add instances to broken instances, issue was internal
                 instanceMessage =
                         "Internal JMXFetch error refreshing bean list for instance " + instance;
@@ -615,85 +564,13 @@ public class App {
         }
 
         // Attempt to fix broken instances
-        this.fixBrokenInstances(reporter);
+        this.lifecycleManager.fixBrokenInstances(reporter, this.appTelemetry);
 
         try {
             this.appConfig.getStatus().flush();
         } catch (Exception e) {
             log.error("Unable to flush stats.", e);
         }
-    }
-
-    private void fixBrokenInstances(final Reporter reporter) {
-        if (this.brokenInstanceMap.isEmpty()) {
-            return;
-        }
-
-        log.debug("Trying to recover broken instances...");
-        final List<InstanceTask<Void>> fixInstanceTasks =
-                new ArrayList<>(this.brokenInstanceMap.values().size());
-
-        for (final Instance instance : this.brokenInstanceMap.values()) {
-            // Clearing rates aggregator so we won't compute wrong rates if we can reconnect
-            reporter.clearRatesAggregator(instance.getName());
-            reporter.clearCountersAggregator(instance.getName());
-
-            log.warn(
-                    "Instance "
-                            + instance
-                            + " didn't return any metrics. "
-                            + "Maybe the server got disconnected ? Trying to reconnect.");
-
-            // Remove the broken instance from the good instance list so jmxfetch won't try to
-            // collect metrics from this broken instance during next collection and close
-            // ongoing connections (do so asynchronously to avoid locking on network timeout).
-            instance.cleanUpAsync();
-            this.instances.remove(instance);
-
-            // Resetting the instance
-            final Instance newInstance = new Instance(instance, this.appConfig);
-
-            // create the initializing task
-            fixInstanceTasks.add(new InstanceInitializingTask(newInstance, true));
-        }
-
-        try {
-            if (!this.recoveryProcessor.ready()) {
-                log.warn(
-                        "Executor has to be replaced for recovery processor, "
-                        + "previous one hogging threads");
-                this.recoveryProcessor.stop();
-                this.recoveryProcessor.setThreadPoolExecutor(
-                        this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
-                                RECOVERY_POOL_NAME));
-            }
-
-            Collections.shuffle(fixInstanceTasks);
-            final List<TaskStatusHandler> statuses =
-                    this.recoveryProcessor.processTasks(
-                            fixInstanceTasks,
-                            this.appConfig.getReconnectionTimeout(),
-                            TimeUnit.SECONDS,
-                            new TaskMethod<Void>() {
-                                @Override
-                                public TaskStatusHandler invoke(
-                                        final Instance instance,
-                                        final Future<Void> future,
-                                        final Reporter reporter) {
-                                    return App.processRecoveryResults(instance, future, reporter);
-                                }
-                            });
-
-            this.processFixedStatus(fixInstanceTasks, statuses);
-
-            // update with statuses
-            this.processStatus(fixInstanceTasks, statuses);
-
-        } catch (Exception e) {
-            // NADA
-        }
-
-        log.debug("Done trying to recover broken instances.");
     }
 
     /**
@@ -906,7 +783,7 @@ public class App {
                 checkName, serviceCheckName, status, message, tags);
     }
 
-    private Instance instantiate(
+    Instance instantiate(
             final Map<String, Object> instanceMap,
             final Map<String, Object> initConfig,
             final String checkName,
@@ -924,168 +801,21 @@ public class App {
 
     /** Initializes instances and metric collection. */
     public void init(final boolean forceNewConnection) {
-        log.info("Cleaning up instances...");
-        this.clearInstances(this.instances);
-        this.clearInstances(this.brokenInstanceMap.values());
-        this.brokenInstanceMap.clear();
-
-        final List<Instance> newInstances = new ArrayList<>();
-        final Set<String> instanceNamesSeen = new HashSet<>();
-
-        log.info("Dealing with YAML config instances...");
-        final Iterator<Entry<String, ConfigYaml>> it = this.configs.entrySet().iterator();
-        final Iterator<Entry<String, ConfigYaml>> itPipeConfigs = this.adPipeConfigs
-                        .entrySet().iterator();
-        while (it.hasNext() || itPipeConfigs.hasNext()) {
-            Map.Entry<String, ConfigYaml> entry;
-            boolean fromPipeIterator = false;
-            if (it.hasNext()) {
-                entry = it.next();
-            } else {
-                entry = itPipeConfigs.next();
-                fromPipeIterator = true;
-            }
-
-            final String name = entry.getKey();
-            final ConfigYaml yamlConfig = entry.getValue();
-            // AD config cache doesn't remove configs - it just overwrites.
-            if (!fromPipeIterator) {
-                it.remove();
-            }
-
-            final List<Map<String, Object>> configInstances =
-                    ((List<Map<String, Object>>) yamlConfig.getInstances());
-            if (configInstances == null || configInstances.size() == 0) {
-                final String warning = "No instance found in :" + name;
-                log.warn(warning);
-                this.appConfig.getStatus().addInitFailedCheck(name, warning, Status.STATUS_ERROR);
-                continue;
-            }
-
-            for (final Map<String, Object> configInstance : configInstances) {
-                if (appConfig.isTargetDirectInstances() != isDirectInstance(configInstance)) {
-                    log.info("Skipping instance '{}'. targetDirectInstances={} != jvm_direct={}",
-                            name,
-                            this.appConfig.isTargetDirectInstances(),
-                            isDirectInstance(configInstance));
-                    continue;
-                }
-                final String instanceName = (String) configInstance.get("name");
-                if (instanceName != null) {
-                    if (instanceNamesSeen.contains(instanceName)) {
-                        log.warn("Found multiple instances with name: '{}'. "
-                            + "Instance names should be unique, "
-                            + "update the 'name' field on your instances to be unique.",
-                            instanceName);
-                    }
-                    instanceNamesSeen.add(instanceName);
-                }
-                // Create a new Instance object
-                log.info("Instantiating instance for: {}", name);
-                final Instance instance =
-                        instantiate(
-                                configInstance,
-                                (Map<String, Object>) yamlConfig.getInitConfig(),
-                                name,
-                                this.appConfig);
-                newInstances.add(instance);
-            }
-        }
-
-        // Process JSON configurations
-        log.info("Dealing with Auto-Config instances collected...");
-        if (this.adJsonConfigs != null) {
-            for (String check : this.adJsonConfigs.keySet()) {
-                final Map<String, Object> checkConfig =
-                        (Map<String, Object>) this.adJsonConfigs.get(check);
-                final Map<String, Object> initConfig =
-                        (Map<String, Object>) checkConfig.get("init_config");
-                final List<Map<String, Object>> configInstances =
-                        (List<Map<String, Object>>) checkConfig.get("instances");
-                final String checkName = (String) checkConfig.get("check_name");
-                for (Map<String, Object> configInstance : configInstances) {
-                    log.info("Instantiating instance for: " + checkName);
-                    final String instanceName = (String) configInstance.get("name");
-                    if (instanceName != null) {
-                        if (instanceNamesSeen.contains(instanceName)) {
-                            log.warn("Found multiple instances with name: '{}'. "
-                                + "Instance names should be unique, "
-                                + "update the 'name' field on your instances to be unique.",
-                                instanceName);
-                        }
-                        instanceNamesSeen.add(instanceName);
-                    }
-                    final Instance instance =
-                            instantiate(configInstance, initConfig, checkName, this.appConfig);
-                    newInstances.add(instance);
-                }
-            }
-        }
-
-        // Enables jmxfetch telemetry if there are other checks active and it's been enabled
-        if (appConfig.getJmxfetchTelemetry() && newInstances.size() >= 1) {
-            log.info("Adding jmxfetch telemetry check");
-            final Instance instance = instantiate(getTelemetryInstanceConfig(),
-                        getTelemetryInitConfig(), "jmxfetch_telemetry_check",
-                        this.appConfig);
-            newInstances.add(instance);
-        }
-
-        final List<InstanceTask<Void>> instanceInitTasks =
-                new ArrayList<>(newInstances.size());
-        for (Instance instance : newInstances) {
-            // create the initializing tasks
-            instanceInitTasks.add(new InstanceInitializingTask(instance, forceNewConnection));
-        }
-
-        // Initialize the instances
-        log.info("Started instance initialization...");
-
-        try {
-            if (!this.recoveryProcessor.ready()) {
-                log.warn(
-                        "Executor has to be replaced for recovery processor, "
-                        + "previous one hogging threads");
-                this.recoveryProcessor.stop();
-                this.recoveryProcessor.setThreadPoolExecutor(
-                        this.buildExecutorService(this.appConfig.getReconnectionThreadPoolSize(),
-                                RECOVERY_POOL_NAME));
-            }
-
-            final List<TaskStatusHandler> statuses =
-                    this.recoveryProcessor.processTasks(
-                            instanceInitTasks,
-                            this.appConfig.getCollectionTimeout(),
-                            TimeUnit.SECONDS,
-                            new TaskMethod<Void>() {
-                                @Override
-                                public TaskStatusHandler invoke(
-                                        final Instance instance,
-                                        final Future<Void> future,
-                                        final Reporter reporter) {
-                                    return App.processRecoveryResults(instance, future, reporter);
-                                }
-                            });
-
-            log.info("Completed instance initialization...");
-
-            this.processInstantiationStatus(instanceInitTasks, statuses);
-
-            // update with statuses
-            this.processStatus(instanceInitTasks, statuses);
-        } catch (Exception e) {
-            // NADA
-            log.warn("Critical issue initializing instances: " + e);
-        }
+        this.lifecycleManager.init(
+                forceNewConnection,
+                this.configs,
+                this.adPipeConfigs,
+                this.adJsonConfigs,
+                this.appTelemetry);
     }
 
-    private Map<String,Object> getTelemetryInitConfig() {
+    Map<String,Object> getTelemetryInitConfig() {
         Map<String,Object> config = new HashMap<String,Object>();
         config.put("is_jmx",true);
         return config;
     }
 
-    private Map<String,Object> getTelemetryInstanceConfig() {
+    Map<String,Object> getTelemetryInstanceConfig() {
         Map<String,Object> config = new HashMap<String,Object>();
         config.put("name","jmxfetch_telemetry_instance");
         config.put("collect_default_jvm_metrics",true);
@@ -1177,9 +907,13 @@ public class App {
         return status;
     }
 
-    private <T> void processInstantiationStatus(
+    <T> void processInstantiationStatus(
             final List<InstanceTask<T>> tasks,
             final List<TaskStatusHandler> statuses) {
+
+        final List<Instance> instances = this.lifecycleManager.getInstances();
+        final Map<String, Instance> brokenInstanceMap =
+                this.lifecycleManager.getBrokenInstanceMap();
 
         // cleanup fixed brokenInstances - matching indices in fixedInstanceIndices List
         final ListIterator<TaskStatusHandler> sit = statuses.listIterator(statuses.size());
@@ -1194,24 +928,28 @@ public class App {
                 status.raiseForStatus();
 
                 // All was good, add instance
-                this.instances.add(instance);
+                instances.add(instance);
                 log.info("Successfully initialized instance: {}", instance.getName());
             } catch (Throwable e) {
                 log.warn(
                     "Could not initialize instance: {}:", instance.getName(), e);
                 instance.cleanUpAsync();
-                this.brokenInstanceMap.put(instance.toString(), instance);
+                brokenInstanceMap.put(instance.toString(), instance);
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.setBrokenInstanceCount(brokenInstanceMap.size());
                     this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
             }
         }
     }
 
-    private <T> void processFixedStatus(
+    <T> void processFixedStatus(
             final List<InstanceTask<T>> tasks,
             final List<TaskStatusHandler> statuses) {
+        final List<Instance> instances = this.lifecycleManager.getInstances();
+        final Map<String, Instance> brokenInstanceMap =
+                this.lifecycleManager.getBrokenInstanceMap();
+
         // cleanup fixed broken instances - matching indices between statuses and tasks
         final ListIterator<TaskStatusHandler> it = statuses.listIterator();
         int idx = 0;
@@ -1222,12 +960,12 @@ public class App {
                 status.raiseForStatus();
 
                 final Instance instance = tasks.get(idx).getInstance();
-                this.brokenInstanceMap.remove(instance.toString());
-                this.instances.add(instance);
+                brokenInstanceMap.remove(instance.toString());
+                instances.add(instance);
 
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
-                    this.appTelemetry.setRunningInstanceCount(this.instances.size());
+                    this.appTelemetry.setBrokenInstanceCount(brokenInstanceMap.size());
+                    this.appTelemetry.setRunningInstanceCount(instances.size());
                 }
 
             } catch (Throwable e) {
@@ -1238,7 +976,7 @@ public class App {
         }
     }
 
-    private <T> void processStatus(
+    <T> void processStatus(
             final List<InstanceTask<T>> tasks,
             final List<TaskStatusHandler> statuses) {
         for (int i = 0; i < statuses.size(); i++) {
@@ -1339,10 +1077,12 @@ public class App {
                 instanceMessage = task.getWarning();
                 instanceStatus = Status.STATUS_ERROR;
 
-                this.brokenInstanceMap.put(instance.toString(), instance);
+                final Map<String, Instance> brokenInstanceMap =
+                        this.lifecycleManager.getBrokenInstanceMap();
+                brokenInstanceMap.put(instance.toString(), instance);
                 log.debug("Adding broken instance to list: " + instance.getName());
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.setBrokenInstanceCount(brokenInstanceMap.size());
                     this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
 
@@ -1350,10 +1090,12 @@ public class App {
             } catch (Throwable t) {
                 // Legit exception during task - eviction necessary
                 log.debug("Adding broken instance to list: " + instance.getName());
-                this.brokenInstanceMap.put(instance.toString(), instance);
+                final Map<String, Instance> brokenInstanceMap =
+                        this.lifecycleManager.getBrokenInstanceMap();
+                brokenInstanceMap.put(instance.toString(), instance);
 
                 if (this.appTelemetry != null) {
-                    this.appTelemetry.setBrokenInstanceCount(this.brokenInstanceMap.size());
+                    this.appTelemetry.setBrokenInstanceCount(brokenInstanceMap.size());
                     this.appTelemetry.incrementBrokenInstanceEventCount();
                 }
 
