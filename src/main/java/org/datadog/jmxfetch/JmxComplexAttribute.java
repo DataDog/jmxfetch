@@ -34,6 +34,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
 
 
     private List<String> subAttributeList = new ArrayList<String>();
+    private Object cachedJmxValue = null;
 
     /** JmxComplexAttribute constructor. */
     public JmxComplexAttribute(
@@ -91,6 +92,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             metric.setValue(value);
             metrics.add(metric);
         }
+        cachedJmxValue = null;
         return metrics;
     }
 
@@ -98,7 +100,7 @@ public class JmxComplexAttribute extends JmxSubAttribute {
             throws AttributeNotFoundException, InstanceNotFoundException, MBeanException,
                     ReflectionException, IOException {
 
-        Object value = this.getJmxValue();
+        Object value = (cachedJmxValue != null) ? cachedJmxValue : this.getJmxValue();
 
         if (value instanceof CompositeData) {
             CompositeData data = (CompositeData) value;
@@ -130,8 +132,10 @@ public class JmxComplexAttribute extends JmxSubAttribute {
         }
 
         try {
-            populateSubAttributeList(getJmxValue());
+            cachedJmxValue = getJmxValue();
+            populateSubAttributeList(cachedJmxValue);
         } catch (Exception e) {
+            cachedJmxValue = null;
             return false;
         }
 
