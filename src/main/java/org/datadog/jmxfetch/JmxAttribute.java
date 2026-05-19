@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +50,14 @@ public abstract class JmxAttribute {
     private static final Pattern ALL_CAP_RE = Pattern.compile(ALL_CAP_PATTERN);
     private static final Pattern METRIC_REPLACEMENT_RE = Pattern.compile(METRIC_REPLACEMENT);
     private static final Pattern DOT_UNDERSCORE_RE = Pattern.compile(DOT_UNDERSCORE);
+    private static final int METRIC_NAME_CACHE_SIZE = 512;
+    private static final Map<String, String> METRIC_NAME_CACHE =
+            new LinkedHashMap<String, String>(METRIC_NAME_CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+                    return size() > METRIC_NAME_CACHE_SIZE;
+                }
+            };
     protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
 
     private MBeanAttributeInfo attribute;
@@ -281,11 +290,17 @@ public abstract class JmxAttribute {
     }
 
     static String convertMetricName(String metricName) {
-        metricName = FIRST_CAP_RE.matcher(metricName).replaceAll("$1_$2");
-        metricName = ALL_CAP_RE.matcher(metricName).replaceAll("$1_$2").toLowerCase();
-        metricName = METRIC_REPLACEMENT_RE.matcher(metricName).replaceAll("_");
-        metricName = DOT_UNDERSCORE_RE.matcher(metricName).replaceAll(".").trim();
-        return metricName;
+        String cached = METRIC_NAME_CACHE.get(metricName);
+        if (cached != null) {
+            return cached;
+        }
+        String result = metricName;
+        result = FIRST_CAP_RE.matcher(result).replaceAll("$1_$2");
+        result = ALL_CAP_RE.matcher(result).replaceAll("$1_$2").toLowerCase();
+        result = METRIC_REPLACEMENT_RE.matcher(result).replaceAll("_");
+        result = DOT_UNDERSCORE_RE.matcher(result).replaceAll(".").trim();
+        METRIC_NAME_CACHE.put(metricName, result);
+        return result;
     }
 
     /** Returns string representation of JMX Attribute. */

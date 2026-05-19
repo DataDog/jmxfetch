@@ -25,4 +25,11 @@ public class TestJmxAttributeUtil {
     public void testConvertMetricNameDotUnderscore() {
         assertEquals("jmx.my.metric", JmxAttribute.convertMetricName("jmx.my_.metric"));
     }
+
+    @Test
+    public void testConvertMetricNameSameInputReturnsSameOutput() {
+        String first = JmxAttribute.convertMetricName("jmx.myCamelCase");
+        String second = JmxAttribute.convertMetricName("jmx.myCamelCase");
+        assertEquals(first, second);
+    }
 }
