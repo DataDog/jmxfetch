@@ -45,6 +45,10 @@ public abstract class JmxAttribute {
     private static final String ALL_CAP_PATTERN = "([a-z0-9])([A-Z])";
     private static final String METRIC_REPLACEMENT = "([^a-zA-Z0-9_.]+)|(^[^a-zA-Z]+)";
     private static final String DOT_UNDERSCORE = "_*\\._*";
+    private static final Pattern FIRST_CAP_RE = Pattern.compile(FIRST_CAP_PATTERN);
+    private static final Pattern ALL_CAP_RE = Pattern.compile(ALL_CAP_PATTERN);
+    private static final Pattern METRIC_REPLACEMENT_RE = Pattern.compile(METRIC_REPLACEMENT);
+    private static final Pattern DOT_UNDERSCORE_RE = Pattern.compile(DOT_UNDERSCORE);
     protected static final String CASSANDRA_DOMAIN = "org.apache.cassandra.metrics";
 
     private MBeanAttributeInfo attribute;
@@ -277,10 +281,10 @@ public abstract class JmxAttribute {
     }
 
     static String convertMetricName(String metricName) {
-        metricName = metricName.replaceAll(FIRST_CAP_PATTERN, "$1_$2");
-        metricName = metricName.replaceAll(ALL_CAP_PATTERN, "$1_$2").toLowerCase();
-        metricName = metricName.replaceAll(METRIC_REPLACEMENT, "_");
-        metricName = metricName.replaceAll(DOT_UNDERSCORE, ".").trim();
+        metricName = FIRST_CAP_RE.matcher(metricName).replaceAll("$1_$2");
+        metricName = ALL_CAP_RE.matcher(metricName).replaceAll("$1_$2").toLowerCase();
+        metricName = METRIC_REPLACEMENT_RE.matcher(metricName).replaceAll("_");
+        metricName = DOT_UNDERSCORE_RE.matcher(metricName).replaceAll(".").trim();
         return metricName;
     }
 
