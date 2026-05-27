@@ -1,6 +1,7 @@
 Changelog
 =========
 # 0.52.1 / TBC
+* [BUGFIX] Bump `java-dogstatsd-client` from 2.10.5 to 2.13.1 to fix jmxfetch on AIX ppc64 [#615][]
 
 # 0.52.0 / 2026-04-13
 * [FEATURE] Add `key_property` support for `dynamic_tags` to extract tag values from JMX bean name key properties [#601][]
