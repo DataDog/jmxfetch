@@ -1,6 +1,7 @@
 Changelog
 =========
 # 0.52.1 / TBC
+* [BUGFIX] Bump `java-dogstatsd-client` from 2.10.5 to 2.13.1 to fix jmxfetch crash on AIX ppc64 (`invalid type: ssize_t` in jnr-ffi 2.1.12, fixed in 2.1.16) [#615][]
 
 # 0.52.0 / 2026-04-13
 * [FEATURE] Add `key_property` support for `dynamic_tags` to extract tag values from JMX bean name key properties [#601][]
