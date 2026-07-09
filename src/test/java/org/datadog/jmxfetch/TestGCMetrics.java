@@ -163,7 +163,7 @@ public class TestGCMetrics extends TestCommon {
         try (final MisbehavingJMXServer server = new MisbehavingJMXServer.Builder().withJDKImage(
             JDK_21).appendJavaOpts("-XX:+UseZGC -XX:+ZGenerational").build()) {
             final List<Map<String, Object>> actualMetrics = startAndGetMetrics(server, true);
-            assertThat(actualMetrics, hasSize(17));
+            assertThat(actualMetrics, hasSize(21));
             final List<String> gcCycles = Arrays.asList(
                 "ZGC Major Cycles",
                 "ZGC Major Pauses");
@@ -175,6 +175,17 @@ public class TestGCMetrics extends TestCommon {
                 "ZGC Minor Pauses");
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_count", gcPauses);
             assertGCMetric(actualMetrics, "jvm.gc.minor_collection_time", gcPauses);
+
+            // Distinct pause-only aliases so STW pause time can be observed
+            // independently from concurrent cycle duration.
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_major_pauses_collection_count", "ZGC Major Pauses", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_major_pauses_collection_time", "ZGC Major Pauses", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_minor_pauses_collection_count", "ZGC Minor Pauses", "counter");
+            assertGCMetric(actualMetrics,
+                "jvm.gc.zgc_minor_pauses_collection_time", "ZGC Minor Pauses", "counter");
         }
     }
 
