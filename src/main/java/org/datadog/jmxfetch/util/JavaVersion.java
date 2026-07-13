@@ -24,6 +24,11 @@ public final class JavaVersion {
     }
 
     private static int parseMajorJavaVersion(String str) {
+        int indexOfDash = str.indexOf('-');
+        if (indexOfDash >= 0) {
+            str = str.substring(0, indexOfDash);
+        }
+
         int value = 0;
         for (int i = 0; i < str.length(); i++) {
             char ch = str.charAt(i);
@@ -35,6 +40,8 @@ public final class JavaVersion {
                 } else {
                     break;
                 }
+            } else if (ch == '+') {
+                break;
             } else {
                 throw new NumberFormatException();
             }
