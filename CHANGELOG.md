@@ -1,5 +1,7 @@
 Changelog
 =========
+# 0.52.2 / TBC
+
 # 0.52.1 / 2026-07-31
 * [BUGFIX] Bump `java-dogstatsd-client` from 2.10.5 to 2.13.1 to fix jmxfetch on AIX ppc64 [#615][]
 * [BUGFIX] Ignore `-ea` and other version suffixes when parsing the Java major version [#617][]
