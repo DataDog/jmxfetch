@@ -1,7 +1,8 @@
 Changelog
 =========
-# 0.52.1 / TBC
+# 0.52.1 / 2026-07-31
 * [BUGFIX] Bump `java-dogstatsd-client` from 2.10.5 to 2.13.1 to fix jmxfetch on AIX ppc64 [#615][]
+* [BUGFIX] Ignore `-ea` and other version suffixes when parsing the Java major version [#617][]
 
 # 0.52.0 / 2026-04-13
 * [FEATURE] Add `key_property` support for `dynamic_tags` to extract tag values from JMX bean name key properties [#601][]
@@ -826,6 +827,8 @@ Changelog
 [#596]: https://github.com/DataDog/jmxfetch/issues/596
 [#597]: https://github.com/DataDog/jmxfetch/issues/597
 [#601]: https://github.com/DataDog/jmxfetch/pull/601
+[#615]: https://github.com/DataDog/jmxfetch/pull/615
+[#617]: https://github.com/DataDog/jmxfetch/pull/617
 [@alz]: https://github.com/alz
 [@aoking]: https://github.com/aoking
 [@arrawatia]: https://github.com/arrawatia
